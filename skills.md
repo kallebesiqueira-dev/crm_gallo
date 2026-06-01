@@ -26,6 +26,15 @@ For the user-facing story, see [README.md](README.md). This document is the engi
 - CI `pip-audit` allowlist for the 2 vulns we can't close yet (TD-28, TD-29) — each carries a comment with the unblock condition
 - Smoke: pytest 17/17, login + /score-async end-to-end green after the JWT lib bump
 
+### ✅ Done (2026-06-01 — backend depth)
+- **Background worker** (Arq, ADR-006): `worker` service in compose; jobs `score_lead`, `drain_outbox` (5s cron), `deliver_webhook` — closes TD-14.
+- **Outbox + event bus**: `outbox_events` + `record_event` producer, `drain_outbox` consumer (`FOR UPDATE SKIP LOCKED` + backoff + DLQ cap), in-process subscribers — closes TD-16.
+- **Outgoing webhooks**: HMAC-signed, arq-retried, auto-pausing endpoints + `WebhookDelivery` log.
+- **Full-text search**: stored `tsvector` + GIN on leads/customers — closes TD-13.
+- **Optimistic locking on Deal**: `version` + `If-Match` → 412 — closes TD-12.
+- **Refresh token rotation + reuse detection**: rotates per `/refresh`; reuse revokes all sessions.
+- **Redis-backed rate limiter** — closes TD-15.
+
 ### ✅ Done (2026-05-28 hardening pass)
 - RBAC enforcement on destructive endpoints (`hard_delete`, `empty_trash`)
 - Permissive ownership: list/get open, mutate requires owner or admin/manager
@@ -62,10 +71,10 @@ For the user-facing story, see [README.md](README.md). This document is the engi
 - All 7 locales (en/pt/de/fr/it/rm/es) ship `pricing`, `billing`, `marketing` namespaces
 
 ### 🔄 In progress
-*(nothing — pick from P0 next)*
+*(nothing committed — pick the next P1 item)*
 
 ### ⏭️ Next milestone
-**Multi-tenant Organizations** — see P0 below.
+**P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking). The remaining pre-paying-customer work is the **Transactional-email workstream** (unblocks invites/reset/notifications/contracts/dunning), then **Documents/PDF/Contracts** and **cursor pagination** (TD-11). See §3 P1 + the gaps added 2026-06-01 (email, contracts, public API, omnichannel) and the new tech-debt rows TD-30…TD-40.
 
 ---
 
@@ -167,7 +176,7 @@ seat-cap 402, create new org, auto-switch verified, list orgs (2), create+accept
 #### Auth hardening
 - [x] Replace `localStorage` token with **httpOnly cookie + CSRF token** — done 2026-05-30. JWT now lives in `access_token` httpOnly cookie set by backend on login/register/register-with-invite; matching `csrf_token` cookie (JS-readable, ~32 bytes urlsafe) emitted alongside. CSRF middleware in `main.py` enforces double-submit on POST/PUT/PATCH/DELETE when an auth cookie is present (constant-time compare via `secrets.compare_digest`); GET/HEAD/OPTIONS exempt; unauthenticated mutating endpoints (login, register, reset, webhooks) exempt by absence of cookie. `get_current_user` reads from cookie first, falls back to Authorization header (transitional for non-browser callers — curl, tests, integrations). Frontend `lib/auth.ts` keeps `getToken/setToken/clearToken` as compat shims (no-ops; `getToken` returns sentinel from `csrf_token` cookie presence) so the 23 call sites compile unchanged; `lib/api.ts` adds `credentials: 'include'` to every fetch and auto-mirrors `csrf_token` cookie into `X-CSRF-Token` header on mutating methods. CORS already allowed credentials + specific origin; added `X-CSRF-Token` to `allow_headers`. Logout clears both cookies via Set-Cookie. **Smoke verified end-to-end:** login → cookies set, GET via cookie 200, POST without CSRF 403, POST with CSRF 201, logout 204, post-logout GET 401.
 - [x] **Refresh tokens** (short-lived access, long-lived refresh) + Redis revocation — done 2026-05-30. Access JWT shortened to 15 min (was 60); opaque URL-safe refresh token (~43 chars) lives in Redis (`refresh:{token}` → user_id) with 30-day TTL. `app/redis_client.py` (new): async singleton pool, `store/resolve/revoke` helpers. Three cookies: `access_token` (httpOnly, path=/, 15min), `refresh_token` (httpOnly, path=/api/auth, 30d — narrower than / so it's only sent to auth endpoints, including /refresh and /logout for revoke), `csrf_token` (JS-readable, path=/, 30d — outlives access so SPA can echo CSRF when calling /refresh after access expiry). `POST /api/auth/refresh` reads refresh cookie, validates in Redis, rotates ONLY access cookie (non-rotating refresh — simpler, avoids two-tab-race; rotation is a P2 hardening item). Logout revokes Redis entry AND clears all three cookies. **Smoke verified end-to-end:** login (200, all 3 cookies, Redis TTL ≈ 2591997s/30d), refresh (200, access rotated, refresh preserved), GET with new access (200), logout (204, Redis empty), stale-token replay refresh (401). Frontend `lib/api.ts` has a singleton in-flight `attemptRefresh()` — N concurrent 401s collapse to ONE /refresh call; on success the original request is retried once (with `_retrying` flag to prevent loops), on failure it falls through to the existing 401 handler.
-- [ ] Refresh token rotation + reuse detection (P2 hardening — rotate on every /refresh, flag any second use of an old token as a steal signal and revoke the whole user's tokens)
+- [x] **Refresh token rotation + reuse detection** — done 2026-06-01. `/refresh` rotates the refresh cookie on every call (`rotate_refresh_token` in `app/redis_client.py`); the superseded token is kept as a tripwire — any second use fires `refresh.reuse_detected`, revokes ALL of the user's sessions (steal signal), and returns 401. A missing cookie stays a plain 401 ("no refresh token") so it's never confused with the alarm. Covered by `tests/test_refresh_rotation.py` (4 tests: rotates / old-token-invalidated / reuse-revokes-all-sessions / no-cookie-plain-401).
 - [ ] DB-load of user on /refresh to enforce `is_active=false` instantly (today the next protected call catches it)
 - [x] **MFA (TOTP)** — done 2026-05-30 (opt-in for all users; mandatory enforcement for admin/manager remains a follow-up). `pyotp==2.9.0`. New model fields on `users` (`mfa_secret` base32, `mfa_enabled` bool, `mfa_enrolled_at` ts) + table `mfa_backup_codes` (id, user_id, code_hash bcrypt, used_at) — migration `aff1800a6b5d`. Service module `app/mfa.py`: `generate_secret`, `provisioning_uri`, `verify_totp` (±1 step skew), `generate_backup_codes` (10 codes, hashed, wipes prior unused), `consume_backup_code` (constant-time across candidate set), `count_unused_backup_codes`. Endpoints in `auth.py`: `GET /api/auth/mfa/status`, `POST /mfa/setup` (issues secret + provisioning URI), `POST /mfa/enable` (validates first code, activates, returns 10 plaintext backup codes ONCE), `POST /mfa/disable` (requires password AND a current TOTP/backup code), `POST /mfa/verify` (second step of login, takes `mfa_token` + code). `/login` now branches: MFA off → full session as before; MFA on → returns `{mfa_required, mfa_token}` (short-lived 5-min challenge JWT with `purpose=mfa_challenge`). `get_current_user` rejects challenge tokens for non-/verify endpoints. Frontend: 2-step login UI on `/[locale]/login` (form swaps to TOTP/backup input on challenge), `<MfaCard>` on /settings with QR (rendered via api.qrserver.com — TODO: swap for client-side renderer in prod), enroll/enable/disable flows, backup-code one-time display + copy. All 7 locales updated (auth.mfa* 7 keys + new `mfa.*` namespace 22 keys). **Smoke verified end-to-end:** setup → enable (TOTP 200, backup codes returned) → status `enabled=true, backup_codes_remaining=10` → re-login returns challenge (no cookies) → verify with TOTP 200 (full session) → verify with backup code 200 (count drops to 9) → replay burned backup code 401 → disable 204 (status enabled=false, codes=0). Backend container image rebuilt to bake `pyotp` into requirements.
 - [ ] **MFA mandatory for admin/manager** — config flag + login enforcement (today opt-in for all roles)
@@ -235,17 +244,18 @@ These are the modules every serious CRM has and we don't.
 - [ ] **Notifications v2 follow-ups**: SMTP email fanout (depends on a worker — outbox + Arq/Celery is the P1 path); @-mention parser in NotesPanel emits `note_mention` notifications; 90-day retention prune cron; SSE/WebSocket push instead of 60s polling; multi-org bell unification (today the bell scopes to the active org).
 
 #### Background jobs / worker process
-- [ ] Pick one: **Arq** (recommended — async-native, Redis-backed) vs Celery (mature, sync-leaning) vs RQ (simple, sync). See ADR-006.
-- [ ] Add `worker` service to `docker-compose.yml`
-- [ ] First jobs: lead AI scoring (offload from API), customer summarization, email send, audit log shipping
-- [ ] Job idempotency via job key (`{action}:{entity_id}:{date}`)
-- [ ] Dead-letter queue + alert when DLQ depth > 0
+- [x] **Arq chosen + `worker` service live** — done 2026-06-01 (ADR-006). Separate `worker` container in `docker-compose.yml` runs `arq app.worker.settings.WorkerSettings` off the same image/env as the backend; `_startup` builds one long-lived async engine per worker. `max_tries=5`, `job_timeout=60s`, `keep_result=3600s`.
+- [x] `worker` service added to `docker-compose.yml`
+- [x] First jobs: **lead AI scoring** (`score_lead`, backs `POST /score-async`), **outbox drain** (`drain_outbox` cron), **webhook delivery** (`deliver_webhook`). Customer summarization + audit shipping not yet ported; **email send is blocked on the Transactional-email workstream** (no SMTP yet).
+- [x] Job idempotency: `score_lead` is safe to repeat (read-only scoring + overwrite); outbox/webhook subscribers dedupe by `event_id`.
+- [ ] **Dead-letter queue + alert** — arq has no built-in DLQ (after `max_tries` the job is dropped + logged). The *outbox* has a DLQ-by-cap (`attempt_count >= OUTBOX_MAX_ATTEMPTS=10`, surfaced via `/api/outbox?status=failed`), but the arq job queue itself still needs an `arq:queue:dead` list + an alert on depth > 0. (P2)
 
 #### Outbox + event bus (foundation for automations + webhooks)
-- [ ] `outbox_events` table (id, org_id, event_type, payload jsonb, created_at, processed_at). Written in the same transaction as the domain mutation.
-- [ ] Worker polls → publishes to in-process subscribers and outgoing webhooks → marks processed.
-- [ ] Event types: `lead.created`, `lead.stage_changed`, `deal.won`, `deal.lost`, `task.overdue`, `customer.created`, `user.invited`.
-- [ ] This unlocks reliable webhooks, automation actions, and search indexing.
+- [x] **`outbox_events` table** — done 2026-06-01 (migration `22779df17c2e`). `record_event(db, event_type, organization_id, payload)` in `app/events.py` appends a row in the SAME session as the domain mutation, so it commits-or-rolls-back with it — never a phantom event.
+- [x] **Worker drains** (`drain_outbox`, cron every 5s) → claims a batch with `FOR UPDATE SKIP LOCKED` + exponential backoff (`occurred_at + 2^attempt s`) → dispatches to in-process subscribers (`app/events_dispatcher.py`) AND fans out to outgoing webhooks → marks `processed_at`.
+- [x] Event types (v1 subset): `lead.created`, `lead.stage_changed`, `deal.created`, `deal.stage_changed`, `deal.won`, `deal.lost`. **Follow-up:** `task.overdue`, `customer.created`, `user.invited` not emitted yet.
+- [x] Unlocks reliable webhooks (live — see below). Automation actions + search indexing are downstream consumers that can now register as subscribers.
+- [ ] **Lag alert** (per §10): `/api/outbox?status=failed` already surfaces DLQ rows; still need an alert when the oldest unprocessed `occurred_at` is > 60s behind.
 
 #### Webhooks (outgoing)
 - [x] **Webhook outgoing (Phase 1)** — done 2026-06-01. Builds on the Outbox foundation (registered as a wildcard `@subscribe(EventType.x)` against every event type via `_fanout_to_webhooks`). `WebhookEndpoint` model + `WebhookDelivery` log (migration `dc830726fed0`) — neither RLS'd (same reasoning as outbox; admin endpoint filters by `organization_id`). HMAC-SHA256 signing in `app/webhook_sign.py`: header format `X-CRM-Signature: t=<unix>,v1=<sha256_hex>` (Stripe-style); `verify_signature()` enforces ±5min replay window via `max_age_seconds`. Per-delivery retry via arq `Retry(defer=2^attempt)` capped at 240s → 8 tries total (~17min wall time). Auto-pause: `consecutive_failures >= 10` flips `paused_at = now()` and short-circuits remaining retries; unpause via PATCH resets the counter. Body shape: `{event_id, event_type, organization_id, payload}` JSON-encoded with `sort_keys=True` for stable signature recomputation. Headers also send `X-CRM-Event-Id` + `X-CRM-Event-Type` for receiver-side dedup convenience. CRUD endpoints `/api/webhooks` (admin-only POST/PATCH/DELETE; admin+manager GET) — secret returned ONCE on create (`WebhookEndpointCreated`), never on subsequent reads. URL guard rejects loopback hostname / loopback IP / private RFC1918 IP / non-http(s) scheme; lenient on unresolvable hostnames (might be VPN-only). 18 new pytest (signing roundtrip + tamper detection + stale TS + secret strength + CRUD happy paths + cross-org 404 + URL guard + slug validation + delivery list + role gate). Real-app smoke verified end-to-end: POST /api/leads → outbox drain → fanout → arq `deliver_webhook` job → POST signed with HMAC → 405 from /health → `webhook.failed` row + retry @ 2s → next retry @ 4s; `WebhookDelivery` rows captured `attempt, status='failed', response_code, latency_ms (~20ms), error='HTTP 405'`. 44/44 suite green.
@@ -405,7 +415,7 @@ Items below are real debt, not new features. Listed once so we stop re-discoveri
 | TD-11 | Lists paginate with `limit/offset` (slow > 10k, unstable under writes) | M | P1 (cursor) |
 | ~~TD-12~~ | ~~No `version` column → concurrent edits on same Deal silently overwrite~~ — **DONE 2026-06-01** (Deal only; Task/Customer follow). | S | ~~P1~~ |
 | ~~TD-13~~ | ~~Search uses `LOWER(...) LIKE '%q%'` → full table scan~~ — **DONE 2026-06-01** (FTS via stored tsvector + GIN on leads + customers; email pre-tokenized via regex). pg_trgm fuzzy match deferred to P2. | S | ~~P1~~ |
-| TD-14 | No background worker — AI scoring blocks the API request | M | P1 (Arq) |
+| ~~TD-14~~ | ~~No background worker — AI scoring blocks the API request~~ — **DONE 2026-06-01** (Arq `worker` service; `score_lead` / `drain_outbox` / `deliver_webhook` jobs). | M | ~~P1~~ |
 | ~~TD-15~~ | ~~Rate limiter is in-process (SlowAPI default) — wrong on multi-replica~~ — **DONE 2026-06-01** (Redis storage_uri + in-memory fallback). | S | ~~P1~~ |
 | ~~TD-16~~ | ~~No outbox → automations/webhooks would lose events on crash~~ — **DONE 2026-06-01** (Phase 1, in-process subscribers). Webhook outgoing fanout in next round. | M | ~~P1~~ |
 | TD-17 | Billing fields live on `User` (will need to move to `Organization`) | M | P0 (multi-tenant) |
