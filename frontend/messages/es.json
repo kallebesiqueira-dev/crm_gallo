@@ -1,0 +1,673 @@
+{
+  "app": { "name": "CRM Gallo", "tagline": "CRM impulsado por IA para empresas modernas" },
+  "nav": {
+    "dashboard": "Panel", "leads": "Leads", "customers": "Clientes",
+    "deals": "Negocios", "pipeline": "Pipeline", "tasks": "Tareas",
+    "calendar": "Calendario", "documents": "Documentos", "assistant": "Asistente IA",
+    "reports": "Informes", "billing": "Facturación", "settings": "Configuración",
+    "team": "Equipo", "trash": "Papelera", "audit": "Auditoría"
+  },
+  "auth": {
+    "login": "Iniciar sesión", "register": "Crear cuenta",
+    "createAccount": "Crea tu cuenta",
+    "email": "Correo", "password": "Contraseña",
+    "fullName": "Nombre completo", "fullNamePlaceholder": "María García",
+    "logout": "Cerrar sesión",
+    "needAccount": "¿Necesitas una cuenta?", "haveAccount": "¿Ya tienes una cuenta?",
+    "welcomeBack": "Bienvenido de nuevo",
+    "loginSubtitle": "Accede a tu espacio CRM.",
+    "registerSubtitle": "Empieza gratis con hasta 2 usuarios. Mejora cuando quieras.",
+    "signingIn": "Iniciando…", "creatingAccount": "Creando cuenta…",
+    "forgotPassword": "¿Olvidaste la contraseña?",
+    "forgotHeroTitle": "Restablece tu contraseña",
+    "forgotHeroSubtitle": "Escribe el correo de tu cuenta y te enviaremos un enlace para establecer una nueva contraseña.",
+    "forgotTitle": "¿Olvidaste tu contraseña?",
+    "forgotSubtitle": "Escribe tu correo abajo — te enviaremos un enlace de restablecimiento si la cuenta existe.",
+    "forgotSubmit": "Enviar enlace",
+    "forgotSending": "Enviando…",
+    "forgotSentTitle": "Revisa tu bandeja",
+    "forgotSentBody": "Si existe una cuenta con ese correo, recibirás un enlace en un minuto.",
+    "forgotSentNote": "El enlace caduca en 1 hora y solo puede usarse una vez.",
+    "resetHeroTitle": "Define una nueva contraseña",
+    "resetHeroSubtitle": "Elige algo que recuerdes. La próxima vez entras igual que siempre.",
+    "resetTitle": "Nueva contraseña",
+    "resetSubtitle": "Escribe una nueva contraseña y la guardamos en tu cuenta.",
+    "resetSubmit": "Guardar nueva contraseña",
+    "resetSubmitting": "Guardando…",
+    "resetGoneTitle": "Enlace ya no válido",
+    "resetGoneBody": "Este enlace ha caducado o ya se usó. Solicita uno nuevo desde la página de inicio de sesión.",
+    "resetMissingTitle": "Enlace no reconocido",
+    "resetMissingBody": "No encontramos este enlace de restablecimiento. Quizá esté mal escrito o nunca se emitió.",
+    "resetRequestNew": "Pedir un nuevo enlace",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar nueva contraseña",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "mfaPromptTitle": "Verificación en dos pasos",
+    "mfaPromptSubtitle": "Introduce el código de 6 dígitos de tu app de autenticación, o un código de respaldo.",
+    "mfaCodeLabel": "Código",
+    "mfaCodeHint": "Abre Google Authenticator, 1Password, Authy o cualquier app TOTP.",
+    "mfaVerify": "Verificar e iniciar sesión",
+    "mfaVerifying": "Verificando…",
+    "mfaCancel": "Usar otra cuenta",
+    "showPassword": "Mostrar contraseña", "hidePassword": "Ocultar contraseña",
+    "chooseStartingPlan": "Elige tu plan inicial",
+    "acceptTerms": "Acepto los Términos y la Política de Privacidad.",
+    "mustAcceptTerms": "Acepta los términos para continuar.",
+    "seatLimitReached": "Límite del plan Free alcanzado. Mejora para añadir más usuarios.",
+    "strengthWeak": "Débil", "strengthFair": "Aceptable", "strengthGood": "Buena", "strengthStrong": "Fuerte",
+    "inviteUnavailable": "Invitación no disponible",
+    "inviteNotFound": "Esta invitación no existe o ya ha sido usada.",
+    "inviteExpiredOrUsed": "Esta invitación expiró o ya fue aceptada.",
+    "acceptInviteTitle": "Aceptar invitación",
+    "acceptInviteSubtitle": "Te unes a {org} como {role}.",
+    "inviteEmailPinned": "El email está fijado por la invitación y no se puede cambiar.",
+    "acceptAndJoin": "Aceptar y entrar",
+    "inviteBrandTitle": "Bienvenido a CRM Gallo",
+    "inviteBrandSubtitle": "Completa tu cuenta para unirte al equipo."
+  },
+  "dashboard": {
+    "welcome": "Bienvenido a tu panel de CRM. Gestiona leads, clientes, negocios e insights de IA.",
+    "totalLeads": "Total de leads", "totalCustomers": "Total de clientes",
+    "totalDeals": "Total de negocios", "pipelineValue": "Valor del pipeline",
+    "openTasks": "Tareas abiertas", "conversionRate": "Tasa de conversión",
+    "wonDeals": "Ganadas", "lostDeals": "Perdidas",
+    "avgAiScore": "Score IA promedio", "leadsByStage": "Leads por etapa",
+    "trend14Days": "Leads — últimos 14 días",
+    "leadsCreated": "Leads creados", "noData": "Sin datos"
+  },
+  "leads": {
+    "title": "Leads", "new": "Nuevo lead", "search": "Buscar por nombre, correo, empresa...",
+    "name": "Nombre", "company": "Empresa", "stage": "Etapa", "score": "Score IA",
+    "owner": "Responsable", "created": "Creado",
+    "empty": "Sin leads. Crea el primero.",
+    "save": "Guardar", "cancel": "Cancelar", "scoreNow": "Evaluar con IA",
+    "stages": {
+      "new": "Nuevo", "contacted": "Contactado", "qualified": "Cualificado",
+      "proposal_sent": "Propuesta enviada", "negotiation": "Negociación",
+      "won": "Ganado", "lost": "Perdido"
+    }
+  },
+  "customers": {
+    "title": "Clientes", "new": "Nuevo cliente", "search": "Buscar por nombre, correo, empresa...",
+    "name": "Nombre", "company": "Empresa", "country": "País", "created": "Creado",
+    "empty": "Sin clientes. Crea el primero.",
+    "aiSummary": "Resumen IA", "summarize": "Resumir",
+    "noSummary": "Sin resumen. Haz clic en Resumir para generar uno."
+  },
+  "pipeline": {
+    "title": "Pipeline", "new": "Nuevo negocio", "dealTitle": "Título del negocio",
+    "value": "Valor", "currency": "Moneda", "probability": "Probabilidad",
+    "expectedClose": "Cierre previsto", "customer": "Cliente"
+  },
+  "tasks": {
+    "title": "Tareas", "new": "Añadir tarea", "add": "Añadir",
+    "placeholder": "¿Qué hay que hacer?", "empty": "Sin tareas.", "due": "Plazo",
+    "priorities": { "low": "Baja", "medium": "Media", "high": "Alta" }
+  },
+  "trash": {
+    "title": "Papelera", "subtitle": "Restaura o elimina definitivamente los registros borrados.",
+    "empty": "La papelera está vacía.",
+    "restore": "Restaurar", "hardDelete": "Eliminar definitivo",
+    "emptyAll": "Vaciar papelera", "deletedAt": "Eliminado el",
+    "confirmHardDelete": "¿Eliminar este registro definitivamente? Esta acción no se puede deshacer.",
+    "confirmEmpty": "¿Vaciar la papelera y eliminar todo definitivamente?",
+    "tabs": { "all": "Todos", "lead": "Leads", "customer": "Clientes", "deal": "Negocios", "task": "Tareas" }
+  },
+  "settings": {
+    "profile": "Perfil", "password": "Contraseña", "role": "Rol",
+    "currentPassword": "Contraseña actual", "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar nueva contraseña", "changePassword": "Cambiar contraseña",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "passwordChanged": "Contraseña cambiada correctamente."
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "adminOnly": "Solo administradores y managers pueden editar pipelines.",
+    "phase1Notice": "Los pipelines son editables pero las etapas de Lead/Deal aún usan el enum heredado — la integración llega en la próxima ronda.",
+    "kindLabel": "Tipo",
+    "kindLead": "Funnel de leads",
+    "kindDeal": "Funnel de ventas",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Ventas enterprise",
+    "create": "Crear",
+    "empty": "Aún no hay pipelines.",
+    "default": "Predeterminado",
+    "setDefault": "Marcar como predeterminado",
+    "editStages": "Editar etapas",
+    "noStages": "Sin etapas definidas.",
+    "addStage": "Añadir etapa",
+    "removeStage": "Quitar etapa",
+    "stageName": "Nombre de la etapa",
+    "won": "Ganado",
+    "lost": "Perdido",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar el pipeline \"{name}\"?"
+  },
+  "teams": {
+    "title": "Equipos",
+    "adminOnly": "Solo administradores y managers pueden crear o eliminar equipos.",
+    "nameLabel": "Nombre del equipo",
+    "namePlaceholder": "Inbound ES",
+    "create": "Crear",
+    "empty": "Aún no hay equipos.",
+    "memberCount": "{count, plural, =0 {sin miembros} one {1 miembro} other {# miembros}}",
+    "noMembers": "Sin miembros asignados.",
+    "delete": "Eliminar equipo",
+    "removeMember": "Quitar del equipo",
+    "confirmDelete": "¿Eliminar el equipo \"{name}\"? Los miembros y registros se desvincularán.",
+    "confirmUnassign": "¿Quitar este miembro del equipo?"
+  },
+  "team": {
+    "title": "Equipo e invitaciones",
+    "emailLabel": "Correo",
+    "roleLabel": "Rol",
+    "sendInvite": "Enviar invitación",
+    "inviteCreated": "Invitación creada",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "inviteEmailNotSent": "No se envió ningún correo — comparte el enlace con el destinatario tú mismo.",
+    "adminOnly": "Solo los administradores pueden invitar nuevos miembros.",
+    "pendingInvites": "Invitaciones pendientes",
+    "invite": "invitación",
+    "invites": "invitaciones",
+    "noPending": "No hay invitaciones pendientes.",
+    "expiresAt": "caduca el {date}",
+    "revoke": "Revocar",
+    "confirmRevoke": "¿Revocar la invitación para {email}?"
+  },
+  "sessions": {
+    "title": "Sesiones activas",
+    "currentBadge": "Actual",
+    "ip": "IP",
+    "lastSeen": "Visto por última vez {when}",
+    "signedIn": "Inicio de sesión el {when}",
+    "revoke": "Cerrar",
+    "confirmRevoke": "¿Cerrar la sesión de {device}?",
+    "revokeOthers": "Cerrar {count} otros dispositivos",
+    "revokingOthers": "Cerrando…",
+    "confirmRevokeOthers": "¿Cerrar todas las demás sesiones? Tendrán que iniciar sesión otra vez.",
+    "revokedOthers": "Se cerraron {count} otras sesiones."
+  },
+  "mfa": {
+    "title": "Verificación en dos pasos",
+    "disabledBody": "Añade un segundo paso al iniciar sesión: un código de 6 dígitos de una app de autenticación en tu teléfono. Protege tu cuenta aunque te roben la contraseña.",
+    "enableButton": "Activar 2FA",
+    "enrollScanHint": "Escanea este código QR con Google Authenticator, 1Password, Authy o cualquier app TOTP. Luego introduce abajo el primer código de 6 dígitos para confirmar.",
+    "enrollManualKey": "O introduce esta clave manualmente",
+    "enrollCodeLabel": "Primer código de 6 dígitos",
+    "enrollConfirm": "Confirmar y activar",
+    "enrolling": "Activando…",
+    "cancel": "Cancelar",
+    "backupCodesTitle": "Guarda tus códigos de respaldo",
+    "backupCodesWarning": "Cada código se puede usar una sola vez si pierdes el acceso a la app de autenticación. No se mostrarán de nuevo — guárdalos ahora en tu gestor de contraseñas.",
+    "copy": "Copiar todos",
+    "copied": "¡Copiado!",
+    "enabledBanner": "La verificación en dos pasos está activa.",
+    "backupCodesRemaining": "{count} códigos de respaldo restantes.",
+    "disableHint": "Para desactivar la 2FA, confirma tu contraseña y un código 2FA actual (o un código de respaldo).",
+    "currentPassword": "Contraseña actual",
+    "currentCode": "Código 2FA actual",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "disableButton": "Desactivar 2FA",
+    "disabling": "Desactivando…"
+  },
+  "attachments": {
+    "title": "Adjuntos",
+    "upload": "Subir archivo",
+    "uploading": "Subiendo…",
+    "sizeHint": "Máximo 25 MB por archivo.",
+    "empty": "Sin archivos adjuntos.",
+    "unknownUploader": "Desconocido",
+    "download": "Descargar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar \"{name}\"?"
+  },
+  "notifications": {
+    "bell": "Notificaciones",
+    "title": "Notificaciones",
+    "empty": "Estás al día.",
+    "markAllRead": "Marcar todo como leído",
+    "dismiss": "Descartar"
+  },
+  "notes": {
+    "title": "Notas",
+    "placeholder": "Escribe una nota (markdown ok)…",
+    "post": "Publicar",
+    "empty": "Aún no hay notas.",
+    "unknownAuthor": "Desconocido",
+    "edited": "editado",
+    "edit": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar esta nota?"
+  },
+  "activity": {
+    "title": "Actividad",
+    "loading": "Cargando actividad…",
+    "empty": "Aún no ha pasado nada.",
+    "systemActor": "Sistema",
+    "typeCreated": "Creado",
+    "typeUpdated": "Actualizado",
+    "typeDeleted": "Eliminado",
+    "typeRestored": "Restaurado de la papelera",
+    "typeStageChange": "Etapa: {from} → {to}",
+    "typeAiScored": "Puntuación IA: {score} ({priority})",
+    "typeNoteAdded": "Nota añadida",
+    "typeFileAttached": "Archivo adjuntado: {name}",
+    "typeFileRemoved": "Archivo eliminado: {name}",
+    "typeCall": "Llamada registrada",
+    "typeMeeting": "Reunión registrada",
+    "typeEmailSent": "Correo enviado",
+    "typeEmailReceived": "Correo recibido",
+    "typeTaskCompleted": "Tarea completada",
+    "typeImported": "Importado",
+    "typeSystem": "Evento del sistema"
+  },
+  "audit": {
+    "title": "Registro de auditoría",
+    "filterAction": "La acción contiene",
+    "filterEntity": "Tipo de entidad",
+    "filterSince": "Desde",
+    "filterUntil": "Hasta",
+    "apply": "Aplicar",
+    "noResults": "Ningún registro coincide con estos filtros.",
+    "system": "sistema",
+    "forbidden": "El registro de auditoría es solo para admin/manager.",
+    "colWhen": "Cuándo",
+    "colActor": "Actor",
+    "colAction": "Acción",
+    "colEntity": "Entidad",
+    "colMetadata": "Metadatos",
+    "showingRange": "Mostrando {from}–{to}",
+    "prev": "Anterior",
+    "next": "Siguiente"
+  },
+  "reports": {
+    "title": "Informes", "subtitle": "Cómo va tu pipeline ahora mismo.",
+    "leadsByStage": "Leads por etapa", "pipelineValue": "Valor del pipeline por moneda",
+    "leadsLast14Days": "Leads creados — últimos 14 días",
+    "leadsLast30Days": "Leads creados — últimos 30 días",
+    "leadsCreated": "Leads creados", "leads": "Leads",
+    "salesFunnel": "Embudo de ventas", "breakdownByCurrency": "Desglose por moneda",
+    "summary": "Resumen", "totalLeads": "Total de leads",
+    "totalDeals": "Total de negocios", "totalCustomers": "Total de clientes",
+    "conversionRate": "Tasa de conversión", "won": "Ganadas", "noData": "Sin datos."
+  },
+  "calendar": { "today": "Hoy", "noTasksOnDay": "Sin tareas este día." },
+  "common": {
+    "language": "Idioma", "theme": "Tema", "loading": "Cargando...",
+    "actions": "Acciones", "edit": "Editar", "delete": "Eliminar",
+    "cancel": "Cancelar", "confirm": "Confirmar", "confirmTitle": "¿Estás seguro?",
+    "confirmDelete": "¿Eliminar este registro? Esta acción no se puede deshacer.",
+    "noPermission": "No tienes permiso para hacer esto.",
+    "back": "Volver", "saved": "Guardado"
+  },
+  "marketing": {
+    "loginHeroTitle": "Cierra más negocios con un copiloto de IA a tu lado.",
+    "loginHeroSubtitle": "CRM Gallo unifica tu pipeline, contactos y conversaciones — multilingüe, privacy-first, AI-native.",
+    "registerHeroTitle": "Tu equipo de ventas, acelerado.",
+    "badgeAi": "AI-native", "badgeMultilingual": "7 idiomas", "badgeOpenSource": "Open source",
+    "benefitFreeTier": "Gratis para siempre para hasta 2 usuarios",
+    "benefitNoCard": "Sin tarjeta de crédito",
+    "benefitCancel": "Cancela cuando quieras, tus datos son tuyos",
+    "trustedBy": "Usado por equipos comerciales modernos en toda Europa.",
+    "seePricing": "Ver precios", "backToLogin": "Volver al inicio de sesión", "pricesInEUR": "Precios en EUR",
+    "noCardRequired": "Sin tarjeta para el plan Free",
+    "securePayment": "Pago seguro vía Stripe",
+    "vatIncluded": "IVA calculado en el checkout", "madeWith": "Hecho con cariño",
+    "heroEyebrow": "¡Hola!",
+    "heroHeadlineLine1": "El CRM hecho",
+    "heroHeadlineLine2": "para quien vende de verdad.",
+    "heroBadgeTitle": "Amado por equipos comerciales",
+    "heroBadgeSubtitle": "Mejor CRM con IA · 2026",
+    "heroSubheadline": "Sigue leads, lleva tu pipeline y cierra más negocios con un copiloto IA integrado — en 7 idiomas, con privacidad nivel europeo.",
+    "ctaPrimary": "Empezar gratis",
+    "ctaSecondary": "Ver precios",
+    "heroTrustline": "Gratis para siempre para 2 usuarios · Sin tarjeta · Cancela cuando quieras",
+    "navManifesto": "Manifiesto",
+    "navAbout": "Quiénes somos",
+    "navValues": "Valores",
+    "navFeatures": "Funcionalidades",
+    "navPricing": "Precios",
+    "navFaq": "FAQ",
+    "logosTitle": "Adoptado por equipos comerciales que entregan",
+    "statsLeads": "Leads seguidos",
+    "statsLanguages": "Idiomas nativos",
+    "statsUptime": "SLO de uptime",
+    "statsOpenSource": "Open source",
+    "manifesto": {
+      "eyebrow": "Nuestro objetivo",
+      "line1": "No somos solo un CRM.",
+      "line2": "El límite es tu creatividad.",
+      "line3": "Conecta cualquier cosa, automatiza todo. CRM Gallo es la plataforma que se adapta a tu forma de trabajar — no al revés.",
+      "pillars": {
+        "connect": { "title": "Conecta cualquier cosa", "body": "APIs, webhooks, email, calendario, base de conocimiento. Si tiene un endpoint, lo conectas." },
+        "automate": { "title": "Automatiza todo", "body": "Flujos visuales que reaccionan a cada evento del pipeline. Sin escribir una sola línea." },
+        "create": { "title": "Crea sin límites", "body": "Open source y extensible. Tu equipo moldea la herramienta — no al revés." }
+      }
+    },
+    "about": {
+      "eyebrow": "Quiénes somos",
+      "title": "Construimos el CRM que siempre quisimos tener.",
+      "lead": "Somos un pequeño equipo europeo de ingenieros y comerciales convencidos de que un buen CRM debe desaparecer detrás del trabajo real, no añadir fricción.",
+      "body": "Pasamos por startups B2B y agencias multilingües donde las herramientas comerciales eran pesadas, caras y nunca realmente localizadas. Así que construimos una distinta: open source, IA-nativa, multilingüe desde el primer día y con privacidad europea en el centro. CRM Gallo es nuestra respuesta — un copiloto honesto para quien vende.",
+      "missionTitle": "Nuestra misión",
+      "missionSubtitle": "Por qué existimos",
+      "missionBody": "Permitir que cada equipo comercial — desde el fundador en solitario hasta el grupo enterprise — cierre más negocios con una herramienta que entiende su idioma, respeta sus datos y crece con ellos.",
+      "mini": {
+        "1": { "value": "2025", "label": "Año de fundación" },
+        "2": { "value": "7", "label": "Idiomas nativos" },
+        "3": { "value": "100%", "label": "Open source" }
+      },
+      "timeline": {
+        "1": { "year": "2025", "title": "Nace CRM Gallo", "body": "El primer prototipo cobra vida: pipeline, lead scoring con IA y UI en 3 idiomas." },
+        "2": { "year": "2026", "title": "Lanzamiento público", "body": "Open source bajo AGPL-3.0, 7 idiomas nativos, integración Stripe, primeros equipos clientes." },
+        "3": { "year": "Próximos pasos", "title": "Multi-tenant + automatizaciones", "body": "Organizaciones aisladas, automatizaciones visuales e integraciones de email/calendario en camino." }
+      }
+    },
+    "values": {
+      "eyebrow": "Nuestros valores",
+      "title": "Lo que nos guía cada día.",
+      "subtitle": "No son palabras en una diapositiva: son los principios que deciden cómo escribimos código, cómo tratamos tus datos y cómo hablamos con quien nos elige.",
+      "items": {
+        "customer": {
+          "title": "Cliente en el centro",
+          "body": "Cada función nace escuchando a equipos comerciales reales. Sin funciones vanidosas, sin upsell agresivo."
+        },
+        "privacy": {
+          "title": "Privacidad europea",
+          "body": "Datos residentes en la UE, GDPR-ready, sin tracking oculto. Tus datos son tuyos, y punto."
+        },
+        "openSource": {
+          "title": "Open source",
+          "body": "Publicado bajo AGPL-3.0. Léelo, modifícalo, auto-hospédalo. Sin lock-in propietario, nunca."
+        },
+        "ethicalAi": {
+          "title": "IA ética y transparente",
+          "body": "Siempre decimos qué modelo corre, cuándo entra y por qué. Sin magia, sin caja negra."
+        },
+        "multilingual": {
+          "title": "Multilingüe de verdad",
+          "body": "7 idiomas traducidos a mano, nunca generados por máquina. Tu equipo francés y alemán se sienten igual de en casa."
+        },
+        "transparency": {
+          "title": "Transparencia radical",
+          "body": "Roadmap pública, precios claros, facturación simple. Sin sorpresas a fin de mes."
+        }
+      }
+    },
+    "comparison": {
+      "eyebrow": "Por qué Gallo",
+      "titlePre": "Mientras otros CRM te obligan a usar tres herramientas distintas,",
+      "titleAccent": "Gallo te lo da todo en uno.",
+      "subtitle": "IA, automatizaciones, datos, soporte y recorridos del cliente integrados — todo trabajando junto, a tu ritmo.",
+      "left": {
+        "headerPre": "Otros",
+        "headerAccent": "CRM's",
+        "subtitle": "Toca cruzar los dedos para que todo funcione.",
+        "items": {
+          "automation": { "title": "Automatización", "body": "Solo reglas básicas, sin inteligencia integrada." },
+          "growth": { "title": "Crecimiento", "body": "Depende de ajustes manuales y plugins externos." }
+        }
+      },
+      "right": {
+        "headerPre": "CRM",
+        "headerAccent": "Gallo",
+        "subtitle": "Es todo en uno. Es del Gallo.",
+        "items": {
+          "automation": { "title": "Automatización", "body": "Con IA, intent y sentiment integrados de fábrica." },
+          "growth": { "title": "Crecimiento", "body": "Fluido, escala contigo sin configuración oculta." }
+        }
+      }
+    },
+    "testimonialsEyebrow": "Lo que dicen los equipos",
+    "testimonialsTitle": "Amado por equipos comerciales que miden lo que entregan.",
+    "footerTagline": "CRM impulsado por IA, hecho para equipos comerciales modernos. Open source bajo AGPL-3.0.",
+    "footerProduct": "Producto",
+    "footerLegal": "Legal",
+    "footerCompany": "Empresa",
+    "footerTerms": "Términos de servicio",
+    "footerPrivacy": "Política de privacidad",
+    "footerCookies": "Cookies",
+    "footerSecurity": "Seguridad",
+    "footerBusinessName": "Razón social",
+    "footerVAT": "CIF/VAT",
+    "footerSector": "Sector",
+    "footerAddress": "Dirección",
+    "footerPhone": "Teléfono",
+    "footerEmail": "Email",
+    "footerWebsite": "Sitio",
+    "footerRightsReserved": "Todos los derechos reservados",
+    "footerPartnersBadge": "Tech Partners",
+    "footerPartnersTitle": "Construido con los mejores.",
+    "footerPartnersBody": "Seguridad, IA, pagos e infraestructura entregados por socios enterprise — los mismos en los que confían los equipos Fortune 500.",
+    "footerPartners": {
+      "security": "Seguridad",
+      "ai": "Inteligencia artificial",
+      "payments": "Pagos",
+      "infrastructure": "Infraestructura",
+      "privacy": "Privacidad"
+    },
+    "feature": {
+      "ai": {
+        "eyebrow": "Copiloto IA",
+        "title": "Una IA que conoce tu pipeline tan bien como tú.",
+        "body": "Puntúa cada lead, redacta correos de seguimiento y muestra la próxima mejor acción — impulsado por Claude y basado en tus datos del CRM.",
+        "bullet": {
+          "1": "Scoring de lead con probabilidad de conversión y análisis de riesgo",
+          "2": "Correos de seguimiento en un clic en el idioma del cliente",
+          "3": "Fallback heurístico cuando estás sin conexión o sin crédito"
+        }
+      },
+      "pipeline": {
+        "eyebrow": "Pipeline que funciona",
+        "title": "Arrastra, suelta, gana. Tu kanban, hecho para ventas.",
+        "body": "Construye el pipeline que encaja con tu equipo. Mueve negocios entre etapas, ve forecasts ponderados de un vistazo y nunca pierdas un seguimiento.",
+        "bullet": {
+          "1": "Negocios multi-moneda con probabilidad ponderada",
+          "2": "Borrado suave con Papelera — restaura todo en un clic",
+          "3": "Desglose por etapa, tasas de conversión y forecasts"
+        }
+      },
+      "intl": {
+        "eyebrow": "Realmente multilingüe",
+        "title": "Vende en el idioma de tu cliente. En los siete.",
+        "body": "Cambia la UI, el asistente y los correos salientes entre English, Português, Deutsch, Français, Italiano, Español y Rumantsch — sin perder el contexto.",
+        "bullet": {
+          "1": "7 idiomas totalmente traducidos, sin fallback automático",
+          "2": "Preferencia de idioma por usuario",
+          "3": "Compatible con residencia de datos UE, GDPR"
+        }
+      }
+    },
+    "testimonial": {
+      "1": {
+        "quote": "Reemplazamos dos herramientas con CRM Gallo y el AI scoring atrapó dos leads calientes que habríamos perdido en el ruido.",
+        "author": "Andrea Müller",
+        "role": "Head of Sales, SaaS B2B"
+      },
+      "2": {
+        "quote": "Por fin un CRM donde nuestras oficinas francesa y alemana se sienten en casa. El pipeline drag-drop es exactamente lo que mis comerciales querían.",
+        "author": "Léa Petit",
+        "role": "RevOps Lead, Agencia Europea"
+      },
+      "3": {
+        "quote": "Open source, autohospedable, con una IA seria — así deberían ser las herramientas comerciales modernas.",
+        "author": "Joana Ramos",
+        "role": "CTO, Startup de Lisboa"
+      },
+      "4": {
+        "quote": "Migramos de HubSpot en una semana. Solo el AI scoring nos ahorra 3 horas al día.",
+        "author": "Marco Bianchi",
+        "role": "Founder, SaaS Italiano"
+      },
+      "5": {
+        "quote": "El soporte multilingüe cerró el deal. Mi equipo en 4 países por fin usa la misma herramienta.",
+        "author": "Sara Lopez",
+        "role": "Sales Director, Retail Español"
+      },
+      "6": {
+        "quote": "El drag-drop del pipeline es por fin lo que el kanban debía ser. Tiempo real, ponderado, hermoso.",
+        "author": "Hans Müller",
+        "role": "VP Sales, Manufactura Alemana"
+      },
+      "7": {
+        "quote": "Los borradores de follow-up de IA en francés nativo tienen un 41% de tasa de respuesta. Game-changer.",
+        "author": "Camille Dubois",
+        "role": "Account Executive, B2B Francés"
+      },
+      "8": {
+        "quote": "Self-hosted en 2 días. A los auditores les encantó AGPL + residencia UE.",
+        "author": "Davi Costa",
+        "role": "CRO, Fintech Brasileña"
+      },
+      "9": {
+        "quote": "El módulo de reports reemplazó dos herramientas de BI. La precisión del forecast subió del 60% al 87%.",
+        "author": "Anya Kowalski",
+        "role": "RevOps, Logística Polaca"
+      },
+      "10": {
+        "quote": "Soporte en rumantsch desde el primer día. Ni siquiera lo pedimos — lo entregaron.",
+        "author": "Tobias Weber",
+        "role": "Sales Engineer, IoT Suizo"
+      },
+      "11": {
+        "quote": "Los resúmenes de clientes con contexto real reemplazaron nuestras reuniones semanales de revisión.",
+        "author": "Isabella Rossi",
+        "role": "Co-founder, Exportación de Vino Italiano"
+      },
+      "12": {
+        "quote": "El tier Free para 2 usuarios nos dio tiempo de validar. Upgrade tras 3 semanas sin fricciones.",
+        "author": "Carlos Mendes",
+        "role": "Sales Manager, SaaS Portugués"
+      }
+    }
+  },
+  "pricing": {
+    "signIn": "Iniciar sesión", "getStarted": "Empezar",
+    "pricingEyebrow": "Precios",
+    "heroBadge": "Nuevo — Premium con 14 días de prueba",
+    "heroTitle": "Precios que escalan con tu equipo.",
+    "heroSubtitle": "Empieza gratis con dos puestos. Mejora cuando necesites funciones avanzadas — mensual o anual vía Stripe.",
+    "monthly": "Mensual", "yearly": "Anual",
+    "free": "Gratis", "perUserPerMonth": "/ usuario / mes",
+    "freeCtaSubtext": "Hasta 2 usuarios · para siempre",
+    "billedMonthly": "Facturación mensual", "billedYearly": "Facturación anual (-20%)",
+    "trialBadge": "{days} días de prueba gratis",
+    "startFree": "Empezar gratis", "choose": "Elegir plan",
+    "redirecting": "Redirigiendo…", "mostPopular": "Más popular",
+    "compareTitle": "Comparar funcionalidades",
+    "compareSubtitle": "Todo del Free, más lo que desbloqueas en cada plan.",
+    "feature": "Funcionalidad",
+    "matrix": {
+      "users": "Usuarios", "upTo": "Hasta {n}", "unlimited": "Ilimitado",
+      "coreCrm": "Leads, clientes, negocios, pipeline",
+      "aiScoringPro": "Scoring IA avanzado (Claude)",
+      "aiAssistant": "Asistente IA ilimitado",
+      "reports": "Informes y gráficos",
+      "automations": "Automatizaciones de workflow",
+      "integrations": "Integraciones email + calendario",
+      "rag": "Base de conocimiento RAG",
+      "api": "API + Webhooks",
+      "support": "Soporte", "supportDedicated": "Dedicado",
+      "supportPriority": "Prioritario", "supportEmail": "Email"
+    },
+    "faqTitle": "Preguntas frecuentes",
+    "faq": {
+      "1": { "q": "¿Puedo usar el plan Free para siempre?",
+             "a": "Sí. El plan Free es completo para hasta dos usuarios, sin límite de tiempo y sin tarjeta de crédito." },
+      "2": { "q": "¿Qué pasa cuando añado un tercer usuario?",
+             "a": "Pediremos a un admin que mejore a Standard o Premium antes de que el nuevo usuario pueda registrarse. Los usuarios actuales siguen sin interrupción." },
+      "3": { "q": "¿Qué métodos de pago aceptáis?",
+             "a": "Todas las tarjetas principales vía Stripe Checkout. SEPA y transferencia bancaria disponibles bajo petición para planes anuales." },
+      "4": { "q": "¿Puedo cancelar cuando quiera?",
+             "a": "Sí. Cancela desde el Portal de Clientes de Stripe. Tu espacio se mantiene en el plan de pago hasta el fin del período actual y luego vuelve a Free." },
+      "10": { "q": "¿Qué incluye el soporte Premium?",
+              "a": "Canal Slack privado con respuesta en 4 horas hábiles, onboarding guiado de 90 minutos, account manager dedicado para equipos 10+, SLO de uptime 99.9% con crédito automático en caso de breach." },
+      "9": { "q": "¿CRM Gallo cumple con el GDPR?",
+             "a": "Sí. Datos alojados en la UE, cifrado at-rest y in-transit, logs de auditoría inmutables, exportación self-service y derecho al olvido implementado. Data Processing Agreement disponible en los planes Premium." },
+      "8": { "q": "¿Qué integraciones están disponibles?",
+             "a": "Stripe para facturación, IMAP/SMTP para email, Google/Outlook Calendar para agenda, Slack para notificaciones. API REST + webhooks para integraciones custom. Roadmap pública incluye HubSpot, Pipedrive, Notion, Zapier." },
+      "7": { "q": "¿Puedo self-hostar CRM Gallo?",
+             "a": "Sí. El código es público bajo AGPL-3.0. Clona el repo, ejecuta docker compose up y tu instancia está lista en 5 minutos. Mantenemos imágenes Docker actualizadas y guías de deploy para AWS, GCP, Hetzner y Scaleway." },
+      "6": { "q": "¿Cómo funciona el AI scoring?",
+             "a": "Cada lead recibe un puntaje 0-100 basado en los campos completados, actividades registradas y contexto histórico. Usamos Claude Sonnet para el razonamiento y un fallback heurístico si el provider está offline. Transparente: siempre ves qué modelo respondió y sobre qué datos." },
+      "5": { "q": "¿Son míos mis datos de verdad?",
+             "a": "Absolutamente. Somos open source bajo AGPL-3.0. Exporta tus datos cuando quieras; tras cancelar los guardamos 30 días por seguridad y los borramos a petición." }
+    },
+    "ctaTitle": "¿Listo para tomarte en serio tu pipeline?",
+    "ctaSubtitle": "Regístrate gratis en menos de 30 segundos. Mejora solo cuando lo necesites.",
+    "stripeNotConfigured": "Stripe aún no está configurado en este entorno. El plan Free sigue funcionando.",
+    "checkoutCanceled": "Checkout cancelado. No se ha realizado ningún cargo.",
+    "plans": {
+      "free": { "name": "Free", "shortPrice": "€0" },
+      "standard": { "name": "Standard", "shortPrice": "€19/mes" },
+      "premium": { "name": "Premium", "shortPrice": "€49/mes" }
+    }
+  },
+  "billing": {
+    "title": "Facturación", "subtitle": "Gestiona tu plan, usuarios y facturas.",
+    "currentPlan": "Plan actual", "trial": "Prueba",
+    "seatsUsed": "Usuarios activos", "unlimited": "Ilimitado",
+    "startedOn": "Iniciado el", "renewedOn": "Renovado el",
+    "nextSteps": "Próximos pasos", "nothingToBill": "Nada que facturar",
+    "manageBilling": "Gestionar facturación", "openPortal": "Abrir portal Stripe",
+    "upgrade": "Mejorar", "opening": "Abriendo…",
+    "availablePlans": "Planes disponibles", "billingHistory": "Historial de facturación",
+    "noInvoicesYet": "Sin facturas — estás en el plan Free.",
+    "invoicesAtPortal": "Facturas, métodos de pago y cancelación están en el Portal de Clientes de Stripe.",
+    "comparePlans": "Comparar planes",
+    "stripeNotConfigured": "Stripe no está configurado en este entorno. Los planes de pago estarán disponibles una vez configurado.",
+    "checkoutSuccess": "Tu suscripción está activa. ¡Bienvenido!",
+    "checkoutCanceled": "Checkout cancelado. Tu plan no se ha cambiado.",
+    "freeBannerTitle": "Estás en el plan Free",
+    "freeBannerBody": "Desbloquea scoring IA avanzado, asistente ilimitado, informes e integraciones mejorando a Standard o Premium.",
+    "trialEndingSoon": "Tu prueba termina en {days} días. Añade un método de pago para mantener tus funciones.",
+    "seatLimitReachedBanner": "Has alcanzado el límite de usuarios del plan Free. Mejora para continuar.",
+    "canceledBanner": "Tu suscripción terminará al fin del período. Reactiva desde el portal de facturación cuando quieras."
+  },
+  "legal": {
+    "eyebrow": "Legal",
+    "lastUpdated": "Última actualización",
+    "templateNotice": "Borrador modelo — revísalo con un abogado antes de usarlo en producción.",
+    "backToHome": "Volver al inicio",
+    "terms": {
+      "title": "Términos de servicio",
+      "intro": "Estos Términos rigen tu acceso y uso de CRM Gallo. Por favor, léelos con atención.",
+      "s1": { "title": "Aceptación de los términos" },
+      "s2": { "title": "Descripción del servicio" },
+      "s3": { "title": "Tu cuenta" },
+      "s4": { "title": "Suscripciones y facturación" },
+      "s5": { "title": "Uso aceptable" },
+      "s6": { "title": "Tu contenido y nuestra PI" },
+      "s7": { "title": "Privacidad y datos" },
+      "s8": { "title": "Disponibilidad del servicio" },
+      "s9": { "title": "Terminación" },
+      "s10": { "title": "Limitación de responsabilidad" },
+      "s11": { "title": "Indemnización" },
+      "s12": { "title": "Ley aplicable" },
+      "s13": { "title": "Contacto" }
+    },
+    "cookies": {
+      "title": "Política de Cookies",
+      "intro": "Esta política explica cómo CRM Gallo usa cookies y tecnologías similares cuando visitas nuestro sitio o usas el servicio.",
+      "s1": { "title": "¿Qué son las cookies?" },
+      "s2": { "title": "Cómo usamos las cookies" },
+      "s3": { "title": "Tipos de cookies que usamos" },
+      "s4": { "title": "Cookies de terceros" },
+      "s5": { "title": "Gestionar tus preferencias" },
+      "s6": { "title": "Cambios en esta política" },
+      "s7": { "title": "Contacto" },
+      "cat": {
+        "essential": { "label": "Esenciales", "body": "Necesarias para que el servicio funcione (inicio de sesión, seguridad, idioma). No se pueden desactivar." },
+        "functional": { "label": "Funcionales", "body": "Recuerdan tus elecciones de interfaz (tema, diseño). Mejoran la experiencia pero no son obligatorias." },
+        "analytics": { "label": "Analíticas", "body": "Nos ayudan a entender cómo se usa el servicio de forma agregada. Sin datos personales identificables." },
+        "marketing": { "label": "Marketing", "body": "Actualmente no usamos ninguna. Actualizaremos esta política y pediremos tu consentimiento antes de activarlas." }
+      }
+    }
+  }
+}

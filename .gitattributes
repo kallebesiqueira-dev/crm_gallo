@@ -1,0 +1,15 @@
+# Normalize line endings: store LF in the repo, check out LF everywhere.
+# Stops Windows checkouts from rewriting every file to CRLF (which breaks
+# Docker/Linux shell scripts and creates noisy, meaningless diffs).
+* text=auto eol=lf
+
+# Binary assets — never normalize
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf  binary

@@ -1,0 +1,68 @@
+name: frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    env:
+      # next.config / api.ts read NEXT_PUBLIC_API_URL at build time;
+      # CI only needs a syntactically valid value (no live backend).
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_DEFAULT_LOCALE: en
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (npm ci)
+        # `ci` uses the lockfile verbatim — no dependency drift between
+        # dev install and CI install.
+        run: npm ci
+
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Typecheck (tsc --noEmit)
+        # `tsc --noEmit` runs the full type check without producing JS;
+        # catches type errors that `next build` would otherwise hide
+        # behind its own incremental checker.
+        run: npx tsc --noEmit
+
+      # vitest is a P1 backlog item; once `tests/` exists in frontend/
+      # uncomment the step below.
+      # - name: Unit tests (vitest)
+      #   run: npm run test -- --run
+
+      - name: Build (next build)
+        # Catches build-only errors (broken dynamic imports, missing
+        # generateStaticParams cases, etc.) that lint + tsc miss.
+        run: npm run build
+
+      - name: npm audit (production)
+        # Fail the build only on HIGH+CRITICAL vulnerabilities in
+        # runtime deps. Dev-only vulns are noted but not blocking —
+        # they don't ship to users.
+        run: npm audit --production --audit-level=high

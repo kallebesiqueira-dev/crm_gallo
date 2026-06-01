@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Next
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Docker / DB
+postgres-data/
+redis-data/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Local pip --user install target + audit cache (huge, machine-specific)
+.local/
+.pip-audit-cache/
+
+# Smoke-test / debug scratch outputs — SOME CONTAIN LIVE TOKENS, never commit
+cookies_smoke.txt
+*_out.json
+*_search.json
+*_created.json
+openapi_tmp.json
+outbox_*.json

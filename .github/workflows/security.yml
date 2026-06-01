@@ -1,0 +1,56 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly full-history sweep — catches anything pushed before
+    # gitleaks was wired up, and any new rules in upstream that
+    # match historical commits.
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    permissions:
+      # The action posts a PR comment listing leaked secrets when
+      # any are found. Read-only would silently swallow that signal.
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history on weekly scan, shallow elsewhere — costs ~30s
+          # to fetch full history, only worth it once a week.
+          fetch-depth: ${{ github.event_name == 'schedule' && 0 || 1 }}
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional pro license — without it the action runs in OSS
+          # mode (still works, just no SARIF upload to GH Security).
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  trufflehog:
+    # Second pass with a different rule set — trufflehog catches
+    # patterns gitleaks misses (and vice versa). False positive rate
+    # is higher; we keep this as a separate job so PR authors can
+    # see "gitleaks clean, trufflehog noisy" and respond per-tool.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # trufflehog needs commit range to compare
+
+      - name: trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          # Default base/head come from the PR context; falls back to
+          # the full repo on push.
+          extra_args: --results=verified,unknown

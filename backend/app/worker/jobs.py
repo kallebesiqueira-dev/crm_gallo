@@ -1,0 +1,418 @@
+"""Job coroutines. Imported by `WorkerSettings.functions` so arq
+dispatches by name.
+
+Each job function:
+  * Takes `ctx` first (arq convention) — `ctx['SessionLocal']` is
+    the async session factory injected by `_startup`.
+  * Sets the RLS GUC (`app.current_org_id`) inside its own session
+    so the policies don't filter the row out — the worker runs as
+    `crm_app` (NOSUPERUSER NOBYPASSRLS) same as the API, so this
+    is mandatory.
+  * Touches the DB inside a single transaction and `commit()`s
+    explicitly. Errors propagate so arq's retry kicks in.
+"""
+from __future__ import annotations
+
+import json
+import time
+import uuid
+from datetime import UTC, datetime
+
+import httpx
+import structlog
+from arq import Retry
+from sqlalchemy import select, text
+
+from app.activities import ENTITY_LEAD, ActivityType, record_activity
+from app.audit import record_audit
+from app.events import OUTBOX_MAX_ATTEMPTS
+from app.events_dispatcher import EventContext, dispatch_event
+from app.models import Lead, WebhookDelivery, WebhookEndpoint
+from app.services.ai_scoring import score_lead as score_lead_via_llm
+from app.webhook_sign import SIGNATURE_HEADER, sign_payload
+
+log = structlog.get_logger(__name__)
+
+# Per-sweep claim limit. Bigger = more throughput per cron tick;
+# smaller = lower lock contention if we ever scale to N workers.
+# 100 covers the steady-state burst from a typical lead-import or
+# pipeline-shuffle without holding row locks for more than a second.
+_OUTBOX_BATCH_SIZE = 100
+
+
+# Webhook delivery config. Tunables, not contract — adjust as we
+# learn what receivers actually do.
+_WEBHOOK_HTTP_TIMEOUT_S = 10.0
+_WEBHOOK_MAX_TRIES = 8  # 1 + 7 retries; ~17min wall time at the cap
+_WEBHOOK_AUTO_PAUSE_THRESHOLD = 10
+# Truncate received bodies so a misbehaving receiver returning a
+# 1 MB HTML error page doesn't bloat the deliveries table.
+_WEBHOOK_RESPONSE_EXCERPT_BYTES = 2048
+
+
+async def score_lead(ctx: dict, lead_id: str, organization_id: str) -> dict:
+    """Re-score one lead in the background.
+
+    Mirrors the sync `POST /api/leads/{id}/score` endpoint but with
+    no HTTP user attached — activity / audit get `actor=None`
+    (system event). Returns a small status dict that arq stores in
+    Redis (queryable via `JobResult` for "did my click land?"
+    polling).
+
+    Idempotency note: arq retries this job on exception (max_tries=5);
+    so the LLM call MUST be safe to repeat. `score_lead_via_llm`
+    is read-only against the lead; the only mutation here is the
+    final UPDATE on the lead row. Repeated runs just overwrite the
+    same fields with a fresh score — acceptable.
+    """
+    SessionLocal = ctx["SessionLocal"]
+    lead_uuid = uuid.UUID(lead_id)
+    org_uuid = uuid.UUID(organization_id)
+
+    async with SessionLocal() as db:
+        # RLS GUC — the runtime engine doesn't bypass RLS, so a
+        # bare SELECT against tenant tables returns nothing without
+        # this. Session-persistent (false) so it survives the
+        # commit further down (mirror of `get_current_org_id`).
+        await db.execute(
+            text("SELECT set_config('app.current_org_id', :v, false)"),
+            {"v": str(org_uuid)},
+        )
+        result = await db.execute(
+            select(Lead).where(
+                Lead.id == lead_uuid, Lead.organization_id == org_uuid
+            )
+        )
+        lead = result.scalar_one_or_none()
+        if lead is None or lead.deleted_at is not None:
+            # Lead disappeared between enqueue and dispatch (deleted,
+            # cross-org leak attempt, or the org_id is wrong). Don't
+            # retry — there's nothing to score.
+            log.warning(
+                "score_lead.lead_missing", lead_id=lead_id, organization_id=organization_id
+            )
+            return {"status": "missing"}
+
+        scoring = await score_lead_via_llm(lead)
+        lead.ai_score = scoring["score"]
+        lead.ai_priority = scoring["priority"]
+        lead.ai_next_action = scoring["next_action"]
+        lead.ai_conversion_probability = scoring["conversion_probability"]
+        lead.ai_risk_analysis = scoring["risk_analysis"]
+        lead.ai_scored_at = scoring.get("scored_at", datetime.now(UTC))
+
+        await record_activity(
+            db,
+            entity_type=ENTITY_LEAD,
+            entity_id=lead.id,
+            activity_type=ActivityType.ai_scored,
+            organization_id=org_uuid,
+            actor=None,  # system event
+            metadata={
+                "score": lead.ai_score,
+                "priority": lead.ai_priority,
+                "via": "worker",
+            },
+        )
+        await record_audit(
+            db,
+            actor=None,
+            action="lead.score",
+            entity_type="lead",
+            entity_id=lead.id,
+            organization_id=org_uuid,
+            metadata={"score": lead.ai_score, "via": "worker"},
+        )
+        await db.commit()
+
+    log.info(
+        "score_lead.done",
+        lead_id=lead_id,
+        organization_id=organization_id,
+        score=scoring["score"],
+    )
+    return {"status": "scored", "score": scoring["score"]}
+
+
+async def drain_outbox(ctx: dict) -> dict:
+    """Periodic outbox sweep — claims a batch of unprocessed events
+    with `FOR UPDATE SKIP LOCKED`, dispatches each through the
+    in-process subscriber registry, and marks success/failure.
+
+    Why `FOR UPDATE SKIP LOCKED`: two workers (or a worker + an
+    accidentally-triggered one-shot) racing on the same outbox row
+    would otherwise either deadlock (FOR UPDATE) or double-fire
+    subscribers (no lock). SKIP LOCKED makes each row dispatch
+    by exactly one worker per sweep.
+
+    Backoff: after a failure, the row's `occurred_at` is NOT
+    rewritten, but the dispatcher only claims rows where
+    `occurred_at + (2^attempt_count seconds) <= now()`. So attempt 1
+    waits 2s, attempt 5 waits 32s, attempt 10 waits ~17min.
+
+    DLQ: rows with `attempt_count >= OUTBOX_MAX_ATTEMPTS` are
+    excluded from future claims (they stay `processed_at IS NULL`
+    with `last_error` populated). Ops surface via the admin
+    `/api/outbox?status=failed` endpoint.
+
+    Outbox is NOT RLS'd, so no GUC needed. Worker drains across
+    every org in one pass.
+    """
+    SessionLocal = ctx["SessionLocal"]
+    claimed = 0
+    succeeded = 0
+    failed = 0
+
+    async with SessionLocal() as db:
+        # Single SQL claim: SKIP LOCKED + LIMIT for back-pressure +
+        # exponential backoff via `occurred_at + interval`. The
+        # POW expression caps attempts at OUTBOX_MAX_ATTEMPTS so
+        # the LEAST() clause never returns NULL.
+        claim_sql = text(
+            """
+            SELECT id, event_type, organization_id, payload, occurred_at, attempt_count
+              FROM outbox_events
+             WHERE processed_at IS NULL
+               AND attempt_count < :max_attempts
+               AND occurred_at + (POW(2, attempt_count) * INTERVAL '1 second') <= now()
+             ORDER BY occurred_at
+             LIMIT :batch
+             FOR UPDATE SKIP LOCKED
+            """
+        )
+        result = await db.execute(
+            claim_sql,
+            {"max_attempts": OUTBOX_MAX_ATTEMPTS, "batch": _OUTBOX_BATCH_SIZE},
+        )
+        rows = result.mappings().all()
+        claimed = len(rows)
+
+        for row in rows:
+            event_id = row["id"]
+            try:
+                payload_obj = (
+                    json.loads(row["payload"]) if row["payload"] else None
+                )
+            except json.JSONDecodeError as e:
+                # Bad JSON in the payload — flag this row as failed
+                # so it doesn't loop, and move on.
+                await db.execute(
+                    text(
+                        "UPDATE outbox_events SET attempt_count = :ac, "
+                        "last_error = :err WHERE id = :id"
+                    ),
+                    {
+                        "id": event_id,
+                        "ac": OUTBOX_MAX_ATTEMPTS,
+                        "err": f"invalid payload JSON: {e}",
+                    },
+                )
+                failed += 1
+                continue
+
+            event_ctx = EventContext(
+                event_id=event_id,
+                event_type=row["event_type"],
+                organization_id=row["organization_id"],
+                payload=payload_obj,
+                occurred_at=row["occurred_at"],
+            )
+            try:
+                await dispatch_event(event_ctx)
+            except Exception as e:  # noqa: BLE001 — subscriber API is open
+                await db.execute(
+                    text(
+                        "UPDATE outbox_events SET attempt_count = attempt_count + 1, "
+                        "last_error = :err WHERE id = :id"
+                    ),
+                    {"id": event_id, "err": str(e)[:2000]},
+                )
+                log.warning(
+                    "outbox.dispatch_failed",
+                    event_id=str(event_id),
+                    event_type=row["event_type"],
+                    attempt=row["attempt_count"] + 1,
+                    error=str(e),
+                )
+                failed += 1
+                continue
+
+            await db.execute(
+                text(
+                    "UPDATE outbox_events SET processed_at = now(), "
+                    "last_error = NULL WHERE id = :id"
+                ),
+                {"id": event_id},
+            )
+            succeeded += 1
+
+        await db.commit()
+
+    if claimed:
+        log.info(
+            "outbox.drained",
+            claimed=claimed,
+            succeeded=succeeded,
+            failed=failed,
+        )
+    return {"claimed": claimed, "succeeded": succeeded, "failed": failed}
+
+
+async def deliver_webhook(
+    ctx: dict,
+    endpoint_id: str,
+    event_id: str,
+    event_type: str,
+    payload: dict | None,
+    organization_id: str | None,
+) -> dict:
+    """Deliver one event to one webhook endpoint. Re-enqueued by the
+    fanout subscriber once per (endpoint, event) pair so a slow
+    receiver only delays its own deliveries, not the outbox drain
+    or other endpoints.
+
+    Retry model (arq):
+      * `_WEBHOOK_MAX_TRIES` total attempts (1 initial + 7 retries).
+      * Backoff via `arq.Retry(defer_seconds=2^attempt)` — 2s, 4s,
+        8s, 16s, 32s, 64s, 128s, 256s wait between tries.
+      * Each attempt writes a `WebhookDelivery` row tracking the
+        outcome — admin can see "attempt 3 returned 502 after 8s".
+
+    Endpoint health:
+      * `consecutive_failures` is bumped on every non-2xx + reset on
+        success. When it reaches `_WEBHOOK_AUTO_PAUSE_THRESHOLD`,
+        `paused_at = now()` and no further fanouts target this
+        endpoint until an admin unpauses (which also zeros the
+        counter — see `PATCH /api/webhooks/{id}`).
+
+    Idempotency: receivers MUST dedupe by `event_id` from the body.
+    Two arq retries of the same job carry the SAME event_id, so a
+    receiver that successfully processed attempt 1 and crashed
+    before ACK'ing should not double-handle on attempt 2.
+    """
+    SessionLocal = ctx["SessionLocal"]
+    ep_uuid = uuid.UUID(endpoint_id)
+    ev_uuid = uuid.UUID(event_id)
+    attempt = ctx.get("job_try", 1)
+
+    async with SessionLocal() as db:
+        result = await db.execute(
+            select(WebhookEndpoint).where(WebhookEndpoint.id == ep_uuid)
+        )
+        ep = result.scalar_one_or_none()
+        if ep is None or ep.paused_at is not None:
+            # Endpoint deleted or paused between enqueue and dispatch —
+            # drop silently. No retry, no row (there's nothing to
+            # tell ops about an action they intentionally took).
+            return {"status": "skipped"}
+
+        body = json.dumps(
+            {
+                "event_id": event_id,
+                "event_type": event_type,
+                "organization_id": organization_id,
+                "payload": payload or {},
+            },
+            sort_keys=True,  # stable bytes for signature recomputation
+        ).encode("utf-8")
+        signature = sign_payload(ep.secret, body)
+
+        delivery = WebhookDelivery(
+            endpoint_id=ep.id,
+            event_id=ev_uuid,
+            event_type=event_type,
+            attempt=attempt,
+        )
+        db.add(delivery)
+        await db.flush()
+
+        started = time.perf_counter()
+        response_code: int | None = None
+        excerpt: str | None = None
+        err: str | None = None
+        succeeded = False
+        try:
+            async with httpx.AsyncClient(timeout=_WEBHOOK_HTTP_TIMEOUT_S) as client:
+                r = await client.post(
+                    ep.url,
+                    content=body,
+                    headers={
+                        "Content-Type": "application/json",
+                        "User-Agent": "CRM-Gallo-Webhook/1.0",
+                        SIGNATURE_HEADER: signature,
+                        # Receivers can dedupe by event_id alone, but
+                        # this header makes the relationship explicit
+                        # and survives JSON re-encoding.
+                        "X-CRM-Event-Id": event_id,
+                        "X-CRM-Event-Type": event_type,
+                    },
+                )
+            response_code = r.status_code
+            excerpt = r.text[: _WEBHOOK_RESPONSE_EXCERPT_BYTES] or None
+            # 2xx = success. Receivers signal "got it, will dedupe" via
+            # any 2xx — we don't require a specific body shape.
+            succeeded = 200 <= r.status_code < 300
+            if not succeeded:
+                err = f"HTTP {r.status_code}"
+        except httpx.HTTPError as e:
+            err = f"{type(e).__name__}: {e}"
+
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        delivery.latency_ms = latency_ms
+        delivery.response_code = response_code
+        delivery.response_body_excerpt = excerpt
+        delivery.error = err
+        delivery.finished_at = datetime.now(UTC)
+
+        if succeeded:
+            delivery.status = "success"
+            ep.consecutive_failures = 0
+            ep.last_success_at = delivery.finished_at
+            await db.commit()
+            log.info(
+                "webhook.delivered",
+                endpoint_id=endpoint_id,
+                event_id=event_id,
+                event_type=event_type,
+                attempt=attempt,
+                latency_ms=latency_ms,
+                response_code=response_code,
+            )
+            return {"status": "success", "latency_ms": latency_ms}
+
+        # Failure path
+        delivery.status = "failed"
+        ep.consecutive_failures = ep.consecutive_failures + 1
+        ep.last_failure_at = delivery.finished_at
+        auto_pause = ep.consecutive_failures >= _WEBHOOK_AUTO_PAUSE_THRESHOLD
+        if auto_pause:
+            ep.paused_at = delivery.finished_at
+        await db.commit()
+
+        log.warning(
+            "webhook.failed",
+            endpoint_id=endpoint_id,
+            event_id=event_id,
+            event_type=event_type,
+            attempt=attempt,
+            response_code=response_code,
+            error=err,
+            consecutive_failures=ep.consecutive_failures,
+            auto_paused=auto_pause,
+        )
+
+        if auto_pause:
+            # Don't burn the remaining retry budget on an endpoint we
+            # just auto-paused; let arq drop the job here.
+            return {"status": "paused"}
+
+        if attempt < _WEBHOOK_MAX_TRIES:
+            # Exponential backoff. `Retry` is arq's signal to re-queue
+            # this job with `defer_seconds` wait. Caps at ~4 minutes
+            # so a 7-retry sequence finishes in <17min.
+            defer = min(2**attempt, 240)
+            raise Retry(defer=defer)
+
+        # Out of retries — leave the delivery row as the audit trail
+        # and let arq drop the job.
+        return {"status": "exhausted"}

@@ -1,0 +1,151 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: crm_gallo_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-crm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crm}
+      POSTGRES_DB: ${POSTGRES_DB:-crm}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm} -d ${POSTGRES_DB:-crm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: crm_gallo_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+
+  # S3-compatible object storage for FileAttachments. MinIO speaks the
+  # same protocol as AWS S3 / Cloudflare R2, so swapping to a real
+  # cloud provider in prod is an env-var change only — no app code
+  # touches "MinIO" by name. Console on :9001 for ops (browse
+  # buckets, generate access keys); API on :9000 for boto3.
+  minio:
+    image: minio/minio:latest
+    container_name: crm_gallo_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: crm_gallo_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  # One-shot helper that pulls the default model on first start.
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: crm_gallo_ollama_pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: ollama:11434
+      OLLAMA_PULL_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["ollama pull $$OLLAMA_PULL_MODEL && echo 'Model ready.'"]
+    restart: "no"
+
+  backend:
+    build: ./backend
+    container_name: crm_gallo_backend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/app
+    # Alembic owns the schema: every container start runs pending migrations
+    # against the current DB, then hands off to uvicorn. Single replica =
+    # safe; for multi-replica deploys move this into a dedicated migration
+    # job that runs once per release (Kubernetes Job, GitHub Action, etc.).
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # Background worker for async jobs (lead scoring, summarization,
+  # email send, audit shipping). Same image as the backend — same
+  # code, same env — but the entrypoint is `arq` instead of uvicorn
+  # so it pulls work off the Redis queue instead of serving HTTP.
+  # Scales horizontally: bump replicas (or move to a separate
+  # deployment) when one process can't keep up with enqueue rate.
+  worker:
+    build: ./backend
+    container_name: crm_gallo_worker
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    # No --reload flag because arq watches the queue, not files;
+    # code changes need a container restart to take effect. That
+    # matches the prod ergonomics.
+    command: arq app.worker.settings.WorkerSettings
+
+  frontend:
+    build: ./frontend
+    container_name: crm_gallo_frontend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - backend
+    ports:
+      - "3030:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+volumes:
+  postgres-data:
+  redis-data:
+  ollama-data:
+  minio-data:

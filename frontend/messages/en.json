@@ -1,0 +1,802 @@
+{
+  "app": {
+    "name": "CRM Gallo",
+    "tagline": "AI-powered CRM for modern businesses"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "leads": "Leads",
+    "customers": "Customers",
+    "deals": "Deals",
+    "pipeline": "Pipeline",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "documents": "Documents",
+    "assistant": "AI Assistant",
+    "reports": "Reports",
+    "billing": "Billing",
+    "settings": "Settings",
+    "team": "Team",
+    "trash": "Trash",
+    "audit": "Audit log"
+  },
+  "auth": {
+    "login": "Sign in",
+    "register": "Create account",
+    "createAccount": "Create your account",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Jane Doe",
+    "logout": "Sign out",
+    "needAccount": "Need an account?",
+    "haveAccount": "Already have an account?",
+    "welcomeBack": "Welcome back",
+    "loginSubtitle": "Sign in to your CRM workspace.",
+    "registerSubtitle": "Start free with up to 2 users. Upgrade anytime.",
+    "signingIn": "Signing in…",
+    "creatingAccount": "Creating account…",
+    "forgotPassword": "Forgot password?",
+    "forgotHeroTitle": "Reset your password",
+    "forgotHeroSubtitle": "Enter the email tied to your account and we'll send you a link to set a new password.",
+    "forgotTitle": "Forgot your password?",
+    "forgotSubtitle": "Type your email below — we'll send a reset link if the account exists.",
+    "forgotSubmit": "Send reset link",
+    "forgotSending": "Sending…",
+    "forgotSentTitle": "Check your inbox",
+    "forgotSentBody": "If an account exists for that email, you'll receive a reset link within a minute.",
+    "forgotSentNote": "The link expires in 1 hour and can only be used once.",
+    "resetHeroTitle": "Set a new password",
+    "resetHeroSubtitle": "Pick something you'll remember. We'll sign you in next time the old way.",
+    "resetTitle": "New password",
+    "resetSubtitle": "Type a new password and we'll save it on your account.",
+    "resetSubmit": "Save new password",
+    "resetSubmitting": "Saving…",
+    "resetGoneTitle": "Link no longer valid",
+    "resetGoneBody": "This reset link has either expired or already been used. Request a fresh one from the login page.",
+    "resetMissingTitle": "Link not recognised",
+    "resetMissingBody": "We couldn't find this reset link. It may have been mistyped or never issued.",
+    "resetRequestNew": "Request a new link",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "passwordMismatch": "Passwords do not match.",
+    "mfaPromptTitle": "Two-factor required",
+    "mfaPromptSubtitle": "Enter the 6-digit code from your authenticator app, or a backup code.",
+    "mfaCodeLabel": "Code",
+    "mfaCodeHint": "Open Google Authenticator, 1Password, Authy or any TOTP app.",
+    "mfaVerify": "Verify and sign in",
+    "mfaVerifying": "Verifying…",
+    "mfaCancel": "Use a different account",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "chooseStartingPlan": "Choose your starting plan",
+    "acceptTerms": "I agree to the Terms of Service and Privacy Policy.",
+    "mustAcceptTerms": "Please accept the terms to continue.",
+    "seatLimitReached": "Free plan limit reached. Please upgrade to add more users.",
+    "strengthWeak": "Weak",
+    "strengthFair": "Fair",
+    "strengthGood": "Good",
+    "strengthStrong": "Strong",
+    "inviteUnavailable": "Invite unavailable",
+    "inviteNotFound": "This invite does not exist or has already been used.",
+    "inviteExpiredOrUsed": "This invite has expired or has already been accepted.",
+    "acceptInviteTitle": "Accept your invite",
+    "acceptInviteSubtitle": "You're joining {org} as {role}.",
+    "inviteEmailPinned": "Email is pinned by the invite and cannot be changed.",
+    "acceptAndJoin": "Accept and sign in",
+    "inviteBrandTitle": "Welcome to CRM Gallo",
+    "inviteBrandSubtitle": "Finish your account to join the team."
+  },
+  "dashboard": {
+    "welcome": "Welcome to your CRM dashboard. Here you can manage leads, customers, deals, and AI insights.",
+    "totalLeads": "Total leads",
+    "totalCustomers": "Total customers",
+    "totalDeals": "Total deals",
+    "pipelineValue": "Pipeline value",
+    "openTasks": "Open tasks",
+    "conversionRate": "Conversion rate",
+    "wonDeals": "Won deals",
+    "lostDeals": "Lost deals",
+    "avgAiScore": "Avg. AI score",
+    "leadsByStage": "Leads by stage",
+    "trend14Days": "Leads — last 14 days",
+    "leadsCreated": "Leads created",
+    "noData": "No data yet"
+  },
+  "leads": {
+    "title": "Leads",
+    "new": "New lead",
+    "search": "Search by name, email, company...",
+    "name": "Name",
+    "company": "Company",
+    "stage": "Stage",
+    "score": "AI Score",
+    "owner": "Owner",
+    "created": "Created",
+    "empty": "No leads yet. Create your first one.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "scoreNow": "Score with AI",
+    "stages": {
+      "new": "New",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "proposal_sent": "Proposal sent",
+      "negotiation": "Negotiation",
+      "won": "Won",
+      "lost": "Lost"
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "new": "New customer",
+    "search": "Search by name, email, company...",
+    "name": "Name",
+    "company": "Company",
+    "country": "Country",
+    "created": "Created",
+    "empty": "No customers yet. Create your first one.",
+    "aiSummary": "AI summary",
+    "summarize": "Summarize",
+    "noSummary": "No summary yet. Click Summarize to generate one."
+  },
+  "pipeline": {
+    "title": "Pipeline",
+    "new": "New deal",
+    "dealTitle": "Deal title",
+    "value": "Value",
+    "currency": "Currency",
+    "probability": "Probability",
+    "expectedClose": "Expected close",
+    "customer": "Customer"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "new": "Add a task",
+    "add": "Add",
+    "placeholder": "What needs to be done?",
+    "empty": "No tasks yet.",
+    "due": "Due",
+    "priorities": { "low": "Low", "medium": "Medium", "high": "High" }
+  },
+  "trash": {
+    "title": "Trash",
+    "subtitle": "Restore or permanently delete records you removed.",
+    "empty": "Trash is empty.",
+    "restore": "Restore",
+    "hardDelete": "Delete forever",
+    "emptyAll": "Empty trash",
+    "deletedAt": "Deleted at",
+    "confirmHardDelete": "Permanently delete this record? This cannot be undone.",
+    "confirmEmpty": "Empty the trash and permanently delete everything?",
+    "tabs": {
+      "all": "All",
+      "lead": "Leads",
+      "customer": "Customers",
+      "deal": "Deals",
+      "task": "Tasks"
+    }
+  },
+  "settings": {
+    "profile": "Profile",
+    "password": "Password",
+    "role": "Role",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "changePassword": "Change password",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordChanged": "Password changed successfully."
+  },
+  "pipelines": {
+    "title": "Pipelines",
+    "adminOnly": "Only admins and managers can edit pipelines.",
+    "phase1Notice": "Pipelines are editable now but Lead/Deal stages still use the legacy enum — wiring is next round.",
+    "kindLabel": "Type",
+    "kindLead": "Lead funnel",
+    "kindDeal": "Sales funnel",
+    "nameLabel": "Name",
+    "namePlaceholder": "Enterprise sales",
+    "create": "Create",
+    "empty": "No pipelines yet.",
+    "default": "Default",
+    "setDefault": "Set as default",
+    "editStages": "Edit stages",
+    "noStages": "No stages defined.",
+    "addStage": "Add stage",
+    "removeStage": "Remove stage",
+    "stageName": "Stage name",
+    "won": "Won",
+    "lost": "Lost",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Delete pipeline \"{name}\"?"
+  },
+  "teams": {
+    "title": "Teams",
+    "adminOnly": "Only admins and managers can create or delete teams.",
+    "nameLabel": "Team name",
+    "namePlaceholder": "Inbound EU",
+    "create": "Create",
+    "empty": "No teams yet.",
+    "memberCount": "{count, plural, =0 {no members} one {1 member} other {# members}}",
+    "noMembers": "No members assigned.",
+    "delete": "Delete team",
+    "removeMember": "Remove from team",
+    "confirmDelete": "Delete team \"{name}\"? Members and records will be unassigned.",
+    "confirmUnassign": "Remove this member from the team?"
+  },
+  "team": {
+    "title": "Team & invites",
+    "emailLabel": "Email",
+    "roleLabel": "Role",
+    "sendInvite": "Send invite",
+    "inviteCreated": "Invite created",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "inviteEmailNotSent": "No email was sent — share the link with the recipient yourself.",
+    "adminOnly": "Only admins can invite new members.",
+    "pendingInvites": "Pending invites",
+    "invite": "invite",
+    "invites": "invites",
+    "noPending": "No pending invites.",
+    "expiresAt": "expires {date}",
+    "revoke": "Revoke",
+    "confirmRevoke": "Revoke invite for {email}?"
+  },
+  "sessions": {
+    "title": "Active sessions",
+    "currentBadge": "Current",
+    "ip": "IP",
+    "lastSeen": "Last seen {when}",
+    "signedIn": "Signed in {when}",
+    "revoke": "Revoke",
+    "confirmRevoke": "Sign {device} out?",
+    "revokeOthers": "Sign out {count} other devices",
+    "revokingOthers": "Signing out…",
+    "confirmRevokeOthers": "Sign out all other devices? They will need to log in again.",
+    "revokedOthers": "Signed out {count} other devices."
+  },
+  "mfa": {
+    "title": "Two-factor authentication",
+    "disabledBody": "Add a second step at sign-in: a 6-digit code from an authenticator app on your phone. Protects your account if your password is ever stolen.",
+    "enableButton": "Enable 2FA",
+    "enrollScanHint": "Scan this QR code with Google Authenticator, 1Password, Authy or any TOTP app. Then enter the first 6-digit code below to confirm.",
+    "enrollManualKey": "Or enter this key manually",
+    "enrollCodeLabel": "First 6-digit code",
+    "enrollConfirm": "Confirm and enable",
+    "enrolling": "Enabling…",
+    "cancel": "Cancel",
+    "backupCodesTitle": "Save your backup codes",
+    "backupCodesWarning": "These codes can each be used once if you lose access to your authenticator app. They will not be shown again — save them in your password manager now.",
+    "copy": "Copy all",
+    "copied": "Copied!",
+    "enabledBanner": "Two-factor authentication is on.",
+    "backupCodesRemaining": "{count} backup codes remaining.",
+    "disableHint": "To disable 2FA, confirm your password and a current 2FA code (or a backup code).",
+    "currentPassword": "Current password",
+    "currentCode": "Current 2FA code",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "disableButton": "Disable 2FA",
+    "disabling": "Disabling…"
+  },
+  "attachments": {
+    "title": "Attachments",
+    "upload": "Upload file",
+    "uploading": "Uploading…",
+    "sizeHint": "Max 25 MB per file.",
+    "empty": "No files attached.",
+    "unknownUploader": "Unknown",
+    "download": "Download",
+    "delete": "Delete",
+    "confirmDelete": "Delete \"{name}\"?"
+  },
+  "notifications": {
+    "bell": "Notifications",
+    "title": "Notifications",
+    "empty": "You're all caught up.",
+    "markAllRead": "Mark all read",
+    "dismiss": "Dismiss"
+  },
+  "notes": {
+    "title": "Notes",
+    "placeholder": "Write a note (markdown ok)…",
+    "post": "Post",
+    "empty": "No notes yet.",
+    "unknownAuthor": "Unknown",
+    "edited": "edited",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Delete this note?"
+  },
+  "activity": {
+    "title": "Activity",
+    "loading": "Loading activity…",
+    "empty": "Nothing has happened yet.",
+    "systemActor": "System",
+    "typeCreated": "Created",
+    "typeUpdated": "Updated",
+    "typeDeleted": "Deleted",
+    "typeRestored": "Restored from trash",
+    "typeStageChange": "Stage: {from} → {to}",
+    "typeAiScored": "AI score: {score} ({priority})",
+    "typeNoteAdded": "Note added",
+    "typeFileAttached": "File attached: {name}",
+    "typeFileRemoved": "File removed: {name}",
+    "typeCall": "Call logged",
+    "typeMeeting": "Meeting logged",
+    "typeEmailSent": "Email sent",
+    "typeEmailReceived": "Email received",
+    "typeTaskCompleted": "Task completed",
+    "typeImported": "Imported",
+    "typeSystem": "System event"
+  },
+  "audit": {
+    "title": "Audit log",
+    "filterAction": "Action contains",
+    "filterEntity": "Entity type",
+    "filterSince": "From",
+    "filterUntil": "Until",
+    "apply": "Apply",
+    "noResults": "No audit entries match these filters.",
+    "system": "system",
+    "forbidden": "Audit log is admin/manager only.",
+    "colWhen": "When",
+    "colActor": "Actor",
+    "colAction": "Action",
+    "colEntity": "Entity",
+    "colMetadata": "Metadata",
+    "showingRange": "Showing {from}–{to}",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "How your pipeline is performing right now.",
+    "leadsByStage": "Leads by stage",
+    "pipelineValue": "Pipeline value by currency",
+    "leadsLast14Days": "Leads created — last 14 days",
+    "leadsLast30Days": "Leads created — last 30 days",
+    "leadsCreated": "Leads created",
+    "leads": "Leads",
+    "salesFunnel": "Sales funnel",
+    "breakdownByCurrency": "Breakdown by currency",
+    "summary": "Summary",
+    "totalLeads": "Total leads",
+    "totalDeals": "Total deals",
+    "totalCustomers": "Total customers",
+    "conversionRate": "Conversion rate",
+    "won": "Won",
+    "noData": "No data yet."
+  },
+  "calendar": {
+    "today": "Today",
+    "noTasksOnDay": "No tasks on this day."
+  },
+  "common": {
+    "language": "Language",
+    "theme": "Theme",
+    "loading": "Loading...",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "confirmTitle": "Are you sure?",
+    "confirmDelete": "Delete this record? This cannot be undone.",
+    "noPermission": "You don't have permission to do this.",
+    "back": "Back",
+    "saved": "Saved"
+  },
+  "marketing": {
+    "loginHeroTitle": "Close more deals with an AI copilot at your side.",
+    "loginHeroSubtitle": "CRM Gallo unifies your pipeline, contacts and conversations — multilingual, privacy-first, AI-native.",
+    "registerHeroTitle": "Your sales team, accelerated.",
+    "badgeAi": "AI-native",
+    "badgeMultilingual": "7 languages",
+    "badgeOpenSource": "Open source",
+    "benefitFreeTier": "Free forever for up to 2 users",
+    "benefitNoCard": "No credit card required",
+    "benefitCancel": "Cancel anytime, your data stays yours",
+    "trustedBy": "Trusted by modern sales teams across Europe.",
+    "seePricing": "See pricing",
+    "backToLogin": "Back to sign in",
+    "pricesInEUR": "Prices in EUR",
+    "noCardRequired": "No card required for Free",
+    "securePayment": "Secure payment via Stripe",
+    "vatIncluded": "VAT calculated at checkout",
+    "madeWith": "Made with care",
+    "heroEyebrow": "Hi there!",
+    "heroHeadlineLine1": "The CRM built",
+    "heroHeadlineLine2": "for people who sell.",
+    "heroBadgeTitle": "Loved by sales teams",
+    "heroBadgeSubtitle": "Best AI CRM · 2026",
+    "heroSubheadline": "Track leads, run your pipeline, and close more deals with a built-in AI copilot — in 7 languages, with EU-grade privacy.",
+    "ctaPrimary": "Start free",
+    "ctaSecondary": "See pricing",
+    "heroTrustline": "Free forever for 2 users · No card · Cancel anytime",
+    "navManifesto": "Manifesto",
+    "navAbout": "About",
+    "navValues": "Values",
+    "navFeatures": "Features",
+    "navPricing": "Pricing",
+    "navFaq": "FAQ",
+    "logosTitle": "Trusted by sales teams who ship",
+    "statsLeads": "Leads tracked",
+    "statsLanguages": "Native languages",
+    "statsUptime": "Uptime SLO",
+    "statsOpenSource": "Open source",
+    "manifesto": {
+      "eyebrow": "Our objective",
+      "line1": "We're not just a CRM.",
+      "line2": "The only limit is your creativity.",
+      "line3": "Connect anything, automate everything. CRM Gallo is the platform that shapes itself to how you work — not the other way around.",
+      "pillars": {
+        "connect": { "title": "Connect anything", "body": "APIs, webhooks, email, calendar, knowledge base. If it has an endpoint, it plugs in." },
+        "automate": { "title": "Automate everything", "body": "Visual workflows that react to every pipeline event. Without writing a single line." },
+        "create": { "title": "Create without limits", "body": "Open source and extensible. Your team shapes the tool — not the other way around." }
+      }
+    },
+    "about": {
+      "eyebrow": "About us",
+      "title": "We build the CRM we always wished we had.",
+      "lead": "We're a small European team of engineers and salespeople who believe a good CRM should fade into the background of real work, not add friction.",
+      "body": "We've worked at B2B startups and multilingual agencies where sales tools were heavy, expensive and never truly localized. So we built one differently: open source, AI-native, multilingual from day one, with European privacy at its core. CRM Gallo is our answer — an honest copilot for people who sell.",
+      "missionTitle": "Our mission",
+      "missionSubtitle": "Why we exist",
+      "missionBody": "Empower every sales team — from solo founders to enterprise crews — to close more deals with a tool that speaks their language, respects their data, and grows with them.",
+      "mini": {
+        "1": { "value": "2025", "label": "Founded" },
+        "2": { "value": "7", "label": "Native languages" },
+        "3": { "value": "100%", "label": "Open source" }
+      },
+      "timeline": {
+        "1": { "year": "2025", "title": "CRM Gallo is born", "body": "First prototype comes alive: pipeline, AI lead scoring and UI in 3 languages." },
+        "2": { "year": "2026", "title": "Public launch", "body": "Open sourced under AGPL-3.0, 7 native languages, Stripe billing, first customer teams." },
+        "3": { "year": "Next", "title": "Multi-tenant + automations", "body": "Isolated organizations, visual automations and email/calendar integrations coming next." }
+      }
+    },
+    "values": {
+      "eyebrow": "Our values",
+      "title": "What guides us every single day.",
+      "subtitle": "These aren't words on a slide: they decide how we write code, how we treat your data and how we talk to the people who pick us.",
+      "items": {
+        "customer": {
+          "title": "Customer at the core",
+          "body": "Every feature starts by listening to real sales teams. No vanity features, no aggressive upsell."
+        },
+        "privacy": {
+          "title": "European privacy",
+          "body": "EU data residency, GDPR-ready, no hidden tracking. Your data is yours, full stop."
+        },
+        "openSource": {
+          "title": "Open source",
+          "body": "Released under AGPL-3.0. Read it, fork it, self-host it. No proprietary lock-in, ever."
+        },
+        "ethicalAi": {
+          "title": "Ethical, transparent AI",
+          "body": "We always state which model runs, when it kicks in, and why. No magic, no black box."
+        },
+        "multilingual": {
+          "title": "Truly multilingual",
+          "body": "7 hand-translated languages, never machine-generated. Your French and German teams feel equally at home."
+        },
+        "transparency": {
+          "title": "Radical transparency",
+          "body": "Public roadmap, clear pricing, simple billing. No surprises at the end of the month."
+        }
+      }
+    },
+    "comparison": {
+      "eyebrow": "Why Gallo",
+      "titlePre": "While other CRMs make you juggle three tools,",
+      "titleAccent": "Gallo gives you all of it in one.",
+      "subtitle": "AI, automations, data, support and customer journeys integrated — everything working together, at your pace.",
+      "left": {
+        "headerPre": "Other",
+        "headerAccent": "CRMs",
+        "subtitle": "You have to hope it all works.",
+        "items": {
+          "automation": { "title": "Automation", "body": "Just basic rules, no intelligence baked in." },
+          "growth": { "title": "Growth", "body": "Relies on manual setup and external plugins." }
+        }
+      },
+      "right": {
+        "headerPre": "CRM",
+        "headerAccent": "Gallo",
+        "subtitle": "It's all in one. It's all Gallo.",
+        "items": {
+          "automation": { "title": "Automation", "body": "AI, intent and sentiment built in natively." },
+          "growth": { "title": "Growth", "body": "Fluid, scales with you with no hidden config." }
+        }
+      }
+    },
+    "testimonialsEyebrow": "What teams are saying",
+    "testimonialsTitle": "Loved by sales teams who measure what they ship.",
+    "footerTagline": "AI-powered CRM, built for modern sales teams. Open source under AGPL-3.0.",
+    "footerProduct": "Product",
+    "footerLegal": "Legal",
+    "footerCompany": "Company",
+    "footerTerms": "Terms of service",
+    "footerPrivacy": "Privacy policy",
+    "footerCookies": "Cookies",
+    "footerSecurity": "Security",
+    "footerBusinessName": "Legal name",
+    "footerVAT": "VAT",
+    "footerSector": "Sector",
+    "footerAddress": "Address",
+    "footerPhone": "Phone",
+    "footerEmail": "Email",
+    "footerWebsite": "Website",
+    "footerRightsReserved": "All rights reserved",
+    "footerPartnersBadge": "Tech Partners",
+    "footerPartnersTitle": "Built with the best.",
+    "footerPartnersBody": "Security, AI, payments and infrastructure handled by enterprise-grade partners — the same ones Fortune 500 teams rely on.",
+    "footerPartners": {
+      "security": "Security",
+      "ai": "Artificial intelligence",
+      "payments": "Payments",
+      "infrastructure": "Infrastructure",
+      "privacy": "Privacy"
+    },
+    "feature": {
+      "ai": {
+        "eyebrow": "AI Copilot",
+        "title": "An AI that knows your pipeline as well as you do.",
+        "body": "Score every lead, draft follow-up emails, and surface the next best action — powered by Claude and grounded on your CRM data.",
+        "bullet": {
+          "1": "Lead scoring with conversion probability and risk analysis",
+          "2": "One-click follow-up emails in the customer's language",
+          "3": "Heuristic fallback when you're offline or out of credit"
+        }
+      },
+      "pipeline": {
+        "eyebrow": "Pipeline that works",
+        "title": "Drag, drop, win. Your kanban, made for sales.",
+        "body": "Build the pipeline that fits your team. Move deals between stages with a drag, see weighted forecasts at a glance, and never lose track of who owes a follow-up.",
+        "bullet": {
+          "1": "Multi-currency deals with weighted probability",
+          "2": "Soft-delete with a Trash bin — restore anything in one click",
+          "3": "Stage breakdowns, conversion rates, and forecasts"
+        }
+      },
+      "intl": {
+        "eyebrow": "Truly multilingual",
+        "title": "Sell in your customer's language. All seven of them.",
+        "body": "Switch the UI, the assistant, and outgoing emails between English, Português, Deutsch, Français, Italiano, Español and Rumantsch — without losing context.",
+        "bullet": {
+          "1": "7 fully translated locales, no machine fallbacks",
+          "2": "Per-user language preference",
+          "3": "EU data residency-friendly, GDPR-aware"
+        }
+      }
+    },
+    "testimonial": {
+      "1": {
+        "quote": "We replaced two tools with CRM Gallo and the AI scoring caught two warm leads we would have lost in the noise.",
+        "author": "Andrea Müller",
+        "role": "Head of Sales, B2B SaaS"
+      },
+      "2": {
+        "quote": "Finally a CRM where our French and German offices both feel at home. The drag-drop pipeline is exactly what my reps wanted.",
+        "author": "Léa Petit",
+        "role": "RevOps Lead, European Agency"
+      },
+      "3": {
+        "quote": "Open source, self-hostable, with a serious AI — this is what modern sales tooling should look like.",
+        "author": "Joana Ramos",
+        "role": "CTO, Lisbon Startup"
+      },
+      "4": {
+        "quote": "Migrated off HubSpot in a week. The AI scoring alone saves us 3 hours a day.",
+        "author": "Marco Bianchi",
+        "role": "Founder, Italian SaaS"
+      },
+      "5": {
+        "quote": "Multilingual support sealed the deal. My team across 4 countries finally shares the same tool.",
+        "author": "Sara Lopez",
+        "role": "Sales Director, Spanish Retail"
+      },
+      "6": {
+        "quote": "Pipeline drag-drop is finally what kanban was supposed to be. Real-time, weighted, beautiful.",
+        "author": "Hans Müller",
+        "role": "VP Sales, German Manufacturing"
+      },
+      "7": {
+        "quote": "AI follow-up drafts in native French hit a 41% reply rate. Game-changer.",
+        "author": "Camille Dubois",
+        "role": "Account Executive, French B2B"
+      },
+      "8": {
+        "quote": "Self-hosted in 2 days. Auditors loved AGPL + EU residency.",
+        "author": "Davi Costa",
+        "role": "CRO, Brazilian Fintech"
+      },
+      "9": {
+        "quote": "Reports module replaced two BI tools. Pipeline forecast accuracy went from 60% to 87%.",
+        "author": "Anya Kowalski",
+        "role": "RevOps, Polish Logistics"
+      },
+      "10": {
+        "quote": "Rumantsch support out of the box. We didn't even ask — they shipped it.",
+        "author": "Tobias Weber",
+        "role": "Sales Engineer, Swiss IoT"
+      },
+      "11": {
+        "quote": "Customer summaries with real context replaced our weekly review meetings.",
+        "author": "Isabella Rossi",
+        "role": "Co-founder, Italian Wine Export"
+      },
+      "12": {
+        "quote": "Free tier for 2 users gave us time to validate. Upgraded after 3 weeks with zero migration friction.",
+        "author": "Carlos Mendes",
+        "role": "Sales Manager, Portuguese SaaS"
+      }
+    }
+  },
+  "pricing": {
+    "signIn": "Sign in",
+    "getStarted": "Get started",
+    "pricingEyebrow": "Pricing",
+    "heroBadge": "New — Premium with 14-day trial",
+    "heroTitle": "Pricing that scales with your sales team.",
+    "heroSubtitle": "Start free with two seats. Upgrade when you need power features, billed monthly or yearly via Stripe.",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "free": "Free",
+    "perUserPerMonth": "/ user / month",
+    "freeCtaSubtext": "Up to 2 users · forever",
+    "billedMonthly": "Billed monthly",
+    "billedYearly": "Billed yearly (-20%)",
+    "trialBadge": "{days}-day free trial",
+    "startFree": "Start free",
+    "choose": "Choose plan",
+    "redirecting": "Redirecting…",
+    "mostPopular": "Most popular",
+    "compareTitle": "Compare features",
+    "compareSubtitle": "Everything in Free, plus what you unlock on each tier.",
+    "feature": "Feature",
+    "matrix": {
+      "users": "Users",
+      "upTo": "Up to {n}",
+      "unlimited": "Unlimited",
+      "coreCrm": "Leads, customers, deals, pipeline",
+      "aiScoringPro": "Advanced AI scoring (Claude)",
+      "aiAssistant": "Unlimited AI assistant",
+      "reports": "Reports and charts",
+      "automations": "Workflow automations",
+      "integrations": "Email + calendar integrations",
+      "rag": "RAG knowledge base",
+      "api": "API + Webhooks",
+      "support": "Support",
+      "supportDedicated": "Dedicated",
+      "supportPriority": "Priority",
+      "supportEmail": "Email"
+    },
+    "faqTitle": "Frequently asked questions",
+    "faq": {
+      "1": {
+        "q": "Can I really use the Free plan forever?",
+        "a": "Yes. The Free plan is fully featured for up to two users with no time limit and no credit card."
+      },
+      "2": {
+        "q": "What happens when I add a third user?",
+        "a": "You'll be asked to upgrade an admin to Standard or Premium before the new user can register. Existing users keep working without interruption."
+      },
+      "3": {
+        "q": "Which payment methods do you accept?",
+        "a": "All major credit and debit cards via Stripe Checkout. SEPA and bank transfer are available on yearly plans on request."
+      },
+      "4": {
+        "q": "Can I cancel anytime?",
+        "a": "Yes. Cancel from the Stripe Customer Portal. Your workspace stays on the paid plan until the end of the current period, then downgrades to Free."
+      },
+      "5": {
+        "q": "Is my data really mine?",
+        "a": "Absolutely. We are AGPL-3.0 open source. Export your data anytime; on cancellation we keep it for 30 days for accidental-undelete, then erase on request."
+      },
+      "6": {
+        "q": "How does the AI scoring work?",
+        "a": "Each lead gets a 0-100 score based on filled fields, logged activities and historical context. We use Claude Sonnet for reasoning with a heuristic fallback if the provider is offline. Fully transparent: you always see which model answered and on what data."
+      },
+      "7": {
+        "q": "Can I self-host CRM Gallo?",
+        "a": "Yes. The source is public under AGPL-3.0. Clone the repo, run docker compose up, and your instance is live in 5 minutes. We ship up-to-date Docker images and deploy guides for AWS, GCP, Hetzner and Scaleway."
+      },
+      "8": {
+        "q": "What integrations are available?",
+        "a": "Stripe for billing, IMAP/SMTP for email, Google/Outlook Calendar for scheduling, Slack for notifications. REST API + webhooks for custom integrations. Public roadmap includes HubSpot, Pipedrive, Notion, Zapier."
+      },
+      "9": {
+        "q": "Is CRM Gallo GDPR compliant?",
+        "a": "Yes. EU data residency, at-rest and in-transit encryption, immutable audit logs, self-service export and right-to-erasure implemented. A Data Processing Agreement is available on Premium plans."
+      },
+      "10": {
+        "q": "What does Premium support include?",
+        "a": "Private Slack channel with 4-business-hour response, 90-minute guided onboarding, dedicated account manager for teams of 10+, 99.9% uptime SLO with automatic credit if breached."
+      }
+    },
+    "ctaTitle": "Ready to take your pipeline seriously?",
+    "ctaSubtitle": "Sign up free in under 30 seconds. Upgrade only when you need it.",
+    "stripeNotConfigured": "Stripe is not configured yet on this environment. The Free plan still works.",
+    "checkoutCanceled": "Checkout canceled. No charge was made.",
+    "plans": {
+      "free": { "name": "Free", "shortPrice": "€0" },
+      "standard": { "name": "Standard", "shortPrice": "€19/mo" },
+      "premium": { "name": "Premium", "shortPrice": "€49/mo" }
+    }
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Manage your plan, seats, and invoices.",
+    "currentPlan": "Current plan",
+    "trial": "Trial",
+    "seatsUsed": "Seats used",
+    "unlimited": "Unlimited",
+    "startedOn": "Started on",
+    "renewedOn": "Renewed on",
+    "nextSteps": "Next steps",
+    "nothingToBill": "Nothing to bill",
+    "manageBilling": "Manage billing",
+    "openPortal": "Open Stripe portal",
+    "upgrade": "Upgrade",
+    "opening": "Opening…",
+    "availablePlans": "Available plans",
+    "billingHistory": "Billing history",
+    "noInvoicesYet": "No invoices yet — you're on the Free plan.",
+    "invoicesAtPortal": "Invoices, payment methods and cancellation live in the Stripe Customer Portal.",
+    "comparePlans": "Compare plans",
+    "stripeNotConfigured": "Stripe is not configured on this environment. Paid plans will become available once it's set up.",
+    "checkoutSuccess": "Your subscription is active. Welcome aboard!",
+    "checkoutCanceled": "Checkout was canceled. Your plan was not changed.",
+    "freeBannerTitle": "You're on the Free plan",
+    "freeBannerBody": "Unlock advanced AI scoring, unlimited assistant, reports and integrations by upgrading to Standard or Premium.",
+    "trialEndingSoon": "Your trial ends in {days} days. Add a payment method to keep your features.",
+    "seatLimitReachedBanner": "You've reached the Free plan seat limit. Upgrade to keep adding users.",
+    "canceledBanner": "Your subscription will end at the period end. Reactivate from the billing portal anytime."
+  },
+  "legal": {
+    "eyebrow": "Legal",
+    "lastUpdated": "Last updated",
+    "templateNotice": "Template draft — review with legal counsel before relying on it in production.",
+    "backToHome": "Back to home",
+    "terms": {
+      "title": "Terms of Service",
+      "intro": "These Terms govern your access to and use of CRM Gallo. Please read them carefully.",
+      "s1": { "title": "Acceptance of terms" },
+      "s2": { "title": "Description of service" },
+      "s3": { "title": "Your account" },
+      "s4": { "title": "Subscriptions and billing" },
+      "s5": { "title": "Acceptable use" },
+      "s6": { "title": "Your content and our IP" },
+      "s7": { "title": "Privacy and data" },
+      "s8": { "title": "Service availability" },
+      "s9": { "title": "Termination" },
+      "s10": { "title": "Limitation of liability" },
+      "s11": { "title": "Indemnification" },
+      "s12": { "title": "Governing law" },
+      "s13": { "title": "Contact" }
+    },
+    "cookies": {
+      "title": "Cookies Policy",
+      "intro": "This policy explains how CRM Gallo uses cookies and similar technologies when you visit our website or use the Service.",
+      "s1": { "title": "What are cookies?" },
+      "s2": { "title": "How we use cookies" },
+      "s3": { "title": "Types of cookies we use" },
+      "s4": { "title": "Third-party cookies" },
+      "s5": { "title": "Managing your preferences" },
+      "s6": { "title": "Changes to this policy" },
+      "s7": { "title": "Contact" },
+      "cat": {
+        "essential": { "label": "Essential", "body": "Required for the Service to work (sign-in, security, language). Cannot be disabled." },
+        "functional": { "label": "Functional", "body": "Remember your interface choices (theme, layout). They improve the experience but aren't strictly required." },
+        "analytics": { "label": "Analytics", "body": "Help us understand how the Service is used in aggregate. No personally identifiable data." },
+        "marketing": { "label": "Marketing", "body": "We don't currently use any. We will update this policy and request consent before setting one." }
+      }
+    }
+  }
+}
