@@ -27,9 +27,19 @@ from sqlalchemy import select, text
 
 from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.audit import record_audit
+from app.database import set_current_org_id
 from app.events import OUTBOX_MAX_ATTEMPTS
 from app.events_dispatcher import EventContext, dispatch_event
-from app.models import Customer, Deal, Lead, Organization, User, WebhookDelivery, WebhookEndpoint
+from app.models import (
+    Customer,
+    Deal,
+    Lead,
+    Organization,
+    Quote,
+    User,
+    WebhookDelivery,
+    WebhookEndpoint,
+)
 from app.services.ai_scoring import score_lead as score_lead_via_llm
 from app.webhook_sign import SIGNATURE_HEADER, sign_payload
 
@@ -72,14 +82,12 @@ async def score_lead(ctx: dict, lead_id: str, organization_id: str) -> dict:
     org_uuid = uuid.UUID(organization_id)
 
     async with SessionLocal() as db:
-        # RLS GUC — the runtime engine doesn't bypass RLS, so a
-        # bare SELECT against tenant tables returns nothing without
-        # this. Session-persistent (false) so it survives the
-        # commit further down (mirror of `get_current_org_id`).
-        await db.execute(
-            text("SELECT set_config('app.current_org_id', :v, false)"),
-            {"v": str(org_uuid)},
-        )
+        # RLS GUC — the runtime engine doesn't bypass RLS, so a bare
+        # SELECT against tenant tables returns nothing without a tenant
+        # set. Stash it on the task ContextVar; the worker engine's begin
+        # event applies it (SET LOCAL) to each transaction, so it can't
+        # linger on a pooled connection and leak into the next job.
+        set_current_org_id(org_uuid)
         result = await db.execute(
             select(Lead).where(Lead.id == lead_uuid, Lead.organization_id == org_uuid)
         )
@@ -474,11 +482,15 @@ async def generate_deal_pdf(ctx: dict, deal_id: str, organization_id: str) -> di
     deal_uuid = uuid.UUID(deal_id)
     org_uuid = uuid.UUID(organization_id)
 
+    # RLS tenant scope via the task ContextVar; the worker engine's begin
+    # event applies it (SET LOCAL) to every transaction this job opens.
+    # See app.database.register_org_guc.
+    set_current_org_id(org_uuid)
+
+    # Phase 1 — read into a plain context dict, then RELEASE the connection
+    # before the render (TD-43: don't pin a pooled connection across the
+    # ~tens-of-seconds WeasyPrint call).
     async with SessionLocal() as db:
-        await db.execute(
-            text("SELECT set_config('app.current_org_id', :v, false)"),
-            {"v": str(org_uuid)},
-        )
         deal = (
             await db.execute(
                 select(Deal).where(Deal.id == deal_uuid, Deal.organization_id == org_uuid)
@@ -517,6 +529,8 @@ async def generate_deal_pdf(ctx: dict, deal_id: str, organization_id: str) -> di
                 await db.execute(select(User.full_name).where(User.id == deal.owner_id))
             ).scalar_one_or_none()
 
+        deal_pk = deal.id
+        filename = f"deal-{deal.title[:40].strip()}.pdf".replace("/", "-")
         context = {
             "org_name": org_name,
             "deal_title": deal.title,
@@ -532,19 +546,23 @@ async def generate_deal_pdf(ctx: dict, deal_id: str, organization_id: str) -> di
             "description": deal.notes,
             "generated_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
         }
-        # WeasyPrint's write_pdf() is synchronous and CPU-bound (~seconds,
-        # tens of seconds on a cold font cache). Running it inline blocks
-        # arq's event loop — which starves the Redis heartbeat and the
-        # drain_outbox cron, and can surface as spurious CancelledError on
-        # the Redis connection mid-render. Offload to a thread.
-        pdf_bytes = await asyncio.to_thread(render_pdf, TEMPLATE_DEAL_SUMMARY, context)
 
-        filename = f"deal-{deal.title[:40].strip()}.pdf".replace("/", "-")
+    # Phase 2 — render with NO DB connection held. WeasyPrint's write_pdf()
+    # is synchronous and CPU-bound (~seconds, tens of seconds on a cold
+    # font cache); running it inline blocks arq's event loop — which
+    # starves the Redis heartbeat and the drain_outbox cron, and can
+    # surface as spurious CancelledError on the Redis connection
+    # mid-render. Offload to a thread.
+    pdf_bytes = await asyncio.to_thread(render_pdf, TEMPLATE_DEAL_SUMMARY, context)
+
+    # Phase 3 — store + audit in a fresh short transaction (GUC re-applied
+    # by the begin event from the still-set ContextVar).
+    async with SessionLocal() as db:
         att = await store_pdf_attachment(
             db,
             organization_id=org_uuid,
             entity_type="deal",
-            entity_id=deal.id,
+            entity_id=deal_pk,
             filename=filename,
             pdf_bytes=pdf_bytes,
         )
@@ -553,17 +571,159 @@ async def generate_deal_pdf(ctx: dict, deal_id: str, organization_id: str) -> di
             actor=None,
             action="deal.pdf_generated",
             entity_type="deal",
-            entity_id=deal.id,
+            entity_id=deal_pk,
             organization_id=org_uuid,
             metadata={"attachment_id": str(att.id), "size_bytes": att.size_bytes, "via": "worker"},
         )
         await db.commit()
+        att_id = str(att.id)
+        att_size = att.size_bytes
 
     log.info(
         "generate_deal_pdf.done",
         deal_id=deal_id,
         organization_id=organization_id,
-        attachment_id=str(att.id),
-        size_bytes=att.size_bytes,
+        attachment_id=att_id,
+        size_bytes=att_size,
     )
-    return {"status": "generated", "attachment_id": str(att.id), "size_bytes": att.size_bytes}
+    return {"status": "generated", "attachment_id": att_id, "size_bytes": att_size}
+
+
+async def generate_quote_pdf(ctx: dict, quote_id: str, organization_id: str) -> dict:
+    """Render a quote PDF and attach it to the quote (ADR-016).
+
+    Enqueued by `POST /api/quotes/{id}/pdf`. Mirrors `generate_deal_pdf`:
+    set the RLS GUC (worker is `crm_app`, NOBYPASSRLS), read the quote +
+    its line items + the org/customer/owner names, render the `quote`
+    template via WeasyPrint off the event loop, and store the bytes as a
+    `FileAttachment` (entity_type="quote") so it surfaces in the quote's
+    attachment list and downloads via the existing presigned-URL path.
+
+    The line items are eager-loaded (`selectinload`) because the render
+    happens after the session work — a lazy load there would fail under
+    async. Same retry/idempotency note as the deal job applies.
+    """
+    from sqlalchemy.orm import selectinload
+
+    from app.pdf import TEMPLATE_QUOTE, render_pdf, store_pdf_attachment
+
+    SessionLocal = ctx["SessionLocal"]
+    quote_uuid = uuid.UUID(quote_id)
+    org_uuid = uuid.UUID(organization_id)
+
+    # RLS tenant scope via the task ContextVar; the worker engine's begin
+    # event applies it (SET LOCAL) to EVERY transaction this job opens —
+    # both the read below and the write after the render. See
+    # app.database.register_org_guc.
+    set_current_org_id(org_uuid)
+
+    # Phase 1 — read everything into a plain context dict, then RELEASE the
+    # connection. The render (Phase 2) is ~tens of seconds; holding a
+    # pooled connection across it would starve the small worker pool and
+    # block drain_outbox / other jobs (TD-43).
+    async with SessionLocal() as db:
+        quote = (
+            await db.execute(
+                select(Quote)
+                .where(Quote.id == quote_uuid, Quote.organization_id == org_uuid)
+                .options(selectinload(Quote.line_items))
+            )
+        ).scalar_one_or_none()
+        if quote is None or quote.deleted_at is not None:
+            log.warning(
+                "generate_quote_pdf.quote_missing",
+                quote_id=quote_id,
+                organization_id=organization_id,
+            )
+            return {"status": "missing"}
+
+        org_name = (
+            await db.execute(select(Organization.name).where(Organization.id == org_uuid))
+        ).scalar_one_or_none() or "CRM Gallo"
+
+        customer_name = None
+        if quote.customer_id is not None:
+            cust = (
+                await db.execute(
+                    select(Customer.first_name, Customer.last_name, Customer.company).where(
+                        Customer.id == quote.customer_id
+                    )
+                )
+            ).first()
+            if cust is not None:
+                full = f"{cust.first_name} {cust.last_name}".strip()
+                customer_name = f"{full} ({cust.company})" if cust.company else full
+
+        owner_name = None
+        if quote.owner_id is not None:
+            owner_name = (
+                await db.execute(select(User.full_name).where(User.id == quote.owner_id))
+            ).scalar_one_or_none()
+
+        quote_pk = quote.id
+        filename = f"quote-{quote.number}-v{quote.version}.pdf".replace("/", "-")
+        context = {
+            "org_name": org_name,
+            "number": quote.number,
+            "version": quote.version,
+            "status": quote.status.value,
+            "title": quote.title,
+            "currency": quote.currency.value,
+            "customer_name": customer_name,
+            "owner_name": owner_name,
+            "valid_until": quote.valid_until.isoformat() if quote.valid_until else None,
+            "created_at": quote.created_at.strftime("%Y-%m-%d"),
+            "notes": quote.notes,
+            "subtotal": quote.subtotal,
+            "tax_rate": quote.tax_rate,
+            "tax_amount": quote.tax_amount,
+            "total": quote.total,
+            "line_items": [
+                {
+                    "description": item.description,
+                    "quantity": item.quantity,
+                    "unit_price": item.unit_price,
+                    "line_total": item.line_total,
+                }
+                for item in quote.line_items
+            ],
+            "generated_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
+        }
+
+    # Phase 2 — render with NO DB connection held. Synchronous CPU-bound
+    # WeasyPrint call is offloaded so it doesn't block arq's event loop
+    # (see generate_deal_pdf for the full rationale).
+    pdf_bytes = await asyncio.to_thread(render_pdf, TEMPLATE_QUOTE, context)
+
+    # Phase 3 — store + audit in a fresh short transaction (GUC re-applied
+    # by the begin event from the still-set ContextVar).
+    async with SessionLocal() as db:
+        att = await store_pdf_attachment(
+            db,
+            organization_id=org_uuid,
+            entity_type="quote",
+            entity_id=quote_pk,
+            filename=filename,
+            pdf_bytes=pdf_bytes,
+        )
+        await record_audit(
+            db,
+            actor=None,
+            action="quote.pdf_generated",
+            entity_type="quote",
+            entity_id=quote_pk,
+            organization_id=org_uuid,
+            metadata={"attachment_id": str(att.id), "size_bytes": att.size_bytes, "via": "worker"},
+        )
+        await db.commit()
+        att_id = str(att.id)
+        att_size = att.size_bytes
+
+    log.info(
+        "generate_quote_pdf.done",
+        quote_id=quote_id,
+        organization_id=organization_id,
+        attachment_id=att_id,
+        size_bytes=att_size,
+    )
+    return {"status": "generated", "attachment_id": att_id, "size_bytes": att_size}

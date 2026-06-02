@@ -6,7 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.cookies import ACCESS_TOKEN_COOKIE
-from app.database import get_db
+from app.database import get_db, set_current_org_id
 from app.models import Organization, OrgMembership, User, UserRole
 from app.security import decode_token
 
@@ -138,15 +138,21 @@ async def get_current_org_id(
         await db.commit()
         await db.refresh(user)
 
-    # Phase 6 RLS: set the GUC the policies read. We use the
-    # session-persistent form (`set_config(..., false)`, i.e. SET not
-    # SET LOCAL) because routes commit mid-request — SET LOCAL would
-    # be wiped on the next txn and subsequent queries (e.g.
-    # `db.refresh()` after `db.commit()`) would return zero rows.
-    # `get_db` clears this GUC on session close so the value can't
-    # leak across pooled connections to a later request.
+    # Phase 6 RLS: tell the policies which tenant this request is.
+    # Stash the org in a task-local ContextVar so the `begin` event in
+    # app.database re-applies it (as a transaction-local SET LOCAL) at
+    # the start of every transaction — including the autobegin that
+    # follows a mid-request commit. Without that, a connection-scoped
+    # GUC would survive the commit on this connection but `commit()`
+    # releases the connection to the pool, so a post-commit readback
+    # could land on a different connection with no GUC (404) or another
+    # tenant's GUC (cross-tenant leak).
+    set_current_org_id(org_id)
+    # Apply it to the transaction that's already open on this session
+    # (get_current_user's SELECT autobegan one); the begin event only
+    # fires for transactions opened *after* the ContextVar is set.
     await db.execute(
-        text("SELECT set_config('app.current_org_id', :v, false)"),
+        text("SELECT set_config('app.current_org_id', :v, true)"),
         {"v": str(org_id)},
     )
     return org_id

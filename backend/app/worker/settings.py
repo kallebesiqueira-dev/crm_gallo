@@ -31,10 +31,12 @@ from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.config import get_settings
+from app.database import register_org_guc
 from app.worker.jobs import (
     deliver_webhook,
     drain_outbox,
     generate_deal_pdf,
+    generate_quote_pdf,
     score_lead,
     send_email,
 )
@@ -69,6 +71,11 @@ async def _startup(ctx: dict) -> None:
     safe (no fresh-pool-per-job overhead)."""
     settings = get_settings()
     engine = create_async_engine(settings.runtime_database_url, echo=False, future=True)
+    # Transaction-scoped RLS GUC: jobs call `set_current_org_id(...)` and
+    # this re-applies `app.current_org_id` (SET LOCAL) at every txn begin,
+    # so a connection-scoped GUC can't linger on a pooled connection and
+    # leak one job's tenant into a later job that reuses it.
+    register_org_guc(engine)
     ctx["engine"] = engine
     ctx["SessionLocal"] = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
 
@@ -83,7 +90,13 @@ class WorkerSettings:
     """Arq picks `functions`, `redis_settings`, `on_startup`,
     `on_shutdown`, `max_tries`, etc. off the class directly."""
 
-    functions: ClassVar = [score_lead, deliver_webhook, send_email, generate_deal_pdf]
+    functions: ClassVar = [
+        score_lead,
+        deliver_webhook,
+        send_email,
+        generate_deal_pdf,
+        generate_quote_pdf,
+    ]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1
     # request-latency-budget; the drain just needs to be fast enough

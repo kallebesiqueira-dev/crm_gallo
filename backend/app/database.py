@@ -1,6 +1,8 @@
+import uuid
 from collections.abc import AsyncGenerator
+from contextvars import ContextVar
 
-from sqlalchemy import event, text
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -14,6 +16,58 @@ settings = get_settings()
 
 engine = create_async_engine(settings.runtime_database_url, echo=False, future=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+
+# ---------- Transaction-scoped tenant GUC ----------
+# RLS policies read `app.current_org_id`. This MUST be applied as a
+# transaction-local setting (`set_config(..., true)` == SET LOCAL),
+# not a session/connection-level one, because:
+#   1. Routes commit mid-request. A connection-scoped GUC survives the
+#      commit on *that* connection, but `commit()` releases the
+#      connection back to the pool. The post-commit readback (e.g.
+#      `_get_quote_or_404`, `db.refresh()`) reacquires a possibly
+#      DIFFERENT pooled connection — one with no GUC (→ 404/empty) or,
+#      worse, another tenant's GUC (→ cross-tenant data leak). A
+#      concurrent repro showed 7/10 requests reading back the wrong org.
+#   2. A transaction-local GUC auto-clears at COMMIT/ROLLBACK, so it can
+#      never leak across pooled connections to a later request.
+#
+# Because SET LOCAL is wiped at every commit, we must re-apply it at the
+# start of *every* transaction. The request stashes its org in a
+# ContextVar (task-local, so isolated per request); the `begin` event
+# below re-reads it whenever SQLAlchemy opens a new DBAPI transaction
+# (including the autobegin after a mid-request commit). SQLAlchemy's
+# greenlet bridge copies the contextvars into the sync greenlet, so the
+# handler sees the value set on the async request task.
+current_org_id_ctx: ContextVar[str | None] = ContextVar("current_org_id", default=None)
+
+
+def set_current_org_id(org_id: uuid.UUID) -> None:
+    """Stash the tenant for the current task (request OR worker job) so
+    every transaction on that task re-applies the RLS GUC. Stored as a
+    string; the source is always a validated `uuid.UUID`, so it is safe
+    to inline into SQL."""
+    current_org_id_ctx.set(str(org_id))
+
+
+def register_org_guc(target_engine) -> None:
+    """Attach the transaction-begin GUC re-application to an engine's
+    sync_engine. Call once per engine. The FastAPI runtime engine is
+    wired below; the Arq worker builds its own engine and calls this in
+    its startup hook so background jobs get the same transaction-scoped
+    tenant isolation (no reliance on connection-scoped GUCs lingering on
+    pooled connections between jobs)."""
+
+    @event.listens_for(target_engine.sync_engine, "begin")
+    def _apply_org_guc(conn):
+        org = current_org_id_ctx.get()
+        if org:
+            # `org` is str(uuid.UUID) — no injection surface, so inlining
+            # is safe and sidesteps asyncpg paramstyle quirks here.
+            conn.exec_driver_sql(f"SELECT set_config('app.current_org_id', '{org}', true)")
+
+
+register_org_guc(engine)
 
 
 class Base(DeclarativeBase):
@@ -60,21 +114,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         try:
             yield session
         finally:
-            # Phase 6 RLS hygiene: clear the per-session GUC set by
-            # `get_current_org_id` so the next request that picks up
-            # this pooled connection starts with no implicit org
-            # context. The active request always sets it explicitly
-            # before any tenant-table query, so wiping here is
-            # belt-and-suspenders.
-            try:
-                await session.execute(text("SELECT set_config('app.current_org_id', '', false)"))
-                await session.commit()
-            except Exception as e:
-                # If the session is already in a broken state (e.g.
-                # rolled back by an earlier error), the reset is
-                # best-effort. Log so we notice if it happens often;
-                # the pool may discard the connection anyway, and any
-                # next request will overwrite the GUC.
-                import logging
-
-                logging.getLogger(__name__).warning("rls_guc_cleanup_failed: %s", e)
+            # The org GUC is now transaction-local (see
+            # `_apply_org_guc`), so it auto-clears at every commit /
+            # rollback and can't leak across pooled connections — no
+            # connection-level wipe needed. Reset the ContextVar so a
+            # later coroutine reusing this task's context starts with no
+            # implicit tenant.
+            current_org_id_ctx.set(None)
