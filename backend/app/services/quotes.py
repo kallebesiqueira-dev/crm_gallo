@@ -8,15 +8,17 @@ the worker and tests can call the same logic.
 from __future__ import annotations
 
 import uuid
+from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Quote
+from app.money import ZERO, q2
 
 
-def compute_line_total(quantity: float, unit_price: float) -> float:
-    return round(quantity * unit_price, 2)
+def compute_line_total(quantity: Decimal, unit_price: Decimal) -> Decimal:
+    return q2(quantity * unit_price)
 
 
 def recompute_totals(quote: Quote) -> None:
@@ -24,18 +26,20 @@ def recompute_totals(quote: Quote) -> None:
     place from `quote.line_items` and `quote.tax_rate`. Mutates the ORM
     objects; the caller owns the flush/commit.
 
-    `tax_rate` is a percentage (7.7 → 7.7%). Rounding is applied per line
-    and again on the tax so the printed numbers always add up.
+    All money is Decimal (ADR-015) — exact per-line rounding + exact
+    summation, no binary-float drift. `tax_rate` is a percentage
+    (7.7 → 7.7%). Rounding is applied per line and again on the tax so
+    the printed numbers always add up.
     """
-    subtotal = 0.0
+    subtotal = ZERO
     for item in quote.line_items:
         item.line_total = compute_line_total(item.quantity, item.unit_price)
         subtotal += item.line_total
-    subtotal = round(subtotal, 2)
-    tax_amount = round(subtotal * quote.tax_rate / 100.0, 2)
+    subtotal = q2(subtotal)
+    tax_amount = q2(subtotal * quote.tax_rate / Decimal(100))
     quote.subtotal = subtotal
     quote.tax_amount = tax_amount
-    quote.total = round(subtotal + tax_amount, 2)
+    quote.total = q2(subtotal + tax_amount)
 
 
 async def next_quote_number(db: AsyncSession, organization_id: uuid.UUID) -> str:

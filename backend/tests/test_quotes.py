@@ -9,6 +9,7 @@ endpoints through RLS as a logged-in user.
 from __future__ import annotations
 
 import uuid
+from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
@@ -20,30 +21,31 @@ from tests.conftest import CsrfAwareClient
 
 
 def test_compute_line_total_rounds_to_cents():
-    assert compute_line_total(3, 9.99) == 29.97
-    assert compute_line_total(1, 0.1 + 0.2) == 0.3  # float noise rounded away
+    assert compute_line_total(Decimal("3"), Decimal("9.99")) == Decimal("29.97")
+    # Decimal is exact — no float noise to round away in the first place.
+    assert compute_line_total(Decimal("1"), Decimal("0.1") + Decimal("0.2")) == Decimal("0.30")
 
 
 def test_recompute_totals_sums_lines_and_applies_tax():
-    quote = Quote(tax_rate=7.7)
+    quote = Quote(tax_rate=Decimal("7.7"))
     quote.line_items = [
-        QuoteLineItem(description="A", quantity=2, unit_price=250.0),
-        QuoteLineItem(description="B", quantity=1, unit_price=500.0),
+        QuoteLineItem(description="A", quantity=Decimal("2"), unit_price=Decimal("250.00")),
+        QuoteLineItem(description="B", quantity=Decimal("1"), unit_price=Decimal("500.00")),
     ]
     recompute_totals(quote)
-    assert quote.line_items[0].line_total == 500.0
-    assert quote.subtotal == 1000.0
-    assert quote.tax_amount == 77.0
-    assert quote.total == 1077.0
+    assert quote.line_items[0].line_total == Decimal("500.00")
+    assert quote.subtotal == Decimal("1000.00")
+    assert quote.tax_amount == Decimal("77.00")
+    assert quote.total == Decimal("1077.00")
 
 
 def test_recompute_totals_zero_tax_and_empty():
-    quote = Quote(tax_rate=0.0)
+    quote = Quote(tax_rate=Decimal("0"))
     quote.line_items = []
     recompute_totals(quote)
-    assert quote.subtotal == 0.0
-    assert quote.tax_amount == 0.0
-    assert quote.total == 0.0
+    assert quote.subtotal == Decimal("0.00")
+    assert quote.tax_amount == Decimal("0.00")
+    assert quote.total == Decimal("0.00")
 
 
 # ---------- helpers ----------

@@ -1,6 +1,7 @@
 import enum
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
@@ -10,6 +11,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     func,
@@ -342,7 +344,7 @@ class Lead(SoftDeleteMixin, Base):
     industry: Mapped[str | None] = mapped_column(String(120))
     country: Mapped[str | None] = mapped_column(String(2))
     company_size: Mapped[int | None] = mapped_column(Integer)
-    budget: Mapped[float | None] = mapped_column(Float)
+    budget: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     source: Mapped[str | None] = mapped_column(String(120))
     notes: Mapped[str | None] = mapped_column(Text)
 
@@ -416,7 +418,9 @@ class Deal(SoftDeleteMixin, Base):
         index=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    value: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    value: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), nullable=False
+    )
     currency: Mapped[Currency] = mapped_column(Enum(Currency), default=Currency.EUR, nullable=False)
     stage: Mapped[DealStage] = mapped_column(Enum(DealStage), default=DealStage.new, nullable=False)
     probability: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
@@ -501,12 +505,22 @@ class Quote(SoftDeleteMixin, Base):
     notes: Mapped[str | None] = mapped_column(Text)
 
     # Money columns are server-computed (recompute_totals in
-    # app/services/quotes.py). `tax_rate` is a percentage (e.g. 7.7 for
-    # Swiss VAT); tax_amount = round(subtotal * tax_rate / 100, 2).
-    subtotal: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    tax_rate: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    tax_amount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    total: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    # app/services/quotes.py). Stored as Numeric/Decimal — never float —
+    # so per-line rounding + summation are exact (ADR-015 / TD-30).
+    # `tax_rate` is a percentage (e.g. 7.700 for Swiss VAT);
+    # tax_amount = q2(subtotal * tax_rate / 100).
+    subtotal: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), nullable=False
+    )
+    tax_rate: Mapped[Decimal] = mapped_column(
+        Numeric(6, 3), default=Decimal("0"), nullable=False
+    )
+    tax_amount: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), nullable=False
+    )
+    total: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), nullable=False
+    )
 
     # Revision chain: the prior version points forward to its replacement.
     superseded_by: Mapped[uuid.UUID | None] = mapped_column(
@@ -560,10 +574,18 @@ class QuoteLineItem(Base):
         index=True,
     )
     description: Mapped[str] = mapped_column(String(500), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    # line_total = round(quantity * unit_price, 2); recomputed server-side.
-    line_total: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    # quantity allows fractional units (e.g. 2.5 hours); the money
+    # columns are Numeric/Decimal so quantity * unit_price is exact.
+    quantity: Mapped[Decimal] = mapped_column(
+        Numeric(12, 3), default=Decimal("1"), nullable=False
+    )
+    unit_price: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), nullable=False
+    )
+    # line_total = q2(quantity * unit_price); recomputed server-side.
+    line_total: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), nullable=False
+    )
     sort_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     quote: Mapped[Quote] = relationship(back_populates="line_items")

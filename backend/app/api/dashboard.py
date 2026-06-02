@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
@@ -7,13 +8,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.deps import get_current_org_id, get_current_user
 from app.models import Customer, Deal, DealStage, Lead, LeadStage, Task, TaskStatus, User
+from app.money import ZERO, q2
 from app.schemas import DashboardStats
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
 # Rough conversion to EUR for quick pipeline-value approximation.
-# In production, fetch live rates and persist them.
-FX_TO_EUR = {"EUR": 1.0, "CHF": 1.04, "USD": 0.93, "GBP": 1.17}
+# In production, fetch live rates and persist them. Decimal so the
+# Numeric deal values (also Decimal) multiply without a float mix.
+FX_TO_EUR = {
+    "EUR": Decimal("1"),
+    "CHF": Decimal("1.04"),
+    "USD": Decimal("0.93"),
+    "GBP": Decimal("1.17"),
+}
 
 CLOSED_DEAL_STAGES = {DealStage.won, DealStage.lost}
 
@@ -79,9 +87,9 @@ async def stats(
             )
         )
     ).all()
-    pipeline_value = sum(
-        (value or 0) * FX_TO_EUR.get(currency.value, 1.0) for value, currency in open_deals
-    )
+    pipeline_value = ZERO
+    for value, currency in open_deals:
+        pipeline_value += (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
 
     return DashboardStats(
         total_leads=total_leads,
@@ -92,6 +100,6 @@ async def stats(
         avg_ai_score=float(avg_score) if avg_score is not None else None,
         total_customers=total_customers,
         total_deals=total_deals,
-        pipeline_value_eur=round(pipeline_value, 2),
+        pipeline_value_eur=float(q2(pipeline_value)),
         open_tasks=open_tasks,
     )

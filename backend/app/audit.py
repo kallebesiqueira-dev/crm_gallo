@@ -2,6 +2,7 @@
 
 import json
 import uuid
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,8 @@ log = get_logger(__name__)
 def _to_jsonable(value: Any) -> Any:
     if isinstance(value, uuid.UUID):
         return str(value)
+    if isinstance(value, Decimal):
+        return float(value)
     if hasattr(value, "isoformat"):
         return value.isoformat()
     if hasattr(value, "value"):  # enum

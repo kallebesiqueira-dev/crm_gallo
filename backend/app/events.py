@@ -20,6 +20,7 @@ from __future__ import annotations
 import enum
 import json
 import uuid
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,6 +71,8 @@ class EventType(str, enum.Enum):
 def _to_jsonable(value: Any) -> Any:
     if isinstance(value, uuid.UUID):
         return str(value)
+    if isinstance(value, Decimal):
+        return float(value)
     if hasattr(value, "isoformat"):
         return value.isoformat()
     if hasattr(value, "value"):  # enum

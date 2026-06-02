@@ -442,7 +442,7 @@ Items below are real debt, not new features. Listed once so we stop re-discoveri
 | TD-27 | Frontend reads recharts at request time; no SSR-safe wrapper — large bundle on first dashboard hit | M | P2 (dynamic import) |
 | TD-28 | `starlette==0.49.3` still has PYSEC-2026-161 (fixed in 1.0.1). Needs `fastapi>=0.131` to allow `starlette>=1.0` — bigger bump than the 2026-06-01 security round; revisit when next FastAPI bump happens. Currently ignored in CI `pip-audit` with comment. | S | P1 (next dep round) |
 | TD-29 | `pytest==8.3.3` has GHSA-6w46-j5rx-g56g (tmp-dir DoS on shared runners). Fixed in 9.0.3 but `pytest-asyncio==0.24.0` is incompatible with pytest 9; need to bump both together. Dev-only; ignored in CI `pip-audit`. | S | P2 |
-| TD-30 | **Money stored as `float`** (`billing/catalog.py` `monthly_eur: float`; audit `Deal.value` + any amount column). Binary floats can't represent cents exactly — sums drift, rounding bugs in a paid CRM kill credibility. | S | P1 (integer minor units or `Numeric`) — see ADR-015 |
+| TD-30 | ~~**Money stored as `float`**.~~ **DONE 2026-06-02 (ADR-015).** All 9 money columns (`leads.budget`, `deals.value`, `quotes.{subtotal,tax_rate,tax_amount,total}`, `quote_line_items.{quantity,unit_price,line_total}`) migrated `double precision → Numeric` (hand-written migration `d9f1a2b3c4e5`). Models `Mapped[Decimal]`; `app/money.py` helper (`q2` half-up, `ZERO`); quote totals + `billing/catalog.py` + dashboard FX now exact Decimal arithmetic. Strategy: **Decimal in / float out** — input schemas use `Decimal` (Pydantic routes JSON float→Decimal via str, no binary tail), output schemas keep `float` so JSON stays clean numbers (frontend untouched). `audit.py`/`events.py` `_to_jsonable` gained a `Decimal→float` branch. Smoke: 3×9.99 + 1.5×10.10 @7.7% → 45.12/3.47/48.59 exact. 111/111. | S | ✅ |
 | TD-31 | **`crm_app` DB password hardcoded** in a migration (`crm_app_dev_2026`). Must rotate via `ALTER ROLE` + secrets manager before any non-local deploy; update `APP_DATABASE_URL`. | S | P0 (deploy blocker) |
 | TD-32 | **Customer PII sent to Anthropic (US)** for scoring/summary/RAG. Conflicts with the EU/Swiss data-residency selling point + GDPR Art. 44+ transfer. No redaction, no EU-region option, no per-tenant opt-out to local Ollama. | M | P1 — see ADR-014 |
 | TD-33 | **GDPR erasure vs soft-delete vs append-only audit**: soft-deleted rows and immutable `audit_logs`/`activities` still hold PII. "Right to erasure" needs a hard-delete/anonymize path that keeps the immutable trail intact (opaque actor id + erase the PII projection). | M | P1 (before GDPR endpoints) |
@@ -548,10 +548,10 @@ Compact ADRs. Add one whenever you make a non-obvious technical choice.
 **Consequence:** Scoring/summary/RAG prompts need a redaction pass + a provider router keyed on the org policy. Local-Ollama tenants get lower AI quality — surface that trade-off in the plan. Also defend RAG against prompt injection on user-uploaded docs.
 
 ### ADR-015 — Money as integer minor units, never float
-**Date:** 2026-06-01 (proposed)
-**Decision:** Store every monetary amount (deal value, plan prices, invoice lines) as integer minor units (cents) or `Numeric(12,2)` — never `float`. Carry an explicit ISO-4217 `currency` next to every amount.
-**Why:** Binary floats can't represent `0.10` exactly; sums drift and rounding bugs in money destroy trust in a paid CRM. `catalog.py` currently types prices as `float` (TD-30).
-**Consequence:** A migration to convert existing amount columns + a small money helper for parse/format. Multi-currency (CHF/GBP) then becomes a column add, not a refactor.
+**Date:** 2026-06-01 (proposed) → **ACCEPTED & IMPLEMENTED 2026-06-02 (TD-30)**
+**Decision:** Store every monetary amount (deal value, plan prices, invoice/quote lines) as `Numeric(12,2)` (rate/quantity scales differ) — never `float`. Carry an explicit ISO-4217 `currency` next to every amount.
+**Why:** Binary floats can't represent `0.10` exactly; sums drift and rounding bugs in money destroy trust in a paid CRM.
+**Consequence:** Migration `d9f1a2b3c4e5` converted all 9 amount columns; `app/money.py` (`q2` half-up + `ZERO`) is the shared helper. Wire format = **Decimal in / float out** (Pydantic float→Decimal goes via str so no binary tail; output stays clean JSON numbers). Multi-currency (CHF/GBP) is now a column add, not a refactor.
 
 ### ADR-016 — E-signature via a qualified EU/CH provider, not homegrown
 **Date:** 2026-06-01 (proposed)

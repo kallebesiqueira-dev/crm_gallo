@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -474,7 +475,9 @@ class LeadBase(BaseModel):
     industry: str | None = None
     country: str | None = Field(default=None, max_length=2)
     company_size: int | None = Field(default=None, ge=0)
-    budget: float | None = Field(default=None, ge=0)
+    # Money in → Decimal (Pydantic routes the JSON number through str, so
+    # no float tail). LeadOut re-declares it as float for clean JSON out.
+    budget: Decimal | None = Field(default=None, ge=0)
     source: str | None = None
     notes: str | None = None
     stage: LeadStage = LeadStage.new
@@ -494,7 +497,7 @@ class LeadUpdate(BaseModel):
     industry: str | None = None
     country: str | None = None
     company_size: int | None = None
-    budget: float | None = None
+    budget: Decimal | None = None
     source: str | None = None
     notes: str | None = None
     stage: LeadStage | None = None
@@ -504,6 +507,8 @@ class LeadUpdate(BaseModel):
 
 class LeadOut(LeadBase):
     model_config = ConfigDict(from_attributes=True)
+    # Float purely as JSON transport of the already-exact Numeric value.
+    budget: float | None = None
     id: uuid.UUID
     owner_id: uuid.UUID | None
     team_id: uuid.UUID | None = None
@@ -570,7 +575,8 @@ class CustomerOut(CustomerBase):
 # ---------- Deals ----------
 class DealBase(BaseModel):
     title: Annotated[str, Field(min_length=1, max_length=255)]
-    value: float = 0.0
+    # Money in → Decimal; DealOut re-declares as float for JSON out.
+    value: Decimal = Field(default=Decimal("0"), ge=0)
     currency: Currency = Currency.EUR
     stage: DealStage = DealStage.new
     probability: Annotated[int, Field(ge=0, le=100)] = 10
@@ -586,7 +592,7 @@ class DealCreate(DealBase):
 
 class DealUpdate(BaseModel):
     title: str | None = None
-    value: float | None = None
+    value: Decimal | None = Field(default=None, ge=0)
     currency: Currency | None = None
     stage: DealStage | None = None
     probability: int | None = Field(default=None, ge=0, le=100)
@@ -600,6 +606,8 @@ class DealUpdate(BaseModel):
 
 class DealOut(DealBase):
     model_config = ConfigDict(from_attributes=True)
+    # Float purely as JSON transport of the already-exact Numeric value.
+    value: float = 0.0
     id: uuid.UUID
     owner_id: uuid.UUID | None
     team_id: uuid.UUID | None = None
@@ -624,8 +632,9 @@ class DealStageMove(BaseModel):
 # `*Out` schemas expose them; the `*In`/`Create`/`Update` schemas do not.
 class QuoteLineItemIn(BaseModel):
     description: Annotated[str, Field(min_length=1, max_length=500)]
-    quantity: float = 1.0
-    unit_price: float = 0.0
+    # Money/quantity in → Decimal so server-side line math is exact.
+    quantity: Decimal = Field(default=Decimal("1"), ge=0)
+    unit_price: Decimal = Field(default=Decimal("0"), ge=0)
     sort_index: int = 0
 
 
@@ -642,7 +651,7 @@ class QuoteLineItemOut(BaseModel):
 class QuoteCreate(BaseModel):
     title: Annotated[str, Field(min_length=1, max_length=255)]
     currency: Currency = Currency.EUR
-    tax_rate: Annotated[float, Field(ge=0, le=100)] = 0.0
+    tax_rate: Annotated[Decimal, Field(ge=0, le=100)] = Decimal("0")
     valid_until: date | None = None
     notes: str | None = None
     deal_id: uuid.UUID | None = None
@@ -659,7 +668,7 @@ class QuoteUpdate(BaseModel):
 
     title: str | None = Field(default=None, min_length=1, max_length=255)
     currency: Currency | None = None
-    tax_rate: float | None = Field(default=None, ge=0, le=100)
+    tax_rate: Decimal | None = Field(default=None, ge=0, le=100)
     valid_until: date | None = None
     notes: str | None = None
     deal_id: uuid.UUID | None = None

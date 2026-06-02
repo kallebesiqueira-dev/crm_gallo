@@ -12,12 +12,14 @@ without a deploy. Prices themselves stay tied to Stripe Price IDs.
 """
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 from app.config import get_settings
+from app.money import q2
 from app.models import BillingCycle, Plan
 
 FREE_SEAT_LIMIT = 2
-YEARLY_DISCOUNT = 0.20  # 20% off when paying annually
+YEARLY_DISCOUNT = Decimal("0.20")  # 20% off when paying annually
 TRIAL_DAYS_PREMIUM = 14  # Premium ships with a 14-day trial
 
 
@@ -26,7 +28,7 @@ class PlanDescriptor:
     id: Plan
     name: str
     tagline: str
-    monthly_eur: float
+    monthly_eur: Decimal  # exact money (ADR-015); PlanOut serializes to float
     seat_limit: int | None  # None = unlimited
     features: list[str] = field(default_factory=list)
     highlighted: bool = False
@@ -34,13 +36,13 @@ class PlanDescriptor:
     trial_days: int = 0
 
     @property
-    def yearly_eur_per_user(self) -> float:
+    def yearly_eur_per_user(self) -> Decimal:
         """Effective monthly price when paying annually."""
-        return round(self.monthly_eur * (1 - YEARLY_DISCOUNT), 2)
+        return q2(self.monthly_eur * (1 - YEARLY_DISCOUNT))
 
     @property
-    def yearly_total_eur(self) -> float:
-        return round(self.yearly_eur_per_user * 12, 2)
+    def yearly_total_eur(self) -> Decimal:
+        return q2(self.yearly_eur_per_user * 12)
 
 
 CATALOG: dict[Plan, PlanDescriptor] = {
@@ -48,7 +50,7 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         id=Plan.free,
         name="Free",
         tagline="Get started and validate with your team.",
-        monthly_eur=0.0,
+        monthly_eur=Decimal("0"),
         seat_limit=FREE_SEAT_LIMIT,
         features=[
             "Up to 2 users",
@@ -61,7 +63,7 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         id=Plan.standard,
         name="Standard",
         tagline="For growing sales teams.",
-        monthly_eur=19.00,
+        monthly_eur=Decimal("19.00"),
         seat_limit=None,
         features=[
             "Unlimited users",
@@ -79,7 +81,7 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         id=Plan.premium,
         name="Premium",
         tagline="For teams that scale with automation.",
-        monthly_eur=49.00,
+        monthly_eur=Decimal("49.00"),
         seat_limit=None,
         features=[
             "Everything in Standard",
