@@ -23,14 +23,39 @@ export const STATUS_VARIANT: Record<
 
 export default function QuotesPage() {
   const t = useTranslations("quotes");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const [quotes, setQuotes] = useState<Quote[] | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    api.listQuotes(token).then(setQuotes).catch(() => setQuotes([]));
+    api
+      .listQuotes(token)
+      .then((page) => {
+        setQuotes(page.items);
+        setCursor(page.next_cursor);
+        setHasMore(page.has_more);
+      })
+      .catch(() => setQuotes([]));
   }, []);
+
+  async function loadMore() {
+    const token = getToken();
+    if (!token || !cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await api.listQuotes(token, { cursor });
+      setQuotes((prev) => [...(prev ?? []), ...page.items]);
+      setCursor(page.next_cursor);
+      setHasMore(page.has_more);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -76,6 +101,14 @@ export default function QuotesPage() {
           )}
         </CardContent>
       </Card>
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button type="button" variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? tCommon("loading") : tCommon("loadMore")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

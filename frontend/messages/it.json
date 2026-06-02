@@ -350,7 +350,8 @@
     "cancel": "Annulla", "confirm": "Conferma", "confirmTitle": "Sei sicuro?",
     "confirmDelete": "Eliminare questo record? L'operazione è irreversibile.",
     "noPermission": "Non hai i permessi per farlo.",
-    "back": "Indietro", "saved": "Salvato"
+    "back": "Indietro", "saved": "Salvato",
+    "loadMore": "Carica altri"
   },
   "marketing": {
     "loginHeroTitle": "Chiudi più trattative con un copilota IA al tuo fianco.",

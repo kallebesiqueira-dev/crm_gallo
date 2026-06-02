@@ -30,7 +30,7 @@ export default function DashboardPage() {
     const token = getToken();
     if (!token) return;
     api.stats(token).then(setStats).catch(() => setStats(null));
-    api.listLeads(token).then(setLeads).catch(() => setLeads([]));
+    api.listAllLeads(token).then(setLeads).catch(() => setLeads([]));
   }, []);
 
   const moneyFmt = new Intl.NumberFormat(locale, {

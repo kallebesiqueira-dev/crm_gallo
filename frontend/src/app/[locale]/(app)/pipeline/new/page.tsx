@@ -44,7 +44,7 @@ export default function NewDealPage() {
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    api.listCustomers(token).then(setCustomers).catch(() => setCustomers([]));
+    api.listAllCustomers(token).then(setCustomers).catch(() => setCustomers([]));
   }, []);
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {

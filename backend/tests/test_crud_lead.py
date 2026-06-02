@@ -26,7 +26,7 @@ def test_lead_lifecycle(admin_client: CsrfAwareClient):
     # LIST — must include the new lead
     r = admin_client.get("/api/leads")
     assert r.status_code == 200
-    assert lead_id in {row["id"] for row in r.json()}
+    assert lead_id in {row["id"] for row in r.json()["items"]}
 
     # GET single
     r = admin_client.get(f"/api/leads/{lead_id}")
@@ -44,7 +44,7 @@ def test_lead_lifecycle(admin_client: CsrfAwareClient):
 
     # LIST — must NOT include the deleted lead (SoftDeleteMixin global filter)
     r = admin_client.get("/api/leads")
-    assert lead_id not in {row["id"] for row in r.json()}
+    assert lead_id not in {row["id"] for row in r.json()["items"]}
 
     # GET single — must 404 now (also filtered)
     r = admin_client.get(f"/api/leads/{lead_id}")
@@ -96,5 +96,5 @@ def test_lead_create_strips_organization_id_from_body(admin_client: CsrfAwareCli
         # the bogus one in the body. The endpoint doesn't return
         # organization_id, so the proof is that LIST sees the new row.
         new_id = r.json()["id"]
-        listed = admin_client.get("/api/leads").json()
+        listed = admin_client.get("/api/leads").json()["items"]
         assert new_id in {row["id"] for row in listed}

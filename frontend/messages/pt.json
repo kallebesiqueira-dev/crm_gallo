@@ -437,7 +437,8 @@
     "confirmDelete": "Apagar este registro? Esta ação não pode ser desfeita.",
     "noPermission": "Você não tem permissão para isso.",
     "back": "Voltar",
-    "saved": "Salvo"
+    "saved": "Salvo",
+    "loadMore": "Carregar mais"
   },
   "marketing": {
     "loginHeroTitle": "Feche mais negócios com um copiloto de IA do seu lado.",

@@ -354,7 +354,8 @@
     "cancel": "Annuler", "confirm": "Confirmer", "confirmTitle": "Êtes-vous sûr ?",
     "confirmDelete": "Supprimer cet enregistrement ? Cette action est irréversible.",
     "noPermission": "Vous n'avez pas la permission de faire cela.",
-    "back": "Retour", "saved": "Enregistré"
+    "back": "Retour", "saved": "Enregistré",
+    "loadMore": "Charger plus"
   },
   "marketing": {
     "loginHeroTitle": "Concluez plus d'affaires avec un copilote IA à vos côtés.",

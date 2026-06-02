@@ -30,16 +30,46 @@ export default function LeadsPage() {
   const confirm = useConfirm();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [q, setQ] = useState("");
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
     if (!token) return;
     const handle = setTimeout(() => {
-      api.listLeads(token, q || undefined).then(setLeads).catch(() => setLeads([]));
+      api
+        .listLeads(token, { q: q || undefined })
+        .then((page) => {
+          setLeads(page.items);
+          setCursor(page.next_cursor);
+          setHasMore(page.has_more);
+        })
+        .catch(() => {
+          setLeads([]);
+          setCursor(null);
+          setHasMore(false);
+        });
     }, 200);
     return () => clearTimeout(handle);
   }, [q]);
+
+  async function loadMore() {
+    const token = getToken();
+    if (!token || !cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await api.listLeads(token, { q: q || undefined, cursor });
+      setLeads((prev) => [...prev, ...page.items]);
+      setCursor(page.next_cursor);
+      setHasMore(page.has_more);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function handleDelete(lead: Lead) {
     const ok = await confirm({
@@ -155,6 +185,14 @@ export default function LeadsPage() {
           </table>
         )}
       </Card>
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button type="button" variant="outline" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? tCommon("loading") : tCommon("loadMore")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

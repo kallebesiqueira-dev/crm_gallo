@@ -24,7 +24,7 @@ def test_search_matches_first_name(admin_client):
         "/api/leads", json={"first_name": "Charles", "last_name": "Y"}
     ).raise_for_status()
 
-    rows = admin_client.get("/api/leads?q=beatrice").json()
+    rows = admin_client.get("/api/leads?q=beatrice").json()["items"]
     names = {r["first_name"] for r in rows}
     assert "Beatrice" in names
     assert "Charles" not in names
@@ -48,7 +48,7 @@ def test_search_matches_email(admin_client):
         },
     ).raise_for_status()
 
-    rows = admin_client.get("/api/leads?q=acmecorp").json()
+    rows = admin_client.get("/api/leads?q=acmecorp").json()["items"]
     assert {r["email"] for r in rows} >= {"founder@acmecorp.example"}
 
 
@@ -62,7 +62,7 @@ def test_search_matches_company(admin_client):
         json={"first_name": "Other", "last_name": "Probe", "company": "Initech"},
     ).raise_for_status()
 
-    rows = admin_client.get("/api/leads?q=globex").json()
+    rows = admin_client.get("/api/leads?q=globex").json()["items"]
     assert all(r["company"] == "Globex" for r in rows)
     assert len(rows) >= 1
 
@@ -77,13 +77,13 @@ def test_search_vector_updates_on_patch(admin_client):
         json={"first_name": "Patched", "last_name": "X", "company": "OldCo"},
     ).json()
 
-    assert admin_client.get("/api/leads?q=NewCo").json() == [] or all(
-        r["id"] != created["id"] for r in admin_client.get("/api/leads?q=NewCo").json()
+    assert admin_client.get("/api/leads?q=NewCo").json()["items"] == [] or all(
+        r["id"] != created["id"] for r in admin_client.get("/api/leads?q=NewCo").json()["items"]
     )
 
     admin_client.patch(f"/api/leads/{created['id']}", json={"company": "NewCo"}).raise_for_status()
 
-    rows = admin_client.get("/api/leads?q=NewCo").json()
+    rows = admin_client.get("/api/leads?q=NewCo").json()["items"]
     assert any(r["id"] == created["id"] for r in rows)
 
 
@@ -104,7 +104,7 @@ def test_search_websearch_AND_semantics(admin_client):
         json={"first_name": "OnlyCorp", "last_name": "Solo", "company": "Corp"},
     ).raise_for_status()
 
-    rows = admin_client.get("/api/leads?q=acme+corp").json()
+    rows = admin_client.get("/api/leads?q=acme+corp").json()["items"]
     # Two rows contain both "Acme" AND "Corp"; one row contains
     # only Corp (the OnlyCorp lead doesn't have "Acme" anywhere).
     # Use first_name uniqueness as a probe to spot the AND filter.
@@ -129,7 +129,7 @@ def test_search_cross_org_isolated(admin_client, db: Session, other_org):
     )
     db.commit()
 
-    rows = admin_client.get("/api/leads?q=UniqueWord123").json()
+    rows = admin_client.get("/api/leads?q=UniqueWord123").json()["items"]
     assert rows == []
 
 
@@ -145,6 +145,6 @@ def test_customers_search_smoke(admin_client):
         json={"first_name": "Cust", "last_name": "B", "company": "Pied Piper"},
     ).raise_for_status()
 
-    rows = admin_client.get("/api/customers?q=hooli").json()
+    rows = admin_client.get("/api/customers?q=hooli").json()["items"]
     assert any(r["company"] == "Hooli" for r in rows)
     assert all(r["company"] != "Pied Piper" for r in rows)

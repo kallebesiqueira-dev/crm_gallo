@@ -13,6 +13,7 @@ from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.models import Lead, LeadStage, User
 from app.notifications import NotificationType, notify
+from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
 from app.services.ai_scoring import score_lead
 
@@ -38,24 +39,18 @@ async def _get_lead_or_404(db: AsyncSession, lead_id: uuid.UUID, org_id: uuid.UU
     return lead
 
 
-@router.get("", response_model=list[LeadOut])
+@router.get("", response_model=CursorPage[LeadOut])
 async def list_leads(
     stage: LeadStage | None = None,
     team_id: uuid.UUID | None = Query(default=None, description="filter by team_id"),
     q: str | None = Query(default=None, description="search by name/email/company"),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    cursor: str | None = Query(default=None, description="opaque keyset cursor"),
     _: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
-) -> list[Lead]:
-    stmt = (
-        select(Lead)
-        .where(Lead.organization_id == org_id)
-        .order_by(Lead.created_at.desc())
-        .limit(limit)
-        .offset(offset)
-    )
+) -> CursorPage:
+    stmt = select(Lead).where(Lead.organization_id == org_id)
     if stage:
         stmt = stmt.where(Lead.stage == stage)
     if team_id is not None:
@@ -70,8 +65,7 @@ async def list_leads(
         stmt = stmt.where(
             sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
         )
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return await paginate(db, stmt, Lead, limit=limit, cursor=cursor)
 
 
 @router.post("", response_model=LeadOut, status_code=status.HTTP_201_CREATED)

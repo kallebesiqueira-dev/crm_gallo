@@ -349,7 +349,8 @@
     "cancel": "Annullar", "confirm": "Confermar", "confirmTitle": "Esas vus segir?",
     "confirmDelete": "Stizzar quest record? Quai na po betg vegnir revocà.",
     "noPermission": "Vus n'avais betg ils dretgs per quai.",
-    "back": "Enavos", "saved": "Memorisà"
+    "back": "Enavos", "saved": "Memorisà",
+    "loadMore": "Chargiar dapli"
   },
   "marketing": {
     "loginHeroTitle": "Serra dapli affars cun in copilot IA a tes maun.",

@@ -114,7 +114,7 @@ def test_get_and_list(admin_client):
 
     listed = admin_client.get("/api/quotes")
     assert listed.status_code == 200
-    assert any(item["id"] == q["id"] for item in listed.json())
+    assert any(item["id"] == q["id"] for item in listed.json()["items"])
 
 
 def test_update_draft_replaces_line_items_and_recomputes(admin_client):

@@ -350,7 +350,8 @@
     "cancel": "Cancelar", "confirm": "Confirmar", "confirmTitle": "¿Estás seguro?",
     "confirmDelete": "¿Eliminar este registro? Esta acción no se puede deshacer.",
     "noPermission": "No tienes permiso para hacer esto.",
-    "back": "Volver", "saved": "Guardado"
+    "back": "Volver", "saved": "Guardado",
+    "loadMore": "Cargar más"
   },
   "marketing": {
     "loginHeroTitle": "Cierra más negocios con un copiloto de IA a tu lado.",

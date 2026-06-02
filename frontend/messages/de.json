@@ -386,7 +386,8 @@
     "cancel": "Abbrechen", "confirm": "Bestätigen", "confirmTitle": "Sind Sie sicher?",
     "confirmDelete": "Diesen Datensatz löschen? Dies kann nicht rückgängig gemacht werden.",
     "noPermission": "Sie haben keine Berechtigung dafür.",
-    "back": "Zurück", "saved": "Gespeichert"
+    "back": "Zurück", "saved": "Gespeichert",
+    "loadMore": "Mehr laden"
   },
   "marketing": {
     "loginHeroTitle": "Schließen Sie mehr Deals — mit einem KI-Copiloten an Ihrer Seite.",

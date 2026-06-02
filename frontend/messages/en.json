@@ -437,7 +437,8 @@
     "confirmDelete": "Delete this record? This cannot be undone.",
     "noPermission": "You don't have permission to do this.",
     "back": "Back",
-    "saved": "Saved"
+    "saved": "Saved",
+    "loadMore": "Load more"
   },
   "marketing": {
     "loginHeroTitle": "Close more deals with an AI copilot at your side.",

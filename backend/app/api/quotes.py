@@ -28,6 +28,7 @@ from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.logging_setup import get_logger
 from app.models import Quote, QuoteLineItem, QuoteStatus, User
+from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import QuoteCreate, QuoteOut, QuoteUpdate
 from app.services.quotes import next_quote_number, recompute_totals
 
@@ -58,22 +59,21 @@ def _require_draft(quote: Quote) -> None:
         )
 
 
-@router.get("", response_model=list[QuoteOut])
+@router.get("", response_model=CursorPage[QuoteOut])
 async def list_quotes(
     status_filter: QuoteStatus | None = Query(default=None, alias="status"),
     deal_id: uuid.UUID | None = Query(default=None),
     customer_id: uuid.UUID | None = Query(default=None),
-    limit: int = Query(default=200, ge=1, le=500),
+    limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    cursor: str | None = Query(default=None, description="opaque keyset cursor"),
     _: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
-) -> list[Quote]:
+) -> CursorPage:
     stmt = (
         select(Quote)
         .where(Quote.organization_id == org_id)
         .options(selectinload(Quote.line_items))
-        .order_by(Quote.created_at.desc())
-        .limit(limit)
     )
     if status_filter is not None:
         stmt = stmt.where(Quote.status == status_filter)
@@ -81,8 +81,7 @@ async def list_quotes(
         stmt = stmt.where(Quote.deal_id == deal_id)
     if customer_id is not None:
         stmt = stmt.where(Quote.customer_id == customer_id)
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return await paginate(db, stmt, Quote, limit=limit, cursor=cursor)
 
 
 @router.post("", response_model=QuoteOut, status_code=status.HTTP_201_CREATED)

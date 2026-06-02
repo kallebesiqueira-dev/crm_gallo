@@ -81,7 +81,7 @@ For the user-facing story, see [README.md](README.md). This document is the engi
 *(nothing committed — pick the next P1 item)*
 
 ### ⏭️ Next milestone
-**P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking) and the **Transactional-email workstream** (DONE 2026-06-01, ADR-017 — provider abstraction + worker delivery + 7-locale templates; invites + reset now send for real). The **PDF foundation** (ADR-016, first slice) is now DONE (2026-06-02 — WeasyPrint render in the worker, deal-summary PDF stored as a FileAttachment; see §3 Documents). The remaining pre-paying-customer work is the rest of **Documents/Contracts** (versioned `Quote`/`Contract` entity + e-signature, ADR-016) and **cursor pagination** (TD-11). See §3 P1 + the gaps added 2026-06-01 (contracts, public API, omnichannel) and the new tech-debt rows TD-30…TD-41.
+**P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking) and the **Transactional-email workstream** (DONE 2026-06-01, ADR-017 — provider abstraction + worker delivery + 7-locale templates; invites + reset now send for real). The **PDF foundation** (ADR-016, first slice) is now DONE (2026-06-02 — WeasyPrint render in the worker, deal-summary PDF stored as a FileAttachment; see §3 Documents). Cursor pagination (TD-11) is now DONE (2026-06-02 — keyset on leads/customers/quotes). The remaining pre-paying-customer work is the rest of **Documents/Contracts** (`Contract` entity + e-signature via Skribble/Scrive, ADR-016). See §3 P1 + the gaps added 2026-06-01 (contracts, public API, omnichannel) and the new tech-debt rows TD-30…TD-41.
 
 ---
 
@@ -308,7 +308,7 @@ Auth is browser cookie + CSRF, which can't do server-to-server, and routes aren'
 - [ ] Defer dedicated search engine (Meilisearch/OpenSearch) until > 1M records or ranking matters
 
 #### Pagination + concurrency
-- [ ] **Cursor pagination** on every list endpoint (`?cursor=...&limit=50`). Limit/offset diverges under writes and is slow at offset > 10k.
+- [x] **Cursor pagination** (`?cursor=...&limit=50`) — **DONE 2026-06-02 (TD-11)** on the unbounded table lists (leads/customers/quotes); `app/pagination.py` keyset helper + `CursorPage` envelope. Kanban/calendar/trash deliberately stay full-fetch (they need the whole set). Limit/offset is gone from those three.
 - [x] **Optimistic locking on Deal (Phase 1)** — done 2026-06-01. Migration `4d3d59906702` adds `version int NOT NULL DEFAULT 0` to `deals`. `DealOut` exposes it. `PATCH /api/deals/{id}` and `POST /api/deals/{id}/move` accept `If-Match: <int>` header (RFC 7232 quoted form `"7"` also works), 412 Precondition Failed on mismatch, 400 on malformed value, and v1 leniency: missing header logs a warning but proceeds (gives the frontend a rollout window before strict mode). Server bumps `version += 1` on every successful mutation. Pytest 8 new (fresh deal starts at 0, no-header lenient path, correct match, stale 412, quoted form, malformed 400, /move also enforces, concurrent edit scenario one-wins-one-loses). 59/59 suite green.
 - [ ] **Optimistic locking on Task + Customer** — copy the Deal pattern + same migration shape. Not done yet because Deal is the highest-collision target (sales reps editing during meetings); Task/Customer follow.
 - [ ] **Strict mode**: flip `_check_if_match` to require the header once the frontend echoes `version` on every PATCH; currently logs `deal.if_match_missing` as the rollout signal.
@@ -423,7 +423,7 @@ Items below are real debt, not new features. Listed once so we stop re-discoveri
 | TD-8 | Customer summary LLM call lacks context | S | P2 |
 | TD-9 | Assistant chat no streaming, no history | M | P2 |
 | TD-10 | Audit log has no UI surface | M | P1 |
-| TD-11 | Lists paginate with `limit/offset` (slow > 10k, unstable under writes) | M | P1 (cursor) |
+| ~~TD-11~~ | ~~Lists paginate with `limit/offset`~~ — **DONE 2026-06-02.** Keyset (cursor) pagination on the unbounded table lists: **leads, customers, quotes**. `app/pagination.py` = `CursorPage[T]` envelope (`items`/`next_cursor`/`has_more`) + opaque base64 cursor of `(created_at, id)` + async `paginate()` using a row-value `tuple_(created_at,id) < cursor` keyset, order `created_at DESC, id DESC`, fetch `limit+1` to know `has_more` without a COUNT. Frontend: `Page<T>` type + `?cursor` arg + a "Load more" button (7-locale `common.loadMore`); analytics/dropdown consumers (dashboard, reports, pipeline/new) use new `listAllLeads`/`listAllCustomers` page-walking helpers so they still get every row. **Deliberately NOT paginated:** deals (kanban, sorted `stage,sort_index`), tasks (calendar, `due_date nullslast`), trash (polymorphic union) — they need full datasets. 5 tests in `test_pagination.py`; suite 116/116. HTTP-smoked: limit=2 → 2 pages descending no-overlap, bad cursor → 400. | M | ✅ |
 | ~~TD-12~~ | ~~No `version` column → concurrent edits on same Deal silently overwrite~~ — **DONE 2026-06-01** (Deal only; Task/Customer follow). | S | ~~P1~~ |
 | ~~TD-13~~ | ~~Search uses `LOWER(...) LIKE '%q%'` → full table scan~~ — **DONE 2026-06-01** (FTS via stored tsvector + GIN on leads + customers; email pre-tokenized via regex). pg_trgm fuzzy match deferred to P2. | S | ~~P1~~ |
 | ~~TD-14~~ | ~~No background worker — AI scoring blocks the API request~~ — **DONE 2026-06-01** (Arq `worker` service; `score_lead` / `drain_outbox` / `deliver_webhook` jobs). | M | ~~P1~~ |
@@ -735,7 +735,7 @@ Hard gate. Don't open `crm.<customer-domain>.com` to a paying customer until eve
 - [ ] Alert on p95 latency regression + error rate > 1%
 
 ### Data
-- [ ] Cursor pagination on every list (TD-11)
+- [x] Cursor pagination on the unbounded table lists — leads/customers/quotes (TD-11, done 2026-06-02)
 - [ ] tsvector + GIN index on Lead/Customer search fields (TD-13)
 - [ ] Composite indices starting with `organization_id` on every tenant table
 - [ ] No N+1 on detail pages (eager-load `owner`, `customer`, recent activities)

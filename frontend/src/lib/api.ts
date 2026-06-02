@@ -546,6 +546,14 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
+// Keyset-paginated list envelope (TD-11). `next_cursor` is an opaque
+// token; pass it back verbatim to fetch the next page.
+export interface Page<T> {
+  items: T[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
 export const api = {
   async login(email: string, password: string): Promise<LoginResponse> {
     const body = new URLSearchParams({ username: email, password });
@@ -807,8 +815,25 @@ export const api = {
     request<void>("/api/auth/logout", { method: "POST", token }),
 
   // Leads
-  listLeads: (token: string, q?: string) =>
-    request<Lead[]>(`/api/leads${q ? `?q=${encodeURIComponent(q)}` : ""}`, { token }),
+  listLeads: (token: string, opts?: { q?: string; cursor?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (opts?.q) params.set("q", opts.q);
+    if (opts?.cursor) params.set("cursor", opts.cursor);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    return request<Page<Lead>>(`/api/leads${qs ? `?${qs}` : ""}`, { token });
+  },
+  // Walk every page — for analytics/exports that genuinely need all rows.
+  listAllLeads: async (token: string, opts?: { q?: string }): Promise<Lead[]> => {
+    const all: Lead[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await api.listLeads(token, { ...opts, cursor, limit: 200 });
+      all.push(...page.items);
+      cursor = page.next_cursor ?? undefined;
+    } while (cursor);
+    return all;
+  },
   createLead: (token: string, payload: Partial<Lead>) =>
     request<Lead>("/api/leads", { method: "POST", token, body: JSON.stringify(payload) }),
   getLead: (token: string, id: string) => request<Lead>(`/api/leads/${id}`, { token }),
@@ -820,8 +845,24 @@ export const api = {
     request<void>(`/api/leads/${id}`, { method: "DELETE", token }),
 
   // Customers
-  listCustomers: (token: string, q?: string) =>
-    request<Customer[]>(`/api/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`, { token }),
+  listCustomers: (token: string, opts?: { q?: string; cursor?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (opts?.q) params.set("q", opts.q);
+    if (opts?.cursor) params.set("cursor", opts.cursor);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    return request<Page<Customer>>(`/api/customers${qs ? `?${qs}` : ""}`, { token });
+  },
+  listAllCustomers: async (token: string, opts?: { q?: string }): Promise<Customer[]> => {
+    const all: Customer[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await api.listCustomers(token, { ...opts, cursor, limit: 200 });
+      all.push(...page.items);
+      cursor = page.next_cursor ?? undefined;
+    } while (cursor);
+    return all;
+  },
   createCustomer: (token: string, payload: Partial<Customer>) =>
     request<Customer>("/api/customers", { method: "POST", token, body: JSON.stringify(payload) }),
   getCustomer: (token: string, id: string) => request<Customer>(`/api/customers/${id}`, { token }),
@@ -870,14 +911,22 @@ export const api = {
   // Quotes (versioned proposals — ADR-016)
   listQuotes: (
     token: string,
-    opts?: { status?: QuoteStatus; deal_id?: string; customer_id?: string },
+    opts?: {
+      status?: QuoteStatus;
+      deal_id?: string;
+      customer_id?: string;
+      cursor?: string;
+      limit?: number;
+    },
   ) => {
     const params = new URLSearchParams();
     if (opts?.status) params.set("status", opts.status);
     if (opts?.deal_id) params.set("deal_id", opts.deal_id);
     if (opts?.customer_id) params.set("customer_id", opts.customer_id);
+    if (opts?.cursor) params.set("cursor", opts.cursor);
+    if (opts?.limit) params.set("limit", String(opts.limit));
     const qs = params.toString();
-    return request<Quote[]>(`/api/quotes${qs ? `?${qs}` : ""}`, { token });
+    return request<Page<Quote>>(`/api/quotes${qs ? `?${qs}` : ""}`, { token });
   },
   getQuote: (token: string, id: string) => request<Quote>(`/api/quotes/${id}`, { token }),
   createQuote: (token: string, payload: QuoteCreate) =>

@@ -10,6 +10,7 @@ from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.models import Customer, User
+from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import CustomerCreate, CustomerOut, CustomerUpdate
 from app.services.ai_assistant import summarize_customer
 
@@ -33,22 +34,16 @@ async def _get_customer_or_404(
     return customer
 
 
-@router.get("", response_model=list[CustomerOut])
+@router.get("", response_model=CursorPage[CustomerOut])
 async def list_customers(
     q: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    cursor: str | None = Query(default=None, description="opaque keyset cursor"),
     _: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
-) -> list[Customer]:
-    stmt = (
-        select(Customer)
-        .where(Customer.organization_id == org_id)
-        .order_by(Customer.created_at.desc())
-        .limit(limit)
-        .offset(offset)
-    )
+) -> CursorPage:
+    stmt = select(Customer).where(Customer.organization_id == org_id)
     if q:
         # FTS via the stored search_vector column + GIN index
         # (migration 062fbc7b628d). Same pattern as leads — see
@@ -56,8 +51,7 @@ async def list_customers(
         stmt = stmt.where(
             sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
         )
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return await paginate(db, stmt, Customer, limit=limit, cursor=cursor)
 
 
 @router.post("", response_model=CustomerOut, status_code=status.HTTP_201_CREATED)

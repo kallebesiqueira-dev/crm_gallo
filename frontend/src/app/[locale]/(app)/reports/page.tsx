@@ -42,7 +42,7 @@ export default function ReportsPage() {
     Promise.all([
       api.stats(token).catch(() => null),
       api.listDeals(token).catch(() => []),
-      api.listLeads(token).catch(() => []),
+      api.listAllLeads(token).catch(() => []),
     ]).then(([s, d, l]) => {
       setStats(s);
       setDeals(d ?? []);
