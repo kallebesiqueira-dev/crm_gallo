@@ -120,6 +120,22 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_use_tls: bool = True
 
+    # ---- E-signature (ADR-016) ----
+    # Which signing backend `app.signing.get_provider()` selects. `manual`
+    # is the dev/low-stakes default: it signs in-app via an opaque token
+    # link and needs zero vendor config, so a fresh clone has a working
+    # signing flow. Switch to `skribble` / `scrive` (QES/eIDAS) for
+    # legally-binding signatures — those adapters need a vendor account.
+    signing_provider: str = "manual"  # manual | skribble | scrive
+    # Vendor API credentials for the real providers. Empty → that provider
+    # raises a clear "not configured" error instead of half-working.
+    skribble_api_key: str = ""
+    scrive_api_key: str = ""
+    # HMAC secret the inbound signature webhook verifies (vendor-configured
+    # signing secret). Empty → the webhook returns 503 (not configured)
+    # rather than accepting unverified state changes.
+    signing_webhook_secret: str = ""
+
     @property
     def runtime_database_url(self) -> str:
         """URL the FastAPI process should connect with. Defaults to the

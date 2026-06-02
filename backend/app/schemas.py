@@ -12,6 +12,7 @@ from app.models import (
     LeadStage,
     Plan,
     QuoteStatus,
+    SignatureStatus,
     TaskPriority,
     TaskStatus,
     UserRole,
@@ -701,6 +702,71 @@ class QuoteOut(BaseModel):
     line_items: list[QuoteLineItemOut] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+
+# ---------- E-signature (ADR-016) ----------
+class SignatureRequestCreate(BaseModel):
+    """Raise a signing envelope against a quote. The quote must be `sent`
+    (you sign a delivered proposal, not a draft). The provider is taken
+    from server config, never the client."""
+
+    quote_id: uuid.UUID
+    signer_name: Annotated[str, Field(min_length=1, max_length=255)]
+    signer_email: EmailStr
+    message: str | None = Field(default=None, max_length=2000)
+
+
+class SignatureSignIn(BaseModel):
+    """Payload the manual in-app signer submits. The typed full name is the
+    consent record; IP / user-agent are captured server-side from the
+    request, never trusted from the body."""
+
+    typed_name: Annotated[str, Field(min_length=1, max_length=255)]
+
+
+class SignatureDeclineIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=2000)
+
+
+class SignatureRequestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    quote_id: uuid.UUID
+    provider: str
+    status: SignatureStatus
+    signer_name: str
+    signer_email: str
+    message: str | None
+    external_id: str | None
+    document_attachment_id: uuid.UUID | None
+    signed_document_key: str | None
+    owner_id: uuid.UUID | None
+    sent_at: datetime | None
+    viewed_at: datetime | None
+    signed_at: datetime | None
+    declined_at: datetime | None
+    decline_reason: str | None
+    created_at: datetime
+    updated_at: datetime
+    # Where the signer goes to sign. Only meaningful for the manual
+    # provider (built from `sign_token`); real providers return their own
+    # hosted URL. Not an ORM column — set by the handler, so it defaults to
+    # None when absent and never trips `from_attributes`.
+    signing_url: str | None = None
+
+
+class SignatureSignContext(BaseModel):
+    """The minimal, unauthenticated view the signer sees on the signing
+    page — no internal ids, owners, or org plumbing. Marks the request
+    `viewed` as a side effect of being fetched."""
+
+    status: SignatureStatus
+    signer_name: str
+    quote_number: str
+    quote_title: str
+    quote_total: float
+    quote_currency: Currency
+    organization_name: str
 
 
 # ---------- Tasks ----------

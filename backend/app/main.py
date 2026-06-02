@@ -29,6 +29,7 @@ from app.api import (
     outbox,
     pipelines,
     quotes,
+    signatures,
     tasks,
     teams,
     trash,
@@ -271,6 +272,7 @@ app.include_router(leads.router)
 app.include_router(customers.router)
 app.include_router(deals.router)
 app.include_router(quotes.router)
+app.include_router(signatures.router)
 app.include_router(tasks.router)
 app.include_router(dashboard.router)
 app.include_router(assistant.router)

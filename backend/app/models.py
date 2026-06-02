@@ -88,6 +88,30 @@ class QuoteStatus(str, enum.Enum):
     expired = "expired"
 
 
+class SignatureStatus(str, enum.Enum):
+    """Lifecycle of an e-signature request / envelope (ADR-016).
+
+    State machine (enforced in `app/api/signatures.py`):
+        drafted ──send──▶ sent ──view──▶ viewed ──sign──▶ signed (terminal)
+                            │               │
+                            └────decline────┴──▶ declined (terminal)
+        (drafted|sent|viewed) ──cancel──▶ cancelled (terminal)
+
+    `signed` is the completion state — all required parties have signed.
+    A separate `countersigned` is reserved for a future counter-signature
+    step (org signs after the customer) and is not yet reachable, mirroring
+    how `QuoteStatus.expired` is declared ahead of its transition.
+    """
+
+    drafted = "drafted"
+    sent = "sent"
+    viewed = "viewed"
+    signed = "signed"
+    countersigned = "countersigned"
+    declined = "declined"
+    cancelled = "cancelled"
+
+
 class Plan(str, enum.Enum):
     free = "free"
     standard = "standard"
@@ -589,6 +613,92 @@ class QuoteLineItem(Base):
     sort_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     quote: Mapped[Quote] = relationship(back_populates="line_items")
+
+
+class SignatureRequest(SoftDeleteMixin, Base):
+    """An e-signature envelope raised against a Quote (ADR-016).
+
+    A request asks one external signer (the customer) to sign a document —
+    here, a sent quote. Signing is delegated to a `SignatureProvider`
+    (`app/signing/providers.py`): the dev/low-stakes `manual` provider signs
+    in-app via an opaque `sign_token` link; the `skribble`/`scrive` adapters
+    delegate to a QES/eIDAS vendor and report completion back through the
+    inbound webhook receiver. A homegrown click-to-accept is NOT a qualified
+    signature — the provider seam is what keeps the upgrade to QES a config
+    change, not a rewrite.
+
+    Tenant-scoped with RLS + a denormalised `organization_id` (same invariant
+    as `quote_line_items` — every tenant table isolates at the row level
+    rather than via a join). Soft-deletable so it lands in the trash bin like
+    every other tenant entity.
+
+    Completion side effect: when the signer signs a request whose quote is
+    still `sent`, the quote transitions to `accepted` (a signed quote IS an
+    acceptance) — see `app/api/signatures.py`.
+    """
+
+    __tablename__ = "signature_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    quote_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quotes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Which backend owns this envelope. Captured at create time from
+    # settings.signing_provider so a later config switch doesn't strand
+    # in-flight envelopes on the wrong provider.
+    provider: Mapped[str] = mapped_column(String(40), nullable=False, default="manual")
+    status: Mapped[SignatureStatus] = mapped_column(
+        Enum(SignatureStatus), default=SignatureStatus.drafted, nullable=False
+    )
+
+    signer_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    signer_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Optional cover note shown to the signer.
+    message: Mapped[str | None] = mapped_column(Text)
+
+    # Provider-side envelope id (Skribble/Scrive). NULL for the manual
+    # provider, which is driven entirely by `sign_token`.
+    external_id: Mapped[str | None] = mapped_column(String(255), index=True)
+    # Opaque bearer token for the manual signing link — the token IS the
+    # credential (like an org-invite token), so the signer reaches the sign
+    # endpoint without an account. Unique; minted on send.
+    sign_token: Mapped[str | None] = mapped_column(String(64))
+
+    # The source document presented for signing (the quote PDF). SET NULL on
+    # attachment delete — the request stays as an audit record.
+    document_attachment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("file_attachments.id", ondelete="SET NULL")
+    )
+    # S3 key of the signed artifact + provider audit trail, set on completion
+    # (ADR-016: store the signed PDF / audit trail in S3).
+    signed_document_key: Mapped[str | None] = mapped_column(String(500))
+
+    # Signing-event audit trail (the legal record for the manual provider).
+    signed_ip: Mapped[str | None] = mapped_column(String(64))
+    signed_user_agent: Mapped[str | None] = mapped_column(String(400))
+    decline_reason: Mapped[str | None] = mapped_column(Text)
+
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    viewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    signed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    declined_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class Task(SoftDeleteMixin, Base):

@@ -67,6 +67,15 @@ class EventType(str, enum.Enum):
     quote_accepted = "quote.accepted"
     quote_declined = "quote.declined"
 
+    # E-signature lifecycle (ADR-016). `signature.signed` is the
+    # high-value completion trigger (it also flips the underlying quote to
+    # accepted); viewed/declined let automation react to signer behaviour.
+    signature_requested = "signature.requested"
+    signature_viewed = "signature.viewed"
+    signature_signed = "signature.signed"
+    signature_declined = "signature.declined"
+    signature_cancelled = "signature.cancelled"
+
 
 def _to_jsonable(value: Any) -> Any:
     if isinstance(value, uuid.UUID):
