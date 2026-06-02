@@ -66,6 +66,26 @@ class TaskPriority(str, enum.Enum):
     high = "high"
 
 
+class QuoteStatus(str, enum.Enum):
+    """Lifecycle of a quote/proposal (ADR-016).
+
+    State machine (enforced in `app/api/quotes.py`):
+        draft ──send──▶ sent ──accept──▶ accepted
+                          │  └─decline──▶ declined
+                          └────expire──▶ expired
+    `draft` is the only editable state. Once sent the document is
+    immutable — a "resend with changes" clones it into a new version
+    (the old row keeps its terminal state and points at the new one
+    via `superseded_by`).
+    """
+
+    draft = "draft"
+    sent = "sent"
+    accepted = "accepted"
+    declined = "declined"
+    expired = "expired"
+
+
 class Plan(str, enum.Enum):
     free = "free"
     standard = "standard"
@@ -432,6 +452,121 @@ class Deal(SoftDeleteMixin, Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class Quote(SoftDeleteMixin, Base):
+    """A versioned quote / proposal (ADR-016).
+
+    Polymorphic-ish links: a quote optionally hangs off a Deal and/or a
+    Customer (both nullable FK, SET NULL on delete) so it can be raised
+    from a pipeline deal or directly for a customer. Totals are computed
+    server-side from the line items (never trusted from the client).
+
+    Versioning: `number` is the human-facing identifier (e.g. `Q-000007`),
+    stable across revisions; `version` increments each time the quote is
+    re-issued. Re-issuing a `sent` quote clones it into `version + 1` as a
+    fresh `draft`; the prior row keeps its terminal status and sets
+    `superseded_by` to the new row. `(organization_id, number, version)`
+    is unique — never two live revisions with the same pair.
+
+    `draft` is the only mutable status; the state machine lives in
+    `app/api/quotes.py`. Soft-deletable like every tenant entity.
+    """
+
+    __tablename__ = "quotes"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    deal_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deals.id", ondelete="SET NULL"), index=True
+    )
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), index=True
+    )
+
+    number: Mapped[str] = mapped_column(String(40), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    status: Mapped[QuoteStatus] = mapped_column(
+        Enum(QuoteStatus), default=QuoteStatus.draft, nullable=False
+    )
+
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    currency: Mapped[Currency] = mapped_column(Enum(Currency), default=Currency.EUR, nullable=False)
+    valid_until: Mapped[date | None] = mapped_column(Date)
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    # Money columns are server-computed (recompute_totals in
+    # app/services/quotes.py). `tax_rate` is a percentage (e.g. 7.7 for
+    # Swiss VAT); tax_amount = round(subtotal * tax_rate / 100, 2).
+    subtotal: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    tax_rate: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    tax_amount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    total: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+
+    # Revision chain: the prior version points forward to its replacement.
+    superseded_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("quotes.id", ondelete="SET NULL")
+    )
+
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+
+    # Lifecycle timestamps — set as the quote transitions.
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    declined_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    line_items: Mapped[list["QuoteLineItem"]] = relationship(
+        back_populates="quote",
+        cascade="all, delete-orphan",
+        order_by="QuoteLineItem.sort_index",
+    )
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class QuoteLineItem(Base):
+    """A single line on a quote. Belongs to exactly one quote version —
+    cloning a quote into a new version deep-copies its line items.
+
+    Carries `organization_id` (denormalised from the parent quote) so it
+    can be RLS-scoped directly, keeping the "every tenant table enforces
+    org isolation at the row level" invariant rather than relying on the
+    join to `quotes` (avoids a TD-42-style gap). Not soft-deletable: a
+    line is part of an immutable sent document, or freely
+    editable/removable while the parent is still a draft.
+    """
+
+    __tablename__ = "quote_line_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    quote_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("quotes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    quantity: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
+    unit_price: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    # line_total = round(quantity * unit_price, 2); recomputed server-side.
+    line_total: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    sort_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    quote: Mapped[Quote] = relationship(back_populates="line_items")
 
 
 class Task(SoftDeleteMixin, Base):

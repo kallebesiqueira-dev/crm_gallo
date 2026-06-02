@@ -29,6 +29,7 @@ export type DealStage =
 export type Currency = "EUR" | "CHF" | "USD" | "GBP";
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high";
+export type QuoteStatus = "draft" | "sent" | "accepted" | "declined" | "expired";
 
 export interface Lead {
   id: string;
@@ -103,6 +104,70 @@ export interface Task {
   lead_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface QuoteLineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  sort_index: number;
+}
+
+/** A line item as sent to the server — no id / line_total (the
+ *  server computes totals and assigns ids). */
+export interface QuoteLineItemInput {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  sort_index?: number;
+}
+
+export interface Quote {
+  id: string;
+  number: string;
+  version: number;
+  status: QuoteStatus;
+  title: string;
+  currency: Currency;
+  valid_until: string | null;
+  notes: string | null;
+  deal_id: string | null;
+  customer_id: string | null;
+  owner_id: string | null;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  superseded_by: string | null;
+  sent_at: string | null;
+  accepted_at: string | null;
+  declined_at: string | null;
+  line_items: QuoteLineItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuoteCreate {
+  title: string;
+  currency?: Currency;
+  tax_rate?: number;
+  valid_until?: string | null;
+  notes?: string | null;
+  deal_id?: string | null;
+  customer_id?: string | null;
+  owner_id?: string | null;
+  line_items?: QuoteLineItemInput[];
+}
+
+export interface QuoteUpdate {
+  title?: string;
+  currency?: Currency;
+  tax_rate?: number;
+  valid_until?: string | null;
+  notes?: string | null;
+  line_items?: QuoteLineItemInput[];
 }
 
 export interface DashboardStats {
@@ -267,7 +332,7 @@ export interface Team {
 
 export interface FileAttachment {
   id: string;
-  entity_type: "lead" | "customer" | "deal";
+  entity_type: "lead" | "customer" | "deal" | "quote";
   entity_id: string;
   filename: string;
   content_type: string;
@@ -643,7 +708,7 @@ export const api = {
 
   // ---- File attachments (S3-backed) ----
   listAttachments: (
-    entity_type: "lead" | "customer" | "deal",
+    entity_type: "lead" | "customer" | "deal" | "quote",
     entity_id: string,
   ) => {
     const params = new URLSearchParams({ entity_type, entity_id });
@@ -801,6 +866,41 @@ export const api = {
     request<Task>(`/api/tasks/${id}`, { method: "PATCH", token, body: JSON.stringify(payload) }),
   deleteTask: (token: string, id: string) =>
     request<void>(`/api/tasks/${id}`, { method: "DELETE", token }),
+
+  // Quotes (versioned proposals — ADR-016)
+  listQuotes: (
+    token: string,
+    opts?: { status?: QuoteStatus; deal_id?: string; customer_id?: string },
+  ) => {
+    const params = new URLSearchParams();
+    if (opts?.status) params.set("status", opts.status);
+    if (opts?.deal_id) params.set("deal_id", opts.deal_id);
+    if (opts?.customer_id) params.set("customer_id", opts.customer_id);
+    const qs = params.toString();
+    return request<Quote[]>(`/api/quotes${qs ? `?${qs}` : ""}`, { token });
+  },
+  getQuote: (token: string, id: string) => request<Quote>(`/api/quotes/${id}`, { token }),
+  createQuote: (token: string, payload: QuoteCreate) =>
+    request<Quote>("/api/quotes", { method: "POST", token, body: JSON.stringify(payload) }),
+  updateQuote: (token: string, id: string, payload: QuoteUpdate) =>
+    request<Quote>(`/api/quotes/${id}`, { method: "PATCH", token, body: JSON.stringify(payload) }),
+  deleteQuote: (token: string, id: string) =>
+    request<void>(`/api/quotes/${id}`, { method: "DELETE", token }),
+  sendQuote: (token: string, id: string) =>
+    request<Quote>(`/api/quotes/${id}/send`, { method: "POST", token }),
+  acceptQuote: (token: string, id: string) =>
+    request<Quote>(`/api/quotes/${id}/accept`, { method: "POST", token }),
+  declineQuote: (token: string, id: string) =>
+    request<Quote>(`/api/quotes/${id}/decline`, { method: "POST", token }),
+  resendQuote: (token: string, id: string) =>
+    request<Quote>(`/api/quotes/${id}/resend`, { method: "POST", token }),
+  // Enqueues a PDF render (202). The worker attaches it to the quote,
+  // surfacing via listAttachments("quote", id). Returns {queued} flag.
+  generateQuotePdf: (token: string, id: string) =>
+    request<{ queued: boolean; job_id?: string; dedupe?: boolean }>(
+      `/api/quotes/${id}/pdf`,
+      { method: "POST", token },
+    ),
 
   // Dashboard
   stats: (token: string) => request<DashboardStats>("/api/dashboard/stats", { token }),

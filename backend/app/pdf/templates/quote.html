@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ number }} — {{ title }}{% endblock %}
+{% block doc_type %}Quote {{ number }}{% if version and version > 1 %} · v{{ version }}{% endif %}{% endblock %}
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p class="subtitle">{{ org_name }}{% if customer_name %} · {{ customer_name }}{% endif %}</p>
+
+  <table class="fields">
+    <tr>
+      <td class="label">Quote number</td>
+      <td class="value">{{ number }}{% if version and version > 1 %} (version {{ version }}){% endif %}</td>
+    </tr>
+    <tr>
+      <td class="label">Status</td>
+      <td class="value"><span class="pill">{{ status }}</span></td>
+    </tr>
+    {% if customer_name %}
+    <tr><td class="label">Customer</td><td class="value">{{ customer_name }}</td></tr>
+    {% endif %}
+    {% if owner_name %}
+    <tr><td class="label">Prepared by</td><td class="value">{{ owner_name }}</td></tr>
+    {% endif %}
+    {% if valid_until %}
+    <tr><td class="label">Valid until</td><td class="value">{{ valid_until }}</td></tr>
+    {% endif %}
+    <tr><td class="label">Issued</td><td class="value">{{ created_at }}</td></tr>
+  </table>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th class="desc">Description</th>
+        <th class="num">Qty</th>
+        <th class="num">Unit price</th>
+        <th class="num">Line total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in line_items %}
+      <tr>
+        <td class="desc">{{ item.description }}</td>
+        <td class="num">{{ "%g"|format(item.quantity) }}</td>
+        <td class="num">{{ item.unit_price|money(currency) }}</td>
+        <td class="num">{{ item.line_total|money(currency) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="totals">
+    <tr><td class="t-label">Subtotal</td><td class="t-value">{{ subtotal|money(currency) }}</td></tr>
+    <tr><td class="t-label">Tax ({{ "%g"|format(tax_rate) }}%)</td><td class="t-value">{{ tax_amount|money(currency) }}</td></tr>
+    <tr class="grand"><td class="t-label">Total</td><td class="t-value">{{ total|money(currency) }}</td></tr>
+  </table>
+
+  {% if notes %}
+  <h2 class="notes-h">Notes</h2>
+  <p class="notes">{{ notes }}</p>
+  {% endif %}
+
+  <style>
+    table.lines { width: 100%; border-collapse: collapse; margin: 8px 0 20px; }
+    table.lines th {
+      text-align: left; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.03em;
+      color: #64748b; border-bottom: 2px solid #e2e8f0; padding: 6px 8px;
+    }
+    table.lines td { padding: 7px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    table.lines th.num, table.lines td.num { text-align: right; white-space: nowrap; }
+    table.lines td.desc { width: 55%; }
+    table.totals { width: 50%; margin-left: auto; border-collapse: collapse; }
+    table.totals td { padding: 5px 8px; }
+    table.totals td.t-label { color: #64748b; }
+    table.totals td.t-value { text-align: right; font-weight: 500; white-space: nowrap; }
+    table.totals tr.grand td {
+      border-top: 2px solid #e2e8f0; font-size: 12pt; font-weight: 700; color: #4f46e5;
+    }
+    .notes-h { font-size: 11pt; margin: 24px 0 4px; color: #0f172a; }
+    .notes { color: #475569; font-size: 10pt; white-space: pre-line; }
+  </style>
+{% endblock %}

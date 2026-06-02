@@ -8,6 +8,7 @@ Generation runs in the worker (`generate_deal_pdf` job).
 
 from app.pdf.render import (
     TEMPLATE_DEAL_SUMMARY,
+    TEMPLATE_QUOTE,
     render_html,
     render_pdf,
 )
@@ -15,6 +16,7 @@ from app.pdf.store import store_pdf_attachment
 
 __all__ = [
     "TEMPLATE_DEAL_SUMMARY",
+    "TEMPLATE_QUOTE",
     "render_html",
     "render_pdf",
     "store_pdf_attachment",

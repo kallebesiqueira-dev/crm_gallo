@@ -57,6 +57,15 @@ class EventType(str, enum.Enum):
     deal_won = "deal.won"
     deal_lost = "deal.lost"
 
+    # Quote lifecycle (ADR-016). `quote.sent` is the customer-facing
+    # trigger (e-mail/PDF delivery); accepted/declined are the
+    # high-value outcome events, separate from a generic status_changed
+    # so automation can match the outcome directly.
+    quote_created = "quote.created"
+    quote_sent = "quote.sent"
+    quote_accepted = "quote.accepted"
+    quote_declined = "quote.declined"
+
 
 def _to_jsonable(value: Any) -> Any:
     if isinstance(value, uuid.UUID):

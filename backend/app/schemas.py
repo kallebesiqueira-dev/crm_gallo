@@ -10,6 +10,7 @@ from app.models import (
     DealStage,
     LeadStage,
     Plan,
+    QuoteStatus,
     TaskPriority,
     TaskStatus,
     UserRole,
@@ -614,6 +615,83 @@ class DealOut(DealBase):
 class DealStageMove(BaseModel):
     stage: DealStage
     sort_index: int = 0
+
+
+# ---------- Quotes ----------
+# Totals (line_total / subtotal / tax_amount / total) are NEVER accepted
+# from the client — the server recomputes them from the line items on
+# every create/update (see app/services/quotes.recompute_totals). The
+# `*Out` schemas expose them; the `*In`/`Create`/`Update` schemas do not.
+class QuoteLineItemIn(BaseModel):
+    description: Annotated[str, Field(min_length=1, max_length=500)]
+    quantity: float = 1.0
+    unit_price: float = 0.0
+    sort_index: int = 0
+
+
+class QuoteLineItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    description: str
+    quantity: float
+    unit_price: float
+    line_total: float
+    sort_index: int
+
+
+class QuoteCreate(BaseModel):
+    title: Annotated[str, Field(min_length=1, max_length=255)]
+    currency: Currency = Currency.EUR
+    tax_rate: Annotated[float, Field(ge=0, le=100)] = 0.0
+    valid_until: date | None = None
+    notes: str | None = None
+    deal_id: uuid.UUID | None = None
+    customer_id: uuid.UUID | None = None
+    owner_id: uuid.UUID | None = None
+    line_items: list[QuoteLineItemIn] = Field(default_factory=list)
+
+
+class QuoteUpdate(BaseModel):
+    """Draft-only edits. The route rejects edits to a non-draft quote
+    (a sent/accepted revision is immutable — resend creates a new
+    version instead). All fields optional; `line_items`, when provided,
+    fully replaces the existing set."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    currency: Currency | None = None
+    tax_rate: float | None = Field(default=None, ge=0, le=100)
+    valid_until: date | None = None
+    notes: str | None = None
+    deal_id: uuid.UUID | None = None
+    customer_id: uuid.UUID | None = None
+    owner_id: uuid.UUID | None = None
+    line_items: list[QuoteLineItemIn] | None = None
+
+
+class QuoteOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    number: str
+    version: int
+    status: QuoteStatus
+    title: str
+    currency: Currency
+    valid_until: date | None
+    notes: str | None
+    deal_id: uuid.UUID | None
+    customer_id: uuid.UUID | None
+    owner_id: uuid.UUID | None
+    subtotal: float
+    tax_rate: float
+    tax_amount: float
+    total: float
+    superseded_by: uuid.UUID | None
+    sent_at: datetime | None
+    accepted_at: datetime | None
+    declined_at: datetime | None
+    line_items: list[QuoteLineItemOut] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
 
 
 # ---------- Tasks ----------

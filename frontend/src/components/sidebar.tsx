@@ -28,7 +28,7 @@ const NAV = [
   { href: "pipeline", label: "pipeline", icon: Workflow },
   { href: "tasks", label: "tasks", icon: MessagesSquare },
   { href: "calendar", label: "calendar", icon: Calendar },
-  { href: "documents", label: "documents", icon: FileText },
+  { href: "quotes", label: "quotes", icon: FileText },
   { href: "assistant", label: "assistant", icon: Sparkles },
   { href: "reports", label: "reports", icon: BarChart3 },
   { href: "billing", label: "billing", icon: CreditCard },
