@@ -8,6 +8,12 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl \
+    # WeasyPrint runtime (ADR-016): Pango/HarfBuzz do text layout, the
+    # libjpeg/openjp2 pair lets embedded logos render, fonts-dejavu-core
+    # provides actual glyphs (without a font the PDF renders blank text),
+    # shared-mime-info lets WeasyPrint sniff embedded image types.
+    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b \
+    libjpeg62-turbo libopenjp2-7 shared-mime-info fonts-dejavu-core \
  && rm -rf /var/lib/apt/lists/* \
  && groupadd --system app && useradd --system --gid app --home /app appuser
 

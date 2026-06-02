@@ -18,6 +18,7 @@ blast radius per-org instead of per-install; the attachment UUID is
 the last segment so listing one entity's blobs is a single S3
 `list-objects-v2` with that prefix.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -29,7 +30,6 @@ from botocore.client import Config as BotoConfig
 from botocore.exceptions import ClientError
 
 from app.config import get_settings
-
 
 _settings = get_settings()
 _client = None
@@ -72,6 +72,7 @@ async def ensure_bucket() -> None:
     `BucketAlreadyExists` (someone-else-took-the-name; in real AWS
     this would 503 our deploy — for MinIO it's a no-op).
     """
+
     def _sync():
         s3 = _s3()
         try:
@@ -95,6 +96,7 @@ async def put_object(key: str, body: bytes | IO[bytes], content_type: str) -> No
     """Upload `body` to `key`. `content_type` controls what the
     presigned-download URL serves as Content-Type — important for
     inline-view of PDFs / images in the browser."""
+
     def _sync():
         _s3().put_object(
             Bucket=_settings.s3_bucket,
@@ -111,6 +113,7 @@ async def delete_object(key: str) -> None:
     delete endpoint — the DB row stays (audit + restore), the blob
     goes immediately to free storage. Trade-off: restore would
     require a fresh upload."""
+
     def _sync():
         _s3().delete_object(Bucket=_settings.s3_bucket, Key=key)
 
@@ -121,6 +124,7 @@ async def presigned_download_url(key: str, filename: str | None = None) -> str:
     """Time-limited URL the browser can hit directly to download the
     file. We override `Content-Disposition` so the browser uses the
     original filename instead of the opaque attachment UUID."""
+
     def _sync():
         params: dict[str, str] = {"Bucket": _settings.s3_bucket, "Key": key}
         if filename:
@@ -128,9 +132,7 @@ async def presigned_download_url(key: str, filename: str | None = None) -> str:
             # original name. Without it the browser saves as the
             # last path segment (the attachment UUID).
             safe = filename.replace('"', "")
-            params["ResponseContentDisposition"] = (
-                f'attachment; filename="{safe}"'
-            )
+            params["ResponseContentDisposition"] = f'attachment; filename="{safe}"'
         return _s3().generate_presigned_url(
             "get_object", Params=params, ExpiresIn=_settings.s3_download_url_ttl
         )

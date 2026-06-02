@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Deal summary — {{ deal_title }}{% endblock %}
+{% block doc_type %}Deal summary{% endblock %}
+{% block content %}
+  <h1>{{ deal_title }}</h1>
+  <p class="subtitle">{{ org_name }}{% if customer_name %} · {{ customer_name }}{% endif %}</p>
+
+  <p class="amount">{{ value|money(currency) }}</p>
+
+  <table class="fields">
+    <tr>
+      <td class="label">Stage</td>
+      <td class="value"><span class="pill">{{ stage }}</span></td>
+    </tr>
+    {% if customer_name %}
+    <tr><td class="label">Customer</td><td class="value">{{ customer_name }}</td></tr>
+    {% endif %}
+    {% if owner_name %}
+    <tr><td class="label">Owner</td><td class="value">{{ owner_name }}</td></tr>
+    {% endif %}
+    {% if expected_close_date %}
+    <tr><td class="label">Expected close</td><td class="value">{{ expected_close_date }}</td></tr>
+    {% endif %}
+    <tr><td class="label">Created</td><td class="value">{{ created_at }}</td></tr>
+    {% if description %}
+    <tr><td class="label">Description</td><td class="value">{{ description }}</td></tr>
+    {% endif %}
+  </table>
+{% endblock %}

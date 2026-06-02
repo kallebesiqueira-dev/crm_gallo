@@ -13,6 +13,7 @@ We filter by `organization_id == current_org_id` too so a user
 who switches orgs only sees bell items relevant to the active
 workspace — multi-org bell unification is a P3 product call.
 """
+
 from __future__ import annotations
 
 import uuid

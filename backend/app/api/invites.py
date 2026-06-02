@@ -28,6 +28,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import email as email_service
 from app.api.billing import can_accept_new_user
 from app.audit import record_audit
 from app.config import get_settings
@@ -165,16 +166,35 @@ async def create_invite(
     await db.commit()
     await db.refresh(invite)
 
-    # Real SMTP belongs to P1 auth hardening. Until then the invite URL
-    # is returned in the create response AND logged so an operator can
-    # tail the backend log to find it.
     url = _invite_url(invite.token)
+    # The URL is also returned in the create response AND logged, so an
+    # operator can always recover the link even if email delivery is
+    # down (console provider in dev, or a transient enqueue failure).
     log.info(
         "invite.dispatched",
         email=email,
         organization_id=str(org_id),
         invite_url=url,
     )
+
+    # Fire the invite email (ADR-017). Best-effort: a Redis/enqueue
+    # hiccup must not 500 the admin — the URL above is the fallback.
+    org = await db.get(Organization, org_id)
+    try:
+        await email_service.send(
+            to=email,
+            template=email_service.TEMPLATE_INVITE,
+            locale=user.locale,  # invitee locale is unknown; use inviter's
+            ctx={
+                "org_name": org.name if org else "",
+                "role": invite.role.value,
+                "url": url,
+                "expires_at": invite.expires_at.strftime("%Y-%m-%d"),
+            },
+            dedupe_key=f"invite:{invite.token}",
+        )
+    except Exception:
+        log.warning("invite.email_enqueue_failed", email=email, exc_info=True)
 
     out = InviteOut.model_validate(invite)
     out.invite_url = url

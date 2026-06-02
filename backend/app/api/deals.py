@@ -63,12 +63,41 @@ async def _get_deal_or_404(db: AsyncSession, deal_id: uuid.UUID, org_id: uuid.UU
     return deal
 
 
+@router.post("/{deal_id}/pdf", status_code=status.HTTP_202_ACCEPTED)
+async def generate_deal_pdf_endpoint(
+    deal_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Enqueue a deal-summary PDF (ADR-016) and return 202.
+
+    The worker renders the document and attaches it to the deal, so the
+    result shows up in `GET /api/attachments?entity_type=deal&...` and
+    downloads via the existing presigned-URL endpoint. Idempotent within
+    a 5-minute window — a double-click returns `{queued: false}`.
+    """
+    deal = await _get_deal_or_404(db, deal_id, org_id)
+    ensure_can_mutate(user, deal.owner_id)
+
+    from app.worker.queue import enqueue
+
+    job = await enqueue(
+        "generate_deal_pdf",
+        str(deal.id),
+        str(org_id),
+        dedupe_key=f"deal_pdf:{deal.id}",
+        dedupe_ttl_seconds=300,
+    )
+    if job is None:
+        return {"queued": False, "dedupe": True}
+    return {"queued": True, "job_id": job.job_id}
+
+
 @router.get("", response_model=list[DealOut])
 async def list_deals(
     stage: DealStage | None = None,
-    team_id: uuid.UUID | None = Query(
-        default=None, description="filter by team_id"
-    ),
+    team_id: uuid.UUID | None = Query(default=None, description="filter by team_id"),
     limit: int = Query(default=200, ge=1, le=500),
     _: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),

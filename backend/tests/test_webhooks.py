@@ -15,7 +15,6 @@ focus on:
 
 from __future__ import annotations
 
-import json
 import time
 import uuid
 
@@ -24,7 +23,6 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 from app.webhook_sign import generate_secret, sign_payload, verify_signature
-
 
 # ---------- Signing ----------
 
@@ -86,9 +84,7 @@ def test_admin_can_create_webhook_and_secret_returned_once(
     assert "secret" not in detail.json()
 
 
-def test_list_returns_only_own_org(
-    admin_client, admin_user: User, db: Session, other_org
-):
+def test_list_returns_only_own_org(admin_client, admin_user: User, db: Session, other_org):
     """A row in another org must not appear in admin's list."""
     db.execute(
         text(
@@ -108,33 +104,23 @@ def test_list_returns_only_own_org(
 
 def test_non_admin_cannot_create(other_client, other_user: User):
     """sales_agent gets 403 on POST."""
-    r = other_client.post(
-        "/api/webhooks", json={"url": "https://example.com/hook"}
-    )
+    r = other_client.post("/api/webhooks", json={"url": "https://example.com/hook"})
     assert r.status_code == 403
 
 
 def test_update_paused_toggle(admin_client):
-    create = admin_client.post(
-        "/api/webhooks", json={"url": "https://example.com/hook"}
-    ).json()
+    create = admin_client.post("/api/webhooks", json={"url": "https://example.com/hook"}).json()
 
-    paused = admin_client.patch(
-        f"/api/webhooks/{create['id']}", json={"paused": True}
-    ).json()
+    paused = admin_client.patch(f"/api/webhooks/{create['id']}", json={"paused": True}).json()
     assert paused["paused_at"] is not None
 
-    unpaused = admin_client.patch(
-        f"/api/webhooks/{create['id']}", json={"paused": False}
-    ).json()
+    unpaused = admin_client.patch(f"/api/webhooks/{create['id']}", json={"paused": False}).json()
     assert unpaused["paused_at"] is None
     assert unpaused["consecutive_failures"] == 0  # unpause resets counter
 
 
 def test_delete_webhook(admin_client):
-    create = admin_client.post(
-        "/api/webhooks", json={"url": "https://example.com/hook"}
-    ).json()
+    create = admin_client.post("/api/webhooks", json={"url": "https://example.com/hook"}).json()
     r = admin_client.delete(f"/api/webhooks/{create['id']}")
     assert r.status_code == 204
     assert admin_client.get(f"/api/webhooks/{create['id']}").status_code == 404
@@ -155,10 +141,7 @@ def test_cross_org_returns_404(admin_client, db: Session, other_org):
 
     assert admin_client.get(f"/api/webhooks/{foreign_id}").status_code == 404
     assert (
-        admin_client.patch(
-            f"/api/webhooks/{foreign_id}", json={"paused": True}
-        ).status_code
-        == 404
+        admin_client.patch(f"/api/webhooks/{foreign_id}", json={"paused": True}).status_code == 404
     )
 
 
@@ -219,9 +202,7 @@ def test_create_accepts_wildcard_and_known(admin_client):
 # ---------- Delivery row inspection ----------
 
 
-def test_deliveries_endpoint_returns_only_for_owned_endpoint(
-    admin_client, db: Session, other_org
-):
+def test_deliveries_endpoint_returns_only_for_owned_endpoint(admin_client, db: Session, other_org):
     foreign_id = str(uuid.uuid4())
     db.execute(
         text(

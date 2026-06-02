@@ -34,9 +34,7 @@ router = APIRouter(prefix="/api/outbox", tags=["outbox"])
 async def list_outbox(
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
-    status: (
-        Annotated[Literal["pending", "failed", "processed"], Query()] | None
-    ) = None,
+    status: (Annotated[Literal["pending", "failed", "processed"], Query()] | None) = None,
     event_type: str | None = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,

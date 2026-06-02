@@ -14,6 +14,7 @@ inside the same transaction. The order doesn't affect correctness
 (they all hit the same commit boundary) but keeps the audit ledger
 written first if anything in the outbox path raises.
 """
+
 from __future__ import annotations
 
 import enum

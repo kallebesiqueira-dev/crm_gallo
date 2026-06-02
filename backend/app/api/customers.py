@@ -54,8 +54,7 @@ async def list_customers(
         # (migration 062fbc7b628d). Same pattern as leads — see
         # the comment there.
         stmt = stmt.where(
-            sa.text("search_vector @@ websearch_to_tsquery('simple', :q)")
-            .bindparams(q=q)
+            sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
         )
     result = await db.execute(stmt)
     return list(result.scalars().all())

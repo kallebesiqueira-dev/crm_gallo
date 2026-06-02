@@ -81,7 +81,7 @@ class BillingCycle(str, enum.Enum):
 # (database.py needs the mixin class to wire its global filter event;
 # models.py needs Base from database.py). Re-exported here so any
 # existing `from app.models import SoftDeleteMixin` keeps working.
-from app.mixins import SoftDeleteMixin  # noqa: E402, F401
+from app.mixins import SoftDeleteMixin  # noqa: E402
 
 
 class Organization(Base):
@@ -848,9 +848,7 @@ class WebhookEndpoint(Base):
 
     __tablename__ = "webhook_endpoints"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("organizations.id", ondelete="CASCADE"),
@@ -865,23 +863,19 @@ class WebhookEndpoint(Base):
     # stays portable (sqlite for unit tests, etc).
     enabled_events: Mapped[str] = mapped_column(Text, nullable=False, default='["*"]')
     paused_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    consecutive_failures: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
+    consecutive_failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_failure_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class WebhookDelivery(Base):
     """One attempt to deliver one event to one endpoint.
 
-    Cardinality: N (events) × M (matching endpoints) × P (retries).
+    Cardinality: N (events) x M (matching endpoints) x P (retries).
     Useful for: "did my webhook fire for that lead?" triage in the
     admin UI, audit of what we tried to send, p95 latency tracking
     of receivers.
@@ -898,9 +892,7 @@ class WebhookDelivery(Base):
 
     __tablename__ = "webhook_deliveries"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     endpoint_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("webhook_endpoints.id", ondelete="CASCADE"),
@@ -943,9 +935,7 @@ class OutboxEvent(Base):
 
     __tablename__ = "outbox_events"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("organizations.id", ondelete="CASCADE"),

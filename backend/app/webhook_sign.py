@@ -12,13 +12,13 @@ sign with the current timestamp).
 `generate_secret()` produces a 64-hex (32 random bytes) token. Shown
 ONCE on endpoint create; never round-tripped on subsequent reads.
 """
+
 from __future__ import annotations
 
 import hashlib
 import hmac
 import secrets
 import time
-
 
 SIGNATURE_HEADER = "X-CRM-Signature"
 

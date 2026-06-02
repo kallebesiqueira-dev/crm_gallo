@@ -16,6 +16,7 @@ Round-robin assignment of new Leads/Deals to team members is a
 follow-up — needs a Redis cursor per team to remember "last
 assigned". Tracked in skills.md.
 """
+
 from __future__ import annotations
 
 import re
@@ -52,9 +53,7 @@ def _slugify(s: str) -> str:
     return out or "team"
 
 
-async def _get_team_or_404(
-    db: AsyncSession, team_id: uuid.UUID, org_id: uuid.UUID
-) -> Team:
+async def _get_team_or_404(db: AsyncSession, team_id: uuid.UUID, org_id: uuid.UUID) -> Team:
     result = await db.execute(
         select(Team).where(Team.id == team_id, Team.organization_id == org_id)
     )
@@ -76,8 +75,7 @@ async def _serialize(db: AsyncSession, team: Team) -> TeamOut:
         )
     ).all()
     members = [
-        TeamMemberOut(user_id=r.id, full_name=r.full_name, email=r.email, role=r.role)
-        for r in rows
+        TeamMemberOut(user_id=r.id, full_name=r.full_name, email=r.email, role=r.role) for r in rows
     ]
     return TeamOut(
         id=team.id,
@@ -100,9 +98,7 @@ async def list_teams(
     member rolls. Any org member can read — needed to render team
     chips on records."""
     result = await db.execute(
-        select(Team)
-        .where(Team.organization_id == org_id)
-        .order_by(Team.name.asc())
+        select(Team).where(Team.organization_id == org_id).order_by(Team.name.asc())
     )
     teams = list(result.scalars().all())
     return [await _serialize(db, t) for t in teams]
@@ -119,11 +115,7 @@ async def create_team(
     # Guard against the partial unique index racing — gives a
     # readable 409 instead of a raw IntegrityError.
     existing = (
-        await db.execute(
-            select(Team.id).where(
-                Team.organization_id == org_id, Team.slug == slug
-            )
-        )
+        await db.execute(select(Team.id).where(Team.organization_id == org_id, Team.slug == slug))
     ).scalar_one_or_none()
     if existing:
         raise HTTPException(
@@ -134,8 +126,12 @@ async def create_team(
     db.add(team)
     await db.flush()
     await record_audit(
-        db, actor=user, action="team.create",
-        entity_type="team", entity_id=team.id, organization_id=org_id,
+        db,
+        actor=user,
+        action="team.create",
+        entity_type="team",
+        entity_id=team.id,
+        organization_id=org_id,
         metadata={"name": team.name, "slug": team.slug},
     )
     await db.commit()
@@ -153,9 +149,9 @@ async def update_team(
 ) -> TeamOut:
     team = await _get_team_or_404(db, team_id, org_id)
     changes = payload.model_dump(exclude_unset=True)
-    if "name" in changes and changes["name"]:
+    if changes.get("name"):
         team.name = changes["name"].strip()
-    if "slug" in changes and changes["slug"]:
+    if changes.get("slug"):
         new_slug = _slugify(changes["slug"])
         if new_slug != team.slug:
             # Same per-org-unique guard as create.
@@ -175,8 +171,12 @@ async def update_team(
                 )
             team.slug = new_slug
     await record_audit(
-        db, actor=user, action="team.update",
-        entity_type="team", entity_id=team.id, organization_id=org_id,
+        db,
+        actor=user,
+        action="team.update",
+        entity_type="team",
+        entity_id=team.id,
+        organization_id=org_id,
         metadata={"fields": list(changes.keys())},
     )
     await db.commit()
@@ -199,28 +199,27 @@ async def delete_team(
     # soft-delete needs the app to do the housekeeping so the
     # records don't keep pointing at an invisible team.
     team.deleted_at = datetime.now(UTC)
-    await db.execute(
-        update(User).where(User.team_id == team.id).values(team_id=None)
-    )
+    await db.execute(update(User).where(User.team_id == team.id).values(team_id=None))
     # Clear team_id on Lead/Deal too — the FK is SET NULL only on
     # HARD delete; soft-delete needs the app to do the housekeeping
     # so records don't keep pointing at an invisible team. RLS still
     # gates these to the current org via the GUC set by
     # `get_current_org_id`.
-    await db.execute(
-        update(Lead).where(Lead.team_id == team.id).values(team_id=None)
-    )
-    await db.execute(
-        update(Deal).where(Deal.team_id == team.id).values(team_id=None)
-    )
+    await db.execute(update(Lead).where(Lead.team_id == team.id).values(team_id=None))
+    await db.execute(update(Deal).where(Deal.team_id == team.id).values(team_id=None))
     await record_audit(
-        db, actor=user, action="team.delete",
-        entity_type="team", entity_id=team.id, organization_id=org_id,
+        db,
+        actor=user,
+        action="team.delete",
+        entity_type="team",
+        entity_id=team.id,
+        organization_id=org_id,
     )
     await db.commit()
 
 
 # ---------- Membership ----------
+
 
 @router.post("/{team_id}/members", response_model=TeamOut)
 async def add_member(
@@ -243,8 +242,12 @@ async def add_member(
         )
     target.team_id = team.id
     await record_audit(
-        db, actor=user, action="team.member_added",
-        entity_type="team", entity_id=team.id, organization_id=org_id,
+        db,
+        actor=user,
+        action="team.member_added",
+        entity_type="team",
+        entity_id=team.id,
+        organization_id=org_id,
         metadata={"user_id": str(target.id)},
     )
     await db.commit()
@@ -252,9 +255,7 @@ async def add_member(
     return await _serialize(db, team)
 
 
-@router.delete(
-    "/{team_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{team_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_member(
     team_id: uuid.UUID,
     user_id: uuid.UUID,
@@ -268,10 +269,12 @@ async def remove_member(
         raise HTTPException(status_code=404, detail="Member not found in team")
     target.team_id = None
     await record_audit(
-        db, actor=actor, action="team.member_removed",
-        entity_type="team", entity_id=team.id, organization_id=org_id,
+        db,
+        actor=actor,
+        action="team.member_removed",
+        entity_type="team",
+        entity_id=team.id,
+        organization_id=org_id,
         metadata={"user_id": str(user_id)},
     )
     await db.commit()
-
-

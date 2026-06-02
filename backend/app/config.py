@@ -94,6 +94,32 @@ class Settings(BaseSettings):
     stripe_success_url: str = "http://localhost:3030/en/billing?stripe=success"
     stripe_cancel_url: str = "http://localhost:3030/en/pricing?stripe=cancel"
 
+    # ---- Transactional email (ADR-017) ----
+    # Provider is swappable so the SAME app code serves a SaaS deploy
+    # (Resend) and a self-hosted / EU-sovereignty deploy (own SMTP) —
+    # the product's data-residency wedge means we can't hard-wire a US
+    # SaaS sender. `console` is the dev default: it logs the rendered
+    # email and needs zero secrets, so a fresh clone sends "email"
+    # without any setup.
+    email_provider: str = "console"  # console | resend | smtp
+    # Envelope sender. Use a dedicated subdomain (mail.crmgallo.app)
+    # with SPF/DKIM/DMARC in prod — see ADR-017 consequences.
+    email_from: str = "no-reply@crmgallo.app"
+    email_from_name: str = "CRM Gallo"
+    # Frontend origin used to build links in emails (invite / reset).
+    # Single source of truth instead of deriving from the Stripe URL.
+    frontend_base_url: str = "http://localhost:3030"
+    # Resend (SaaS). Empty key + provider=resend → send() raises and
+    # the worker retries; the call-site fallback log still has the URL.
+    resend_api_key: str = ""
+    # SMTP (self-host). STARTTLS on 587 is the safe default; set
+    # smtp_use_tls=false only for a local relay like MailHog.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+
     @property
     def runtime_database_url(self) -> str:
         """URL the FastAPI process should connect with. Defaults to the

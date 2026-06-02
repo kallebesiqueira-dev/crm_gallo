@@ -14,6 +14,7 @@ Stage reconciliation in PATCH (see `_reconcile_stages`):
 This avoids three separate endpoints for the SPA's drag-to-reorder
 + inline rename + delete-stage flow.
 """
+
 from __future__ import annotations
 
 import re
@@ -110,9 +111,7 @@ async def list_pipelines(
     # admins don't have to flip between kinds to discover the
     # "seed happens automatically" behavior. When `?kind=` is given
     # we only seed that one; when omitted we seed both.
-    seeded_kinds: set[PipelineKind] = (
-        {KIND_LOOKUP[kind]} if kind else set(PipelineKind)
-    )
+    seeded_kinds: set[PipelineKind] = {KIND_LOOKUP[kind]} if kind else set(PipelineKind)
     for k in seeded_kinds:
         await get_or_seed_default_pipeline(db, org_id, k)
     await db.commit()
@@ -175,8 +174,12 @@ async def create_pipeline(
     db.add(p)
     await db.flush()
     await record_audit(
-        db, actor=user, action="pipeline.create",
-        entity_type="pipeline", entity_id=p.id, organization_id=org_id,
+        db,
+        actor=user,
+        action="pipeline.create",
+        entity_type="pipeline",
+        entity_id=p.id,
+        organization_id=org_id,
         metadata={"kind": kind.value, "name": p.name},
     )
     await db.commit()
@@ -237,9 +240,9 @@ async def update_pipeline(
     p = await _get_pipeline_or_404(db, pipeline_id, org_id)
     changes = payload.model_dump(exclude_unset=True)
 
-    if "name" in changes and changes["name"]:
+    if changes.get("name"):
         p.name = changes["name"].strip()
-    if "slug" in changes and changes["slug"]:
+    if changes.get("slug"):
         new_slug = _slugify(changes["slug"])
         if new_slug != p.slug:
             clash = (
@@ -276,8 +279,12 @@ async def update_pipeline(
         await _reconcile_stages(db, p, payload.stages)
 
     await record_audit(
-        db, actor=user, action="pipeline.update",
-        entity_type="pipeline", entity_id=p.id, organization_id=org_id,
+        db,
+        actor=user,
+        action="pipeline.update",
+        entity_type="pipeline",
+        entity_id=p.id,
+        organization_id=org_id,
         metadata={"fields": list(changes.keys())},
     )
     await db.commit()
@@ -314,7 +321,11 @@ async def delete_pipeline(
     for stage in p.stages:
         stage.deleted_at = p.deleted_at
     await record_audit(
-        db, actor=user, action="pipeline.delete",
-        entity_type="pipeline", entity_id=p.id, organization_id=org_id,
+        db,
+        actor=user,
+        action="pipeline.delete",
+        entity_type="pipeline",
+        entity_id=p.id,
+        organization_id=org_id,
     )
     await db.commit()

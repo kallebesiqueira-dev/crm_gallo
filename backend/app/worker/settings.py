@@ -21,14 +21,23 @@ exception is logged and the job is dropped. A real DLQ would be
 a Redis list `arq:queue:dead` we LPUSH to from a fail callback;
 tracked as a P2 follow-up.
 """
+
 from __future__ import annotations
+
+from typing import ClassVar
 
 from arq import cron
 from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.config import get_settings
-from app.worker.jobs import deliver_webhook, drain_outbox, score_lead
+from app.worker.jobs import (
+    deliver_webhook,
+    drain_outbox,
+    generate_deal_pdf,
+    score_lead,
+    send_email,
+)
 
 
 def _redis_settings_from_url() -> RedisSettings:
@@ -59,13 +68,9 @@ async def _startup(ctx: dict) -> None:
     re-uses one event loop for the worker's lifetime, so this is
     safe (no fresh-pool-per-job overhead)."""
     settings = get_settings()
-    engine = create_async_engine(
-        settings.runtime_database_url, echo=False, future=True
-    )
+    engine = create_async_engine(settings.runtime_database_url, echo=False, future=True)
     ctx["engine"] = engine
-    ctx["SessionLocal"] = async_sessionmaker(
-        engine, expire_on_commit=False, autoflush=False
-    )
+    ctx["SessionLocal"] = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
 
 
 async def _shutdown(ctx: dict) -> None:
@@ -78,7 +83,7 @@ class WorkerSettings:
     """Arq picks `functions`, `redis_settings`, `on_startup`,
     `on_shutdown`, `max_tries`, etc. off the class directly."""
 
-    functions = [score_lead, deliver_webhook]
+    functions: ClassVar = [score_lead, deliver_webhook, send_email, generate_deal_pdf]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1
     # request-latency-budget; the drain just needs to be fast enough
@@ -86,7 +91,7 @@ class WorkerSettings:
     # spot — at 1s the worker churns on empty queries; at 30s a
     # webhook subscriber would visibly lag a user clicking the
     # button.
-    cron_jobs = [
+    cron_jobs: ClassVar = [
         cron(
             drain_outbox,
             name="drain_outbox",

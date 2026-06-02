@@ -8,6 +8,7 @@ Lives in its own module to break the otherwise-circular import:
 creates a circle. Keeping the mixin here lets BOTH modules import it
 without depending on each other.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -29,6 +30,4 @@ class SoftDeleteMixin:
     `.where(Model.deleted_at.is_(None))` clause.
     """
 
-    deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), index=True
-    )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)

@@ -128,6 +128,12 @@ services:
     # code changes need a container restart to take effect. That
     # matches the prod ergonomics.
     command: arq app.worker.settings.WorkerSettings
+    # The shared backend image ships a HEALTHCHECK that curls
+    # localhost:8000/health, but the worker runs no HTTP server — so that
+    # probe always fails and the container shows "unhealthy" forever.
+    # Disable it here; arq liveness is observable via Redis + logs.
+    healthcheck:
+      disable: true
 
   frontend:
     build: ./frontend

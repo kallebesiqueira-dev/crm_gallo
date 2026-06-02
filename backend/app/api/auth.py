@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import email as email_service
 from app.api.billing import can_accept_new_user
 from app.audit import record_audit
 from app.config import get_settings
@@ -76,9 +77,11 @@ from app.security import (
 
 log = structlog.get_logger(__name__)
 PASSWORD_RESET_TTL_HOURS = 1
-FRONTEND_BASE_URL = "http://localhost:3030"
 
 settings = get_settings()
+# Frontend origin for the reset link. Reads the configured setting so
+# prod emits real https links, not localhost.
+FRONTEND_BASE_URL = settings.frontend_base_url
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
@@ -750,14 +753,30 @@ async def request_password_reset(
     )
     await db.commit()
 
-    # Dev-mode "delivery": log the URL so the operator can paste it
-    # back into the browser. Production swaps this for an SMTP send.
+    reset_url = f"{FRONTEND_BASE_URL}/reset-password/{token_value}"
+    # The URL is logged regardless of provider so an operator can
+    # always recover the link (console provider in dev, or a transient
+    # enqueue failure in prod).
     log.info(
         "password_reset.dispatched",
         user_email=user.email,
-        url=f"{FRONTEND_BASE_URL}/reset-password/{token_value}",
+        url=reset_url,
         expires_in_hours=PASSWORD_RESET_TTL_HOURS,
     )
+
+    # Fire the reset email (ADR-017). Best-effort: a Redis/enqueue
+    # hiccup must not 500 the request — and we always return 204 here
+    # to avoid leaking which addresses exist.
+    try:
+        await email_service.send(
+            to=user.email,
+            template=email_service.TEMPLATE_PASSWORD_RESET,
+            locale=user.locale,
+            ctx={"url": reset_url, "expires_hours": PASSWORD_RESET_TTL_HOURS},
+            dedupe_key=f"pwreset:{token_value}",
+        )
+    except Exception:
+        log.warning("password_reset.email_enqueue_failed", exc_info=True)
 
 
 @router.post("/password-reset/confirm", status_code=status.HTTP_204_NO_CONTENT)

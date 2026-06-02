@@ -11,8 +11,10 @@ Each job function:
   * Touches the DB inside a single transaction and `commit()`s
     explicitly. Errors propagate so arq's retry kicks in.
 """
+
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 import uuid
@@ -27,7 +29,7 @@ from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.audit import record_audit
 from app.events import OUTBOX_MAX_ATTEMPTS
 from app.events_dispatcher import EventContext, dispatch_event
-from app.models import Lead, WebhookDelivery, WebhookEndpoint
+from app.models import Customer, Deal, Lead, Organization, User, WebhookDelivery, WebhookEndpoint
 from app.services.ai_scoring import score_lead as score_lead_via_llm
 from app.webhook_sign import SIGNATURE_HEADER, sign_payload
 
@@ -79,18 +81,14 @@ async def score_lead(ctx: dict, lead_id: str, organization_id: str) -> dict:
             {"v": str(org_uuid)},
         )
         result = await db.execute(
-            select(Lead).where(
-                Lead.id == lead_uuid, Lead.organization_id == org_uuid
-            )
+            select(Lead).where(Lead.id == lead_uuid, Lead.organization_id == org_uuid)
         )
         lead = result.scalar_one_or_none()
         if lead is None or lead.deleted_at is not None:
             # Lead disappeared between enqueue and dispatch (deleted,
             # cross-org leak attempt, or the org_id is wrong). Don't
             # retry — there's nothing to score.
-            log.warning(
-                "score_lead.lead_missing", lead_id=lead_id, organization_id=organization_id
-            )
+            log.warning("score_lead.lead_missing", lead_id=lead_id, organization_id=organization_id)
             return {"status": "missing"}
 
         scoring = await score_lead_via_llm(lead)
@@ -190,9 +188,7 @@ async def drain_outbox(ctx: dict) -> dict:
         for row in rows:
             event_id = row["id"]
             try:
-                payload_obj = (
-                    json.loads(row["payload"]) if row["payload"] else None
-                )
+                payload_obj = json.loads(row["payload"]) if row["payload"] else None
             except json.JSONDecodeError as e:
                 # Bad JSON in the payload — flag this row as failed
                 # so it doesn't loop, and move on.
@@ -219,7 +215,7 @@ async def drain_outbox(ctx: dict) -> dict:
             )
             try:
                 await dispatch_event(event_ctx)
-            except Exception as e:  # noqa: BLE001 — subscriber API is open
+            except Exception as e:
                 await db.execute(
                     text(
                         "UPDATE outbox_events SET attempt_count = attempt_count + 1, "
@@ -296,9 +292,7 @@ async def deliver_webhook(
     attempt = ctx.get("job_try", 1)
 
     async with SessionLocal() as db:
-        result = await db.execute(
-            select(WebhookEndpoint).where(WebhookEndpoint.id == ep_uuid)
-        )
+        result = await db.execute(select(WebhookEndpoint).where(WebhookEndpoint.id == ep_uuid))
         ep = result.scalar_one_or_none()
         if ep is None or ep.paused_at is not None:
             # Endpoint deleted or paused between enqueue and dispatch —
@@ -348,7 +342,7 @@ async def deliver_webhook(
                     },
                 )
             response_code = r.status_code
-            excerpt = r.text[: _WEBHOOK_RESPONSE_EXCERPT_BYTES] or None
+            excerpt = r.text[:_WEBHOOK_RESPONSE_EXCERPT_BYTES] or None
             # 2xx = success. Receivers signal "got it, will dedupe" via
             # any 2xx — we don't require a specific body shape.
             succeeded = 200 <= r.status_code < 300
@@ -416,3 +410,160 @@ async def deliver_webhook(
         # Out of retries — leave the delivery row as the audit trail
         # and let arq drop the job.
         return {"status": "exhausted"}
+
+
+async def send_email(
+    ctx: dict,
+    to: str,
+    template: str,
+    locale: str | None,
+    email_ctx: dict,
+) -> dict:
+    """Render + deliver one transactional email (ADR-017).
+
+    Enqueued by `app.email.send()`. Rendering happens here (one place)
+    from the small JSON payload pushed onto Redis. Delivery goes
+    through the configured provider (console / resend / smtp); a hard
+    failure raises so arq retries with backoff (`max_tries=5`).
+
+    No DB session is touched — this job is pure render + network. It
+    therefore needs no RLS GUC.
+    """
+    # Imported here (not module top) so the jobs module stays cheap to
+    # import and there's no email↔worker import cycle at load time.
+    from app.email import get_provider, render
+
+    rendered = render(template, locale, email_ctx)
+    provider = get_provider()
+    await provider.send(to=to, message=rendered)
+
+    log.info(
+        "email.sent",
+        to=to,
+        template=template,
+        locale=locale,
+        provider=provider.name,
+        subject=rendered.subject,
+    )
+    return {"status": "sent", "provider": provider.name}
+
+
+async def generate_deal_pdf(ctx: dict, deal_id: str, organization_id: str) -> dict:
+    """Render a deal-summary PDF and attach it to the deal (ADR-016).
+
+    Enqueued by `POST /api/deals/{id}/pdf`. Reads the deal (+ customer,
+    owner, org names), renders the `deal_summary` template to PDF via
+    WeasyPrint, and stores it as a `FileAttachment` — so it surfaces in
+    the deal's existing attachment list and downloads through the same
+    presigned-URL path as uploads.
+
+    RLS: the worker runs as `crm_app` (NOBYPASSRLS), so the GUC must be
+    set before reading `deals` (an RLS'd tenant table) or the SELECT
+    returns nothing. `file_attachments` is not yet RLS'd (TD-42) so the
+    INSERT itself doesn't depend on the GUC, but we set it anyway.
+
+    Idempotency: arq retries on exception (`max_tries=5`). A retry
+    re-renders + re-uploads, producing a NEW attachment row (fresh
+    UUID/key). Acceptable for v1 — a regenerate is user-meaningful and
+    the dedupe window on the enqueue side collapses accidental
+    double-clicks. The lazy WeasyPrint import lives in `app.pdf.render`.
+    """
+    from app.pdf import TEMPLATE_DEAL_SUMMARY, render_pdf, store_pdf_attachment
+
+    SessionLocal = ctx["SessionLocal"]
+    deal_uuid = uuid.UUID(deal_id)
+    org_uuid = uuid.UUID(organization_id)
+
+    async with SessionLocal() as db:
+        await db.execute(
+            text("SELECT set_config('app.current_org_id', :v, false)"),
+            {"v": str(org_uuid)},
+        )
+        deal = (
+            await db.execute(
+                select(Deal).where(Deal.id == deal_uuid, Deal.organization_id == org_uuid)
+            )
+        ).scalar_one_or_none()
+        if deal is None or deal.deleted_at is not None:
+            # Deal vanished between enqueue and dispatch — nothing to
+            # render. Don't retry.
+            log.warning(
+                "generate_deal_pdf.deal_missing",
+                deal_id=deal_id,
+                organization_id=organization_id,
+            )
+            return {"status": "missing"}
+
+        org_name = (
+            await db.execute(select(Organization.name).where(Organization.id == org_uuid))
+        ).scalar_one_or_none() or "CRM Gallo"
+
+        customer_name = None
+        if deal.customer_id is not None:
+            cust = (
+                await db.execute(
+                    select(Customer.first_name, Customer.last_name, Customer.company).where(
+                        Customer.id == deal.customer_id
+                    )
+                )
+            ).first()
+            if cust is not None:
+                full = f"{cust.first_name} {cust.last_name}".strip()
+                customer_name = f"{full} ({cust.company})" if cust.company else full
+
+        owner_name = None
+        if deal.owner_id is not None:
+            owner_name = (
+                await db.execute(select(User.full_name).where(User.id == deal.owner_id))
+            ).scalar_one_or_none()
+
+        context = {
+            "org_name": org_name,
+            "deal_title": deal.title,
+            "value": deal.value,
+            "currency": deal.currency.value,
+            "stage": deal.stage.value,
+            "customer_name": customer_name,
+            "owner_name": owner_name,
+            "expected_close_date": (
+                deal.expected_close_date.isoformat() if deal.expected_close_date else None
+            ),
+            "created_at": deal.created_at.strftime("%Y-%m-%d"),
+            "description": deal.notes,
+            "generated_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
+        }
+        # WeasyPrint's write_pdf() is synchronous and CPU-bound (~seconds,
+        # tens of seconds on a cold font cache). Running it inline blocks
+        # arq's event loop — which starves the Redis heartbeat and the
+        # drain_outbox cron, and can surface as spurious CancelledError on
+        # the Redis connection mid-render. Offload to a thread.
+        pdf_bytes = await asyncio.to_thread(render_pdf, TEMPLATE_DEAL_SUMMARY, context)
+
+        filename = f"deal-{deal.title[:40].strip()}.pdf".replace("/", "-")
+        att = await store_pdf_attachment(
+            db,
+            organization_id=org_uuid,
+            entity_type="deal",
+            entity_id=deal.id,
+            filename=filename,
+            pdf_bytes=pdf_bytes,
+        )
+        await record_audit(
+            db,
+            actor=None,
+            action="deal.pdf_generated",
+            entity_type="deal",
+            entity_id=deal.id,
+            organization_id=org_uuid,
+            metadata={"attachment_id": str(att.id), "size_bytes": att.size_bytes, "via": "worker"},
+        )
+        await db.commit()
+
+    log.info(
+        "generate_deal_pdf.done",
+        deal_id=deal_id,
+        organization_id=organization_id,
+        attachment_id=str(att.id),
+        size_bytes=att.size_bytes,
+    )
+    return {"status": "generated", "attachment_id": str(att.id), "size_bytes": att.size_bytes}

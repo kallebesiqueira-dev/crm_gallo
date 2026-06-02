@@ -13,6 +13,7 @@ Phase 2 (next session) will:
   * Migrate filters / kanban to read from pipeline_stage_id
   * Eventually drop the enum columns once nothing references them
 """
+
 from __future__ import annotations
 
 import uuid
@@ -21,7 +22,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import LeadStage, Pipeline, PipelineKind, PipelineStage
-
 
 # Seed templates: (slug, name, probability, is_won, is_lost). These
 # mirror the legacy enum so the per-row backfill in Phase 2 is a

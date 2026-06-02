@@ -23,9 +23,7 @@ def test_new_deal_starts_at_version_zero(admin_client):
 def test_patch_without_if_match_still_works_and_bumps_version(admin_client):
     """v1 leniency: header is optional. Logged as a warning server-side."""
     deal = admin_client.post("/api/deals", json={"title": "no-header probe"}).json()
-    r = admin_client.patch(
-        f"/api/deals/{deal['id']}", json={"title": "renamed"}
-    )
+    r = admin_client.patch(f"/api/deals/{deal['id']}", json={"title": "renamed"})
     assert r.status_code == 200, r.text
     assert r.json()["version"] == 1
 

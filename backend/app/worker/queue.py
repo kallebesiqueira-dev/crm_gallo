@@ -12,6 +12,7 @@ Returns the Arq `Job` (with `.job_id`) on success or `None` when
 the de-dupe key was already present — caller surfaces "already
 queued" to the SPA rather than queueing twice.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -22,7 +23,6 @@ from arq.jobs import Job
 
 from app.redis_client import get_redis
 from app.worker.settings import WorkerSettings
-
 
 _pool: ArqRedis | None = None
 

@@ -15,6 +15,7 @@ Trust boundary notes:
     `POST /{id}/rotate-secret` (followup, not in v1) so the action
     can't happen accidentally inside a generic patch payload.
 """
+
 from __future__ import annotations
 
 import ipaddress
@@ -31,7 +32,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import record_audit
 from app.database import get_db
-from app.deps import get_current_org_id, get_current_user, require_roles
+from app.deps import get_current_org_id, require_roles
 from app.events import EventType
 from app.models import User, UserRole, WebhookDelivery, WebhookEndpoint
 from app.schemas import (
@@ -89,9 +90,7 @@ def _validate_url(url: str) -> None:
         resolved = socket.gethostbyname(parsed.hostname)
         ip = ipaddress.ip_address(resolved)
         if ip.is_loopback or ip.is_private or ip.is_link_local:
-            raise HTTPException(
-                status_code=400, detail="private/loopback URL not allowed"
-            )
+            raise HTTPException(status_code=400, detail="private/loopback URL not allowed")
     except (socket.gaierror, ValueError):
         # DNS doesn't resolve right now. We don't refuse the create —
         # the receiver might come online later. Delivery will just

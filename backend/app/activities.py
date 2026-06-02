@@ -14,6 +14,7 @@ Calling convention mirrors `record_audit`: emit alongside the audit
 row at the same commit boundary so both ledgers stay consistent
 with the underlying mutation.
 """
+
 from __future__ import annotations
 
 import enum

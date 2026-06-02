@@ -26,13 +26,10 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-
 # ---------- Producer side: HTTP → record_event ----------
 
 
-def test_create_lead_emits_outbox_event(
-    admin_client, admin_user: User, db: Session
-):
+def test_create_lead_emits_outbox_event(admin_client, admin_user: User, db: Session):
     """POST /api/leads emits a lead.created outbox row in the same
     txn as the lead INSERT. Caller commit makes both visible."""
     r = admin_client.post(
@@ -66,9 +63,7 @@ def test_stage_change_emits_outbox_event(admin_client, admin_user: User, db: Ses
     create = admin_client.post(
         "/api/leads", json={"first_name": "Stage", "last_name": "Probe"}
     ).json()
-    admin_client.patch(
-        f"/api/leads/{create['id']}", json={"stage": "qualified"}
-    ).raise_for_status()
+    admin_client.patch(f"/api/leads/{create['id']}", json={"stage": "qualified"}).raise_for_status()
 
     row = db.execute(
         text(
@@ -149,8 +144,7 @@ def test_drain_marks_processed(admin_client, admin_user: User, db: Session):
     for r in claim:
         db.execute(
             text(
-                "UPDATE outbox_events SET processed_at = now(), "
-                "last_error = NULL WHERE id = :id"
+                "UPDATE outbox_events SET processed_at = now(), " "last_error = NULL WHERE id = :id"
             ),
             {"id": r.id},
         )
@@ -276,9 +270,7 @@ def test_drain_dlq_excludes_max_attempts(db: Session, test_org):
 # ---------- Admin endpoint ----------
 
 
-def test_admin_outbox_returns_own_org_only(
-    admin_client, admin_user: User, db: Session, other_org
-):
+def test_admin_outbox_returns_own_org_only(admin_client, admin_user: User, db: Session, other_org):
     """Admin /api/outbox is org-scoped — the foreign-org row must NOT
     appear in admin's response."""
     org_id = admin_user.last_active_org_id

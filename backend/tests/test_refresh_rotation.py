@@ -59,13 +59,14 @@ def test_old_refresh_token_invalidated_after_rotation(client, admin_user: User):
 
     # Manually plant the OLD token back in and call refresh — must be
     # detected as REUSE → 401 + all sessions revoked.
-    # Force-replace the cookie. TestClient's cookie jar can keep
-    # multiple entries with the same name when set() is called naively;
-    # delete first to be sure the OLD value is the one sent.
-    client.cookies.delete("refresh_token", domain="testserver", path="/api/auth")
-    client.cookies.set(
-        "refresh_token", original, domain="testserver", path="/api/auth"
-    )
+    # Force-replace the cookie. The server emits Set-Cookie WITHOUT a
+    # Domain attribute, so http.cookiejar stores it host-only under the
+    # key `testserver.local` (it appends `.local` to dotless hosts) —
+    # NOT `testserver`. Delete by name across all domains to be robust,
+    # then re-plant under the same `.local` key the jar actually uses so
+    # the OLD value is what gets sent.
+    client.cookies.delete("refresh_token")
+    client.cookies.set("refresh_token", original, domain="testserver.local", path="/api/auth")
     r = client.post("/api/auth/refresh")
     assert r.status_code == 401, r.text
     assert "reuse" in r.json()["detail"].lower()
@@ -85,15 +86,16 @@ def test_reuse_detection_revokes_all_user_sessions(client, admin_user: User):
     client.post("/api/auth/refresh").raise_for_status()
     rotated = client.cookies.get("refresh_token")
 
-    # Plant the OLD token → tripwire.
-    client.cookies.delete("refresh_token", domain="testserver", path="/api/auth")
-    client.cookies.set("refresh_token", original, domain="testserver", path="/api/auth")
+    # Plant the OLD token → tripwire. (Jar stores host-only cookies for
+    # the dotless `testserver` host under the `testserver.local` key.)
+    client.cookies.delete("refresh_token")
+    client.cookies.set("refresh_token", original, domain="testserver.local", path="/api/auth")
     client.post("/api/auth/refresh")  # 401 alarm
 
     # Now restore the legitimate rotated token. It MUST no longer
     # work, because reuse detection revoked every session.
-    client.cookies.delete("refresh_token", domain="testserver", path="/api/auth")
-    client.cookies.set("refresh_token", rotated, domain="testserver", path="/api/auth")
+    client.cookies.delete("refresh_token")
+    client.cookies.set("refresh_token", rotated, domain="testserver.local", path="/api/auth")
     r = client.post("/api/auth/refresh")
     assert r.status_code == 401, r.text
 

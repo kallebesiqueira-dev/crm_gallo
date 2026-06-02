@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
 
         await ensure_bucket()
         s3_ready = True
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning("s3_bucket_bootstrap_failed", error=str(e)[:200])
 
     log.info(

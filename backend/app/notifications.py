@@ -7,6 +7,7 @@ Email fanout is a follow-up — for v1 we deliver in-app only. When
 the worker (`app/workers/`) lands, it'll subscribe to the
 `notification.created` outbox event and dispatch SMTP from there.
 """
+
 from __future__ import annotations
 
 import enum

@@ -21,8 +21,10 @@ Why upload-through-API instead of presigned-PUT-from-browser:
     abuse rate limits (an attacker could otherwise mint signed URLs
     forever). Tracked as a P2 hardening.
 """
+
 import hashlib
 import uuid
+from datetime import UTC
 from typing import Annotated, Literal
 
 from fastapi import (
@@ -225,7 +227,7 @@ async def delete_attachment(
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     att = await _get_attachment_or_404(db, attachment_id, org_id)
     # Permissive ownership: uploader OR admin/manager. Same rule as
@@ -241,7 +243,7 @@ async def delete_attachment(
     # handle gracefully (TODO once we have a real error path).
     await delete_object(att.storage_key)
 
-    att.deleted_at = datetime.now(timezone.utc)
+    att.deleted_at = datetime.now(UTC)
     await record_activity(
         db,
         entity_type=att.entity_type,

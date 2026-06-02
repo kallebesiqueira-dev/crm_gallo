@@ -9,6 +9,7 @@ line-length = 100
 target-version = "py312"
 extend-exclude = [
     "alembic/versions/*",  # autogen'd files — manual edits annotated, not styled by ruff
+    ".local",  # pip --user install dir (gitignored; only visible in the bind-mounted container, never in CI)
 ]
 
 [tool.ruff.lint]
@@ -37,6 +38,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Tests can `assert X` (B011) and use long-line table fixtures.
 "tests/*.py" = ["E501", "B011"]
+# Localized email copy + the inline-styled HTML layout are data, not
+# logic — wrapping the translation strings would hurt readability.
+"app/email/render.py" = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app", "tests"]

@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from app.models import User
-
 
 def test_search_matches_first_name(admin_client):
     admin_client.post(
@@ -80,13 +78,10 @@ def test_search_vector_updates_on_patch(admin_client):
     ).json()
 
     assert admin_client.get("/api/leads?q=NewCo").json() == [] or all(
-        r["id"] != created["id"]
-        for r in admin_client.get("/api/leads?q=NewCo").json()
+        r["id"] != created["id"] for r in admin_client.get("/api/leads?q=NewCo").json()
     )
 
-    admin_client.patch(
-        f"/api/leads/{created['id']}", json={"company": "NewCo"}
-    ).raise_for_status()
+    admin_client.patch(f"/api/leads/{created['id']}", json={"company": "NewCo"}).raise_for_status()
 
     rows = admin_client.get("/api/leads?q=NewCo").json()
     assert any(r["id"] == created["id"] for r in rows)

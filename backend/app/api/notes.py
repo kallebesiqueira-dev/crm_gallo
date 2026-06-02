@@ -10,6 +10,7 @@ Org-scoped via `get_current_org_id`. Notes inherit `SoftDeleteMixin`
 so the global filter excludes deleted ones — the trash UI sees them
 via the standard opt-out (not surfaced for notes today; follow-up).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -35,9 +36,7 @@ router = APIRouter(prefix="/api/notes", tags=["notes"])
 EntityType = Literal["lead", "customer", "deal"]
 
 
-async def _get_note_or_404(
-    db: AsyncSession, note_id: uuid.UUID, org_id: uuid.UUID
-) -> Note:
+async def _get_note_or_404(db: AsyncSession, note_id: uuid.UUID, org_id: uuid.UUID) -> Note:
     """Org-scoped fetch; raises 404 on miss (NOT 403 — same
     existence-leak rule as the rest of the CRUD layer)."""
     result = await db.execute(
@@ -111,9 +110,9 @@ async def create_note(
     # activity `content` so the timeline previews the note without
     # rendering the whole markdown; the NotesPanel shows the full
     # body separately.
-    preview = (
-        payload.body[:80] + "…" if len(payload.body) > 80 else payload.body
-    ).replace("\n", " ")
+    preview = (payload.body[:80] + "…" if len(payload.body) > 80 else payload.body).replace(
+        "\n", " "
+    )
     await record_activity(
         db,
         entity_type=payload.entity_type,

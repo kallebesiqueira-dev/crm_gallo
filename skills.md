@@ -1,7 +1,7 @@
 # Engineering Backlog & Project Status
 
 > **Living document.** Update when work changes state. Read this first when resuming work.
-> **Last reviewed:** 2026-05-28
+> **Last reviewed:** 2026-06-02
 
 ---
 
@@ -74,7 +74,7 @@ For the user-facing story, see [README.md](README.md). This document is the engi
 *(nothing committed — pick the next P1 item)*
 
 ### ⏭️ Next milestone
-**P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking). The remaining pre-paying-customer work is the **Transactional-email workstream** (unblocks invites/reset/notifications/contracts/dunning), then **Documents/PDF/Contracts** and **cursor pagination** (TD-11). See §3 P1 + the gaps added 2026-06-01 (email, contracts, public API, omnichannel) and the new tech-debt rows TD-30…TD-40.
+**P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking) and the **Transactional-email workstream** (DONE 2026-06-01, ADR-017 — provider abstraction + worker delivery + 7-locale templates; invites + reset now send for real). The **PDF foundation** (ADR-016, first slice) is now DONE (2026-06-02 — WeasyPrint render in the worker, deal-summary PDF stored as a FileAttachment; see §3 Documents). The remaining pre-paying-customer work is the rest of **Documents/Contracts** (versioned `Quote`/`Contract` entity + e-signature, ADR-016) and **cursor pagination** (TD-11). See §3 P1 + the gaps added 2026-06-01 (contracts, public API, omnichannel) and the new tech-debt rows TD-30…TD-41.
 
 ---
 
@@ -246,7 +246,7 @@ These are the modules every serious CRM has and we don't.
 #### Background jobs / worker process
 - [x] **Arq chosen + `worker` service live** — done 2026-06-01 (ADR-006). Separate `worker` container in `docker-compose.yml` runs `arq app.worker.settings.WorkerSettings` off the same image/env as the backend; `_startup` builds one long-lived async engine per worker. `max_tries=5`, `job_timeout=60s`, `keep_result=3600s`.
 - [x] `worker` service added to `docker-compose.yml`
-- [x] First jobs: **lead AI scoring** (`score_lead`, backs `POST /score-async`), **outbox drain** (`drain_outbox` cron), **webhook delivery** (`deliver_webhook`). Customer summarization + audit shipping not yet ported; **email send is blocked on the Transactional-email workstream** (no SMTP yet).
+- [x] First jobs: **lead AI scoring** (`score_lead`, backs `POST /score-async`), **outbox drain** (`drain_outbox` cron), **webhook delivery** (`deliver_webhook`), **email send** (`send_email` — DONE 2026-06-01, ADR-017). Customer summarization + audit shipping not yet ported.
 - [x] Job idempotency: `score_lead` is safe to repeat (read-only scoring + overwrite); outbox/webhook subscribers dedupe by `event_id`.
 - [ ] **Dead-letter queue + alert** — arq has no built-in DLQ (after `max_tries` the job is dropped + logged). The *outbox* has a DLQ-by-cap (`attempt_count >= OUTBOX_MAX_ATTEMPTS=10`, surfaced via `/api/outbox?status=failed`), but the arq job queue itself still needs an `arq:queue:dead` list + an alert on depth > 0. (P2)
 
@@ -268,17 +268,19 @@ These are the modules every serious CRM has and we don't.
 - [ ] Streaming exports (don't materialize all rows in memory)
 - [ ] Per-tenant rate limit on imports (e.g. 1 concurrent + 10/day on Free)
 
-#### Transactional email (shared blocker — today it's faked with log lines)
-Invites, password-reset and notifications currently only `log.info("…dispatched", url=…)`. Five-plus features depend on real delivery; solve it ONCE as a workstream, not per-feature.
-- [ ] Provider behind `app/email.py::send(to, template, ctx)` (swappable): **Resend** or **Postmark** (deliverability-first); SES if already on AWS. Avoid raw SMTP-to-inbox.
-- [ ] Deliverability: SPF + DKIM + DMARC on a dedicated sending subdomain; bounce/complaint webhook → suppression list.
-- [ ] Localized HTML+text templates (7 locales), rendered server-side.
-- [ ] Sent through the worker (Arq) so a slow SMTP call never blocks the request; retry w/ backoff, dead-letter on hard fail.
-- [ ] Unblocks: invite dispatch, password reset, notification fanout, contract send, dunning emails.
+#### Transactional email (workstream — DONE 2026-06-01, see ADR-017)
+Invites and password-reset used to only `log.info("…dispatched", url=…)`. Solved ONCE as a workstream (provider abstraction + worker delivery + localized templates), not per-feature.
+- [x] Provider behind `app/email/sender.py::send(*, to, template, locale, ctx, dedupe_key)` — swappable via `EMAIL_PROVIDER`: `console` (dev default, logs, never raises), `resend` (httpx → api.resend.com), `smtp` (stdlib smtplib in a thread, STARTTLS). `get_provider()` factory; unknown → console fallback. SMTP self-host path is the EU/CH data-sovereignty answer (ADR-014).
+- [ ] Deliverability: SPF + DKIM + DMARC on a dedicated sending subdomain; bounce/complaint webhook → suppression list. **(prod-infra follow-up — not code)**
+- [x] Localized HTML+text templates (7 locales en/pt/de/fr/it/rm/es), rendered server-side in `app/email/render.py`. HTML part uses an **autoescaping** Jinja env (XSS-in-inbox defense — `<script>` in an org name is escaped; verified by `test_email.py`); text part is a separate non-escaping env. Branded inline-CSS table layout.
+- [x] Sent through the worker (Arq `send_email` job) so a slow provider never blocks the request; inherits the worker's `max_tries=5` backoff. Callers (invite create, password reset) enqueue best-effort (try/except, URL still logged as recovery fallback) so a Redis hiccup never 500s a user action. Deferred import breaks the email↔worker import cycle.
+- [x] **Smoke-verified end-to-end 2026-06-01:** enqueued an invite (locale=pt, org_name with `<script>`) → worker rendered + delivered via console provider → `{status: sent, provider: console}`; HTML escaping confirmed. `tests/test_email.py` (10 tests, all green): invite+reset render all 7 locales, HTML escapes, unknown-locale→en, pt-BR→pt, unknown-template raises, console never raises, resend/smtp raise without config.
+- [x] Unblocks: invite dispatch, password reset (both wired). Still TODO downstream: notification fanout, contract send, dunning emails (consume the same `email_service.send`).
+- [ ] **DLQ follow-up:** after `max_tries` the `send_email` job is dropped + logged (arq has no built-in DLQ); a real dead-letter list is tracked in `worker/settings.py` as a P2.
 
 #### Documents, PDF & Contracts (sales-critical gap — see ADR-016)
-The Activity model was already designed to accept a future `Quote/Contract` (its polymorphic `entity_type`); nothing is built and **no PDF generation exists anywhere**.
-- [ ] **PDF generation** as a shared capability: HTML-template → PDF via WeasyPrint (pure-Python, no headless browser) or Playwright. Render in the worker; store in S3 (FileAttachment infra exists).
+The Activity model was already designed to accept a future `Quote/Contract` (its polymorphic `entity_type`).
+- [x] **PDF generation foundation — DONE 2026-06-02.** Shared capability: HTML-template → PDF via WeasyPrint (pure-Python, pinned `weasyprint==62.3` ↔ `pydyf==0.10.0` — pydyf ≥0.11 broke the `Stream.transform` API 62.3 calls; native Pango/HarfBuzz/fonts libs added to the Dockerfile). `app/pdf/` = `render.py` (Jinja2 autoescaping env + `money` filter, `render_html`/`render_pdf`), `templates/base.html` + `deal_summary.html`, `store.py` (`store_pdf_attachment` → sha256 + S3 put + `FileAttachment` row, caller commits). Worker job `generate_deal_pdf(ctx, deal_id, org_id)` sets the RLS GUC, reads the deal, renders **off the event loop via `asyncio.to_thread`** (WeasyPrint is sync CPU-bound ~20s; running it inline starved the Redis heartbeat + `drain_outbox` cron and threw a spurious `CancelledError` — fixed), stores the attachment, audits `deal.pdf_generated`. Endpoint `POST /api/deals/{id}/pdf` → 202 + arq enqueue with a 5-min dedupe key (double-click → `{queued:false}`). Generated PDFs reuse the existing attachment list + presigned-download surface (zero new download code). 6 tests in `test_pdf.py` (markup/money/autoescape + one real `render_pdf` → `%PDF-`). Suite 91/91. E2E smoked: login → create deal → enqueue → worker renders → download returns `%PDF-1.7`. **Follow-ups:** render latency ~20s even warm (fontconfig/Pango setup per call — investigate caching a `FontConfiguration`); retry re-renders into a NEW attachment row (acceptable v1); `file_attachments` not RLS'd (TD-42).
 - [ ] `Quote`/`Contract` entity + line items, polymorphic to Deal/Customer. **Versioned** so "redo/resend" creates a new immutable revision instead of mutating a sent doc.
 - [ ] Template engine with merge fields (customer, deal value, line items, dates); admin-editable copy.
 - [ ] **E-signature** (ADR-016): integrate **Skribble** (Swiss, QES/eIDAS) or **Scrive** for legally-binding EU/CH signatures; DocuSign/Dropbox Sign as global fallback; inbound events via the existing webhook layer. A homegrown click-to-accept is low-stakes only — NOT a qualified signature.
@@ -442,6 +444,9 @@ Items below are real debt, not new features. Listed once so we stop re-discoveri
 | TD-38 | **No onboarding / seed data.** A fresh org lands on an empty CRM (bad first impression). Add sample data toggle + an onboarding checklist + empty-state CTAs. | S | P2 (activation) |
 | TD-39 | **No defined SLOs.** Alerts fire on "p95 regression" with no numeric target. Set explicit SLOs (e.g. list p95 < 300ms, 99.9% uptime) + an error-budget policy to drive thresholds. | S | P2 |
 | TD-40 | **DR has no RPO/RTO.** §10 says "backups + tested restore" but no recovery targets, no PITR/WAL strategy, no encryption/retention, no restore runbook. Define RPO/RTO and drill it. | M | P1 (before paying customer) |
+| ~~TD-41~~ | ~~**CI ruff/test gates have never actually run green**~~ — **CODE PORTION DONE 2026-06-02.** Cleared the ruff backlog: `ruff check .` → all pass (fixed UP017/I001/RUF019/F401/RUF100 auto + 3 RUF002 ambiguous `×`→`x` in docstrings manually); `ruff format .` reformatted 34 files (28 in `app/`, 6 in `tests/` — the committed tree had never been formatted); `.local` (pip --user dir, gitignored) added to ruff `extend-exclude`. Suite 85/85. The `tests/test_refresh_rotation.py` cookie-jar domain bug (`testserver` vs real `testserver.local` host-only key) was fixed 2026-06-01. **Remaining (not code):** turn on branch protection on `main` so the now-green gate is mandatory. **Lesson:** run the full CI gate locally before declaring green; "tests exist" ≠ "tests pass", and "lint configured" ≠ "lint passes". | S | ~~P1~~ → branch-protection toggle only |
+| TD-42 | **`file_attachments` is not RLS'd** — every other tenant table (leads/customers/deals/tasks) has row-level security so a query as `crm_app` can't cross orgs, but `file_attachments` carries `organization_id` with no RLS policy. Today isolation rests entirely on the API always filtering by org; a missing `WHERE organization_id` anywhere (or a future raw query) leaks cross-tenant files. Surfaced building the PDF foundation (the worker job sets the GUC anyway for consistency). Add an RLS policy + `GRANT` migration matching the other tables; rewrite the autogen migration by hand (partial-index hazard, see memory). | S | P1 (defense-in-depth before paying customer) |
+| TD-43 | **WeasyPrint render is ~20s even warm.** `generate_deal_pdf` renders a one-page PDF in ~20s on every call, not just cold — points at fontconfig scanning / Pango setup per render rather than a one-time cache. Now off the event loop (`asyncio.to_thread`) so it doesn't block other jobs, but 20s/doc won't scale. Investigate a process-level cached `weasyprint.text.fonts.FontConfiguration` and trimming installed font packages. | S | P2 (perf) |
 
 ---
 
@@ -544,6 +549,12 @@ Compact ADRs. Add one whenever you make a non-obvious technical choice.
 **Decision:** For legally-binding contracts, integrate a QES/eIDAS provider — **Skribble** (Swiss) or **Scrive** — rather than building signing in-house. A homegrown click-to-accept is allowed only for low-stakes consent (terms, opt-ins).
 **Why:** A qualified electronic signature has legal weight in CH/EU that a checkbox + IP log does not, and self-certifying QES is out of scope. A provider is faster and defensible. Reinforces the Swiss positioning.
 **Consequence:** Per-envelope cost + an external dependency on the signing path; inbound completion via the existing webhook layer. Store the signed PDF + the provider's audit trail in S3.
+
+### ADR-017 — Transactional email as a provider-abstracted worker workstream
+**Date:** 2026-06-01 (implemented)
+**Decision:** One `app/email` package owns all transactional mail. A thin `EmailProvider` Protocol (`console` / `resend` / `smtp`) is selected by `EMAIL_PROVIDER` config; callers never touch a provider directly — they call `email_service.send(...)`, which enqueues an Arq `send_email` job. Rendering (`render.py`) is locale-aware (7 locales) with a **two-env Jinja split**: HTML autoescapes, text does not. Payloads on the queue are the raw `(to, template, locale, ctx)` so rendering lives in exactly one place (the worker) and the Redis payload stays small + JSON-serializable.
+**Why:** Five+ features (invites, reset, notifications, contracts, dunning) need delivery; building it per-feature would fork the template/retry/provider logic. Putting send on the worker keeps a slow SMTP/API call off the request path; the provider Protocol keeps us free to run **self-hosted SMTP for EU/CH data sovereignty** (ADR-014) or a deliverability-first SaaS (Resend) without touching call sites. Autoescaping the HTML part is a deliberate XSS-in-inbox defense (attacker-controlled org names render as data, not markup).
+**Consequence:** Callers enqueue best-effort (the URL is still logged as a manual-recovery fallback) so a Redis hiccup never 500s a user action. Delivery retries are the worker's `max_tries=5` backoff; a hard fail after retries is logged + dropped (no DLQ yet — P2). Deliverability infra (SPF/DKIM/DMARC, bounce suppression) is prod-side and still open.
 
 ---
 

@@ -16,6 +16,7 @@ dispatcher does NOT dedupe — it can't tell whether a subscriber's
 side-effect (HTTP POST, DB write, queue push) succeeded after a
 crash mid-way.
 """
+
 from __future__ import annotations
 
 import json

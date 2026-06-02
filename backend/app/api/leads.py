@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.audit import record_audit
-from app.events import EventType, record_event
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
+from app.events import EventType, record_event
 from app.models import Lead, LeadStage, User
 from app.notifications import NotificationType, notify
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
@@ -41,9 +41,7 @@ async def _get_lead_or_404(db: AsyncSession, lead_id: uuid.UUID, org_id: uuid.UU
 @router.get("", response_model=list[LeadOut])
 async def list_leads(
     stage: LeadStage | None = None,
-    team_id: uuid.UUID | None = Query(
-        default=None, description="filter by team_id"
-    ),
+    team_id: uuid.UUID | None = Query(default=None, description="filter by team_id"),
     q: str | None = Query(default=None, description="search by name/email/company"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -70,8 +68,7 @@ async def list_leads(
         # `acme -spam`. `simple` config matches the index — locale-
         # agnostic since the data is multilingual.
         stmt = stmt.where(
-            sa.text("search_vector @@ websearch_to_tsquery('simple', :q)")
-            .bindparams(q=q)
+            sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
         )
     result = await db.execute(stmt)
     return list(result.scalars().all())

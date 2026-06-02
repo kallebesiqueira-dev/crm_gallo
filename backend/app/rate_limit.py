@@ -2,7 +2,7 @@
 
 In-memory counters are wrong as soon as we run more than one
 backend replica: each pod sees only its own bucket, so the
-effective rate is `N_replicas × configured_limit`. Redis storage
+effective rate is `N_replicas x configured_limit`. Redis storage
 puts the bucket in one place all replicas read/write.
 
 `in_memory_fallback_enabled=True` keeps the service alive if
@@ -14,6 +14,7 @@ request when the dependency is down.
 Redis to point at. `key_prefix` namespaces our buckets so they
 don't collide with the refresh-token store / session metadata.
 """
+
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 

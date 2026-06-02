@@ -15,6 +15,7 @@ through the GUC the dep sets, but we also filter explicitly so the
 generated SQL stays readable + the index `idx_activities_entity_created`
 is fully usable.
 """
+
 from __future__ import annotations
 
 import uuid
