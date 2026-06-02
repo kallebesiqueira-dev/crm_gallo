@@ -41,6 +41,7 @@ pnpm-debug.log*
 # Local pip --user install target + audit cache (huge, machine-specific)
 .local/
 .pip-audit-cache/
+.cache/
 
 # Smoke-test / debug scratch outputs — SOME CONTAIN LIVE TOKENS, never commit
 cookies_smoke.txt
