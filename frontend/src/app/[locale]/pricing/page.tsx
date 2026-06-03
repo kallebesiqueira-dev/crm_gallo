@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowRight,
@@ -30,6 +30,7 @@ import { FuturisticBackground } from "@/components/marketing/futuristic-backgrou
 import { Footer } from "@/components/marketing/footer";
 import { Logo } from "@/components/logo";
 import { SmoothScroll } from "@/components/marketing/smooth-scroll";
+import { SearchParamWatcher } from "@/components/search-param-watcher";
 import { api, type PlanOut, type PlanId, type BillingCycle } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -46,12 +47,12 @@ export default function PricingPage() {
   const tMarketing = useTranslations("marketing");
   const locale = useLocale();
   const router = useRouter();
-  const search = useSearchParams();
 
   const [plans, setPlans] = useState<PlanOut[] | null>(null);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [busyPlan, setBusyPlan] = useState<PlanId | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [stripeFlag, setStripeFlag] = useState<string | null>(null);
 
   // Framer Motion (Reveal/RevealGroup) drives every section's entry
   // animation now — see components/marketing/reveal.tsx. SmoothScroll
@@ -59,10 +60,16 @@ export default function PricingPage() {
 
   useEffect(() => {
     api.plans().then(setPlans).catch(() => setPlans([]));
-    if (search.get("stripe") === "cancel") {
+  }, []);
+
+  // `?stripe=cancel` comes back from an abandoned Checkout — surface a
+  // gentle banner. The flag is read by <SearchParamWatcher> below so
+  // useSearchParams() stays inside its own Suspense boundary.
+  useEffect(() => {
+    if (stripeFlag === "cancel") {
       setBanner(t("checkoutCanceled"));
     }
-  }, [search, t]);
+  }, [stripeFlag, t]);
 
   const moneyFmt = new Intl.NumberFormat(locale, {
     style: "currency",
@@ -106,6 +113,9 @@ export default function PricingPage() {
         page surface stacks above via `relative z-10` so it can't get hidden
         behind the mesh. */}
     <div className="dark relative min-h-screen text-foreground">
+      <Suspense fallback={null}>
+        <SearchParamWatcher name="stripe" onValue={setStripeFlag} />
+      </Suspense>
       <FuturisticBackground />
       {/* Sticky header */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#040509]/70 backdrop-blur-xl">

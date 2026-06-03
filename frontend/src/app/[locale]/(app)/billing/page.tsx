@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowRight,
@@ -18,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SearchParamWatcher } from "@/components/search-param-watcher";
 import { api, type BillingMe, type PlanOut, type PlanId, type BillingCycle } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -39,27 +39,31 @@ export default function BillingPage() {
   const t = useTranslations("billing");
   const tPricing = useTranslations("pricing");
   const locale = useLocale();
-  const search = useSearchParams();
 
   const [me, setMe] = useState<BillingMe | null>(null);
   const [plans, setPlans] = useState<PlanOut[] | null>(null);
   const [busy, setBusy] = useState<PlanId | "portal" | null>(null);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [banner, setBanner] = useState<{ kind: "ok" | "warn"; text: string } | null>(null);
+  const [stripeFlag, setStripeFlag] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
     if (!token) return;
     api.billingMe(token).then(setMe).catch(() => setMe(null));
     api.plans().then(setPlans).catch(() => setPlans([]));
+  }, []);
 
-    const stripeFlag = search.get("stripe");
+  // Checkout round-trips back here with ?stripe=success|cancel. The flag is
+  // read by <SearchParamWatcher> so useSearchParams() stays inside its own
+  // Suspense boundary (required for static prerender in Next 15).
+  useEffect(() => {
     if (stripeFlag === "success") {
       setBanner({ kind: "ok", text: t("checkoutSuccess") });
     } else if (stripeFlag === "cancel") {
       setBanner({ kind: "warn", text: t("checkoutCanceled") });
     }
-  }, [search, t]);
+  }, [stripeFlag, t]);
 
   const moneyFmt = new Intl.NumberFormat(locale, {
     style: "currency",
@@ -136,6 +140,9 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-8">
+      <Suspense fallback={null}>
+        <SearchParamWatcher name="stripe" onValue={setStripeFlag} />
+      </Suspense>
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>

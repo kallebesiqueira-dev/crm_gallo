@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/marketing/auth-shell";
+import { SearchParamWatcher } from "@/components/search-param-watcher";
 import { api, type PlanId } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -22,20 +23,23 @@ export default function RegisterPage() {
   const tPricing = useTranslations("pricing");
   const locale = useLocale();
   const router = useRouter();
-  const search = useSearchParams();
-  const initialPlan = (search.get("plan") as PlanId) || "free";
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>(initialPlan);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>("free");
+  const [planParam, setPlanParam] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // The starting plan can be deep-linked via ?plan=… (set by the pricing
+  // cards). `planParam` is fed by <SearchParamWatcher> so useSearchParams()
+  // stays inside its own Suspense boundary.
   useEffect(() => {
-    if (PLAN_OPTIONS.includes(initialPlan)) setSelectedPlan(initialPlan);
-  }, [initialPlan]);
+    const plan = (planParam as PlanId) || "free";
+    if (PLAN_OPTIONS.includes(plan)) setSelectedPlan(plan);
+  }, [planParam]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,6 +100,9 @@ export default function RegisterPage() {
         </div>
       }
     >
+      <Suspense fallback={null}>
+        <SearchParamWatcher name="plan" onValue={setPlanParam} />
+      </Suspense>
       <div className="space-y-6">
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">{tAuth("createAccount")}</h2>
