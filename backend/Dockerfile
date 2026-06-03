@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl \
     # WeasyPrint runtime (ADR-016): Pango/HarfBuzz do text layout, the
     # libjpeg/openjp2 pair lets embedded logos render, fonts-dejavu-core
