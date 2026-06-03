@@ -13,6 +13,7 @@ import { TeamCard } from "@/components/team-card";
 import { PipelinesCard } from "@/components/pipelines-card";
 import { TeamsCard } from "@/components/teams-card";
 import { DocumentTemplatesCard } from "@/components/document-templates-card";
+import { ApiKeysCard } from "@/components/api-keys-card";
 import { api, type User } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { locales, localeLabels, type Locale } from "@/i18n/config";
@@ -247,6 +248,11 @@ export default function SettingsPage() {
       {/* Merge-field document templates — author reusable contract
           bodies with {{ token }} placeholders. Admin/manager gated. */}
       <DocumentTemplatesCard canManage={canManageTemplates} />
+
+      {/* Public-API bearer keys — mint / revoke server-to-server
+          credentials for /api/v1. Admin-only (creation requires admin);
+          the card shows a notice + hides actions for non-admins. */}
+      <ApiKeysCard canManage={canInvite} />
     </div>
   );
 }

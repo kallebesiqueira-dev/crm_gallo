@@ -278,6 +278,35 @@
     "apply": "Anwenden",
     "noTemplate": "Keine Vorlage"
   },
+  "apiKeys": {
+    "title": "API-Schlüssel",
+    "new": "Neuer Schlüssel",
+    "adminOnly": "Nur Administratoren können API-Schlüssel erstellen oder widerrufen.",
+    "intro": "Bearer-Anmeldedaten für die öffentliche API (/api/v1). Für Server-zu-Server-Integrationen.",
+    "secretOnce": "Kopieren Sie diesen Schlüssel jetzt – er wird nicht erneut angezeigt.",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "dismiss": "Fertig",
+    "nameLabel": "Name",
+    "namePlaceholder": "Zapier-Integration",
+    "allowWrite": "Schreibzugriff erlauben",
+    "scopesHint": "Lesen erlaubt das Auflisten und Abrufen von Datensätzen. Schreiben erlaubt zusätzlich das Erstellen.",
+    "expiresLabel": "Läuft ab (optional)",
+    "cancel": "Abbrechen",
+    "create": "Schlüssel erstellen",
+    "empty": "Noch keine API-Schlüssel.",
+    "scope": {
+      "read": "Lesen",
+      "write": "Schreiben"
+    },
+    "revoked": "Widerrufen",
+    "expired": "Abgelaufen",
+    "lastUsed": "Zuletzt verwendet {date}",
+    "neverUsed": "Nie verwendet",
+    "expiresOn": "Läuft ab {date}",
+    "confirmRevoke": "Schlüssel \"{name}\" widerrufen? Integrationen, die ihn verwenden, funktionieren nicht mehr.",
+    "revoke": "Widerrufen"
+  },
   "teams": {
     "title": "Teams",
     "adminOnly": "Nur Admins und Manager können Teams erstellen oder löschen.",

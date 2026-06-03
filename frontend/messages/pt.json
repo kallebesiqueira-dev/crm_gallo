@@ -278,6 +278,35 @@
     "apply": "Aplicar",
     "noTemplate": "Sem modelo"
   },
+  "apiKeys": {
+    "title": "Chaves de API",
+    "new": "Nova chave",
+    "adminOnly": "Apenas administradores podem criar ou revogar chaves de API.",
+    "intro": "Credenciais bearer para a API pública (/api/v1). Use-as para integrações servidor a servidor.",
+    "secretOnce": "Copie esta chave agora — ela não será exibida novamente.",
+    "copy": "Copiar",
+    "copied": "Copiada",
+    "dismiss": "Concluído",
+    "nameLabel": "Nome",
+    "namePlaceholder": "Integração com o Zapier",
+    "allowWrite": "Permitir acesso de escrita",
+    "scopesHint": "Leitura permite listar e obter registros. Escrita também permite criá-los.",
+    "expiresLabel": "Expira (opcional)",
+    "cancel": "Cancelar",
+    "create": "Criar chave",
+    "empty": "Ainda não há chaves de API.",
+    "scope": {
+      "read": "leitura",
+      "write": "escrita"
+    },
+    "revoked": "Revogada",
+    "expired": "Expirada",
+    "lastUsed": "Último uso em {date}",
+    "neverUsed": "Nunca usada",
+    "expiresOn": "Expira em {date}",
+    "confirmRevoke": "Revogar a chave \"{name}\"? As integrações que a usam deixarão de funcionar.",
+    "revoke": "Revogar"
+  },
   "teams": {
     "title": "Equipes",
     "adminOnly": "Apenas admins e managers podem criar ou excluir equipes.",

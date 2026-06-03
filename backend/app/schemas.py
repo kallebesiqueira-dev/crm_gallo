@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.models import (
+    ApiKeyScope,
     BillingCycle,
     ContractStatus,
     Currency,
@@ -385,6 +386,50 @@ class WebhookEndpointCreated(WebhookEndpointOut):
     Future GETs return WebhookEndpointOut only."""
 
     secret: str
+
+
+class ApiKeyCreate(BaseModel):
+    """Admin mints a Public-API key for the current org.
+
+    `scopes` is coarse for v1: `read` (GET) and/or `write` (mutations).
+    Defaults to read-only — the least-privilege default, so a key that's
+    only meant to pull data can't accidentally be granted write. An empty
+    list is rejected (a scopeless key could do nothing). `expires_at` is
+    optional; omit for a non-expiring key.
+    """
+
+    name: str = Field(min_length=1, max_length=120)
+    scopes: list[ApiKeyScope] = Field(default_factory=lambda: [ApiKeyScope.read])
+    expires_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def _non_empty_scopes(self) -> "ApiKeyCreate":
+        if not self.scopes:
+            raise ValueError("scopes must be non-empty")
+        return self
+
+
+class ApiKeyOut(BaseModel):
+    """Public view of an API key — the secret token is NEVER here. The
+    plaintext is shown ONCE on create (ApiKeyCreated) and is otherwise
+    unrecoverable. `display_prefix` is the non-secret label for the list."""
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    name: str
+    display_prefix: str
+    scopes: list[ApiKeyScope]
+    last_used_at: datetime | None = None
+    expires_at: datetime | None = None
+    revoked_at: datetime | None = None
+    created_at: datetime
+
+
+class ApiKeyCreated(ApiKeyOut):
+    """One-time response on POST /api/api-keys carrying the plaintext
+    `token`. Copy it now — it is hashed at rest and can't be shown again."""
+
+    token: str
 
 
 class WebhookDeliveryOut(BaseModel):

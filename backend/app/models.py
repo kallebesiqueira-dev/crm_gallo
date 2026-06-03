@@ -202,6 +202,22 @@ class BillingCycle(str, enum.Enum):
     yearly = "yearly"
 
 
+class ApiKeyScope(str, enum.Enum):
+    """Coarse-grained permission a Public-API key carries.
+
+    `read`  — GET only (idempotent, safe verbs).
+    `write` — everything `read` can do, plus create/update/delete.
+    A key stores a SET of scopes (`["read"]` or `["read","write"]`);
+    the bearer dependency maps the request's HTTP method to the scope
+    it requires. Intentionally coarse for v1 — per-resource scopes
+    (`leads:read`) can be added later without a schema change since
+    scopes live in a JSON column, not a Postgres enum.
+    """
+
+    read = "read"
+    write = "write"
+
+
 # SoftDeleteMixin moved to `app.mixins` to break a circular import
 # (database.py needs the mixin class to wire its global filter event;
 # models.py needs Base from database.py). Re-exported here so any
@@ -1512,3 +1528,67 @@ class OutboxEvent(Base):
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     last_error: Mapped[str | None] = mapped_column(Text)
+
+
+class ApiKey(Base):
+    """A server-to-server credential for the Public API (/api/v1).
+
+    The browser auth model (cookie + CSRF) can't serve a backend
+    integrator — there's no browser to hold the cookie and no origin to
+    scope CSRF to. An API key is the bearer credential for that path:
+    issued by an org admin, presented as `Authorization: Bearer <token>`.
+
+    **At-rest:** only the sha256 of the full token is stored
+    (`hashed_key`, unique). The plaintext is shown exactly ONCE on
+    create and never round-tripped on reads — mirrors how Stripe/GitHub
+    render secrets, and how `WebhookEndpoint.secret` already behaves.
+    `display_prefix` (e.g. `crmk_a1b2…wxyz`) is the non-secret label the
+    UI lists so an admin can tell keys apart and pick which to revoke.
+
+    **Token shape:** `crmk_{org_hex}_{secret}`. The org id is embedded
+    (it is NOT a secret) so the bearer path can recover the tenant,
+    set the `app.current_org_id` GUC, and *then* look the key up under
+    RLS — the same trick the e-signature `sign_token` uses to read an
+    RLS'd row before any session exists.
+
+    **Scopes:** a JSON array of `ApiKeyScope` values (`["read"]` /
+    `["read","write"]`). The bearer dependency maps the request verb to
+    the scope it needs (GET→read, mutating→write).
+
+    **Revocation is soft** (`revoked_at` timestamp, not a row delete) so
+    the audit trail of which key did what survives the revoke. `expires_at`
+    is an optional hard cutoff. A key is only usable while
+    `revoked_at IS NULL AND (expires_at IS NULL OR expires_at > now())`
+    AND its creator user is still active (deactivating a user kills their
+    keys — a deliberate v1 coupling so there's no orphaned credential
+    outliving the human who owns it).
+
+    Org-scoped + RLS like every tenant table. NOT soft-deletable in the
+    trash sense — `revoked_at` is the lifecycle end-state.
+    """
+
+    __tablename__ = "api_keys"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    # sha256 hex of the full `crmk_…` token. Unique so a lookup by hash
+    # resolves at most one key.
+    hashed_key: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    # Non-secret label for the UI list, e.g. `crmk_a1b2…wxyz`.
+    display_prefix: Mapped[str] = mapped_column(String(40), nullable=False)
+    # JSON-encoded array of ApiKeyScope values. Text (not PG ARRAY/enum)
+    # so per-resource scopes can be added later without a migration.
+    scopes: Mapped[str] = mapped_column(Text, nullable=False, default='["read"]')
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

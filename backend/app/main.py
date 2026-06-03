@@ -13,6 +13,7 @@ from sqlalchemy import text
 
 from app.api import (
     activities,
+    api_keys,
     assistant,
     attachments,
     audit,
@@ -37,6 +38,7 @@ from app.api import (
     tasks,
     teams,
     trash,
+    v1,
     webhooks,
 )
 from app.config import get_settings
@@ -291,6 +293,10 @@ app.include_router(notes.router)
 app.include_router(attachments.router)
 app.include_router(imports.router)
 app.include_router(exports.router)
+app.include_router(api_keys.router)
+# Public, versioned, bearer-authenticated API. Mounted last; its
+# /api/v1 prefix doesn't collide with the internal /api/* routes.
+app.include_router(v1.router)
 app.include_router(teams.router)
 app.include_router(pipelines.router)
 app.include_router(notifications.router)

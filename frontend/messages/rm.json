@@ -278,6 +278,35 @@
     "apply": "Applitgar",
     "noTemplate": "Nagin model"
   },
+  "apiKeys": {
+    "title": "Clavs API",
+    "new": "Nova clav",
+    "adminOnly": "Mo administraturs pon crear u revocar clavs API.",
+    "intro": "Credenzialas bearer per l'API publica (/api/v1). Dovrar per integraziuns server-a-server.",
+    "secretOnce": "Copiar questa clav ussa — ella na vegn betg mussada danovamain.",
+    "copy": "Copiar",
+    "copied": "Copià",
+    "dismiss": "Finì",
+    "nameLabel": "Num",
+    "namePlaceholder": "Integraziun Zapier",
+    "allowWrite": "Permetter access da scriver",
+    "scopesHint": "Leger permetta da listar ed obtegnair datas. Scriver permetta era da las crear.",
+    "expiresLabel": "Scada (opziunal)",
+    "cancel": "Interrumper",
+    "create": "Crear clav",
+    "empty": "Anc naginas clavs API.",
+    "scope": {
+      "read": "leger",
+      "write": "scriver"
+    },
+    "revoked": "Revocada",
+    "expired": "Scadida",
+    "lastUsed": "Ultim diever {date}",
+    "neverUsed": "Mai duvrada",
+    "expiresOn": "Scada ils {date}",
+    "confirmRevoke": "Revocar la clav \"{name}\"? Las integraziuns che la dovran na funcziunan betg pli.",
+    "revoke": "Revocar"
+  },
   "teams": {
     "title": "Teams",
     "adminOnly": "Mo administraturs e manager pon crear u stizzar teams.",

@@ -67,6 +67,19 @@ class Settings(BaseSettings):
     # doing real imports never approaches it.
     import_daily_cap: int = 50
 
+    # ---- Public API & API keys (ADR-016) ----
+    # Per-key request budget for the bearer-authenticated /api/v1
+    # surface, fixed-window per minute in Redis. Separate from the
+    # per-IP login limit (different threat: a key is one integrator's
+    # automation, not anonymous login attempts). Generous default —
+    # a normal sync job stays well under it; a runaway loop trips 429.
+    api_key_rate_limit_per_minute: int = 120
+    # Don't write `last_used_at` on every request — that's a row write
+    # on every API call. Only refresh it when the stored value is older
+    # than this many seconds, so the "last used" telemetry stays useful
+    # without turning every GET into a write.
+    api_key_last_used_throttle_seconds: int = 60
+
     # ---- Sentry ----
     # Empty DSN = SDK disabled (no init, no network calls). The smoke
     # path is "deploy with an empty DSN and nothing changes"; pasting

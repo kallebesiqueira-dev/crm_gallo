@@ -319,6 +319,33 @@ export interface SignatureSignContext {
   organization_name: string;
 }
 
+export type ApiKeyScope = "read" | "write";
+
+export interface ApiKey {
+  id: string;
+  organization_id: string;
+  name: string;
+  // Non-secret label like `crmk_a1b2c3d4…wxyz` — safe to show anywhere.
+  display_prefix: string;
+  scopes: ApiKeyScope[];
+  last_used_at: string | null;
+  expires_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+}
+
+/** Returned ONCE by createApiKey — `token` is the plaintext bearer
+ *  credential and is never retrievable again after this response. */
+export interface ApiKeyCreated extends ApiKey {
+  token: string;
+}
+
+export interface ApiKeyCreate {
+  name: string;
+  scopes?: ApiKeyScope[];
+  expires_at?: string | null;
+}
+
 export interface DashboardStats {
   total_leads: number;
   leads_by_stage: Record<string, number>;
@@ -1402,6 +1429,25 @@ export const api = {
       method: "DELETE",
       token,
     }),
+  // ── API keys (Public API bearer credentials — ADR-016) ───────────
+  // Admin-gated, current-org only. createApiKey returns the plaintext
+  // `token` ONCE; subsequent reads expose only `display_prefix`.
+  listApiKeys: (token: string) =>
+    request<ApiKey[]>("/api/api-keys", { token }),
+  createApiKey: (token: string, payload: ApiKeyCreate) =>
+    request<ApiKeyCreated>("/api/api-keys", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  getApiKey: (token: string, id: string) =>
+    request<ApiKey>(`/api/api-keys/${encodeURIComponent(id)}`, { token }),
+  revokeApiKey: (token: string, id: string) =>
+    request<ApiKey>(`/api/api-keys/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      token,
+    }),
+
   // Public — no token. Token in URL IS the credential.
   previewInvite: (token: string) =>
     request<InvitePreview>(`/api/invites/${encodeURIComponent(token)}`),

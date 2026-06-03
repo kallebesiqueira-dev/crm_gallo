@@ -278,6 +278,35 @@
     "apply": "Apply",
     "noTemplate": "No template"
   },
+  "apiKeys": {
+    "title": "API keys",
+    "new": "New key",
+    "adminOnly": "Only admins can create or revoke API keys.",
+    "intro": "Bearer credentials for the public API (/api/v1). Use them for server-to-server integrations.",
+    "secretOnce": "Copy this key now — it won't be shown again.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "dismiss": "Done",
+    "nameLabel": "Name",
+    "namePlaceholder": "Zapier integration",
+    "allowWrite": "Allow write access",
+    "scopesHint": "Read lets the key list and fetch records. Write also lets it create them.",
+    "expiresLabel": "Expires (optional)",
+    "cancel": "Cancel",
+    "create": "Create key",
+    "empty": "No API keys yet.",
+    "scope": {
+      "read": "read",
+      "write": "write"
+    },
+    "revoked": "Revoked",
+    "expired": "Expired",
+    "lastUsed": "Last used {date}",
+    "neverUsed": "Never used",
+    "expiresOn": "Expires {date}",
+    "confirmRevoke": "Revoke key \"{name}\"? Integrations using it will stop working.",
+    "revoke": "Revoke"
+  },
   "teams": {
     "title": "Teams",
     "adminOnly": "Only admins and managers can create or delete teams.",
