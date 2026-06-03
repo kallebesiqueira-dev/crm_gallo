@@ -95,9 +95,34 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.component.name }}
           cache-to: type=gha,scope=${{ matrix.component.name }},mode=max
 
-      - name: Trivy scan
+      # The merge-blocking gate. Uses `format: table` deliberately: in `sarif`
+      # mode the action defaults `limit-severities-for-sarif: false`, so the
+      # report (and the exit-code evaluation) covers ALL severities regardless
+      # of the `severity` filter — a MEDIUM/LOW finding would then trip
+      # `exit-code: "1"`. `table` honors the `severity` filter for the exit
+      # code, so only HIGH/CRITICAL hard-fail. Both images were confirmed 0
+      # HIGH/CRITICAL on 2026-06-03 (backend after `apt-get upgrade` in its
+      # Dockerfile; frontend with the root `.trivyignore` dev-toolchain
+      # allowlist), so this gate passes today and only a NEW HIGH/CRITICAL
+      # fails the build.
+      - name: Trivy scan (gate)
         # Run AFTER push so we get the same digest the registry has.
         # On PRs the scanned image is the local `:pr-scan` build.
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: >-
+            ${{ github.event_name == 'pull_request'
+                && format('{0}:pr-scan', matrix.component.name)
+                || format('{0}/{1}/{2}:edge', env.REGISTRY, env.IMAGE_BASE, matrix.component.name) }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      # Report-only SARIF for the GH Security tab (and as a record). Never
+      # blocks — the gate above is the source of truth.
+      - name: Trivy scan (SARIF report)
+        if: always()
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: >-
@@ -108,11 +133,6 @@ jobs:
           output: trivy-${{ matrix.component.name }}.sarif
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          # Report-only: surface HIGH/CRITICAL in the logs + SARIF without
-          # hard-failing the pipeline. (Was exit-code "1", but that blocked
-          # main on base-image CVEs. `apt-get upgrade` in backend/Dockerfile
-          # patches the OS-package findings; re-tighten to "1" once both
-          # images are confirmed clean.)
           exit-code: "0"
 
       - name: Upload SARIF to GH Security tab
