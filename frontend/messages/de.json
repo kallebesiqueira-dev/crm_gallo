@@ -427,7 +427,8 @@
     "needLineItems": "Fügen Sie vor dem Senden mindestens eine Position hinzu.",
     "confirmDelete": "Dieses Angebot löschen? Dies kann nicht rückgängig gemacht werden.",
     "details": "Details",
-    "created": "Erstellt"
+    "created": "Erstellt",
+    "createContract": "Vertrag erstellen"
   },
   "contracts": {
     "title": "Verträge",

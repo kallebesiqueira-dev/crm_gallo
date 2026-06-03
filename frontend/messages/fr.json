@@ -427,7 +427,8 @@
     "needLineItems": "Ajoutez au moins une ligne avant d'envoyer.",
     "confirmDelete": "Supprimer ce devis ? Cette action est irréversible.",
     "details": "Détails",
-    "created": "Créé"
+    "created": "Créé",
+    "createContract": "Créer un contrat"
   },
   "contracts": {
     "title": "Contrats",

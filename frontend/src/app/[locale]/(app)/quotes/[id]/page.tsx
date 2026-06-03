@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   Check,
   Download,
+  FileSignature,
   FileText,
   Loader2,
   Pencil,
@@ -102,6 +103,20 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  async function handleCreateContract() {
+    const token = getToken();
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const contract = await api.createContractFromQuote(token, id);
+      router.push(`/${locale}/contracts/${contract.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+      setBusy(false);
+    }
+  }
+
   async function generatePdf() {
     const token = getToken();
     if (!token) return;
@@ -146,6 +161,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
 
   const isDraft = quote.status === "draft";
   const isSent = quote.status === "sent";
+  const isAccepted = quote.status === "accepted";
   const canResend = quote.status !== "draft";
 
   return (
@@ -203,6 +219,12 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                 {t("decline")}
               </Button>
             </>
+          )}
+          {isAccepted && (
+            <Button size="sm" disabled={busy} onClick={handleCreateContract}>
+              <FileSignature className="h-4 w-4" />
+              {t("createContract")}
+            </Button>
           )}
           {canResend && (
             <Button size="sm" variant="outline" disabled={busy} onClick={handleResend}>

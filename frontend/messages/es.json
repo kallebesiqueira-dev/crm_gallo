@@ -427,7 +427,8 @@
     "needLineItems": "Añade al menos una línea antes de enviar.",
     "confirmDelete": "¿Eliminar este presupuesto? Esta acción no se puede deshacer.",
     "details": "Detalles",
-    "created": "Creado"
+    "created": "Creado",
+    "createContract": "Crear contrato"
   },
   "contracts": {
     "title": "Contratos",

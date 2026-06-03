@@ -22,6 +22,9 @@ dist/
 .env.*.local
 *.pem
 
+# Claude Code agent memory / local session state — never publish
+.claude/
+
 # IDE
 .vscode/
 .idea/

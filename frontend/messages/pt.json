@@ -427,7 +427,8 @@
     "needLineItems": "Adicione ao menos um item antes de enviar.",
     "confirmDelete": "Excluir este orçamento? Isto não pode ser desfeito.",
     "details": "Detalhes",
-    "created": "Criado"
+    "created": "Criado",
+    "createContract": "Criar contrato"
   },
   "contracts": {
     "title": "Contratos",

@@ -427,7 +427,8 @@
     "needLineItems": "Aggiungi almeno una voce prima di inviare.",
     "confirmDelete": "Eliminare questo preventivo? L'operazione è irreversibile.",
     "details": "Dettagli",
-    "created": "Creato"
+    "created": "Creato",
+    "createContract": "Crea contratto"
   },
   "contracts": {
     "title": "Contratti",

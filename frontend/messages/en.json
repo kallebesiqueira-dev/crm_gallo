@@ -427,7 +427,8 @@
     "needLineItems": "Add at least one line item before sending.",
     "confirmDelete": "Delete this quote? This cannot be undone.",
     "details": "Details",
-    "created": "Created"
+    "created": "Created",
+    "createContract": "Create contract"
   },
   "contracts": {
     "title": "Contracts",

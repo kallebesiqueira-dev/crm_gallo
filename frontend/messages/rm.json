@@ -427,7 +427,8 @@
     "needLineItems": "Agiunta almain ina posiziun avant trametter.",
     "confirmDelete": "Stizzar questa offerta? Quai na po betg vegnir revocà.",
     "details": "Detagls",
-    "created": "Creà"
+    "created": "Creà",
+    "createContract": "Crear contract"
   },
   "contracts": {
     "title": "Contracts",
