@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.activities import ENTITY_CUSTOMER, ActivityType, record_activity
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
@@ -74,6 +75,14 @@ async def create_customer(
         entity_id=customer.id,
         organization_id=org_id,
     )
+    await record_activity(
+        db,
+        entity_type=ENTITY_CUSTOMER,
+        entity_id=customer.id,
+        activity_type=ActivityType.created,
+        organization_id=org_id,
+        actor=user,
+    )
     await db.commit()
     await db.refresh(customer)
     return customer
@@ -110,6 +119,15 @@ async def update_customer(
         entity_type="customer",
         entity_id=customer.id,
         organization_id=org_id,
+        metadata={"fields": list(changes.keys())},
+    )
+    await record_activity(
+        db,
+        entity_type=ENTITY_CUSTOMER,
+        entity_id=customer.id,
+        activity_type=ActivityType.updated,
+        organization_id=org_id,
+        actor=user,
         metadata={"fields": list(changes.keys())},
     )
     await db.commit()

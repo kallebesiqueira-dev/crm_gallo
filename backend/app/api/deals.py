@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.activities import ENTITY_DEAL, ActivityType, record_activity
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
@@ -155,6 +156,15 @@ async def create_deal(
         organization_id=org_id,
         metadata={"stage": deal.stage.value, "value": deal.value},
     )
+    await record_activity(
+        db,
+        entity_type=ENTITY_DEAL,
+        entity_id=deal.id,
+        activity_type=ActivityType.created,
+        organization_id=org_id,
+        actor=user,
+        metadata={"stage": deal.stage.value},
+    )
     await record_event(
         db,
         event_type=EventType.deal_created,
@@ -208,6 +218,15 @@ async def update_deal(
         organization_id=org_id,
         metadata={"fields": list(changes.keys())},
     )
+    await record_activity(
+        db,
+        entity_type=ENTITY_DEAL,
+        entity_id=deal.id,
+        activity_type=ActivityType.updated,
+        organization_id=org_id,
+        actor=user,
+        metadata={"fields": list(changes.keys())},
+    )
     await db.commit()
     await db.refresh(deal)
     return deal
@@ -243,6 +262,15 @@ async def move_deal(
     # case OR react narrowly to `deal.won` / `deal.lost` without
     # parsing the payload (cleaner automation surface).
     if deal.stage != prev_stage:
+        await record_activity(
+            db,
+            entity_type=ENTITY_DEAL,
+            entity_id=deal.id,
+            activity_type=ActivityType.stage_change,
+            organization_id=org_id,
+            actor=user,
+            metadata={"from": prev_stage.value, "to": deal.stage.value},
+        )
         event_payload = {
             "deal_id": deal.id,
             "from": prev_stage.value,

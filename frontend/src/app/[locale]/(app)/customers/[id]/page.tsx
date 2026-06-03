@@ -8,6 +8,9 @@ import { Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
+import { ActivityTimeline } from "@/components/activity-timeline";
+import { AttachmentsPanel } from "@/components/attachments-panel";
+import { NotesPanel } from "@/components/notes-panel";
 import { api, type Customer } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -65,77 +68,82 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-2xl">
-                {customer.first_name} {customer.last_name}
-              </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">{customer.company ?? "—"}</p>
+      <div className="space-y-6 lg:col-span-2">
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-2xl">
+                  {customer.first_name} {customer.last_name}
+                </CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">{customer.company ?? "—"}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button asChild size="sm">
+                  <Link href={`/${locale}/customers/${customer.id}/edit`}>
+                    <Pencil className="h-4 w-4" />
+                    {tCommon("edit")}
+                  </Link>
+                </Button>
+                <Button type="button" variant="destructive" size="sm" onClick={handleDelete}>
+                  <Trash2 className="h-4 w-4" />
+                  {tCommon("delete")}
+                </Button>
+              </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button asChild size="sm">
-                <Link href={`/${locale}/customers/${customer.id}/edit`}>
-                  <Pencil className="h-4 w-4" />
-                  {tCommon("edit")}
-                </Link>
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-                {tCommon("delete")}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          <Field label="Email" value={customer.email} />
-          <Field label="Phone" value={customer.phone} />
-          <Field label="Industry" value={customer.industry} />
-          <Field label="Country" value={customer.country} />
-          <Field label="Website" value={customer.website} />
-          <Field
-            label={t("created")}
-            value={new Date(customer.created_at).toLocaleString(locale)}
-          />
-          {customer.address && (
-            <div className="sm:col-span-2">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Address</div>
-              <p className="mt-1 text-sm">{customer.address}</p>
-            </div>
-          )}
-          {customer.notes && (
-            <div className="sm:col-span-2">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Notes</div>
-              <p className="mt-1 whitespace-pre-wrap text-sm">{customer.notes}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <Field label="Email" value={customer.email} />
+            <Field label="Phone" value={customer.phone} />
+            <Field label="Industry" value={customer.industry} />
+            <Field label="Country" value={customer.country} />
+            <Field label="Website" value={customer.website} />
+            <Field
+              label={t("created")}
+              value={new Date(customer.created_at).toLocaleString(locale)}
+            />
+            {customer.address && (
+              <div className="sm:col-span-2">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Address
+                </div>
+                <p className="mt-1 text-sm">{customer.address}</p>
+              </div>
+            )}
+            {customer.notes && (
+              <div className="sm:col-span-2">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">Notes</div>
+                <p className="mt-1 whitespace-pre-wrap text-sm">{customer.notes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">{t("aiSummary")}</CardTitle>
-            <Button size="sm" onClick={summarize} disabled={busy}>
-              <Sparkles className="h-4 w-4" />
-              {busy ? "…" : t("summarize")}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {customer.ai_summary ? (
-            <p className="whitespace-pre-wrap text-sm">{customer.ai_summary}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("noSummary")}</p>
-          )}
-        </CardContent>
-      </Card>
+        <NotesPanel entityType="customer" entityId={customer.id} />
+        <AttachmentsPanel entityType="customer" entityId={customer.id} />
+        <ActivityTimeline entityType="customer" entityId={customer.id} />
+      </div>
+
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{t("aiSummary")}</CardTitle>
+              <Button size="sm" onClick={summarize} disabled={busy}>
+                <Sparkles className="h-4 w-4" />
+                {busy ? "…" : t("summarize")}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {customer.ai_summary ? (
+              <p className="whitespace-pre-wrap text-sm">{customer.ai_summary}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("noSummary")}</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
