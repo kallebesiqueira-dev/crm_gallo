@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ number }} — {{ title }}{% endblock %}
+{% block doc_type %}Contract {{ number }}{% if version and version > 1 %} · v{{ version }}{% endif %}{% endblock %}
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p class="subtitle">{{ org_name }}{% if customer_name %} · {{ customer_name }}{% endif %}</p>
+
+  <table class="fields">
+    <tr>
+      <td class="label">Contract number</td>
+      <td class="value">{{ number }}{% if version and version > 1 %} (version {{ version }}){% endif %}</td>
+    </tr>
+    <tr>
+      <td class="label">Status</td>
+      <td class="value"><span class="pill">{{ status }}</span></td>
+    </tr>
+    {% if customer_name %}
+    <tr><td class="label">Customer</td><td class="value">{{ customer_name }}</td></tr>
+    {% endif %}
+    {% if owner_name %}
+    <tr><td class="label">Prepared by</td><td class="value">{{ owner_name }}</td></tr>
+    {% endif %}
+    <tr><td class="label">Contract value</td><td class="value">{{ value|money(currency) }}</td></tr>
+    {% if effective_date %}
+    <tr><td class="label">Effective</td><td class="value">{{ effective_date }}</td></tr>
+    {% endif %}
+    {% if end_date %}
+    <tr><td class="label">End</td><td class="value">{{ end_date }}</td></tr>
+    {% endif %}
+    <tr>
+      <td class="label">Auto-renew</td>
+      <td class="value">
+        {% if auto_renew %}Yes{% if renewal_term_months %} — {{ renewal_term_months }} month term{% endif %}{% else %}No{% endif %}
+      </td>
+    </tr>
+    <tr><td class="label">Issued</td><td class="value">{{ created_at }}</td></tr>
+  </table>
+
+  {% if body %}
+  <h2 class="terms-h">Terms</h2>
+  <div class="terms">{{ body }}</div>
+  {% endif %}
+
+  {% if notes %}
+  <h2 class="notes-h">Notes</h2>
+  <p class="notes">{{ notes }}</p>
+  {% endif %}
+
+  <style>
+    .terms-h { font-size: 11pt; margin: 24px 0 4px; color: #0f172a; }
+    .terms { color: #334155; font-size: 10pt; white-space: pre-line; line-height: 1.5; }
+    .notes-h { font-size: 11pt; margin: 24px 0 4px; color: #0f172a; }
+    .notes { color: #475569; font-size: 10pt; white-space: pre-line; }
+  </style>
+{% endblock %}

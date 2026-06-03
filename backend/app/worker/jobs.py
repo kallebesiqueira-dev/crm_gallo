@@ -31,6 +31,7 @@ from app.database import set_current_org_id
 from app.events import OUTBOX_MAX_ATTEMPTS
 from app.events_dispatcher import EventContext, dispatch_event
 from app.models import (
+    Contract,
     Customer,
     Deal,
     Lead,
@@ -722,6 +723,128 @@ async def generate_quote_pdf(ctx: dict, quote_id: str, organization_id: str) -> 
     log.info(
         "generate_quote_pdf.done",
         quote_id=quote_id,
+        organization_id=organization_id,
+        attachment_id=att_id,
+        size_bytes=att_size,
+    )
+    return {"status": "generated", "attachment_id": att_id, "size_bytes": att_size}
+
+
+async def generate_contract_pdf(ctx: dict, contract_id: str, organization_id: str) -> dict:
+    """Render a contract PDF and attach it to the contract (ADR-016).
+
+    Enqueued by `POST /api/contracts/{id}/pdf`. Mirrors
+    `generate_quote_pdf` but the contract has no line items — it renders a
+    single agreed `value` plus the term / renewal / free-text body. Set
+    the RLS GUC (worker is `crm_app`, NOBYPASSRLS), read the contract +
+    org/customer/owner names, render the `contract` template via
+    WeasyPrint off the event loop, and store the bytes as a
+    `FileAttachment` (entity_type="contract") so it surfaces in the
+    contract's attachment list and downloads via the existing
+    presigned-URL path. Same retry/idempotency note as the quote job.
+    """
+    from app.pdf import TEMPLATE_CONTRACT, render_pdf, store_pdf_attachment
+
+    SessionLocal = ctx["SessionLocal"]
+    contract_uuid = uuid.UUID(contract_id)
+    org_uuid = uuid.UUID(organization_id)
+
+    set_current_org_id(org_uuid)
+
+    # Phase 1 — read into a plain context dict, then RELEASE the connection
+    # before the ~tens-of-seconds WeasyPrint render (TD-43).
+    async with SessionLocal() as db:
+        contract = (
+            await db.execute(
+                select(Contract).where(
+                    Contract.id == contract_uuid, Contract.organization_id == org_uuid
+                )
+            )
+        ).scalar_one_or_none()
+        if contract is None or contract.deleted_at is not None:
+            log.warning(
+                "generate_contract_pdf.contract_missing",
+                contract_id=contract_id,
+                organization_id=organization_id,
+            )
+            return {"status": "missing"}
+
+        org_name = (
+            await db.execute(select(Organization.name).where(Organization.id == org_uuid))
+        ).scalar_one_or_none() or "CRM Gallo"
+
+        customer_name = None
+        if contract.customer_id is not None:
+            cust = (
+                await db.execute(
+                    select(Customer.first_name, Customer.last_name, Customer.company).where(
+                        Customer.id == contract.customer_id
+                    )
+                )
+            ).first()
+            if cust is not None:
+                full = f"{cust.first_name} {cust.last_name}".strip()
+                customer_name = f"{full} ({cust.company})" if cust.company else full
+
+        owner_name = None
+        if contract.owner_id is not None:
+            owner_name = (
+                await db.execute(select(User.full_name).where(User.id == contract.owner_id))
+            ).scalar_one_or_none()
+
+        contract_pk = contract.id
+        filename = f"contract-{contract.number}-v{contract.version}.pdf".replace("/", "-")
+        context = {
+            "org_name": org_name,
+            "number": contract.number,
+            "version": contract.version,
+            "status": contract.status.value,
+            "title": contract.title,
+            "currency": contract.currency.value,
+            "customer_name": customer_name,
+            "owner_name": owner_name,
+            "value": contract.value,
+            "effective_date": (
+                contract.effective_date.isoformat() if contract.effective_date else None
+            ),
+            "end_date": contract.end_date.isoformat() if contract.end_date else None,
+            "auto_renew": contract.auto_renew,
+            "renewal_term_months": contract.renewal_term_months,
+            "created_at": contract.created_at.strftime("%Y-%m-%d"),
+            "body": contract.body,
+            "notes": contract.notes,
+            "generated_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
+        }
+
+    # Phase 2 — render with NO DB connection held (see generate_deal_pdf).
+    pdf_bytes = await asyncio.to_thread(render_pdf, TEMPLATE_CONTRACT, context)
+
+    # Phase 3 — store + audit in a fresh short transaction.
+    async with SessionLocal() as db:
+        att = await store_pdf_attachment(
+            db,
+            organization_id=org_uuid,
+            entity_type="contract",
+            entity_id=contract_pk,
+            filename=filename,
+            pdf_bytes=pdf_bytes,
+        )
+        await record_audit(
+            db,
+            actor=None,
+            action="contract.pdf_generated",
+            entity_type="contract",
+            entity_id=contract_pk,
+            organization_id=org_uuid,
+            metadata={"attachment_id": str(att.id), "size_bytes": att.size_bytes, "via": "worker"},
+        )
+        await db.commit()
+        att_id = str(att.id)
+        att_size = att.size_bytes
+
+    log.info(
+        "generate_contract_pdf.done",
+        contract_id=contract_id,
         organization_id=organization_id,
         attachment_id=att_id,
         size_bytes=att_size,

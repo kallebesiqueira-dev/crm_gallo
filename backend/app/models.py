@@ -88,6 +88,32 @@ class QuoteStatus(str, enum.Enum):
     expired = "expired"
 
 
+class ContractStatus(str, enum.Enum):
+    """Lifecycle of a contract / agreement (ADR-016).
+
+    State machine (enforced in `app/api/contracts.py`):
+        draft ──send──▶ sent ──sign──▶ signed ──activate──▶ active
+                                          │                    │
+                                          └───terminate────────┴──▶ terminated
+        active ──(time)──▶ expired   (set by a future cron, no endpoint)
+
+    `draft` is the only editable state. Once sent the agreement is
+    immutable — a "re-issue with changes" clones it into a new version
+    (the old row keeps its terminal state and points at the new one via
+    `superseded_by`), exactly like Quote. `terminate` is the early-exit
+    path from a signed or active contract; `expired` is the natural
+    end-of-term state (reached by a scheduled sweep, mirroring how a
+    quote expires — there is no manual transition for it).
+    """
+
+    draft = "draft"
+    sent = "sent"
+    signed = "signed"
+    active = "active"
+    terminated = "terminated"
+    expired = "expired"
+
+
 class SignatureStatus(str, enum.Enum):
     """Lifecycle of an e-signature request / envelope (ADR-016).
 
@@ -613,6 +639,88 @@ class QuoteLineItem(Base):
     sort_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     quote: Mapped[Quote] = relationship(back_populates="line_items")
+
+
+class Contract(SoftDeleteMixin, Base):
+    """A versioned contract / agreement (ADR-016).
+
+    The formal agreement that follows an accepted quote. Distinct from
+    Quote on purpose — it is NOT a re-itemised quote clone:
+
+      * It carries a **term** (`effective_date` / `end_date`), optional
+        **auto-renewal** (`auto_renew` + `renewal_term_months`), and a
+        free-text **terms body** — the things a quote does not have.
+      * It stores a single `value` (the agreed amount) rather than line
+        items; the itemisation lives on the source quote (`quote_id`).
+        The merge-field template engine (admin-editable terms with line
+        roll-up) is a separate backlog item.
+
+    Links: optional `quote_id` (the quote it was generated from),
+    `customer_id`, and `deal_id` — all nullable FK SET NULL.
+
+    Versioning + lifecycle mirror Quote: `number` (e.g. `C-000007`) is
+    stable across revisions, `version` increments on re-issue, and
+    `(organization_id, number, version)` is unique. `draft` is the only
+    mutable status; the state machine lives in `app/api/contracts.py`.
+    Soft-deletable + RLS like every tenant entity.
+    """
+
+    __tablename__ = "contracts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    quote_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("quotes.id", ondelete="SET NULL"), index=True
+    )
+    deal_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deals.id", ondelete="SET NULL"), index=True
+    )
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), index=True
+    )
+
+    number: Mapped[str] = mapped_column(String(40), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    status: Mapped[ContractStatus] = mapped_column(
+        Enum(ContractStatus), default=ContractStatus.draft, nullable=False
+    )
+
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    currency: Mapped[Currency] = mapped_column(Enum(Currency), default=Currency.EUR, nullable=False)
+    # The agreed contract value. Decimal/Numeric — never float (ADR-015).
+    value: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
+
+    # The term + renewal — what makes a contract a contract.
+    effective_date: Mapped[date | None] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    auto_renew: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    renewal_term_months: Mapped[int | None] = mapped_column(Integer)
+
+    body: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    # Revision chain: the prior version points forward to its replacement.
+    superseded_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("contracts.id", ondelete="SET NULL")
+    )
+
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+
+    # Lifecycle timestamps — set as the contract transitions.
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    signed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    terminated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class SignatureRequest(SoftDeleteMixin, Base):

@@ -54,7 +54,7 @@ router = APIRouter(prefix="/api/attachments", tags=["attachments"])
 
 settings = get_settings()
 
-EntityType = Literal["lead", "customer", "deal", "quote"]
+EntityType = Literal["lead", "customer", "deal", "quote", "contract"]
 
 
 def _serialize(att: FileAttachment, email: str | None, name: str | None) -> FileAttachmentOut:

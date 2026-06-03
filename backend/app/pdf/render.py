@@ -28,6 +28,7 @@ _TEMPLATES_DIR = Path(__file__).parent / "templates"
 # never pass a raw filename string around.
 TEMPLATE_DEAL_SUMMARY = "deal_summary.html"
 TEMPLATE_QUOTE = "quote.html"
+TEMPLATE_CONTRACT = "contract.html"
 
 _env = Environment(
     loader=FileSystemLoader(str(_TEMPLATES_DIR)),

@@ -67,6 +67,15 @@ class EventType(str, enum.Enum):
     quote_accepted = "quote.accepted"
     quote_declined = "quote.declined"
 
+    # Contract lifecycle (ADR-016). `contract.signed` and
+    # `contract.activated` are the high-value outcome triggers (revenue
+    # recognition, provisioning); terminated is the churn signal.
+    contract_created = "contract.created"
+    contract_sent = "contract.sent"
+    contract_signed = "contract.signed"
+    contract_activated = "contract.activated"
+    contract_terminated = "contract.terminated"
+
     # E-signature lifecycle (ADR-016). `signature.signed` is the
     # high-value completion trigger (it also flips the underlying quote to
     # accepted); viewed/declined let automation react to signer behaviour.

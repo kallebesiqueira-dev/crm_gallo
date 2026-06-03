@@ -35,6 +35,7 @@ from app.database import register_org_guc
 from app.worker.jobs import (
     deliver_webhook,
     drain_outbox,
+    generate_contract_pdf,
     generate_deal_pdf,
     generate_quote_pdf,
     score_lead,
@@ -96,6 +97,7 @@ class WorkerSettings:
         send_email,
         generate_deal_pdf,
         generate_quote_pdf,
+        generate_contract_pdf,
     ]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1

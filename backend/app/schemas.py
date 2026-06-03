@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models import (
     BillingCycle,
+    ContractStatus,
     Currency,
     DealStage,
     LeadStage,
@@ -767,6 +768,77 @@ class SignatureSignContext(BaseModel):
     quote_total: float
     quote_currency: Currency
     organization_name: str
+
+
+# ---------- Contracts (ADR-016) ----------
+class ContractCreate(BaseModel):
+    """A new draft contract. Unlike a quote there are no line items — a
+    contract carries a single agreed `value`; itemisation (if any) lives
+    on the linked source quote. `quote_id` is optional so a contract can
+    be drafted free-standing, but when present the route can later copy
+    over title/value defaults."""
+
+    title: Annotated[str, Field(min_length=1, max_length=255)]
+    currency: Currency = Currency.EUR
+    value: Annotated[Decimal, Field(ge=0)] = Decimal("0")
+    effective_date: date | None = None
+    end_date: date | None = None
+    auto_renew: bool = False
+    renewal_term_months: Annotated[int, Field(ge=1, le=120)] | None = None
+    body: str | None = None
+    notes: str | None = None
+    quote_id: uuid.UUID | None = None
+    deal_id: uuid.UUID | None = None
+    customer_id: uuid.UUID | None = None
+    owner_id: uuid.UUID | None = None
+
+
+class ContractUpdate(BaseModel):
+    """Draft-only edits. The route rejects edits to a non-draft contract
+    (a sent/signed revision is immutable — resend creates a new version
+    instead). All fields optional."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    currency: Currency | None = None
+    value: Decimal | None = Field(default=None, ge=0)
+    effective_date: date | None = None
+    end_date: date | None = None
+    auto_renew: bool | None = None
+    renewal_term_months: int | None = Field(default=None, ge=1, le=120)
+    body: str | None = None
+    notes: str | None = None
+    quote_id: uuid.UUID | None = None
+    deal_id: uuid.UUID | None = None
+    customer_id: uuid.UUID | None = None
+    owner_id: uuid.UUID | None = None
+
+
+class ContractOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    number: str
+    version: int
+    status: ContractStatus
+    title: str
+    currency: Currency
+    value: float
+    effective_date: date | None
+    end_date: date | None
+    auto_renew: bool
+    renewal_term_months: int | None
+    body: str | None
+    notes: str | None
+    quote_id: uuid.UUID | None
+    deal_id: uuid.UUID | None
+    customer_id: uuid.UUID | None
+    owner_id: uuid.UUID | None
+    superseded_by: uuid.UUID | None
+    sent_at: datetime | None
+    signed_at: datetime | None
+    activated_at: datetime | None
+    terminated_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
 
 # ---------- Tasks ----------
