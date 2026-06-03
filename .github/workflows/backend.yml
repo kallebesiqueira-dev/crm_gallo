@@ -64,6 +64,13 @@ jobs:
       # config.validate_for_runtime so the app can boot in CI.
       JWT_SECRET: ci-${{ github.run_id }}-padding-padding-padding-padding-padding-padding
       ENVIRONMENT: ci
+      # S3-compatible storage for the import/signature tests. Points at the
+      # MinIO container started in the "Start MinIO" step below; the app's
+      # lifespan `ensure_bucket()` creates the bucket on first boot.
+      S3_ENDPOINT_URL: http://localhost:9000
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_BUCKET: crm-gallo-attachments
 
     steps:
       - uses: actions/checkout@v4
@@ -90,6 +97,26 @@ jobs:
         # Postgres. An invalid migration (broken op, missing column,
         # bad rev chain) fails here loudly.
         run: alembic upgrade head
+
+      - name: Start MinIO (S3 storage for import / signature tests)
+        # The `services:` block above can't run MinIO — the minio image
+        # needs a `server /data` command and GH service containers can't
+        # override the command. So run it as a plain container here. The
+        # app creates the bucket on startup (lifespan -> ensure_bucket),
+        # so no manual bucket-creation step is needed.
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO is ready"; exit 0
+            fi
+            sleep 1
+          done
+          echo "MinIO failed to become ready" >&2
+          exit 1
 
       - name: Run pytest
         run: python -m pytest tests/ -q
