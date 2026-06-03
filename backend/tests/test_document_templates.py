@@ -106,8 +106,7 @@ def test_format_line_items_block():
     ]
     block = _format_line_items(items, "EUR")
     assert block == (
-        "- Setup — 2 × EUR 1000.00 = EUR 2000.00\n"
-        "- Training — 1 × EUR 500.00 = EUR 500.00"
+        "- Setup — 2 × EUR 1000.00 = EUR 2000.00\n" "- Training — 1 × EUR 500.00 = EUR 500.00"
     )
 
 
@@ -197,9 +196,7 @@ def test_apply_template_renders_body(admin_client):
         body="Agreement with {{ organization.name }} dated {{ today }}.",
     )
     contract = _create_contract(admin_client)
-    r = admin_client.post(
-        f"/api/contracts/{contract['id']}/apply-template/{tpl['id']}"
-    )
+    r = admin_client.post(f"/api/contracts/{contract['id']}/apply-template/{tpl['id']}")
     assert r.status_code == 200, r.text
     body = r.json()
     assert "Agreement with" in body["body"]
@@ -211,17 +208,13 @@ def test_apply_template_rejects_non_draft(admin_client):
     tpl = _create_template(admin_client)
     contract = _create_contract(admin_client)
     admin_client.post(f"/api/contracts/{contract['id']}/send").raise_for_status()
-    r = admin_client.post(
-        f"/api/contracts/{contract['id']}/apply-template/{tpl['id']}"
-    )
+    r = admin_client.post(f"/api/contracts/{contract['id']}/apply-template/{tpl['id']}")
     assert r.status_code == 409
 
 
 def test_apply_missing_template_404(admin_client):
     contract = _create_contract(admin_client)
-    r = admin_client.post(
-        f"/api/contracts/{contract['id']}/apply-template/{uuid.uuid4()}"
-    )
+    r = admin_client.post(f"/api/contracts/{contract['id']}/apply-template/{uuid.uuid4()}")
     assert r.status_code == 404
 
 
@@ -232,9 +225,7 @@ def test_from_quote_with_template_rolls_up_line_items(admin_client):
         name="With lines",
         body="Lines:\n{{ line_items }}",
     )
-    r = admin_client.post(
-        f"/api/contracts/from-quote/{quote['id']}?template_id={tpl['id']}"
-    )
+    r = admin_client.post(f"/api/contracts/from-quote/{quote['id']}?template_id={tpl['id']}")
     assert r.status_code == 201, r.text
     c = r.json()
     assert c["applied_template_id"] == tpl["id"]
@@ -263,9 +254,7 @@ def test_cross_org_returns_404(
 
     assert admin_client.get(f"/api/document-templates/{foreign.id}").status_code == 404
     assert (
-        admin_client.patch(
-            f"/api/document-templates/{foreign.id}", json={"name": "x"}
-        ).status_code
+        admin_client.patch(f"/api/document-templates/{foreign.id}", json={"name": "x"}).status_code
         == 404
     )
     assert admin_client.delete(f"/api/document-templates/{foreign.id}").status_code == 404

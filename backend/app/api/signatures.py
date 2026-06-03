@@ -156,14 +156,10 @@ async def _get_request_by_token(db: AsyncSession, token: str) -> SignatureReques
     return req
 
 
-async def _maybe_accept_quote(
-    db: AsyncSession, *, quote_id: uuid.UUID, org_id: uuid.UUID
-) -> None:
+async def _maybe_accept_quote(db: AsyncSession, *, quote_id: uuid.UUID, org_id: uuid.UUID) -> None:
     """A completed signature accepts the still-open quote it signed."""
     quote = (
-        await db.execute(
-            select(Quote).where(Quote.id == quote_id, Quote.organization_id == org_id)
-        )
+        await db.execute(select(Quote).where(Quote.id == quote_id, Quote.organization_id == org_id))
     ).scalar_one_or_none()
     if quote is None or quote.status != QuoteStatus.sent:
         return
@@ -238,9 +234,7 @@ async def _load_document_summary(
     document, or None if it has since been deleted. Exactly one of
     quote_id/contract_id is set (DB CHECK)."""
     if req.quote_id is not None:
-        q = (
-            await db.execute(select(Quote).where(Quote.id == req.quote_id))
-        ).scalar_one_or_none()
+        q = (await db.execute(select(Quote).where(Quote.id == req.quote_id))).scalar_one_or_none()
         if q is None:
             return None
         return ("quote", q.number, q.title, float(q.total), q.currency)

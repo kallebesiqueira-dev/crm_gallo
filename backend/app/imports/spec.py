@@ -71,8 +71,7 @@ class _ImportRowBase(BaseModel):
         # an empty `email` column would fail EmailStr on every row.
         if isinstance(data, dict):
             return {
-                k: (None if isinstance(v, str) and v.strip() == "" else v)
-                for k, v in data.items()
+                k: (None if isinstance(v, str) and v.strip() == "" else v) for k, v in data.items()
             }
         return data
 

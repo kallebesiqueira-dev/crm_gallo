@@ -61,14 +61,18 @@ async def _clear_other_defaults(
 ) -> None:
     """Demote any other default of this (org, doc_type)."""
     others = (
-        await db.execute(
-            select(DocumentTemplate).where(
-                DocumentTemplate.organization_id == org_id,
-                DocumentTemplate.doc_type == doc_type,
-                DocumentTemplate.is_default.is_(True),
+        (
+            await db.execute(
+                select(DocumentTemplate).where(
+                    DocumentTemplate.organization_id == org_id,
+                    DocumentTemplate.doc_type == doc_type,
+                    DocumentTemplate.is_default.is_(True),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for other in others:
         if keep_id is None or other.id != keep_id:
             other.is_default = False

@@ -91,7 +91,9 @@ def test_create_blocked_over_daily_cap_429(admin_client, db, test_org):
 
 def test_create_happy_path_creates_pending_job(admin_client):
     files = {"file": ("contacts.csv", b"first_name,last_name\nMaria,Silva\n", "text/csv")}
-    r = admin_client.post("/api/imports", data={"entity_type": "lead", "mode": "create"}, files=files)
+    r = admin_client.post(
+        "/api/imports", data={"entity_type": "lead", "mode": "create"}, files=files
+    )
     assert r.status_code == 201, r.text
     body = r.json()
     assert body["status"] == "pending"
@@ -119,7 +121,9 @@ def test_get_import_unknown_id_is_404(admin_client):
 
 
 def test_export_streams_csv_with_header(admin_client):
-    admin_client.post("/api/leads", json={"first_name": "Maria", "last_name": "Silva"}).raise_for_status()
+    admin_client.post(
+        "/api/leads", json={"first_name": "Maria", "last_name": "Silva"}
+    ).raise_for_status()
     r = admin_client.get("/api/exports/lead?format=csv")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/csv")

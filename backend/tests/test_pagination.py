@@ -20,9 +20,7 @@ from sqlalchemy.orm import Session
 def _make_leads(client, n: int) -> set[str]:
     ids: set[str] = set()
     for i in range(n):
-        r = client.post(
-            "/api/leads", json={"first_name": f"Page{i:02d}", "last_name": "Probe"}
-        )
+        r = client.post("/api/leads", json={"first_name": f"Page{i:02d}", "last_name": "Probe"})
         r.raise_for_status()
         ids.add(r.json()["id"])
     return ids
@@ -97,9 +95,7 @@ def test_cross_org_rows_never_paged(admin_client, db: Session, other_org):
     seen: list[str] = []
     cursor = None
     while True:
-        body = admin_client.get(
-            f"/api/leads?limit=2{f'&cursor={cursor}' if cursor else ''}"
-        ).json()
+        body = admin_client.get(f"/api/leads?limit=2{f'&cursor={cursor}' if cursor else ''}").json()
         seen.extend(row["first_name"] for row in body["items"])
         if not body["has_more"]:
             break

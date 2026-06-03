@@ -86,9 +86,7 @@ async def get_import(
 ) -> ImportJobOut:
     job = (
         await db.execute(
-            select(ImportJob).where(
-                ImportJob.id == import_id, ImportJob.organization_id == org_id
-            )
+            select(ImportJob).where(ImportJob.id == import_id, ImportJob.organization_id == org_id)
         )
     ).scalar_one_or_none()
     if job is None:

@@ -34,6 +34,10 @@ ignore = [
     # are constructed per-call, not a default arg.
     "B008",
 ]
+# `×` (U+00D7) is intentional in user-facing line-item copy
+# ("2 × EUR 10.00") — allow it without disabling RUF001's homoglyph
+# detection for genuinely confusable characters.
+allowed-confusables = ["×"]
 
 [tool.ruff.lint.per-file-ignores]
 # Tests can `assert X` (B011) and use long-line table fixtures.

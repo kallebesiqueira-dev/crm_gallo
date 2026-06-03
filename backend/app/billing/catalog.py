@@ -15,8 +15,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 
 from app.config import get_settings
-from app.money import q2
 from app.models import BillingCycle, Plan
+from app.money import q2
 
 FREE_SEAT_LIMIT = 2
 YEARLY_DISCOUNT = Decimal("0.20")  # 20% off when paying annually

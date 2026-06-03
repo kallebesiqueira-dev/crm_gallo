@@ -487,7 +487,12 @@ function LeadsScene({ theme }: { theme: Theme }) {
 
 /* Scene 3 — Pipeline (dark) */
 function PipelineScene({ theme }: { theme: Theme }) {
-  const COLUMNS = [
+  const COLUMNS: {
+    label: string;
+    count: number;
+    color: string;
+    cards: { title: string; value: string; prob: number; highlight?: boolean }[];
+  }[] = [
     { label: "New",          count: 12, color: "bg-indigo-500/20 text-indigo-300",   cards: [
       { title: "Acme — Annual Plan", value: "€18,400", prob: 35 },
       { title: "Globex — Pilot",     value: "€6,200",  prob: 25 },

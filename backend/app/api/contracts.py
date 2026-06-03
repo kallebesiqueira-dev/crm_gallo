@@ -41,9 +41,7 @@ async def _get_contract_or_404(
     db: AsyncSession, contract_id: uuid.UUID, org_id: uuid.UUID
 ) -> Contract:
     result = await db.execute(
-        select(Contract).where(
-            Contract.id == contract_id, Contract.organization_id == org_id
-        )
+        select(Contract).where(Contract.id == contract_id, Contract.organization_id == org_id)
     )
     contract = result.scalar_one_or_none()
     if not contract or contract.deleted_at is not None:
@@ -98,9 +96,7 @@ async def create_contract(
     # number). hashtext → int4, fits the bigint lock-key param; the
     # lock auto-releases at transaction end. The partial unique index
     # (organization_id, number, version) is the backstop.
-    await db.execute(
-        select(func.pg_advisory_xact_lock(func.hashtext(f"contract_number:{org_id}")))
-    )
+    await db.execute(select(func.pg_advisory_xact_lock(func.hashtext(f"contract_number:{org_id}"))))
     number = await next_contract_number(db, org_id)
 
     data = payload.model_dump()
@@ -163,9 +159,7 @@ async def create_contract_from_quote(
     merge fields are rendered into the new contract's `body` at creation.
     """
     quote = (
-        await db.execute(
-            select(Quote).where(Quote.id == quote_id, Quote.organization_id == org_id)
-        )
+        await db.execute(select(Quote).where(Quote.id == quote_id, Quote.organization_id == org_id))
     ).scalar_one_or_none()
     if not quote or quote.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Quote not found")
@@ -175,9 +169,7 @@ async def create_contract_from_quote(
             detail=f"Quote must be accepted to draft a contract (current: {quote.status.value}).",
         )
 
-    await db.execute(
-        select(func.pg_advisory_xact_lock(func.hashtext(f"contract_number:{org_id}")))
-    )
+    await db.execute(select(func.pg_advisory_xact_lock(func.hashtext(f"contract_number:{org_id}"))))
     number = await next_contract_number(db, org_id)
 
     contract = Contract(

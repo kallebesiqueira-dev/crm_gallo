@@ -84,9 +84,7 @@ async def paginate(
 
     has_more = len(rows) > limit
     rows = rows[:limit]
-    next_cursor = (
-        encode_cursor(rows[-1].created_at, rows[-1].id) if has_more and rows else None
-    )
+    next_cursor = encode_cursor(rows[-1].created_at, rows[-1].id) if has_more and rows else None
     # model_construct: skip re-validation here; FastAPI's response_model
     # coerces each ORM row to its Out schema on the way out.
     return CursorPage.model_construct(items=rows, next_cursor=next_cursor, has_more=has_more)

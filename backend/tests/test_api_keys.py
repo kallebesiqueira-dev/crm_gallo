@@ -62,9 +62,11 @@ def test_create_returns_token_once_and_defaults_read(admin_client):
 
 def test_create_stores_only_hash_never_plaintext(admin_client, db: Session):
     body = _mint(admin_client)
-    row = db.execute(
-        text("SELECT hashed_key FROM api_keys WHERE id = :id"), {"id": body["id"]}
-    ).mappings().one()
+    row = (
+        db.execute(text("SELECT hashed_key FROM api_keys WHERE id = :id"), {"id": body["id"]})
+        .mappings()
+        .one()
+    )
     # DB holds the sha256, not the token.
     assert row["hashed_key"] == hash_token(body["token"])
     assert row["hashed_key"] != body["token"]
@@ -246,7 +248,9 @@ def test_v1_is_org_scoped(admin_client, db: Session, other_org):
 def test_last_used_at_is_recorded(admin_client, db: Session):
     body = _mint(admin_client, scopes=["read"])
     admin_client.get("/api/v1/leads", headers=_bearer(body["token"]))
-    row = db.execute(
-        text("SELECT last_used_at FROM api_keys WHERE id = :id"), {"id": body["id"]}
-    ).mappings().one()
+    row = (
+        db.execute(text("SELECT last_used_at FROM api_keys WHERE id = :id"), {"id": body["id"]})
+        .mappings()
+        .one()
+    )
     assert row["last_used_at"] is not None

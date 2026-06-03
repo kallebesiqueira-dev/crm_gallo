@@ -52,9 +52,7 @@ class FieldSpec:
 # this becomes a per-type catalog.
 FIELD_CATALOG: list[FieldSpec] = [
     FieldSpec("today", "Today's date", "The date the template is applied.", "2026-06-03"),
-    FieldSpec(
-        "organization.name", "Your organisation", "Your organisation's name.", "Acme GmbH"
-    ),
+    FieldSpec("organization.name", "Your organisation", "Your organisation's name.", "Acme GmbH"),
     FieldSpec("contract.number", "Contract number", "The contract's stable number.", "C-000007"),
     FieldSpec("contract.title", "Contract title", "The contract's title.", "Annual Support"),
     FieldSpec(
@@ -158,12 +156,16 @@ async def build_contract_context(db: AsyncSession, contract: Contract) -> dict[s
     line_items_block = "—"
     if contract.quote_id is not None:
         items = (
-            await db.execute(
-                select(QuoteLineItem)
-                .where(QuoteLineItem.quote_id == contract.quote_id)
-                .order_by(QuoteLineItem.sort_index)
+            (
+                await db.execute(
+                    select(QuoteLineItem)
+                    .where(QuoteLineItem.quote_id == contract.quote_id)
+                    .order_by(QuoteLineItem.sort_index)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         line_items_block = _format_line_items(list(items), currency)
 
     return {

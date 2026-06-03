@@ -174,7 +174,9 @@ def test_cannot_terminate_a_draft(admin_client):
 def test_cannot_edit_a_sent_contract(admin_client):
     c = _create_contract(admin_client)
     admin_client.post(f"/api/contracts/{c['id']}/send").raise_for_status()
-    assert admin_client.patch(f"/api/contracts/{c['id']}", json={"title": "nope"}).status_code == 409
+    assert (
+        admin_client.patch(f"/api/contracts/{c['id']}", json={"title": "nope"}).status_code == 409
+    )
 
 
 # ---------- Versioning / supersede ----------
@@ -246,7 +248,9 @@ def test_from_quote_requires_accepted(admin_client):
     assert admin_client.post(f"/api/contracts/from-quote/{quote['id']}").status_code == 409
 
 
-def test_from_quote_cross_org_404(admin_client: CsrfAwareClient, db: Session, other_org, foreign_user):
+def test_from_quote_cross_org_404(
+    admin_client: CsrfAwareClient, db: Session, other_org, foreign_user
+):
     quote = Quote(
         organization_id=other_org.id,
         number="Q-900001",

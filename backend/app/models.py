@@ -537,9 +537,7 @@ class Deal(SoftDeleteMixin, Base):
         index=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    value: Mapped[Decimal] = mapped_column(
-        Numeric(12, 2), default=Decimal("0"), nullable=False
-    )
+    value: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
     currency: Mapped[Currency] = mapped_column(Enum(Currency), default=Currency.EUR, nullable=False)
     stage: Mapped[DealStage] = mapped_column(Enum(DealStage), default=DealStage.new, nullable=False)
     probability: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
@@ -628,18 +626,12 @@ class Quote(SoftDeleteMixin, Base):
     # so per-line rounding + summation are exact (ADR-015 / TD-30).
     # `tax_rate` is a percentage (e.g. 7.700 for Swiss VAT);
     # tax_amount = q2(subtotal * tax_rate / 100).
-    subtotal: Mapped[Decimal] = mapped_column(
-        Numeric(12, 2), default=Decimal("0"), nullable=False
-    )
-    tax_rate: Mapped[Decimal] = mapped_column(
-        Numeric(6, 3), default=Decimal("0"), nullable=False
-    )
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
+    tax_rate: Mapped[Decimal] = mapped_column(Numeric(6, 3), default=Decimal("0"), nullable=False)
     tax_amount: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), default=Decimal("0"), nullable=False
     )
-    total: Mapped[Decimal] = mapped_column(
-        Numeric(12, 2), default=Decimal("0"), nullable=False
-    )
+    total: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
 
     # Revision chain: the prior version points forward to its replacement.
     superseded_by: Mapped[uuid.UUID | None] = mapped_column(
@@ -695,9 +687,7 @@ class QuoteLineItem(Base):
     description: Mapped[str] = mapped_column(String(500), nullable=False)
     # quantity allows fractional units (e.g. 2.5 hours); the money
     # columns are Numeric/Decimal so quantity * unit_price is exact.
-    quantity: Mapped[Decimal] = mapped_column(
-        Numeric(12, 3), default=Decimal("1"), nullable=False
-    )
+    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=Decimal("1"), nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), default=Decimal("0"), nullable=False
     )

@@ -87,9 +87,7 @@ def test_csv_blank_header_row_raises():
 
 
 def test_csv_over_row_cap_raises():
-    body = "first_name,last_name\n" + "".join(
-        f"A{i},B{i}\n" for i in range(MAX_ROWS + 5)
-    )
+    body = "first_name,last_name\n" + "".join(f"A{i},B{i}\n" for i in range(MAX_ROWS + 5))
     with pytest.raises(ImportParseError, match="limit"):
         parse_table(body.encode("utf-8"), "text/csv", "x.csv")
 
@@ -130,9 +128,7 @@ def test_xlsx_integer_cell_renders_without_dot_zero():
 
 
 def test_xlsx_blank_rows_skipped():
-    content = _xlsx_bytes(
-        [["first_name", "last_name"], ["A", "B"], [None, None], ["C", "D"]]
-    )
+    content = _xlsx_bytes([["first_name", "last_name"], ["A", "B"], [None, None], ["C", "D"]])
     _, rows = parse_table(content, "", "x.xlsx")
     assert len(rows) == 2
 

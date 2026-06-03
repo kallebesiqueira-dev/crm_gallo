@@ -1,0 +1,44 @@
+# Trivy HIGH/CRITICAL suppressions for the docker workflow's image scan.
+# Mirrors the backend pip-audit allowlist convention: every entry is a
+# deliberate, documented acceptance — not a blanket mute. `ignore-unfixed`
+# is already on in docker.yml, so everything here HAS a fix available but
+# is being consciously deferred with a stated reason.
+#
+# Review rule: anything reachable from the *runtime* attack surface gets
+# upgraded, not ignored. The entries below are all build/dev tooling that
+# only lands in the image because frontend/Dockerfile is a dev container
+# (`npm ci` installs devDependencies, CMD is `npm run dev`). They are not
+# part of the served Next.js runtime an external client can reach.
+#
+# Proper fix (logged as tech debt, skills.md): give the frontend a
+# multi-stage production Dockerfile (`next build` + standalone output, no
+# devDependencies) so this whole class of dev-toolchain CVEs stops landing
+# in the scanned image. Once that exists, delete this file.
+
+# --- frontend dev-toolchain transitives (node_modules build tools) ---
+# (rollup's CVE-2026-27606 is NOT listed here — it's actually fixed via a
+# package.json `overrides` pin to rollup 3.30.0, not suppressed.)
+
+# cross-spawn ReDoS — dev tooling path parsing, not request-path.
+CVE-2024-21538
+
+# glob CLI command injection — only via the glob binary's CLI, which we
+# never invoke; it's a transitive lib dep of build tooling.
+CVE-2025-64756
+
+# minimatch ReDoS / unbounded-recursion DoS — glob-pattern matching in
+# build tooling, fed static patterns, not attacker input.
+CVE-2026-26996
+CVE-2026-27903
+CVE-2026-27904
+
+# node-tar path-traversal / arbitrary-file-write on EXTRACTION. Fixes only
+# exist in tar 7.x (major bump of an npm-internal transitive). We never
+# extract untrusted archives at runtime — tar is pulled in by install-time
+# tooling that unpacks our own trusted, lockfile-pinned packages.
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
+CVE-2026-26960
+CVE-2026-29786
+CVE-2026-31802

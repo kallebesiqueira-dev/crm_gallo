@@ -16,8 +16,6 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import (
-    Contract,
-    ContractStatus,
     Organization,
     Quote,
     QuoteLineItem,
@@ -37,7 +35,9 @@ _LINES = [{"description": "Design", "quantity": 2, "unit_price": 250.0}]
 def _sent_quote(client: CsrfAwareClient) -> dict:
     """Create a quote and move it to `sent` — the only state a signature
     request can be raised from."""
-    r = client.post("/api/quotes", json={"title": "Proposal", "tax_rate": 0.0, "line_items": _LINES})
+    r = client.post(
+        "/api/quotes", json={"title": "Proposal", "tax_rate": 0.0, "line_items": _LINES}
+    )
     assert r.status_code == 201, r.text
     q = r.json()
     client.post(f"/api/quotes/{q['id']}/send").raise_for_status()
@@ -357,9 +357,7 @@ def test_non_owner_cannot_send(
     admin_user: User,
 ):
     quote = _seed_sent_quote(db, test_org, owner=admin_user)
-    req = _seed_request(
-        db, test_org, quote, owner=admin_user, status=SignatureStatus.drafted
-    )
+    req = _seed_request(db, test_org, quote, owner=admin_user, status=SignatureStatus.drafted)
     r = other_client.post(f"/api/signatures/{req.id}/send")
     assert r.status_code == 403
 

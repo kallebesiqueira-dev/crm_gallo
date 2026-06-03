@@ -71,9 +71,7 @@ async def list_quotes(
     db: AsyncSession = Depends(get_db),
 ) -> CursorPage:
     stmt = (
-        select(Quote)
-        .where(Quote.organization_id == org_id)
-        .options(selectinload(Quote.line_items))
+        select(Quote).where(Quote.organization_id == org_id).options(selectinload(Quote.line_items))
     )
     if status_filter is not None:
         stmt = stmt.where(Quote.status == status_filter)

@@ -65,21 +65,32 @@ def _make_job(
             "VALUES (:id, :org, :uid, :entity, :mode, 'pending', 'f.csv', "
             " 'text/csv', :key)"
         ),
-        {"id": job_id, "org": org_id, "uid": created_by, "entity": entity, "mode": mode, "key": key},
+        {
+            "id": job_id,
+            "org": org_id,
+            "uid": created_by,
+            "entity": entity,
+            "mode": mode,
+            "key": key,
+        },
     )
     db.commit()
     return job_id, key
 
 
 def _job_row(db: Session, job_id) -> dict:
-    row = db.execute(
-        text(
-            "SELECT status, total_rows, created_count, updated_count, "
-            "skipped_count, error_count, error_report, error_message "
-            "FROM import_jobs WHERE id = :id"
-        ),
-        {"id": job_id},
-    ).mappings().one()
+    row = (
+        db.execute(
+            text(
+                "SELECT status, total_rows, created_count, updated_count, "
+                "skipped_count, error_count, error_report, error_message "
+                "FROM import_jobs WHERE id = :id"
+            ),
+            {"id": job_id},
+        )
+        .mappings()
+        .one()
+    )
     return dict(row)
 
 
@@ -158,9 +169,11 @@ async def test_upsert_mode_updates_existing(worker_ctx, db, test_org, admin_user
     row = _job_row(db, job_id)
     assert row["updated_count"] == 1
     assert row["created_count"] == 0
-    updated = db.execute(
-        text("SELECT first_name, company FROM leads WHERE id = :id"), {"id": lead_id}
-    ).mappings().one()
+    updated = (
+        db.execute(text("SELECT first_name, company FROM leads WHERE id = :id"), {"id": lead_id})
+        .mappings()
+        .one()
+    )
     assert updated["first_name"] == "NewFirst"
     assert updated["company"] == "NewCo"
 
@@ -205,9 +218,7 @@ async def test_missing_required_column_fails_whole_file(worker_ctx, db, test_org
 
 async def test_completed_job_is_not_reprocessed(worker_ctx, db, test_org, admin_user):
     job_id, key = _make_job(db, test_org.id, admin_user.id)
-    db.execute(
-        text("UPDATE import_jobs SET status = 'completed' WHERE id = :id"), {"id": job_id}
-    )
+    db.execute(text("UPDATE import_jobs SET status = 'completed' WHERE id = :id"), {"id": job_id})
     db.commit()
     await put_object(key, b"first_name,last_name\nA,B\n", "text/csv")
 

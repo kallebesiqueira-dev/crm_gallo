@@ -66,9 +66,7 @@ async def list_api_keys(
     db: AsyncSession = Depends(get_db),
 ) -> list[ApiKeyOut]:
     result = await db.execute(
-        select(ApiKey)
-        .where(ApiKey.organization_id == org_id)
-        .order_by(desc(ApiKey.created_at))
+        select(ApiKey).where(ApiKey.organization_id == org_id).order_by(desc(ApiKey.created_at))
     )
     return [_to_out(k) for k in result.scalars().all()]
 

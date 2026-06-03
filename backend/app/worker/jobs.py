@@ -954,14 +954,10 @@ async def process_import(ctx: dict, import_job_id: str, organization_id: str) ->
     # whole-file problem; resolve_headers reports missing required columns.
     try:
         content = await get_object(storage_key)
-        headers, raw_rows = await asyncio.to_thread(
-            parse_table, content, content_type, filename
-        )
+        headers, raw_rows = await asyncio.to_thread(parse_table, content, content_type, filename)
         header_to_field, missing = resolve_headers(spec, headers)
         if missing:
-            raise ImportParseError(
-                "Missing required column(s): " + ", ".join(missing)
-            )
+            raise ImportParseError("Missing required column(s): " + ", ".join(missing))
     except ImportParseError as exc:
         async with SessionLocal() as db:
             job = (
@@ -1004,9 +1000,7 @@ async def process_import(ctx: dict, import_job_id: str, organization_id: str) ->
         email_to_id: dict[str, uuid.UUID] = {}
         phone_to_id: dict[str, uuid.UUID] = {}
         existing = await db.execute(
-            select(model.id, model.email, model.phone).where(
-                model.organization_id == org_uuid
-            )
+            select(model.id, model.email, model.phone).where(model.organization_id == org_uuid)
         )
         for rid, email, phone in existing:
             if email:

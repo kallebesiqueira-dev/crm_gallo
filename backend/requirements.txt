@@ -22,18 +22,20 @@ prometheus-client==0.21.0
 sentry-sdk[fastapi]==2.18.0
 boto3==1.35.60
 arq==0.26.3
-jinja2==3.1.4
+jinja2==3.1.6
 # XLSX parsing for bulk imports (ADR-016 imports slice). Pure-Python,
 # read_only mode streams rows so a large sheet doesn't load fully into
 # memory. CSV uses the stdlib; this is only pulled in for .xlsx files.
 openpyxl==3.1.5
 # HTML->PDF for documents/contracts (ADR-016). Pure-Python rendering
 # (pydyf), but needs Pango/HarfBuzz/fonts system libs — see Dockerfile.
-# pydyf is pinned because 0.11 changed the Stream.transform API that
-# WeasyPrint 62.3 calls — an unpinned 0.12 breaks render at runtime
-# (`'super' object has no attribute 'transform'`). 62.3 ↔ 0.10.0.
-weasyprint==62.3
-pydyf==0.10.0
+# Bumped 62.3 -> 68.0 to clear CVE-2025-68616 (SSRF). pydyf must move
+# in lockstep: 68.0 is written against the pydyf 0.11+ Stream.transform
+# API, so it pairs with 0.12.1 (the old 62.3 ↔ 0.10.0 pin would crash
+# 68.0). 68.0 also pulls tinyhtml5 (pinned below) as its HTML parser.
+weasyprint==68.0
+pydyf==0.12.1
+tinyhtml5==2.1.0
 pytest==8.3.3
 pytest-asyncio==0.24.0
 asgi-lifespan==2.1.0

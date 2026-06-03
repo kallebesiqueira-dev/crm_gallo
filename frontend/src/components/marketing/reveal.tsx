@@ -26,7 +26,16 @@ const DURATION_BUTTON = 1.1;
 const STAGGER = 0.12;
 const VIEWPORT_AMOUNT = 0.25;
 
-type RevealVariant = "base" | "title" | "text" | "button" | "card" | "scaleIn" | "soft";
+type RevealVariant =
+  | "base"
+  | "title"
+  | "text"
+  | "button"
+  | "card"
+  | "scaleIn"
+  | "soft"
+  | "fade-right"
+  | "fade-left";
 
 const REVEAL_VARIANTS: Record<RevealVariant, Variants> = {
   base: {
@@ -103,6 +112,26 @@ const REVEAL_VARIANTS: Record<RevealVariant, Variants> = {
       opacity: 1,
       filter: "blur(0px)",
       transition: { duration: DURATION_TEXT, ease: EASE },
+    },
+  },
+  // Directional fades for side-by-side lockups (e.g. the comparison
+  // cards): each slides horizontally into place so the pair converges.
+  "fade-right": {
+    hidden: { opacity: 0, x: -60, filter: "blur(20px)" },
+    visible: {
+      opacity: 1,
+      x: 0,
+      filter: "blur(0px)",
+      transition: { duration: DURATION_BASE, ease: EASE },
+    },
+  },
+  "fade-left": {
+    hidden: { opacity: 0, x: 60, filter: "blur(20px)" },
+    visible: {
+      opacity: 1,
+      x: 0,
+      filter: "blur(0px)",
+      transition: { duration: DURATION_BASE, ease: EASE },
     },
   },
 };
