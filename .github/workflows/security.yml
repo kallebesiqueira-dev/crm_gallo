@@ -25,9 +25,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Full history on weekly scan, shallow elsewhere — costs ~30s
-          # to fetch full history, only worth it once a week.
-          fetch-depth: ${{ github.event_name == 'schedule' && 0 || 1 }}
+          # Full history always. gitleaks-action scans the pushed commit
+          # RANGE (commits[0]^..after), so a shallow clone breaks on any
+          # push with >1 commit: `fatal: ambiguous argument '<sha>^..<sha>':
+          # unknown revision`. Full history costs ~30s and makes
+          # multi-commit pushes scannable.
+          fetch-depth: 0
 
       - name: gitleaks
         uses: gitleaks/gitleaks-action@v2
