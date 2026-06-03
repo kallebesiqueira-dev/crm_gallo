@@ -1,22 +1,43 @@
 {
-  "app": { "name": "CRM Gallo", "tagline": "CRM cun IA per interpresas modernas" },
+  "app": {
+    "name": "CRM Gallo",
+    "tagline": "CRM cun IA per interpresas modernas"
+  },
   "nav": {
-    "dashboard": "Dashboard", "leads": "Leads", "customers": "Clients",
-    "deals": "Affars", "pipeline": "Pipeline", "tasks": "Incumbensas",
-    "calendar": "Chalender", "quotes": "Offertas", "documents": "Documents", "assistant": "Assistent IA",
-    "reports": "Rapports", "billing": "Quint", "settings": "Parameters",
-    "team": "Team", "trash": "Cazetta", "audit": "Protocol d'audit"
+    "dashboard": "Dashboard",
+    "leads": "Leads",
+    "customers": "Clients",
+    "deals": "Affars",
+    "pipeline": "Pipeline",
+    "tasks": "Incumbensas",
+    "calendar": "Chalender",
+    "quotes": "Offertas",
+    "contracts": "Contracts",
+    "documents": "Documents",
+    "assistant": "Assistent IA",
+    "reports": "Rapports",
+    "billing": "Quint",
+    "settings": "Parameters",
+    "team": "Team",
+    "trash": "Cazetta",
+    "audit": "Protocol d'audit"
   },
   "auth": {
-    "login": "S'annunziar", "register": "Crear conto", "createAccount": "Crear ses conto",
-    "email": "E-mail", "password": "Pled-clav",
-    "fullName": "Num cumplet", "fullNamePlaceholder": "Gion Caduff",
+    "login": "S'annunziar",
+    "register": "Crear conto",
+    "createAccount": "Crear ses conto",
+    "email": "E-mail",
+    "password": "Pled-clav",
+    "fullName": "Num cumplet",
+    "fullNamePlaceholder": "Gion Caduff",
     "logout": "Sortir",
-    "needAccount": "Basegn d'in conto?", "haveAccount": "Gia in conto?",
+    "needAccount": "Basegn d'in conto?",
+    "haveAccount": "Gia in conto?",
     "welcomeBack": "Bainvegni puspè",
     "loginSubtitle": "S'annunzia en tes spazi CRM.",
     "registerSubtitle": "Cumenza gratuitamain cun fin a 2 utilisaturs. Fa upgrade cura che vuls.",
-    "signingIn": "S'annunziar…", "creatingAccount": "Crear conto…",
+    "signingIn": "S'annunziar…",
+    "creatingAccount": "Crear conto…",
     "forgotPassword": "Emblidà il pled-clav?",
     "forgotHeroTitle": "Reset dal pled-clav",
     "forgotHeroSubtitle": "Endatescha l'email da tes conto — nus tarmettain in link per definir in nov pled-clav.",
@@ -48,12 +69,16 @@
     "mfaVerify": "Verifitgar e s'annunziar",
     "mfaVerifying": "Verifitgar…",
     "mfaCancel": "Duvrar in auter conto",
-    "showPassword": "Mussar pled-clav", "hidePassword": "Zuppentar pled-clav",
+    "showPassword": "Mussar pled-clav",
+    "hidePassword": "Zuppentar pled-clav",
     "chooseStartingPlan": "Tscherna tes plan da partenza",
     "acceptTerms": "Jau accepta las cundiziuns e la politica da privacy.",
     "mustAcceptTerms": "Acceptai gentilmain las cundiziuns.",
     "seatLimitReached": "Limit dal plan Free cuntanschì. Fa per plaschair upgrade per agiuntar dapli utilisaturs.",
-    "strengthWeak": "Flaivel", "strengthFair": "Mediocer", "strengthGood": "Bun", "strengthStrong": "Ferm",
+    "strengthWeak": "Flaivel",
+    "strengthFair": "Mediocer",
+    "strengthGood": "Bun",
+    "strengthStrong": "Ferm",
     "inviteUnavailable": "Invitaziun n'è betg disponibla",
     "inviteNotFound": "Questa invitaziun n'exista betg u è gia stada utilisada.",
     "inviteExpiredOrUsed": "Questa invitaziun è scrudada u è gia stada acceptada.",
@@ -66,56 +91,106 @@
   },
   "dashboard": {
     "welcome": "Bainvegni en tes dashboard CRM. Qua pos ti administrar leads, clients, affars e infurmaziuns IA.",
-    "totalLeads": "Leads totals", "totalCustomers": "Clients totals",
-    "totalDeals": "Affars totals", "pipelineValue": "Valur dal pipeline",
-    "openTasks": "Incumbensas avertas", "conversionRate": "Taxa da conversiun",
-    "wonDeals": "Affars gudagnads", "lostDeals": "Affars persi",
-    "avgAiScore": "Score IA mesan", "leadsByStage": "Leads per stadi",
+    "totalLeads": "Leads totals",
+    "totalCustomers": "Clients totals",
+    "totalDeals": "Affars totals",
+    "pipelineValue": "Valur dal pipeline",
+    "openTasks": "Incumbensas avertas",
+    "conversionRate": "Taxa da conversiun",
+    "wonDeals": "Affars gudagnads",
+    "lostDeals": "Affars persi",
+    "avgAiScore": "Score IA mesan",
+    "leadsByStage": "Leads per stadi",
     "trend14Days": "Leads — ultims 14 dis",
-    "leadsCreated": "Leads creads", "noData": "Naginas datas"
+    "leadsCreated": "Leads creads",
+    "noData": "Naginas datas"
   },
   "leads": {
-    "title": "Leads", "new": "Nov lead", "search": "Tschertgar tras num, e-mail, interpresa...",
-    "name": "Num", "company": "Interpresa", "stage": "Stadi", "score": "Score IA",
-    "owner": "Responsabel", "created": "Creà",
+    "title": "Leads",
+    "new": "Nov lead",
+    "search": "Tschertgar tras num, e-mail, interpresa...",
+    "name": "Num",
+    "company": "Interpresa",
+    "stage": "Stadi",
+    "score": "Score IA",
+    "owner": "Responsabel",
+    "created": "Creà",
     "empty": "Nagins leads. Crea il emprim.",
-    "save": "Memorisar", "cancel": "Annullar", "scoreNow": "Valutar cun IA",
+    "save": "Memorisar",
+    "cancel": "Annullar",
+    "scoreNow": "Valutar cun IA",
     "stages": {
-      "new": "Nov", "contacted": "Contactà", "qualified": "Qualifitgà",
-      "proposal_sent": "Proposta tramessa", "negotiation": "Negoziaziun",
-      "won": "Gudagnà", "lost": "Persa"
+      "new": "Nov",
+      "contacted": "Contactà",
+      "qualified": "Qualifitgà",
+      "proposal_sent": "Proposta tramessa",
+      "negotiation": "Negoziaziun",
+      "won": "Gudagnà",
+      "lost": "Persa"
     }
   },
   "customers": {
-    "title": "Clients", "new": "Nov client", "search": "Tschertgar tras num, e-mail, interpresa...",
-    "name": "Num", "company": "Interpresa", "country": "Pajais", "created": "Creà",
+    "title": "Clients",
+    "new": "Nov client",
+    "search": "Tschertgar tras num, e-mail, interpresa...",
+    "name": "Num",
+    "company": "Interpresa",
+    "country": "Pajais",
+    "created": "Creà",
     "empty": "Nagins clients. Crea il emprim.",
-    "aiSummary": "Resumaziun IA", "summarize": "Resumar",
+    "aiSummary": "Resumaziun IA",
+    "summarize": "Resumar",
     "noSummary": "Nagina resumaziun anc. Cliccai sin Resumar per generar."
   },
   "pipeline": {
-    "title": "Pipeline", "new": "Nov affar", "dealTitle": "Titel d'affar",
-    "value": "Valur", "currency": "Munaida", "probability": "Probabilitad",
-    "expectedClose": "Serrada speranza", "customer": "Client"
+    "title": "Pipeline",
+    "new": "Nov affar",
+    "dealTitle": "Titel d'affar",
+    "value": "Valur",
+    "currency": "Munaida",
+    "probability": "Probabilitad",
+    "expectedClose": "Serrada speranza",
+    "customer": "Client"
   },
   "tasks": {
-    "title": "Incumbensas", "new": "Agiuntar incumbensa", "add": "Agiuntar",
-    "placeholder": "Tge fa basegn?", "empty": "Naginas incumbensas.", "due": "Termin",
-    "priorities": { "low": "Bassa", "medium": "Mediana", "high": "Auta" }
+    "title": "Incumbensas",
+    "new": "Agiuntar incumbensa",
+    "add": "Agiuntar",
+    "placeholder": "Tge fa basegn?",
+    "empty": "Naginas incumbensas.",
+    "due": "Termin",
+    "priorities": {
+      "low": "Bassa",
+      "medium": "Mediana",
+      "high": "Auta"
+    }
   },
   "trash": {
-    "title": "Cazetta", "subtitle": "Restituir u stizzar definitivamain ils records stizzads.",
+    "title": "Cazetta",
+    "subtitle": "Restituir u stizzar definitivamain ils records stizzads.",
     "empty": "La cazetta è vida.",
-    "restore": "Restituir", "hardDelete": "Stizzar definitivamain",
-    "emptyAll": "Vidar cazetta", "deletedAt": "Stizzà il",
+    "restore": "Restituir",
+    "hardDelete": "Stizzar definitivamain",
+    "emptyAll": "Vidar cazetta",
+    "deletedAt": "Stizzà il",
     "confirmHardDelete": "Stizzar quest record definitivamain? Quai na po betg vegnir revocà.",
     "confirmEmpty": "Vidar la cazetta e stizzar tut definitivamain?",
-    "tabs": { "all": "Tuts", "lead": "Leads", "customer": "Clients", "deal": "Affars", "task": "Incumbensas" }
+    "tabs": {
+      "all": "Tuts",
+      "lead": "Leads",
+      "customer": "Clients",
+      "deal": "Affars",
+      "task": "Incumbensas"
+    }
   },
   "settings": {
-    "profile": "Profil", "password": "Pled-clav", "role": "Rolla",
-    "currentPassword": "Pled-clav actual", "newPassword": "Nov pled-clav",
-    "confirmPassword": "Confermar nov pled-clav", "changePassword": "Midar pled-clav",
+    "profile": "Profil",
+    "password": "Pled-clav",
+    "role": "Rolla",
+    "currentPassword": "Pled-clav actual",
+    "newPassword": "Nov pled-clav",
+    "confirmPassword": "Confermar nov pled-clav",
+    "changePassword": "Midar pled-clav",
     "passwordMismatch": "Ils pleds-clav na correspundan betg.",
     "passwordChanged": "Pled-clav midà cun success."
   },
@@ -286,17 +361,28 @@
     "next": "Vinavant"
   },
   "reports": {
-    "title": "Rapports", "subtitle": "Sco tes pipeline funcziuna actualmain.",
-    "leadsByStage": "Leads per stadi", "pipelineValue": "Valur pipeline per munaida",
+    "title": "Rapports",
+    "subtitle": "Sco tes pipeline funcziuna actualmain.",
+    "leadsByStage": "Leads per stadi",
+    "pipelineValue": "Valur pipeline per munaida",
     "leadsLast14Days": "Leads creads — ultims 14 dis",
     "leadsLast30Days": "Leads creads — ultims 30 dis",
-    "leadsCreated": "Leads creads", "leads": "Leads",
-    "salesFunnel": "Funnel da venditas", "breakdownByCurrency": "Repartiziun per munaida",
-    "summary": "Resumaziun", "totalLeads": "Leads totals",
-    "totalDeals": "Affars totals", "totalCustomers": "Clients totals",
-    "conversionRate": "Taxa da conversiun", "won": "Gudagnà", "noData": "Naginas datas."
+    "leadsCreated": "Leads creads",
+    "leads": "Leads",
+    "salesFunnel": "Funnel da venditas",
+    "breakdownByCurrency": "Repartiziun per munaida",
+    "summary": "Resumaziun",
+    "totalLeads": "Leads totals",
+    "totalDeals": "Affars totals",
+    "totalCustomers": "Clients totals",
+    "conversionRate": "Taxa da conversiun",
+    "won": "Gudagnà",
+    "noData": "Naginas datas."
   },
-  "calendar": { "today": "Oz", "noTasksOnDay": "Naginas incumbensas en quest di." },
+  "calendar": {
+    "today": "Oz",
+    "noTasksOnDay": "Naginas incumbensas en quest di."
+  },
   "quotes": {
     "title": "Offertas",
     "new": "Nova offerta",
@@ -341,6 +427,55 @@
     "needLineItems": "Agiunta almain ina posiziun avant trametter.",
     "confirmDelete": "Stizzar questa offerta? Quai na po betg vegnir revocà.",
     "details": "Detagls",
+    "created": "Creà"
+  },
+  "contracts": {
+    "title": "Contracts",
+    "new": "Nov contract",
+    "empty": "Anc nagins contracts. Creai voss emprim.",
+    "create": "Crear contract",
+    "edit": "Modifitgar contract",
+    "save": "Memorisar las midadas",
+    "contractTitle": "Titel",
+    "titlePlaceholder": "Contract da servetsch annual",
+    "currency": "Valuta",
+    "value": "Valur dal contract",
+    "effectiveDate": "Data d'entrada en vigur",
+    "endDate": "Data da fin",
+    "autoRenew": "Renovaziun automatica",
+    "renewalTerm": "Durada da renovaziun (mais)",
+    "body": "Cundiziuns",
+    "bodyPlaceholder": "Ramatg, obligaziuns, cundiziuns da pajament…",
+    "notes": "Notas",
+    "notesPlaceholder": "Notas internas…",
+    "termsSection": "Cundiziuns",
+    "details": "Detagls",
+    "version": "v{n}",
+    "statuses": {
+      "draft": "Sboz",
+      "sent": "Tramess",
+      "signed": "Suttascrit",
+      "active": "Activ",
+      "terminated": "Resilià",
+      "expired": "Scrudà"
+    },
+    "send": "Trametter",
+    "sign": "Marcar sco suttascrit",
+    "activate": "Activar",
+    "terminate": "Resiliar",
+    "resend": "Nova versiun",
+    "generatePdf": "Generar PDF",
+    "generating": "Generar…",
+    "documents": "Documents",
+    "noDocuments": "Anc nagin PDF generà.",
+    "supersededBy": "Ina versiun pli nova remplazza questa.",
+    "confirmDelete": "Stizzar quest contract? Quai na po betg vegnir revocà.",
+    "confirmTerminate": "Resiliar quest contract? Quai na po betg vegnir revocà.",
+    "renewEvery": "Mintga {n} mais",
+    "yes": "Gea",
+    "no": "Na",
+    "sourceQuote": "Offerta d'origin",
+    "viewQuote": "Vesair l'offerta",
     "created": "Creà"
   },
   "signatures": {
@@ -394,27 +529,39 @@
     }
   },
   "common": {
-    "language": "Lingua", "theme": "Tema", "loading": "Chargiar...",
-    "actions": "Acziuns", "edit": "Modifitgar", "delete": "Stizzar",
-    "cancel": "Annullar", "confirm": "Confermar", "confirmTitle": "Esas vus segir?",
+    "language": "Lingua",
+    "theme": "Tema",
+    "loading": "Chargiar...",
+    "actions": "Acziuns",
+    "edit": "Modifitgar",
+    "delete": "Stizzar",
+    "cancel": "Annullar",
+    "confirm": "Confermar",
+    "confirmTitle": "Esas vus segir?",
     "confirmDelete": "Stizzar quest record? Quai na po betg vegnir revocà.",
     "noPermission": "Vus n'avais betg ils dretgs per quai.",
-    "back": "Enavos", "saved": "Memorisà",
+    "back": "Enavos",
+    "saved": "Memorisà",
     "loadMore": "Chargiar dapli"
   },
   "marketing": {
     "loginHeroTitle": "Serra dapli affars cun in copilot IA a tes maun.",
     "loginHeroSubtitle": "CRM Gallo unescha tes pipeline, contacts e conversaziuns — plurilingual, privacy-first, IA-nativ.",
     "registerHeroTitle": "Tes team da venditas, accelerà.",
-    "badgeAi": "IA-nativ", "badgeMultilingual": "7 linguas", "badgeOpenSource": "Open source",
+    "badgeAi": "IA-nativ",
+    "badgeMultilingual": "7 linguas",
+    "badgeOpenSource": "Open source",
     "benefitFreeTier": "Gratuit per adina per fin a 2 utilisaturs",
     "benefitNoCard": "Senza carta da credit",
     "benefitCancel": "Annulla cura ti vuls, tias datas restan tias",
     "trustedBy": "Duvrà da teams da venditas moderns en l'Europa.",
-    "seePricing": "Vesair pretschs", "backToLogin": "Turnar a l'annunzia", "pricesInEUR": "Pretschs en EUR",
+    "seePricing": "Vesair pretschs",
+    "backToLogin": "Turnar a l'annunzia",
+    "pricesInEUR": "Pretschs en EUR",
     "noCardRequired": "Nagina carta per il plan Free",
     "securePayment": "Pajament segir via Stripe",
-    "vatIncluded": "Taxas calculadas al checkout", "madeWith": "Fatg cun ureglia",
+    "vatIncluded": "Taxas calculadas al checkout",
+    "madeWith": "Fatg cun ureglia",
     "heroEyebrow": "Allegra!",
     "heroHeadlineLine1": "Il CRM construì",
     "heroHeadlineLine2": "per quels che vendan.",
@@ -441,9 +588,18 @@
       "line2": "L'unica limita è tia creativitad.",
       "line3": "Collega tut, automatisescha tut. CRM Gallo è la plattafurma che s'adatta a tia moda da lavurar — betg l'invers.",
       "pillars": {
-        "connect": { "title": "Collegar tut", "body": "APIs, webhooks, e-mail, chalender, base da savair. Sch'el ha in endpoint, el sa connectar." },
-        "automate": { "title": "Automatisar tut", "body": "Workflows visuals che reageschan a mintga eveniment dal pipeline. Senza scriver in'unica lingia." },
-        "create": { "title": "Crear senza limitas", "body": "Open source ed extensibel. Tes team furma l'utensil — betg l'invers." }
+        "connect": {
+          "title": "Collegar tut",
+          "body": "APIs, webhooks, e-mail, chalender, base da savair. Sch'el ha in endpoint, el sa connectar."
+        },
+        "automate": {
+          "title": "Automatisar tut",
+          "body": "Workflows visuals che reageschan a mintga eveniment dal pipeline. Senza scriver in'unica lingia."
+        },
+        "create": {
+          "title": "Crear senza limitas",
+          "body": "Open source ed extensibel. Tes team furma l'utensil — betg l'invers."
+        }
       }
     },
     "about": {
@@ -455,14 +611,35 @@
       "missionSubtitle": "Pertge che nus existin",
       "missionBody": "Permetter a mintga team da venditas — dal fundatur sulet al team enterprise — da serrar dapli affars cun in utensil che chapescha lur lingua, respecta lur datas e crescha cun els.",
       "mini": {
-        "1": { "value": "2025", "label": "Onn da fundaziun" },
-        "2": { "value": "7", "label": "Linguas nativas" },
-        "3": { "value": "100%", "label": "Open source" }
+        "1": {
+          "value": "2025",
+          "label": "Onn da fundaziun"
+        },
+        "2": {
+          "value": "7",
+          "label": "Linguas nativas"
+        },
+        "3": {
+          "value": "100%",
+          "label": "Open source"
+        }
       },
       "timeline": {
-        "1": { "year": "2025", "title": "Nascha CRM Gallo", "body": "L'emprim prototip naschan: pipeline, lead scoring IA ed UI en 3 linguas." },
-        "2": { "year": "2026", "title": "Lantschada publica", "body": "Open source sut AGPL-3.0, 7 linguas nativas, integraziun Stripe, emprims teams clients." },
-        "3": { "year": "Proxims pass", "title": "Multi-tenant + automatisaziuns", "body": "Organisaziuns isoladas, automatisaziuns visualas ed integraziuns e-mail/chalender en vegnida." }
+        "1": {
+          "year": "2025",
+          "title": "Nascha CRM Gallo",
+          "body": "L'emprim prototip naschan: pipeline, lead scoring IA ed UI en 3 linguas."
+        },
+        "2": {
+          "year": "2026",
+          "title": "Lantschada publica",
+          "body": "Open source sut AGPL-3.0, 7 linguas nativas, integraziun Stripe, emprims teams clients."
+        },
+        "3": {
+          "year": "Proxims pass",
+          "title": "Multi-tenant + automatisaziuns",
+          "body": "Organisaziuns isoladas, automatisaziuns visualas ed integraziuns e-mail/chalender en vegnida."
+        }
       }
     },
     "values": {
@@ -506,8 +683,14 @@
         "headerAccent": "CRM",
         "subtitle": "Stos sperar che tut funcziuna.",
         "items": {
-          "automation": { "title": "Automatisaziun", "body": "Mo reglas basicas, senza intelligenza integrada." },
-          "growth": { "title": "Crescientscha", "body": "Dependa da setup manual e plugins externs." }
+          "automation": {
+            "title": "Automatisaziun",
+            "body": "Mo reglas basicas, senza intelligenza integrada."
+          },
+          "growth": {
+            "title": "Crescientscha",
+            "body": "Dependa da setup manual e plugins externs."
+          }
         }
       },
       "right": {
@@ -515,8 +698,14 @@
         "headerAccent": "Gallo",
         "subtitle": "Tut en in. Tut Gallo.",
         "items": {
-          "automation": { "title": "Automatisaziun", "body": "IA, intent e sentiment integrads nativamain." },
-          "growth": { "title": "Crescientscha", "body": "Flua, crescha cun tai senza configuraziun zuppada." }
+          "automation": {
+            "title": "Automatisaziun",
+            "body": "IA, intent e sentiment integrads nativamain."
+          },
+          "growth": {
+            "title": "Crescientscha",
+            "body": "Flua, crescha cun tai senza configuraziun zuppada."
+          }
         }
       }
     },
@@ -644,23 +833,31 @@
     }
   },
   "pricing": {
-    "signIn": "S'annunziar", "getStarted": "Cumenzar",
+    "signIn": "S'annunziar",
+    "getStarted": "Cumenzar",
     "pricingEyebrow": "Pretschs",
     "heroBadge": "Nov — Premium cun 14 dis gratuits",
     "heroTitle": "Pretschs che creschan cun tes team.",
     "heroSubtitle": "Cumenza gratuitamain cun dus posts. Fa upgrade cura che ti has basegn da funcziuns avanzadas — meinsil u annual via Stripe.",
-    "monthly": "Meinsil", "yearly": "Annual",
-    "free": "Gratuit", "perUserPerMonth": "/ utilisatur / mais",
+    "monthly": "Meinsil",
+    "yearly": "Annual",
+    "free": "Gratuit",
+    "perUserPerMonth": "/ utilisatur / mais",
     "freeCtaSubtext": "Fin a 2 utilisaturs · per adina",
-    "billedMonthly": "Quint meinsil", "billedYearly": "Quint annual (-20%)",
+    "billedMonthly": "Quint meinsil",
+    "billedYearly": "Quint annual (-20%)",
     "trialBadge": "{days} dis gratuits",
-    "startFree": "Cumenzar gratuitamain", "choose": "Tscherner plan",
-    "redirecting": "Redirecziun…", "mostPopular": "Il pli popular",
+    "startFree": "Cumenzar gratuitamain",
+    "choose": "Tscherner plan",
+    "redirecting": "Redirecziun…",
+    "mostPopular": "Il pli popular",
     "compareTitle": "Cumparegliar funcziunalitads",
     "compareSubtitle": "Tut dal Free, plus tge ch'ogni plan deblochescha.",
     "feature": "Funcziunalitad",
     "matrix": {
-      "users": "Utilisaturs", "upTo": "Fin a {n}", "unlimited": "Illimità",
+      "users": "Utilisaturs",
+      "upTo": "Fin a {n}",
+      "unlimited": "Illimità",
       "coreCrm": "Leads, clients, affars, pipeline",
       "aiScoringPro": "Scoring IA avanzà (Claude)",
       "aiAssistant": "Assistent IA illimità",
@@ -669,51 +866,90 @@
       "integrations": "Integraziuns e-mail + chalender",
       "rag": "Base da savair RAG",
       "api": "API + Webhooks",
-      "support": "Sustegn", "supportDedicated": "Dedicà",
-      "supportPriority": "Prioritar", "supportEmail": "E-mail"
+      "support": "Sustegn",
+      "supportDedicated": "Dedicà",
+      "supportPriority": "Prioritar",
+      "supportEmail": "E-mail"
     },
     "faqTitle": "Dumondas frequentas",
     "faq": {
-      "1": { "q": "Pos jau propi utilisar il plan Free per adina?",
-             "a": "Gea. Il plan Free è cumplet per fin a dus utilisaturs, senza limit da temp e senza carta da credit." },
-      "2": { "q": "Tge capita cura che jau agiunt in terz utilisatur?",
-             "a": "In admin vegn dumandà da far upgrade a Standard u Premium avant che il nov utilisatur poss s'annunziar. Ils utilisaturs existents cuntinueschan senza interrupziun." },
-      "3": { "q": "Tge mediums da pajament acceptais vus?",
-             "a": "Tut las cartas principalas via Stripe Checkout. SEPA e bunificaziun bancarica disponiblas sin dumonda per ils plans annuals." },
-      "4": { "q": "Pos jau annullar cura che jau vi?",
-             "a": "Gea. Annulla via il Portal da Clients da Stripe. Tes workspace resta sin il plan pajà fin la fin dal period actual, lura turna sin Free." },
-      "10": { "q": "Tge cumpiglia il sustegn Premium?",
-              "a": "Chanal Slack privat cun resposta entaifer 4 uras d'industria, onboarding accumpagnà da 90 minutas, account manager dedicà per teams da 10+, SLO da disponibilitad 99,9% cun credit automatic en cas da rumpidura." },
-      "9": { "q": "È CRM Gallo conforma al GDPR?",
-             "a": "Gea. Datas hospitadas en l'UE, criptaziun at-rest ed in-transit, logs d'audit immutabels, export self-service e dretg da scordar implementads. In Data Processing Agreement è disponibel sin ils plans Premium." },
-      "8": { "q": "Tge integraziuns èn disponiblas?",
-             "a": "Stripe per fatturaziun, IMAP/SMTP per e-mail, Google/Outlook Calendar per chalender, Slack per notificaziuns. API REST + webhooks per integraziuns custom. Roadmap publica includa HubSpot, Pipedrive, Notion, Zapier." },
-      "7": { "q": "Poss jau self-hostar CRM Gallo?",
-             "a": "Gea. Il code è public sut AGPL-3.0. Clona il repo, exequescha docker compose up e tia instanza è en lingia en 5 minutas. Nus mantegnain images Docker actualisadas e guidas da deploy per AWS, GCP, Hetzner e Scaleway." },
-      "6": { "q": "Co funcziuna l'AI scoring?",
-             "a": "Mintga lead retschaiva ina nota 0-100 basada sin ils champs emplenids, las activitads registradas ed il context historic. Nus utilisain Claude Sonnet per il raschunament cun in fallback euristic sch'il provider è offline. Transparent: ti vesas adina qual model ha respundì e sin tge datas." },
-      "5": { "q": "Èn mias datas propi mias?",
-             "a": "Absolutamain. Nus essan AGPL-3.0 open source. Exportescha tias datas cura che ti vuls; suenter l'annullaziun las mantegnain 30 dis per restituziun accidentala, lura stizzain sin dumonda." }
+      "1": {
+        "q": "Pos jau propi utilisar il plan Free per adina?",
+        "a": "Gea. Il plan Free è cumplet per fin a dus utilisaturs, senza limit da temp e senza carta da credit."
+      },
+      "2": {
+        "q": "Tge capita cura che jau agiunt in terz utilisatur?",
+        "a": "In admin vegn dumandà da far upgrade a Standard u Premium avant che il nov utilisatur poss s'annunziar. Ils utilisaturs existents cuntinueschan senza interrupziun."
+      },
+      "3": {
+        "q": "Tge mediums da pajament acceptais vus?",
+        "a": "Tut las cartas principalas via Stripe Checkout. SEPA e bunificaziun bancarica disponiblas sin dumonda per ils plans annuals."
+      },
+      "4": {
+        "q": "Pos jau annullar cura che jau vi?",
+        "a": "Gea. Annulla via il Portal da Clients da Stripe. Tes workspace resta sin il plan pajà fin la fin dal period actual, lura turna sin Free."
+      },
+      "5": {
+        "q": "Èn mias datas propi mias?",
+        "a": "Absolutamain. Nus essan AGPL-3.0 open source. Exportescha tias datas cura che ti vuls; suenter l'annullaziun las mantegnain 30 dis per restituziun accidentala, lura stizzain sin dumonda."
+      },
+      "6": {
+        "q": "Co funcziuna l'AI scoring?",
+        "a": "Mintga lead retschaiva ina nota 0-100 basada sin ils champs emplenids, las activitads registradas ed il context historic. Nus utilisain Claude Sonnet per il raschunament cun in fallback euristic sch'il provider è offline. Transparent: ti vesas adina qual model ha respundì e sin tge datas."
+      },
+      "7": {
+        "q": "Poss jau self-hostar CRM Gallo?",
+        "a": "Gea. Il code è public sut AGPL-3.0. Clona il repo, exequescha docker compose up e tia instanza è en lingia en 5 minutas. Nus mantegnain images Docker actualisadas e guidas da deploy per AWS, GCP, Hetzner e Scaleway."
+      },
+      "8": {
+        "q": "Tge integraziuns èn disponiblas?",
+        "a": "Stripe per fatturaziun, IMAP/SMTP per e-mail, Google/Outlook Calendar per chalender, Slack per notificaziuns. API REST + webhooks per integraziuns custom. Roadmap publica includa HubSpot, Pipedrive, Notion, Zapier."
+      },
+      "9": {
+        "q": "È CRM Gallo conforma al GDPR?",
+        "a": "Gea. Datas hospitadas en l'UE, criptaziun at-rest ed in-transit, logs d'audit immutabels, export self-service e dretg da scordar implementads. In Data Processing Agreement è disponibel sin ils plans Premium."
+      },
+      "10": {
+        "q": "Tge cumpiglia il sustegn Premium?",
+        "a": "Chanal Slack privat cun resposta entaifer 4 uras d'industria, onboarding accumpagnà da 90 minutas, account manager dedicà per teams da 10+, SLO da disponibilitad 99,9% cun credit automatic en cas da rumpidura."
+      }
     },
     "ctaTitle": "Pront da prender tes pipeline en seria?",
     "ctaSubtitle": "S'annunzia gratuitamain en main da 30 secundas. Fa upgrade mo cura ch'ti has basegn.",
     "stripeNotConfigured": "Stripe n'è anc betg configurà en quest ambient. Il plan Free cuntinuescha da funcziunar.",
     "checkoutCanceled": "Checkout annullà. Nagina ratificaziun fatga.",
     "plans": {
-      "free": { "name": "Free", "shortPrice": "€0" },
-      "standard": { "name": "Standard", "shortPrice": "€19/mais" },
-      "premium": { "name": "Premium", "shortPrice": "€49/mais" }
+      "free": {
+        "name": "Free",
+        "shortPrice": "€0"
+      },
+      "standard": {
+        "name": "Standard",
+        "shortPrice": "€19/mais"
+      },
+      "premium": {
+        "name": "Premium",
+        "shortPrice": "€49/mais"
+      }
     }
   },
   "billing": {
-    "title": "Quint", "subtitle": "Administrescha tes plan, posts e fatgüras.",
-    "currentPlan": "Plan actual", "trial": "Examen",
-    "seatsUsed": "Utilisaturs activs", "unlimited": "Illimità",
-    "startedOn": "Cumenzà ils", "renewedOn": "Renovà ils",
-    "nextSteps": "Proxims pass", "nothingToBill": "Nagut da quintar",
-    "manageBilling": "Administrar quint", "openPortal": "Avrir portal Stripe",
-    "upgrade": "Far upgrade", "opening": "Avrir…",
-    "availablePlans": "Plans disponibels", "billingHistory": "Istorgia da quint",
+    "title": "Quint",
+    "subtitle": "Administrescha tes plan, posts e fatgüras.",
+    "currentPlan": "Plan actual",
+    "trial": "Examen",
+    "seatsUsed": "Utilisaturs activs",
+    "unlimited": "Illimità",
+    "startedOn": "Cumenzà ils",
+    "renewedOn": "Renovà ils",
+    "nextSteps": "Proxims pass",
+    "nothingToBill": "Nagut da quintar",
+    "manageBilling": "Administrar quint",
+    "openPortal": "Avrir portal Stripe",
+    "upgrade": "Far upgrade",
+    "opening": "Avrir…",
+    "availablePlans": "Plans disponibels",
+    "billingHistory": "Istorgia da quint",
     "noInvoicesYet": "Naginas fatgüras anc — ti es sin il plan Free.",
     "invoicesAtPortal": "Fatgüras, mediums da pajament e annullaziun vivan en il Portal da Clients da Stripe.",
     "comparePlans": "Cumparegliar plans",
@@ -734,35 +970,87 @@
     "terms": {
       "title": "Cundiziuns d'utilisaziun",
       "intro": "Questas Cundiziuns reglan tes access ed utilisaziun da CRM Gallo. Legia las cun premura.",
-      "s1": { "title": "Acceptaziun da las cundiziuns" },
-      "s2": { "title": "Descripziun dal servetsch" },
-      "s3": { "title": "Tes conto" },
-      "s4": { "title": "Abonnaments e fatturaziun" },
-      "s5": { "title": "Utilisaziun acceptabla" },
-      "s6": { "title": "Tes cuntegn e nossa PI" },
-      "s7": { "title": "Privacy e datas" },
-      "s8": { "title": "Disponibilitad dal servetsch" },
-      "s9": { "title": "Terminaziun" },
-      "s10": { "title": "Limitaziun da responsabladad" },
-      "s11": { "title": "Indemnisaziun" },
-      "s12": { "title": "Lescha applitgabla" },
-      "s13": { "title": "Contact" }
+      "s1": {
+        "title": "Acceptaziun da las cundiziuns"
+      },
+      "s2": {
+        "title": "Descripziun dal servetsch"
+      },
+      "s3": {
+        "title": "Tes conto"
+      },
+      "s4": {
+        "title": "Abonnaments e fatturaziun"
+      },
+      "s5": {
+        "title": "Utilisaziun acceptabla"
+      },
+      "s6": {
+        "title": "Tes cuntegn e nossa PI"
+      },
+      "s7": {
+        "title": "Privacy e datas"
+      },
+      "s8": {
+        "title": "Disponibilitad dal servetsch"
+      },
+      "s9": {
+        "title": "Terminaziun"
+      },
+      "s10": {
+        "title": "Limitaziun da responsabladad"
+      },
+      "s11": {
+        "title": "Indemnisaziun"
+      },
+      "s12": {
+        "title": "Lescha applitgabla"
+      },
+      "s13": {
+        "title": "Contact"
+      }
     },
     "cookies": {
       "title": "Politica da cookies",
       "intro": "Questa politica declera co CRM Gallo utilisescha cookies e tecnologias similas cura ti visitas noss site u utiliseschas il servetsch.",
-      "s1": { "title": "Tge èn cookies?" },
-      "s2": { "title": "Co utilisain nus cookies" },
-      "s3": { "title": "Tips da cookies utilisads" },
-      "s4": { "title": "Cookies da terzs" },
-      "s5": { "title": "Administrar las preferenzas" },
-      "s6": { "title": "Midadas a questa politica" },
-      "s7": { "title": "Contact" },
+      "s1": {
+        "title": "Tge èn cookies?"
+      },
+      "s2": {
+        "title": "Co utilisain nus cookies"
+      },
+      "s3": {
+        "title": "Tips da cookies utilisads"
+      },
+      "s4": {
+        "title": "Cookies da terzs"
+      },
+      "s5": {
+        "title": "Administrar las preferenzas"
+      },
+      "s6": {
+        "title": "Midadas a questa politica"
+      },
+      "s7": {
+        "title": "Contact"
+      },
       "cat": {
-        "essential": { "label": "Essenzials", "body": "Necessaris per il funcziunament dal servetsch (login, segirezza, lingua). Na pon betg vegnir deactivads." },
-        "functional": { "label": "Funcziunals", "body": "Sa regordan tias tschernas d'interfatscha (tema, layout). Megliereschan l'experientscha ma na èn betg obligatoris." },
-        "analytics": { "label": "Analitics", "body": "Nus aidan da chapir co il servetsch vegn utilisà en moda aggregada. Naginas datas persunalas identifitgablas." },
-        "marketing": { "label": "Marketing", "body": "Actualmain n'utilisain nagins. Nus actualisain questa politica e dumandain tes consentiment avant da'ls activar." }
+        "essential": {
+          "label": "Essenzials",
+          "body": "Necessaris per il funcziunament dal servetsch (login, segirezza, lingua). Na pon betg vegnir deactivads."
+        },
+        "functional": {
+          "label": "Funcziunals",
+          "body": "Sa regordan tias tschernas d'interfatscha (tema, layout). Megliereschan l'experientscha ma na èn betg obligatoris."
+        },
+        "analytics": {
+          "label": "Analitics",
+          "body": "Nus aidan da chapir co il servetsch vegn utilisà en moda aggregada. Naginas datas persunalas identifitgablas."
+        },
+        "marketing": {
+          "label": "Marketing",
+          "body": "Actualmain n'utilisain nagins. Nus actualisain questa politica e dumandain tes consentiment avant da'ls activar."
+        }
       }
     }
   }

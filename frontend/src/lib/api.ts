@@ -170,6 +170,73 @@ export interface QuoteUpdate {
   line_items?: QuoteLineItemInput[];
 }
 
+export type ContractStatus =
+  | "draft"
+  | "sent"
+  | "signed"
+  | "active"
+  | "terminated"
+  | "expired";
+
+export interface Contract {
+  id: string;
+  number: string;
+  version: number;
+  status: ContractStatus;
+  title: string;
+  currency: Currency;
+  value: number;
+  effective_date: string | null;
+  end_date: string | null;
+  auto_renew: boolean;
+  renewal_term_months: number | null;
+  body: string | null;
+  notes: string | null;
+  quote_id: string | null;
+  deal_id: string | null;
+  customer_id: string | null;
+  owner_id: string | null;
+  superseded_by: string | null;
+  sent_at: string | null;
+  signed_at: string | null;
+  activated_at: string | null;
+  terminated_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractCreate {
+  title: string;
+  currency?: Currency;
+  value?: number;
+  effective_date?: string | null;
+  end_date?: string | null;
+  auto_renew?: boolean;
+  renewal_term_months?: number | null;
+  body?: string | null;
+  notes?: string | null;
+  quote_id?: string | null;
+  deal_id?: string | null;
+  customer_id?: string | null;
+  owner_id?: string | null;
+}
+
+export interface ContractUpdate {
+  title?: string;
+  currency?: Currency;
+  value?: number;
+  effective_date?: string | null;
+  end_date?: string | null;
+  auto_renew?: boolean;
+  renewal_term_months?: number | null;
+  body?: string | null;
+  notes?: string | null;
+  quote_id?: string | null;
+  deal_id?: string | null;
+  customer_id?: string | null;
+  owner_id?: string | null;
+}
+
 export type SignatureStatus =
   | "drafted"
   | "sent"
@@ -376,7 +443,7 @@ export interface Team {
 
 export interface FileAttachment {
   id: string;
-  entity_type: "lead" | "customer" | "deal" | "quote";
+  entity_type: "lead" | "customer" | "deal" | "quote" | "contract";
   entity_id: string;
   filename: string;
   content_type: string;
@@ -760,7 +827,7 @@ export const api = {
 
   // ---- File attachments (S3-backed) ----
   listAttachments: (
-    entity_type: "lead" | "customer" | "deal" | "quote",
+    entity_type: "lead" | "customer" | "deal" | "quote" | "contract",
     entity_id: string,
   ) => {
     const params = new URLSearchParams({ entity_type, entity_id });
@@ -992,6 +1059,60 @@ export const api = {
   generateQuotePdf: (token: string, id: string) =>
     request<{ queued: boolean; job_id?: string; dedupe?: boolean }>(
       `/api/quotes/${id}/pdf`,
+      { method: "POST", token },
+    ),
+
+  // Contracts (versioned agreements — ADR-016)
+  listContracts: (
+    token: string,
+    opts?: {
+      status?: ContractStatus;
+      deal_id?: string;
+      customer_id?: string;
+      quote_id?: string;
+      cursor?: string;
+      limit?: number;
+    },
+  ) => {
+    const params = new URLSearchParams();
+    if (opts?.status) params.set("status", opts.status);
+    if (opts?.deal_id) params.set("deal_id", opts.deal_id);
+    if (opts?.customer_id) params.set("customer_id", opts.customer_id);
+    if (opts?.quote_id) params.set("quote_id", opts.quote_id);
+    if (opts?.cursor) params.set("cursor", opts.cursor);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    return request<Page<Contract>>(`/api/contracts${qs ? `?${qs}` : ""}`, { token });
+  },
+  getContract: (token: string, id: string) =>
+    request<Contract>(`/api/contracts/${id}`, { token }),
+  createContract: (token: string, payload: ContractCreate) =>
+    request<Contract>("/api/contracts", { method: "POST", token, body: JSON.stringify(payload) }),
+  createContractFromQuote: (token: string, quoteId: string) =>
+    request<Contract>(`/api/contracts/from-quote/${quoteId}`, { method: "POST", token }),
+  updateContract: (token: string, id: string, payload: ContractUpdate) =>
+    request<Contract>(`/api/contracts/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteContract: (token: string, id: string) =>
+    request<void>(`/api/contracts/${id}`, { method: "DELETE", token }),
+  sendContract: (token: string, id: string) =>
+    request<Contract>(`/api/contracts/${id}/send`, { method: "POST", token }),
+  signContract: (token: string, id: string) =>
+    request<Contract>(`/api/contracts/${id}/sign`, { method: "POST", token }),
+  activateContract: (token: string, id: string) =>
+    request<Contract>(`/api/contracts/${id}/activate`, { method: "POST", token }),
+  terminateContract: (token: string, id: string) =>
+    request<Contract>(`/api/contracts/${id}/terminate`, { method: "POST", token }),
+  resendContract: (token: string, id: string) =>
+    request<Contract>(`/api/contracts/${id}/resend`, { method: "POST", token }),
+  // Enqueues a PDF render (202). The worker attaches it to the contract,
+  // surfacing via listAttachments("contract", id). Returns {queued} flag.
+  generateContractPdf: (token: string, id: string) =>
+    request<{ queued: boolean; job_id?: string; dedupe?: boolean }>(
+      `/api/contracts/${id}/pdf`,
       { method: "POST", token },
     ),
 

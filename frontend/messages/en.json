@@ -12,6 +12,7 @@
     "tasks": "Tasks",
     "calendar": "Calendar",
     "quotes": "Quotes",
+    "contracts": "Contracts",
     "documents": "Documents",
     "assistant": "AI Assistant",
     "reports": "Reports",
@@ -158,7 +159,11 @@
     "placeholder": "What needs to be done?",
     "empty": "No tasks yet.",
     "due": "Due",
-    "priorities": { "low": "Low", "medium": "Medium", "high": "High" }
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
   },
   "trash": {
     "title": "Trash",
@@ -424,6 +429,55 @@
     "details": "Details",
     "created": "Created"
   },
+  "contracts": {
+    "title": "Contracts",
+    "new": "New contract",
+    "empty": "No contracts yet. Create your first one.",
+    "create": "Create contract",
+    "edit": "Edit contract",
+    "save": "Save changes",
+    "contractTitle": "Title",
+    "titlePlaceholder": "Annual service agreement",
+    "currency": "Currency",
+    "value": "Contract value",
+    "effectiveDate": "Effective date",
+    "endDate": "End date",
+    "autoRenew": "Auto-renew",
+    "renewalTerm": "Renewal term (months)",
+    "body": "Terms",
+    "bodyPlaceholder": "Scope, obligations, payment terms…",
+    "notes": "Notes",
+    "notesPlaceholder": "Internal notes…",
+    "termsSection": "Terms",
+    "details": "Details",
+    "version": "v{n}",
+    "statuses": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "signed": "Signed",
+      "active": "Active",
+      "terminated": "Terminated",
+      "expired": "Expired"
+    },
+    "send": "Send",
+    "sign": "Mark signed",
+    "activate": "Activate",
+    "terminate": "Terminate",
+    "resend": "New version",
+    "generatePdf": "Generate PDF",
+    "generating": "Generating…",
+    "documents": "Documents",
+    "noDocuments": "No PDF generated yet.",
+    "supersededBy": "A newer version supersedes this one.",
+    "confirmDelete": "Delete this contract? This cannot be undone.",
+    "confirmTerminate": "Terminate this contract? This cannot be undone.",
+    "renewEvery": "Every {n} months",
+    "yes": "Yes",
+    "no": "No",
+    "sourceQuote": "Source quote",
+    "viewQuote": "View quote",
+    "created": "Created"
+  },
   "signatures": {
     "panelTitle": "E-signature",
     "request": "Request signature",
@@ -534,9 +588,18 @@
       "line2": "The only limit is your creativity.",
       "line3": "Connect anything, automate everything. CRM Gallo is the platform that shapes itself to how you work — not the other way around.",
       "pillars": {
-        "connect": { "title": "Connect anything", "body": "APIs, webhooks, email, calendar, knowledge base. If it has an endpoint, it plugs in." },
-        "automate": { "title": "Automate everything", "body": "Visual workflows that react to every pipeline event. Without writing a single line." },
-        "create": { "title": "Create without limits", "body": "Open source and extensible. Your team shapes the tool — not the other way around." }
+        "connect": {
+          "title": "Connect anything",
+          "body": "APIs, webhooks, email, calendar, knowledge base. If it has an endpoint, it plugs in."
+        },
+        "automate": {
+          "title": "Automate everything",
+          "body": "Visual workflows that react to every pipeline event. Without writing a single line."
+        },
+        "create": {
+          "title": "Create without limits",
+          "body": "Open source and extensible. Your team shapes the tool — not the other way around."
+        }
       }
     },
     "about": {
@@ -548,14 +611,35 @@
       "missionSubtitle": "Why we exist",
       "missionBody": "Empower every sales team — from solo founders to enterprise crews — to close more deals with a tool that speaks their language, respects their data, and grows with them.",
       "mini": {
-        "1": { "value": "2025", "label": "Founded" },
-        "2": { "value": "7", "label": "Native languages" },
-        "3": { "value": "100%", "label": "Open source" }
+        "1": {
+          "value": "2025",
+          "label": "Founded"
+        },
+        "2": {
+          "value": "7",
+          "label": "Native languages"
+        },
+        "3": {
+          "value": "100%",
+          "label": "Open source"
+        }
       },
       "timeline": {
-        "1": { "year": "2025", "title": "CRM Gallo is born", "body": "First prototype comes alive: pipeline, AI lead scoring and UI in 3 languages." },
-        "2": { "year": "2026", "title": "Public launch", "body": "Open sourced under AGPL-3.0, 7 native languages, Stripe billing, first customer teams." },
-        "3": { "year": "Next", "title": "Multi-tenant + automations", "body": "Isolated organizations, visual automations and email/calendar integrations coming next." }
+        "1": {
+          "year": "2025",
+          "title": "CRM Gallo is born",
+          "body": "First prototype comes alive: pipeline, AI lead scoring and UI in 3 languages."
+        },
+        "2": {
+          "year": "2026",
+          "title": "Public launch",
+          "body": "Open sourced under AGPL-3.0, 7 native languages, Stripe billing, first customer teams."
+        },
+        "3": {
+          "year": "Next",
+          "title": "Multi-tenant + automations",
+          "body": "Isolated organizations, visual automations and email/calendar integrations coming next."
+        }
       }
     },
     "values": {
@@ -599,8 +683,14 @@
         "headerAccent": "CRMs",
         "subtitle": "You have to hope it all works.",
         "items": {
-          "automation": { "title": "Automation", "body": "Just basic rules, no intelligence baked in." },
-          "growth": { "title": "Growth", "body": "Relies on manual setup and external plugins." }
+          "automation": {
+            "title": "Automation",
+            "body": "Just basic rules, no intelligence baked in."
+          },
+          "growth": {
+            "title": "Growth",
+            "body": "Relies on manual setup and external plugins."
+          }
         }
       },
       "right": {
@@ -608,8 +698,14 @@
         "headerAccent": "Gallo",
         "subtitle": "It's all in one. It's all Gallo.",
         "items": {
-          "automation": { "title": "Automation", "body": "AI, intent and sentiment built in natively." },
-          "growth": { "title": "Growth", "body": "Fluid, scales with you with no hidden config." }
+          "automation": {
+            "title": "Automation",
+            "body": "AI, intent and sentiment built in natively."
+          },
+          "growth": {
+            "title": "Growth",
+            "body": "Fluid, scales with you with no hidden config."
+          }
         }
       }
     },
@@ -823,9 +919,18 @@
     "stripeNotConfigured": "Stripe is not configured yet on this environment. The Free plan still works.",
     "checkoutCanceled": "Checkout canceled. No charge was made.",
     "plans": {
-      "free": { "name": "Free", "shortPrice": "€0" },
-      "standard": { "name": "Standard", "shortPrice": "€19/mo" },
-      "premium": { "name": "Premium", "shortPrice": "€49/mo" }
+      "free": {
+        "name": "Free",
+        "shortPrice": "€0"
+      },
+      "standard": {
+        "name": "Standard",
+        "shortPrice": "€19/mo"
+      },
+      "premium": {
+        "name": "Premium",
+        "shortPrice": "€49/mo"
+      }
     }
   },
   "billing": {
@@ -865,35 +970,87 @@
     "terms": {
       "title": "Terms of Service",
       "intro": "These Terms govern your access to and use of CRM Gallo. Please read them carefully.",
-      "s1": { "title": "Acceptance of terms" },
-      "s2": { "title": "Description of service" },
-      "s3": { "title": "Your account" },
-      "s4": { "title": "Subscriptions and billing" },
-      "s5": { "title": "Acceptable use" },
-      "s6": { "title": "Your content and our IP" },
-      "s7": { "title": "Privacy and data" },
-      "s8": { "title": "Service availability" },
-      "s9": { "title": "Termination" },
-      "s10": { "title": "Limitation of liability" },
-      "s11": { "title": "Indemnification" },
-      "s12": { "title": "Governing law" },
-      "s13": { "title": "Contact" }
+      "s1": {
+        "title": "Acceptance of terms"
+      },
+      "s2": {
+        "title": "Description of service"
+      },
+      "s3": {
+        "title": "Your account"
+      },
+      "s4": {
+        "title": "Subscriptions and billing"
+      },
+      "s5": {
+        "title": "Acceptable use"
+      },
+      "s6": {
+        "title": "Your content and our IP"
+      },
+      "s7": {
+        "title": "Privacy and data"
+      },
+      "s8": {
+        "title": "Service availability"
+      },
+      "s9": {
+        "title": "Termination"
+      },
+      "s10": {
+        "title": "Limitation of liability"
+      },
+      "s11": {
+        "title": "Indemnification"
+      },
+      "s12": {
+        "title": "Governing law"
+      },
+      "s13": {
+        "title": "Contact"
+      }
     },
     "cookies": {
       "title": "Cookies Policy",
       "intro": "This policy explains how CRM Gallo uses cookies and similar technologies when you visit our website or use the Service.",
-      "s1": { "title": "What are cookies?" },
-      "s2": { "title": "How we use cookies" },
-      "s3": { "title": "Types of cookies we use" },
-      "s4": { "title": "Third-party cookies" },
-      "s5": { "title": "Managing your preferences" },
-      "s6": { "title": "Changes to this policy" },
-      "s7": { "title": "Contact" },
+      "s1": {
+        "title": "What are cookies?"
+      },
+      "s2": {
+        "title": "How we use cookies"
+      },
+      "s3": {
+        "title": "Types of cookies we use"
+      },
+      "s4": {
+        "title": "Third-party cookies"
+      },
+      "s5": {
+        "title": "Managing your preferences"
+      },
+      "s6": {
+        "title": "Changes to this policy"
+      },
+      "s7": {
+        "title": "Contact"
+      },
       "cat": {
-        "essential": { "label": "Essential", "body": "Required for the Service to work (sign-in, security, language). Cannot be disabled." },
-        "functional": { "label": "Functional", "body": "Remember your interface choices (theme, layout). They improve the experience but aren't strictly required." },
-        "analytics": { "label": "Analytics", "body": "Help us understand how the Service is used in aggregate. No personally identifiable data." },
-        "marketing": { "label": "Marketing", "body": "We don't currently use any. We will update this policy and request consent before setting one." }
+        "essential": {
+          "label": "Essential",
+          "body": "Required for the Service to work (sign-in, security, language). Cannot be disabled."
+        },
+        "functional": {
+          "label": "Functional",
+          "body": "Remember your interface choices (theme, layout). They improve the experience but aren't strictly required."
+        },
+        "analytics": {
+          "label": "Analytics",
+          "body": "Help us understand how the Service is used in aggregate. No personally identifiable data."
+        },
+        "marketing": {
+          "label": "Marketing",
+          "body": "We don't currently use any. We will update this policy and request consent before setting one."
+        }
       }
     }
   }

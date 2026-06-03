@@ -12,6 +12,7 @@
     "tasks": "Aufgaben",
     "calendar": "Kalender",
     "quotes": "Angebote",
+    "contracts": "Verträge",
     "documents": "Dokumente",
     "assistant": "KI-Assistent",
     "reports": "Berichte",
@@ -105,49 +106,91 @@
     "noData": "Noch keine Daten"
   },
   "leads": {
-    "title": "Leads", "new": "Neuer Lead", "search": "Nach Name, E-Mail, Firma suchen...",
-    "name": "Name", "company": "Firma", "stage": "Phase", "score": "KI-Score",
-    "owner": "Verantwortlich", "created": "Erstellt",
+    "title": "Leads",
+    "new": "Neuer Lead",
+    "search": "Nach Name, E-Mail, Firma suchen...",
+    "name": "Name",
+    "company": "Firma",
+    "stage": "Phase",
+    "score": "KI-Score",
+    "owner": "Verantwortlich",
+    "created": "Erstellt",
     "empty": "Noch keine Leads. Erstellen Sie Ihren ersten.",
-    "save": "Speichern", "cancel": "Abbrechen", "scoreNow": "Mit KI bewerten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "scoreNow": "Mit KI bewerten",
     "stages": {
-      "new": "Neu", "contacted": "Kontaktiert", "qualified": "Qualifiziert",
-      "proposal_sent": "Angebot gesendet", "negotiation": "Verhandlung",
-      "won": "Gewonnen", "lost": "Verloren"
+      "new": "Neu",
+      "contacted": "Kontaktiert",
+      "qualified": "Qualifiziert",
+      "proposal_sent": "Angebot gesendet",
+      "negotiation": "Verhandlung",
+      "won": "Gewonnen",
+      "lost": "Verloren"
     }
   },
   "customers": {
-    "title": "Kunden", "new": "Neuer Kunde", "search": "Nach Name, E-Mail, Firma suchen...",
-    "name": "Name", "company": "Firma", "country": "Land", "created": "Erstellt",
+    "title": "Kunden",
+    "new": "Neuer Kunde",
+    "search": "Nach Name, E-Mail, Firma suchen...",
+    "name": "Name",
+    "company": "Firma",
+    "country": "Land",
+    "created": "Erstellt",
     "empty": "Noch keine Kunden. Erstellen Sie den ersten.",
-    "aiSummary": "KI-Zusammenfassung", "summarize": "Zusammenfassen",
+    "aiSummary": "KI-Zusammenfassung",
+    "summarize": "Zusammenfassen",
     "noSummary": "Noch keine Zusammenfassung. Klicken Sie auf Zusammenfassen."
   },
   "pipeline": {
-    "title": "Pipeline", "new": "Neuer Deal", "dealTitle": "Deal-Titel",
-    "value": "Wert", "currency": "Währung", "probability": "Wahrscheinlichkeit",
-    "expectedClose": "Erwartetes Abschlussdatum", "customer": "Kunde"
+    "title": "Pipeline",
+    "new": "Neuer Deal",
+    "dealTitle": "Deal-Titel",
+    "value": "Wert",
+    "currency": "Währung",
+    "probability": "Wahrscheinlichkeit",
+    "expectedClose": "Erwartetes Abschlussdatum",
+    "customer": "Kunde"
   },
   "tasks": {
-    "title": "Aufgaben", "new": "Aufgabe hinzufügen", "add": "Hinzufügen",
-    "placeholder": "Was muss erledigt werden?", "empty": "Keine Aufgaben.",
+    "title": "Aufgaben",
+    "new": "Aufgabe hinzufügen",
+    "add": "Hinzufügen",
+    "placeholder": "Was muss erledigt werden?",
+    "empty": "Keine Aufgaben.",
     "due": "Fällig",
-    "priorities": { "low": "Niedrig", "medium": "Mittel", "high": "Hoch" }
+    "priorities": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch"
+    }
   },
   "trash": {
     "title": "Papierkorb",
     "subtitle": "Gelöschte Datensätze wiederherstellen oder endgültig entfernen.",
     "empty": "Der Papierkorb ist leer.",
-    "restore": "Wiederherstellen", "hardDelete": "Endgültig löschen",
-    "emptyAll": "Papierkorb leeren", "deletedAt": "Gelöscht am",
+    "restore": "Wiederherstellen",
+    "hardDelete": "Endgültig löschen",
+    "emptyAll": "Papierkorb leeren",
+    "deletedAt": "Gelöscht am",
     "confirmHardDelete": "Diesen Datensatz endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
     "confirmEmpty": "Papierkorb leeren und alles endgültig löschen?",
-    "tabs": { "all": "Alle", "lead": "Leads", "customer": "Kunden", "deal": "Deals", "task": "Aufgaben" }
+    "tabs": {
+      "all": "Alle",
+      "lead": "Leads",
+      "customer": "Kunden",
+      "deal": "Deals",
+      "task": "Aufgaben"
+    }
   },
   "settings": {
-    "profile": "Profil", "password": "Passwort", "role": "Rolle",
-    "currentPassword": "Aktuelles Passwort", "newPassword": "Neues Passwort",
-    "confirmPassword": "Neues Passwort bestätigen", "changePassword": "Passwort ändern",
+    "profile": "Profil",
+    "password": "Passwort",
+    "role": "Rolle",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Neues Passwort bestätigen",
+    "changePassword": "Passwort ändern",
     "passwordMismatch": "Die Passwörter stimmen nicht überein.",
     "passwordChanged": "Passwort erfolgreich geändert."
   },
@@ -329,11 +372,17 @@
     "salesFunnel": "Sales Funnel",
     "breakdownByCurrency": "Aufschlüsselung nach Währung",
     "summary": "Zusammenfassung",
-    "totalLeads": "Leads insgesamt", "totalDeals": "Deals insgesamt",
-    "totalCustomers": "Kunden insgesamt", "conversionRate": "Konversionsrate",
-    "won": "Gewonnen", "noData": "Noch keine Daten."
+    "totalLeads": "Leads insgesamt",
+    "totalDeals": "Deals insgesamt",
+    "totalCustomers": "Kunden insgesamt",
+    "conversionRate": "Konversionsrate",
+    "won": "Gewonnen",
+    "noData": "Noch keine Daten."
   },
-  "calendar": { "today": "Heute", "noTasksOnDay": "Keine Aufgaben an diesem Tag." },
+  "calendar": {
+    "today": "Heute",
+    "noTasksOnDay": "Keine Aufgaben an diesem Tag."
+  },
   "quotes": {
     "title": "Angebote",
     "new": "Neues Angebot",
@@ -378,6 +427,55 @@
     "needLineItems": "Fügen Sie vor dem Senden mindestens eine Position hinzu.",
     "confirmDelete": "Dieses Angebot löschen? Dies kann nicht rückgängig gemacht werden.",
     "details": "Details",
+    "created": "Erstellt"
+  },
+  "contracts": {
+    "title": "Verträge",
+    "new": "Neuer Vertrag",
+    "empty": "Noch keine Verträge. Erstellen Sie den ersten.",
+    "create": "Vertrag erstellen",
+    "edit": "Vertrag bearbeiten",
+    "save": "Änderungen speichern",
+    "contractTitle": "Titel",
+    "titlePlaceholder": "Jährlicher Servicevertrag",
+    "currency": "Währung",
+    "value": "Vertragswert",
+    "effectiveDate": "Beginn",
+    "endDate": "Ende",
+    "autoRenew": "Automatische Verlängerung",
+    "renewalTerm": "Verlängerungsdauer (Monate)",
+    "body": "Bedingungen",
+    "bodyPlaceholder": "Umfang, Pflichten, Zahlungsbedingungen…",
+    "notes": "Notizen",
+    "notesPlaceholder": "Interne Notizen…",
+    "termsSection": "Bedingungen",
+    "details": "Details",
+    "version": "v{n}",
+    "statuses": {
+      "draft": "Entwurf",
+      "sent": "Gesendet",
+      "signed": "Unterzeichnet",
+      "active": "Aktiv",
+      "terminated": "Gekündigt",
+      "expired": "Abgelaufen"
+    },
+    "send": "Senden",
+    "sign": "Als unterzeichnet markieren",
+    "activate": "Aktivieren",
+    "terminate": "Kündigen",
+    "resend": "Neue Version",
+    "generatePdf": "PDF erstellen",
+    "generating": "Wird erstellt…",
+    "documents": "Dokumente",
+    "noDocuments": "Noch kein PDF erstellt.",
+    "supersededBy": "Eine neuere Version ersetzt diese.",
+    "confirmDelete": "Diesen Vertrag löschen? Dies kann nicht rückgängig gemacht werden.",
+    "confirmTerminate": "Diesen Vertrag kündigen? Dies kann nicht rückgängig gemacht werden.",
+    "renewEvery": "Alle {n} Monate",
+    "yes": "Ja",
+    "no": "Nein",
+    "sourceQuote": "Ursprungsangebot",
+    "viewQuote": "Angebot ansehen",
     "created": "Erstellt"
   },
   "signatures": {
@@ -431,12 +529,19 @@
     }
   },
   "common": {
-    "language": "Sprache", "theme": "Design", "loading": "Laden...",
-    "actions": "Aktionen", "edit": "Bearbeiten", "delete": "Löschen",
-    "cancel": "Abbrechen", "confirm": "Bestätigen", "confirmTitle": "Sind Sie sicher?",
+    "language": "Sprache",
+    "theme": "Design",
+    "loading": "Laden...",
+    "actions": "Aktionen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "confirmTitle": "Sind Sie sicher?",
     "confirmDelete": "Diesen Datensatz löschen? Dies kann nicht rückgängig gemacht werden.",
     "noPermission": "Sie haben keine Berechtigung dafür.",
-    "back": "Zurück", "saved": "Gespeichert",
+    "back": "Zurück",
+    "saved": "Gespeichert",
     "loadMore": "Mehr laden"
   },
   "marketing": {
@@ -483,9 +588,18 @@
       "line2": "Die einzige Grenze ist deine Kreativität.",
       "line3": "Verbinde alles, automatisiere alles. CRM Gallo ist die Plattform, die sich an deine Arbeitsweise anpasst — nicht umgekehrt.",
       "pillars": {
-        "connect": { "title": "Alles verbinden", "body": "APIs, Webhooks, E-Mail, Kalender, Knowledge Base. Wenn es einen Endpoint hat, lässt es sich anschließen." },
-        "automate": { "title": "Alles automatisieren", "body": "Visuelle Workflows, die auf jedes Pipeline-Ereignis reagieren. Ohne eine Zeile Code." },
-        "create": { "title": "Grenzenlos gestalten", "body": "Open Source und erweiterbar. Dein Team formt das Werkzeug — nicht umgekehrt." }
+        "connect": {
+          "title": "Alles verbinden",
+          "body": "APIs, Webhooks, E-Mail, Kalender, Knowledge Base. Wenn es einen Endpoint hat, lässt es sich anschließen."
+        },
+        "automate": {
+          "title": "Alles automatisieren",
+          "body": "Visuelle Workflows, die auf jedes Pipeline-Ereignis reagieren. Ohne eine Zeile Code."
+        },
+        "create": {
+          "title": "Grenzenlos gestalten",
+          "body": "Open Source und erweiterbar. Dein Team formt das Werkzeug — nicht umgekehrt."
+        }
       }
     },
     "about": {
@@ -497,14 +611,35 @@
       "missionSubtitle": "Warum wir existieren",
       "missionBody": "Jedem Vertriebsteam — vom Solo-Gründer bis zum Enterprise-Team — ermöglichen, mehr Deals abzuschließen, mit einem Werkzeug, das seine Sprache spricht, seine Daten respektiert und mit ihm wächst.",
       "mini": {
-        "1": { "value": "2025", "label": "Gegründet" },
-        "2": { "value": "7", "label": "Native Sprachen" },
-        "3": { "value": "100%", "label": "Open Source" }
+        "1": {
+          "value": "2025",
+          "label": "Gegründet"
+        },
+        "2": {
+          "value": "7",
+          "label": "Native Sprachen"
+        },
+        "3": {
+          "value": "100%",
+          "label": "Open Source"
+        }
       },
       "timeline": {
-        "1": { "year": "2025", "title": "CRM Gallo entsteht", "body": "Erster Prototyp wird lebendig: Pipeline, KI-Lead-Scoring und UI in 3 Sprachen." },
-        "2": { "year": "2026", "title": "Öffentlicher Launch", "body": "Open Source unter AGPL-3.0, 7 native Sprachen, Stripe-Abrechnung, erste Kundenteams." },
-        "3": { "year": "Nächste Schritte", "title": "Multi-Tenant + Automatisierungen", "body": "Isolierte Organisationen, visuelle Automatisierungen und E-Mail-/Kalender-Integrationen folgen." }
+        "1": {
+          "year": "2025",
+          "title": "CRM Gallo entsteht",
+          "body": "Erster Prototyp wird lebendig: Pipeline, KI-Lead-Scoring und UI in 3 Sprachen."
+        },
+        "2": {
+          "year": "2026",
+          "title": "Öffentlicher Launch",
+          "body": "Open Source unter AGPL-3.0, 7 native Sprachen, Stripe-Abrechnung, erste Kundenteams."
+        },
+        "3": {
+          "year": "Nächste Schritte",
+          "title": "Multi-Tenant + Automatisierungen",
+          "body": "Isolierte Organisationen, visuelle Automatisierungen und E-Mail-/Kalender-Integrationen folgen."
+        }
       }
     },
     "values": {
@@ -548,8 +683,14 @@
         "headerAccent": "CRMs",
         "subtitle": "Man muss hoffen, dass alles funktioniert.",
         "items": {
-          "automation": { "title": "Automatisierung", "body": "Nur Basis-Regeln, ohne eingebaute Intelligenz." },
-          "growth": { "title": "Wachstum", "body": "Hängt von manuellem Setup und externen Plugins ab." }
+          "automation": {
+            "title": "Automatisierung",
+            "body": "Nur Basis-Regeln, ohne eingebaute Intelligenz."
+          },
+          "growth": {
+            "title": "Wachstum",
+            "body": "Hängt von manuellem Setup und externen Plugins ab."
+          }
         }
       },
       "right": {
@@ -557,8 +698,14 @@
         "headerAccent": "Gallo",
         "subtitle": "Alles in einem. Alles Gallo.",
         "items": {
-          "automation": { "title": "Automatisierung", "body": "KI, Intent und Sentiment nativ integriert." },
-          "growth": { "title": "Wachstum", "body": "Fließend, skaliert mit Ihnen ohne versteckte Config." }
+          "automation": {
+            "title": "Automatisierung",
+            "body": "KI, Intent und Sentiment nativ integriert."
+          },
+          "growth": {
+            "title": "Wachstum",
+            "body": "Fließend, skaliert mit Ihnen ohne versteckte Config."
+          }
         }
       }
     },
@@ -686,23 +833,31 @@
     }
   },
   "pricing": {
-    "signIn": "Anmelden", "getStarted": "Loslegen",
+    "signIn": "Anmelden",
+    "getStarted": "Loslegen",
     "pricingEyebrow": "Preise",
     "heroBadge": "Neu — Premium mit 14 Tagen kostenlos",
     "heroTitle": "Preise, die mit Ihrem Team wachsen.",
     "heroSubtitle": "Kostenlos mit zwei Sitzen starten. Upgraden, wenn Sie Power-Features brauchen — monatlich oder jährlich über Stripe.",
-    "monthly": "Monatlich", "yearly": "Jährlich",
-    "free": "Kostenlos", "perUserPerMonth": "/ Benutzer / Monat",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich",
+    "free": "Kostenlos",
+    "perUserPerMonth": "/ Benutzer / Monat",
     "freeCtaSubtext": "Bis zu 2 Benutzer · für immer",
-    "billedMonthly": "Monatliche Abrechnung", "billedYearly": "Jährliche Abrechnung (-20%)",
+    "billedMonthly": "Monatliche Abrechnung",
+    "billedYearly": "Jährliche Abrechnung (-20%)",
     "trialBadge": "{days} Tage kostenlos testen",
-    "startFree": "Kostenlos starten", "choose": "Plan wählen",
-    "redirecting": "Weiterleitung…", "mostPopular": "Beliebteste Wahl",
+    "startFree": "Kostenlos starten",
+    "choose": "Plan wählen",
+    "redirecting": "Weiterleitung…",
+    "mostPopular": "Beliebteste Wahl",
     "compareTitle": "Funktionen vergleichen",
     "compareSubtitle": "Alles aus Free plus die Funktionen, die jeder Tarif freischaltet.",
     "feature": "Funktion",
     "matrix": {
-      "users": "Benutzer", "upTo": "Bis zu {n}", "unlimited": "Unbegrenzt",
+      "users": "Benutzer",
+      "upTo": "Bis zu {n}",
+      "unlimited": "Unbegrenzt",
       "coreCrm": "Leads, Kunden, Deals, Pipeline",
       "aiScoringPro": "Erweitertes KI-Scoring (Claude)",
       "aiAssistant": "Unbegrenzter KI-Assistent",
@@ -711,52 +866,88 @@
       "integrations": "E-Mail- + Kalenderintegrationen",
       "rag": "RAG-Wissensdatenbank",
       "api": "API + Webhooks",
-      "support": "Support", "supportDedicated": "Dediziert",
-      "supportPriority": "Priorität", "supportEmail": "E-Mail"
+      "support": "Support",
+      "supportDedicated": "Dediziert",
+      "supportPriority": "Priorität",
+      "supportEmail": "E-Mail"
     },
     "faqTitle": "Häufig gestellte Fragen",
     "faq": {
-      "1": { "q": "Kann ich den Free-Tarif wirklich für immer nutzen?",
-             "a": "Ja. Der Free-Tarif ist voll funktionsfähig für bis zu zwei Benutzer — ohne Zeitlimit und ohne Kreditkarte." },
-      "2": { "q": "Was passiert, wenn ich einen dritten Benutzer hinzufüge?",
-             "a": "Ein Admin wird gebeten, auf Standard oder Premium upzugraden, bevor sich der neue Benutzer registrieren kann. Bestehende Benutzer arbeiten ohne Unterbrechung weiter." },
-      "3": { "q": "Welche Zahlungsmethoden akzeptieren Sie?",
-             "a": "Alle gängigen Kredit- und Debitkarten über Stripe Checkout. SEPA und Banküberweisung auf Anfrage für Jahrespläne." },
-      "4": { "q": "Kann ich jederzeit kündigen?",
-             "a": "Ja. Kündigen Sie über das Stripe Customer Portal. Ihr Workspace bleibt bis zum Ende der aktuellen Periode auf dem bezahlten Plan und wechselt dann auf Free." },
-      "10": { "q": "Was umfasst der Premium-Support?",
-              "a": "Privater Slack-Kanal mit Antwort innerhalb von 4 Arbeitsstunden, 90-minütiges geführtes Onboarding, dedizierter Account Manager für Teams ab 10 Personen, 99,9% Uptime-SLO mit automatischer Gutschrift bei Verletzung." },
-      "9": { "q": "Ist CRM Gallo DSGVO-konform?",
-             "a": "Ja. EU-Datenresidenz, Verschlüsselung at-rest und in-transit, unveränderliche Audit-Logs, Self-Service-Export und Recht auf Vergessenwerden umgesetzt. Ein Auftragsverarbeitungsvertrag ist für Premium-Pläne verfügbar." },
-      "8": { "q": "Welche Integrationen sind verfügbar?",
-             "a": "Stripe für Abrechnung, IMAP/SMTP für E-Mail, Google/Outlook Calendar für Termine, Slack für Benachrichtigungen. REST-API + Webhooks für individuelle Integrationen. Öffentliche Roadmap umfasst HubSpot, Pipedrive, Notion, Zapier." },
-      "7": { "q": "Kann ich CRM Gallo selbst hosten?",
-             "a": "Ja. Der Quellcode ist öffentlich unter AGPL-3.0. Repo klonen, docker compose up ausführen, und Ihre Instanz läuft in 5 Minuten. Wir pflegen aktuelle Docker-Images und Deploy-Guides für AWS, GCP, Hetzner und Scaleway." },
-      "6": { "q": "Wie funktioniert das KI-Scoring?",
-             "a": "Jeder Lead erhält einen Score 0-100 basierend auf ausgefüllten Feldern, protokollierten Aktivitäten und historischem Kontext. Wir nutzen Claude Sonnet für die Argumentation, mit heuristischem Fallback wenn der Provider offline ist. Transparent: Sie sehen immer, welches Modell geantwortet hat und auf welchen Daten." },
-      "5": { "q": "Gehören mir meine Daten wirklich?",
-             "a": "Absolut. Wir sind AGPL-3.0 Open Source. Exportieren Sie Ihre Daten jederzeit; nach der Kündigung behalten wir sie 30 Tage zur versehentlichen Wiederherstellung und löschen sie dann auf Wunsch." }
+      "1": {
+        "q": "Kann ich den Free-Tarif wirklich für immer nutzen?",
+        "a": "Ja. Der Free-Tarif ist voll funktionsfähig für bis zu zwei Benutzer — ohne Zeitlimit und ohne Kreditkarte."
+      },
+      "2": {
+        "q": "Was passiert, wenn ich einen dritten Benutzer hinzufüge?",
+        "a": "Ein Admin wird gebeten, auf Standard oder Premium upzugraden, bevor sich der neue Benutzer registrieren kann. Bestehende Benutzer arbeiten ohne Unterbrechung weiter."
+      },
+      "3": {
+        "q": "Welche Zahlungsmethoden akzeptieren Sie?",
+        "a": "Alle gängigen Kredit- und Debitkarten über Stripe Checkout. SEPA und Banküberweisung auf Anfrage für Jahrespläne."
+      },
+      "4": {
+        "q": "Kann ich jederzeit kündigen?",
+        "a": "Ja. Kündigen Sie über das Stripe Customer Portal. Ihr Workspace bleibt bis zum Ende der aktuellen Periode auf dem bezahlten Plan und wechselt dann auf Free."
+      },
+      "5": {
+        "q": "Gehören mir meine Daten wirklich?",
+        "a": "Absolut. Wir sind AGPL-3.0 Open Source. Exportieren Sie Ihre Daten jederzeit; nach der Kündigung behalten wir sie 30 Tage zur versehentlichen Wiederherstellung und löschen sie dann auf Wunsch."
+      },
+      "6": {
+        "q": "Wie funktioniert das KI-Scoring?",
+        "a": "Jeder Lead erhält einen Score 0-100 basierend auf ausgefüllten Feldern, protokollierten Aktivitäten und historischem Kontext. Wir nutzen Claude Sonnet für die Argumentation, mit heuristischem Fallback wenn der Provider offline ist. Transparent: Sie sehen immer, welches Modell geantwortet hat und auf welchen Daten."
+      },
+      "7": {
+        "q": "Kann ich CRM Gallo selbst hosten?",
+        "a": "Ja. Der Quellcode ist öffentlich unter AGPL-3.0. Repo klonen, docker compose up ausführen, und Ihre Instanz läuft in 5 Minuten. Wir pflegen aktuelle Docker-Images und Deploy-Guides für AWS, GCP, Hetzner und Scaleway."
+      },
+      "8": {
+        "q": "Welche Integrationen sind verfügbar?",
+        "a": "Stripe für Abrechnung, IMAP/SMTP für E-Mail, Google/Outlook Calendar für Termine, Slack für Benachrichtigungen. REST-API + Webhooks für individuelle Integrationen. Öffentliche Roadmap umfasst HubSpot, Pipedrive, Notion, Zapier."
+      },
+      "9": {
+        "q": "Ist CRM Gallo DSGVO-konform?",
+        "a": "Ja. EU-Datenresidenz, Verschlüsselung at-rest und in-transit, unveränderliche Audit-Logs, Self-Service-Export und Recht auf Vergessenwerden umgesetzt. Ein Auftragsverarbeitungsvertrag ist für Premium-Pläne verfügbar."
+      },
+      "10": {
+        "q": "Was umfasst der Premium-Support?",
+        "a": "Privater Slack-Kanal mit Antwort innerhalb von 4 Arbeitsstunden, 90-minütiges geführtes Onboarding, dedizierter Account Manager für Teams ab 10 Personen, 99,9% Uptime-SLO mit automatischer Gutschrift bei Verletzung."
+      }
     },
     "ctaTitle": "Bereit, Ihre Pipeline ernst zu nehmen?",
     "ctaSubtitle": "Kostenlos registrieren in unter 30 Sekunden. Upgraden nur, wenn Sie es brauchen.",
     "stripeNotConfigured": "Stripe ist in dieser Umgebung noch nicht konfiguriert. Der Free-Tarif funktioniert weiterhin.",
     "checkoutCanceled": "Checkout abgebrochen. Es wurde nichts berechnet.",
     "plans": {
-      "free": { "name": "Free", "shortPrice": "€0" },
-      "standard": { "name": "Standard", "shortPrice": "€19/Mo" },
-      "premium": { "name": "Premium", "shortPrice": "€49/Mo" }
+      "free": {
+        "name": "Free",
+        "shortPrice": "€0"
+      },
+      "standard": {
+        "name": "Standard",
+        "shortPrice": "€19/Mo"
+      },
+      "premium": {
+        "name": "Premium",
+        "shortPrice": "€49/Mo"
+      }
     }
   },
   "billing": {
     "title": "Abrechnung",
     "subtitle": "Verwalten Sie Ihren Plan, Sitzplätze und Rechnungen.",
-    "currentPlan": "Aktueller Plan", "trial": "Testphase",
-    "seatsUsed": "Aktive Benutzer", "unlimited": "Unbegrenzt",
-    "startedOn": "Begonnen am", "renewedOn": "Erneuert am",
-    "nextSteps": "Nächste Schritte", "nothingToBill": "Nichts abzurechnen",
+    "currentPlan": "Aktueller Plan",
+    "trial": "Testphase",
+    "seatsUsed": "Aktive Benutzer",
+    "unlimited": "Unbegrenzt",
+    "startedOn": "Begonnen am",
+    "renewedOn": "Erneuert am",
+    "nextSteps": "Nächste Schritte",
+    "nothingToBill": "Nichts abzurechnen",
     "manageBilling": "Abrechnung verwalten",
     "openPortal": "Stripe-Portal öffnen",
-    "upgrade": "Upgrade", "opening": "Öffnen…",
+    "upgrade": "Upgrade",
+    "opening": "Öffnen…",
     "availablePlans": "Verfügbare Pläne",
     "billingHistory": "Abrechnungsverlauf",
     "noInvoicesYet": "Noch keine Rechnungen — Sie sind auf dem Free-Plan.",
@@ -779,35 +970,87 @@
     "terms": {
       "title": "Nutzungsbedingungen",
       "intro": "Diese Bedingungen regeln Ihren Zugang zu und die Nutzung von CRM Gallo. Bitte sorgfältig lesen.",
-      "s1": { "title": "Annahme der Bedingungen" },
-      "s2": { "title": "Beschreibung des Services" },
-      "s3": { "title": "Ihr Konto" },
-      "s4": { "title": "Abonnements und Abrechnung" },
-      "s5": { "title": "Akzeptable Nutzung" },
-      "s6": { "title": "Ihre Inhalte und unser geistiges Eigentum" },
-      "s7": { "title": "Datenschutz und Daten" },
-      "s8": { "title": "Verfügbarkeit des Services" },
-      "s9": { "title": "Kündigung" },
-      "s10": { "title": "Haftungsbeschränkung" },
-      "s11": { "title": "Schadensersatz" },
-      "s12": { "title": "Anwendbares Recht" },
-      "s13": { "title": "Kontakt" }
+      "s1": {
+        "title": "Annahme der Bedingungen"
+      },
+      "s2": {
+        "title": "Beschreibung des Services"
+      },
+      "s3": {
+        "title": "Ihr Konto"
+      },
+      "s4": {
+        "title": "Abonnements und Abrechnung"
+      },
+      "s5": {
+        "title": "Akzeptable Nutzung"
+      },
+      "s6": {
+        "title": "Ihre Inhalte und unser geistiges Eigentum"
+      },
+      "s7": {
+        "title": "Datenschutz und Daten"
+      },
+      "s8": {
+        "title": "Verfügbarkeit des Services"
+      },
+      "s9": {
+        "title": "Kündigung"
+      },
+      "s10": {
+        "title": "Haftungsbeschränkung"
+      },
+      "s11": {
+        "title": "Schadensersatz"
+      },
+      "s12": {
+        "title": "Anwendbares Recht"
+      },
+      "s13": {
+        "title": "Kontakt"
+      }
     },
     "cookies": {
       "title": "Cookie-Richtlinie",
       "intro": "Diese Richtlinie erklärt, wie CRM Gallo Cookies und ähnliche Technologien verwendet, wenn Sie unsere Website besuchen oder den Service nutzen.",
-      "s1": { "title": "Was sind Cookies?" },
-      "s2": { "title": "Wie wir Cookies verwenden" },
-      "s3": { "title": "Arten der verwendeten Cookies" },
-      "s4": { "title": "Cookies von Drittanbietern" },
-      "s5": { "title": "Einstellungen verwalten" },
-      "s6": { "title": "Änderungen dieser Richtlinie" },
-      "s7": { "title": "Kontakt" },
+      "s1": {
+        "title": "Was sind Cookies?"
+      },
+      "s2": {
+        "title": "Wie wir Cookies verwenden"
+      },
+      "s3": {
+        "title": "Arten der verwendeten Cookies"
+      },
+      "s4": {
+        "title": "Cookies von Drittanbietern"
+      },
+      "s5": {
+        "title": "Einstellungen verwalten"
+      },
+      "s6": {
+        "title": "Änderungen dieser Richtlinie"
+      },
+      "s7": {
+        "title": "Kontakt"
+      },
       "cat": {
-        "essential": { "label": "Essenziell", "body": "Erforderlich für die Funktion des Services (Anmeldung, Sicherheit, Sprache). Können nicht deaktiviert werden." },
-        "functional": { "label": "Funktional", "body": "Merken sich Ihre Oberflächeneinstellungen (Theme, Layout). Verbessern die Erfahrung, sind aber nicht zwingend." },
-        "analytics": { "label": "Analyse", "body": "Helfen uns, die aggregierte Nutzung zu verstehen. Keine personenbezogenen Daten." },
-        "marketing": { "label": "Marketing", "body": "Derzeit nutzen wir keine. Wir aktualisieren diese Richtlinie und holen Ihre Einwilligung ein, bevor wir welche setzen." }
+        "essential": {
+          "label": "Essenziell",
+          "body": "Erforderlich für die Funktion des Services (Anmeldung, Sicherheit, Sprache). Können nicht deaktiviert werden."
+        },
+        "functional": {
+          "label": "Funktional",
+          "body": "Merken sich Ihre Oberflächeneinstellungen (Theme, Layout). Verbessern die Erfahrung, sind aber nicht zwingend."
+        },
+        "analytics": {
+          "label": "Analyse",
+          "body": "Helfen uns, die aggregierte Nutzung zu verstehen. Keine personenbezogenen Daten."
+        },
+        "marketing": {
+          "label": "Marketing",
+          "body": "Derzeit nutzen wir keine. Wir aktualisieren diese Richtlinie und holen Ihre Einwilligung ein, bevor wir welche setzen."
+        }
       }
     }
   }
