@@ -158,7 +158,7 @@ function AiMockup() {
             <Sparkles className="h-3 w-3" />
           </div>
           <div className="space-y-1 rounded-lg rounded-tl-sm bg-violet-500/10 px-3 py-2 text-xs">
-            <div className="font-medium">Subject: Pricing proposal · CRM Gallo Premium</div>
+            <div className="font-medium">Subject: Pricing proposal · Gallo CRM Premium</div>
             <div className="text-muted-foreground">
               Hi Sofia, thanks for the demo today. Following up with the pricing breakdown we discussed — annual plan saves you 20%…
             </div>

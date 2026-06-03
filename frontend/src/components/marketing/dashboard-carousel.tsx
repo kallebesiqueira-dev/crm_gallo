@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Auto-rotating product showcase — five distinct screens of CRM Gallo
+ * Auto-rotating product showcase — five distinct screens of GALLO CRM
  * alternating between dark and light themes. The whole thing is wrapped
  * in a single browser chrome so the swap feels like a real demo, not a
  * collage. Default cadence is 5s/slide; hovering pauses, the user can
@@ -224,11 +224,11 @@ function Sidebar({ theme }: { theme: Theme }) {
     >
       <div className="mb-4 flex items-center gap-2 px-2">
         <Image
-          src="/logo.png"
+          src="/gallo-logo.png"
           alt=""
           width={28}
           height={28}
-          className="h-7 w-7 shrink-0 rounded-full select-none"
+          className="h-7 w-7 shrink-0 rounded-md select-none"
         />
         <div className="min-w-0">
           <div
@@ -237,7 +237,7 @@ function Sidebar({ theme }: { theme: Theme }) {
               themeClass(theme, "from-white via-white to-blue-200", "from-slate-900 via-slate-900 to-blue-600"),
             )}
           >
-            CRM Gallo
+            GALLO CRM
           </div>
           <div
             className={cn(

@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "CRM Gallo",
+    "name": "GALLO CRM",
     "tagline": "CRM cun IA per interpresas modernas"
   },
   "nav": {
@@ -87,7 +87,7 @@
     "acceptInviteSubtitle": "Ti vegns en {org} sco {role}.",
     "inviteEmailPinned": "L'e-mail è fixà da l'invitaziun e na po betg vegnir midà.",
     "acceptAndJoin": "Acceptar e s'annunziar",
-    "inviteBrandTitle": "Bainvegni en CRM Gallo",
+    "inviteBrandTitle": "Bainvegni en Gallo CRM",
     "inviteBrandSubtitle": "Cumplettescha tes conto per t'unir al team."
   },
   "dashboard": {
@@ -639,7 +639,7 @@
   },
   "marketing": {
     "loginHeroTitle": "Serra dapli affars cun in copilot IA a tes maun.",
-    "loginHeroSubtitle": "CRM Gallo unescha tes pipeline, contacts e conversaziuns — plurilingual, privacy-first, IA-nativ.",
+    "loginHeroSubtitle": "Gallo CRM unescha tes pipeline, contacts e conversaziuns — plurilingual, privacy-first, IA-nativ.",
     "registerHeroTitle": "Tes team da venditas, accelerà.",
     "badgeAi": "IA-nativ",
     "badgeMultilingual": "7 linguas",
@@ -679,7 +679,7 @@
       "eyebrow": "Noss objectiv",
       "line1": "Nus n'essan betg mo in CRM.",
       "line2": "L'unica limita è tia creativitad.",
-      "line3": "Collega tut, automatisescha tut. CRM Gallo è la plattafurma che s'adatta a tia moda da lavurar — betg l'invers.",
+      "line3": "Collega tut, automatisescha tut. Gallo CRM è la plattafurma che s'adatta a tia moda da lavurar — betg l'invers.",
       "pillars": {
         "connect": {
           "title": "Collegar tut",
@@ -699,7 +699,7 @@
       "eyebrow": "Davart nus",
       "title": "Nus construin il CRM che nus avessan adina vulì avair.",
       "lead": "Nus essan in pitschen team europeic d'inschigners e venditurs ch'èn persvads ch'in bun CRM duai sparir davos il lavur real, betg agiuntar fricziun.",
-      "body": "Nus avain lavurà en startups B2B ed agenturas multilinguas nua che gli utensils da venditas eran pesants, chars e mai vairamain localisads. Pia avain nus fatg in auter: open source, IA-nativ, multilingual dal prim di e cun protecziun da datas europeica al center. CRM Gallo è nossa resposta — in copilot onest per quels che vendan.",
+      "body": "Nus avain lavurà en startups B2B ed agenturas multilinguas nua che gli utensils da venditas eran pesants, chars e mai vairamain localisads. Pia avain nus fatg in auter: open source, IA-nativ, multilingual dal prim di e cun protecziun da datas europeica al center. Gallo CRM è nossa resposta — in copilot onest per quels che vendan.",
       "missionTitle": "Nossa missiun",
       "missionSubtitle": "Pertge che nus existin",
       "missionBody": "Permetter a mintga team da venditas — dal fundatur sulet al team enterprise — da serrar dapli affars cun in utensil che chapescha lur lingua, respecta lur datas e crescha cun els.",
@@ -720,7 +720,7 @@
       "timeline": {
         "1": {
           "year": "2025",
-          "title": "Nascha CRM Gallo",
+          "title": "Nascha Gallo CRM",
           "body": "L'emprim prototip naschan: pipeline, lead scoring IA ed UI en 3 linguas."
         },
         "2": {
@@ -864,7 +864,7 @@
     },
     "testimonial": {
       "1": {
-        "quote": "Nus avain remplazzà dus instruments cun CRM Gallo, ed il scoring IA ha tschiffà dus leads chauds che nus avessan pers en il canaster.",
+        "quote": "Nus avain remplazzà dus instruments cun Gallo CRM, ed il scoring IA ha tschiffà dus leads chauds che nus avessan pers en il canaster.",
         "author": "Andrea Müller",
         "role": "Head of Sales, SaaS B2B"
       },
@@ -991,7 +991,7 @@
         "a": "Mintga lead retschaiva ina nota 0-100 basada sin ils champs emplenids, las activitads registradas ed il context historic. Nus utilisain Claude Sonnet per il raschunament cun in fallback euristic sch'il provider è offline. Transparent: ti vesas adina qual model ha respundì e sin tge datas."
       },
       "7": {
-        "q": "Poss jau self-hostar CRM Gallo?",
+        "q": "Poss jau self-hostar Gallo CRM?",
         "a": "Gea. Il code è public sut AGPL-3.0. Clona il repo, exequescha docker compose up e tia instanza è en lingia en 5 minutas. Nus mantegnain images Docker actualisadas e guidas da deploy per AWS, GCP, Hetzner e Scaleway."
       },
       "8": {
@@ -999,7 +999,7 @@
         "a": "Stripe per fatturaziun, IMAP/SMTP per e-mail, Google/Outlook Calendar per chalender, Slack per notificaziuns. API REST + webhooks per integraziuns custom. Roadmap publica includa HubSpot, Pipedrive, Notion, Zapier."
       },
       "9": {
-        "q": "È CRM Gallo conforma al GDPR?",
+        "q": "È Gallo CRM conforma al GDPR?",
         "a": "Gea. Datas hospitadas en l'UE, criptaziun at-rest ed in-transit, logs d'audit immutabels, export self-service e dretg da scordar implementads. In Data Processing Agreement è disponibel sin ils plans Premium."
       },
       "10": {
@@ -1062,7 +1062,7 @@
     "backToHome": "Turnar a la home",
     "terms": {
       "title": "Cundiziuns d'utilisaziun",
-      "intro": "Questas Cundiziuns reglan tes access ed utilisaziun da CRM Gallo. Legia las cun premura.",
+      "intro": "Questas Cundiziuns reglan tes access ed utilisaziun da Gallo CRM. Legia las cun premura.",
       "s1": {
         "title": "Acceptaziun da las cundiziuns"
       },
@@ -1105,7 +1105,7 @@
     },
     "cookies": {
       "title": "Politica da cookies",
-      "intro": "Questa politica declera co CRM Gallo utilisescha cookies e tecnologias similas cura ti visitas noss site u utiliseschas il servetsch.",
+      "intro": "Questa politica declera co Gallo CRM utilisescha cookies e tecnologias similas cura ti visitas noss site u utiliseschas il servetsch.",
       "s1": {
         "title": "Tge èn cookies?"
       },

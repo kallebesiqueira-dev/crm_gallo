@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "CRM Gallo",
+    "name": "GALLO CRM",
     "tagline": "CRM con IA per aziende moderne"
   },
   "nav": {
@@ -87,7 +87,7 @@
     "acceptInviteSubtitle": "Stai entrando in {org} come {role}.",
     "inviteEmailPinned": "L'email è fissata dall'invito e non può essere modificata.",
     "acceptAndJoin": "Accetta e accedi",
-    "inviteBrandTitle": "Benvenuto in CRM Gallo",
+    "inviteBrandTitle": "Benvenuto in Gallo CRM",
     "inviteBrandSubtitle": "Completa il tuo account per unirti al team."
   },
   "dashboard": {
@@ -639,7 +639,7 @@
   },
   "marketing": {
     "loginHeroTitle": "Chiudi più trattative con un copilota IA al tuo fianco.",
-    "loginHeroSubtitle": "CRM Gallo unifica pipeline, contatti e conversazioni — multilingue, privacy-first, IA-nativo.",
+    "loginHeroSubtitle": "Gallo CRM unifica pipeline, contatti e conversazioni — multilingue, privacy-first, IA-nativo.",
     "registerHeroTitle": "Il tuo team commerciale, accelerato.",
     "badgeAi": "IA-nativo",
     "badgeMultilingual": "7 lingue",
@@ -679,7 +679,7 @@
       "eyebrow": "Il nostro obiettivo",
       "line1": "Non siamo solo un CRM.",
       "line2": "Il limite è la tua creatività.",
-      "line3": "Collega qualsiasi cosa, automatizza tutto. CRM Gallo è la piattaforma che si modella sul tuo modo di lavorare — non il contrario.",
+      "line3": "Collega qualsiasi cosa, automatizza tutto. Gallo CRM è la piattaforma che si modella sul tuo modo di lavorare — non il contrario.",
       "pillars": {
         "connect": {
           "title": "Collega qualsiasi cosa",
@@ -699,7 +699,7 @@
       "eyebrow": "Chi siamo",
       "title": "Costruiamo il CRM che avremmo voluto avere.",
       "lead": "Siamo un piccolo team europeo di ingegneri e venditori convinti che un buon CRM debba sparire sullo sfondo del lavoro reale, non aggiungere attrito.",
-      "body": "Abbiamo lavorato in startup B2B e agenzie multilingue dove gli strumenti commerciali erano pesanti, costosi e mai davvero localizzati. Allora ne abbiamo costruito uno diverso: open source, IA-nativo, multilingue dal primo giorno e con la privacy europea al centro. CRM Gallo è la nostra risposta — un copilota onesto per chi vende.",
+      "body": "Abbiamo lavorato in startup B2B e agenzie multilingue dove gli strumenti commerciali erano pesanti, costosi e mai davvero localizzati. Allora ne abbiamo costruito uno diverso: open source, IA-nativo, multilingue dal primo giorno e con la privacy europea al centro. Gallo CRM è la nostra risposta — un copilota onesto per chi vende.",
       "missionTitle": "La nostra missione",
       "missionSubtitle": "Perché esistiamo",
       "missionBody": "Rendere ogni team commerciale — dal freelance al gruppo enterprise — capace di chiudere più trattative con uno strumento che capisce la loro lingua, rispetta i loro dati e impara con loro.",
@@ -720,7 +720,7 @@
       "timeline": {
         "1": {
           "year": "2025",
-          "title": "Nasce CRM Gallo",
+          "title": "Nasce Gallo CRM",
           "body": "Il primo prototipo prende vita: pipeline, lead scoring IA e UI in 3 lingue."
         },
         "2": {
@@ -864,7 +864,7 @@
     },
     "testimonial": {
       "1": {
-        "quote": "Abbiamo sostituito due strumenti con CRM Gallo e l'AI scoring ha catturato due lead caldi che avremmo perso nel rumore.",
+        "quote": "Abbiamo sostituito due strumenti con Gallo CRM e l'AI scoring ha catturato due lead caldi che avremmo perso nel rumore.",
         "author": "Andrea Müller",
         "role": "Head of Sales, SaaS B2B"
       },
@@ -991,7 +991,7 @@
         "a": "Ogni lead riceve un punteggio 0-100 basato sui campi compilati, attività registrate e contesto storico. Usiamo Claude Sonnet per il ragionamento e un fallback euristico se il provider è offline. Trasparente: vedi sempre quale modello ha risposto e su quali dati."
       },
       "7": {
-        "q": "Posso self-hostare CRM Gallo?",
+        "q": "Posso self-hostare Gallo CRM?",
         "a": "Sì. Il codice sorgente è pubblico sotto licenza AGPL-3.0. Puoi clonare il repo, eseguire docker compose up e avere la tua istanza in 5 minuti. Manteniamo Docker images aggiornate e una guida di deploy per cloud comuni (AWS, GCP, Hetzner, Scaleway)."
       },
       "8": {
@@ -999,7 +999,7 @@
         "a": "Stripe per fatturazione, IMAP/SMTP per e-mail, Google/Outlook Calendar per agenda, Slack per notifiche. API REST + webhooks per costruire integrazioni custom. Roadmap pubblica include HubSpot, Pipedrive, Notion, Zapier."
       },
       "9": {
-        "q": "CRM Gallo è conforme al GDPR?",
+        "q": "Gallo CRM è conforme al GDPR?",
         "a": "Sì. Dati ospitati in UE, cifratura at-rest e in-transit, log di audit immutabili, export self-service e diritto all'oblio implementato. Disponibile un Data Processing Agreement per i piani Premium."
       },
       "10": {
@@ -1062,7 +1062,7 @@
     "backToHome": "Torna alla home",
     "terms": {
       "title": "Termini di servizio",
-      "intro": "Questi Termini regolano l'accesso e l'utilizzo di CRM Gallo. Ti preghiamo di leggerli con attenzione.",
+      "intro": "Questi Termini regolano l'accesso e l'utilizzo di Gallo CRM. Ti preghiamo di leggerli con attenzione.",
       "s1": {
         "title": "Accettazione dei termini"
       },
@@ -1105,7 +1105,7 @@
     },
     "cookies": {
       "title": "Informativa sui cookie",
-      "intro": "Questa informativa spiega come CRM Gallo utilizza i cookie e tecnologie simili quando visiti il nostro sito o usi il servizio.",
+      "intro": "Questa informativa spiega come Gallo CRM utilizza i cookie e tecnologie simili quando visiti il nostro sito o usi il servizio.",
       "s1": {
         "title": "Cosa sono i cookie?"
       },

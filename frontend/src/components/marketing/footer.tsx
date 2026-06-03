@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
  *   2. Main grid: brand block (logo + tagline + social row) + 3 link
  *      columns (Product / Legal / Company) + company-info block (VAT,
  *      addresses, copyright).
- *   3. Bottom watermark: huge gradient "CRM GALLO" wordmark that bleeds
+ *   3. Bottom watermark: huge gradient "GALLO CRM" wordmark that bleeds
  *      to the edges, identical in spirit to the Datacrazy footer mark.
  *
  * Everything renders on the page-level <FuturisticBackground> — no opaque
@@ -278,7 +278,7 @@ export function Footer() {
             className="inline-block bg-gradient-to-b from-white/10 via-white/[0.04] to-transparent bg-clip-text font-bold leading-[0.85] tracking-tighter text-transparent transition-all duration-[700ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-[1.04] group-hover:from-white/35 group-hover:via-white/15 group-hover:drop-shadow-[0_20px_80px_rgba(168,85,247,0.45)]"
             style={{ fontSize: "clamp(4rem, 18vw, 16rem)" }}
           >
-            CRM GALLO
+            GALLO CRM
           </span>
         </div>
       </div>

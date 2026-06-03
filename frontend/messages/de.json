@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "CRM Gallo",
+    "name": "GALLO CRM",
     "tagline": "KI-gestütztes CRM für moderne Unternehmen"
   },
   "nav": {
@@ -87,7 +87,7 @@
     "acceptInviteSubtitle": "Sie treten {org} als {role} bei.",
     "inviteEmailPinned": "Die E-Mail ist durch die Einladung festgelegt und kann nicht geändert werden.",
     "acceptAndJoin": "Annehmen und einloggen",
-    "inviteBrandTitle": "Willkommen bei CRM Gallo",
+    "inviteBrandTitle": "Willkommen bei Gallo CRM",
     "inviteBrandSubtitle": "Schließen Sie Ihr Konto ab, um dem Team beizutreten."
   },
   "dashboard": {
@@ -639,7 +639,7 @@
   },
   "marketing": {
     "loginHeroTitle": "Schließen Sie mehr Deals — mit einem KI-Copiloten an Ihrer Seite.",
-    "loginHeroSubtitle": "CRM Gallo vereint Pipeline, Kontakte und Gespräche — mehrsprachig, datenschutzfreundlich, KI-nativ.",
+    "loginHeroSubtitle": "Gallo CRM vereint Pipeline, Kontakte und Gespräche — mehrsprachig, datenschutzfreundlich, KI-nativ.",
     "registerHeroTitle": "Ihr Vertriebsteam, beschleunigt.",
     "badgeAi": "KI-nativ",
     "badgeMultilingual": "7 Sprachen",
@@ -679,7 +679,7 @@
       "eyebrow": "Unser Ziel",
       "line1": "Wir sind nicht nur ein CRM.",
       "line2": "Die einzige Grenze ist deine Kreativität.",
-      "line3": "Verbinde alles, automatisiere alles. CRM Gallo ist die Plattform, die sich an deine Arbeitsweise anpasst — nicht umgekehrt.",
+      "line3": "Verbinde alles, automatisiere alles. Gallo CRM ist die Plattform, die sich an deine Arbeitsweise anpasst — nicht umgekehrt.",
       "pillars": {
         "connect": {
           "title": "Alles verbinden",
@@ -699,7 +699,7 @@
       "eyebrow": "Über uns",
       "title": "Wir bauen das CRM, das wir uns immer gewünscht haben.",
       "lead": "Wir sind ein kleines europäisches Team aus Ingenieuren und Vertrieblern, die überzeugt sind: Ein gutes CRM soll im Hintergrund der echten Arbeit verschwinden, nicht zusätzliche Reibung erzeugen.",
-      "body": "Wir kommen aus B2B-Startups und mehrsprachigen Agenturen, in denen Vertriebstools schwerfällig, teuer und nie wirklich lokalisiert waren. Also haben wir eines anders gebaut: Open Source, KI-nativ, von Tag eins an mehrsprachig und mit europäischem Datenschutz im Kern. CRM Gallo ist unsere Antwort — ein ehrlicher Copilot für Menschen, die verkaufen.",
+      "body": "Wir kommen aus B2B-Startups und mehrsprachigen Agenturen, in denen Vertriebstools schwerfällig, teuer und nie wirklich lokalisiert waren. Also haben wir eines anders gebaut: Open Source, KI-nativ, von Tag eins an mehrsprachig und mit europäischem Datenschutz im Kern. Gallo CRM ist unsere Antwort — ein ehrlicher Copilot für Menschen, die verkaufen.",
       "missionTitle": "Unsere Mission",
       "missionSubtitle": "Warum wir existieren",
       "missionBody": "Jedem Vertriebsteam — vom Solo-Gründer bis zum Enterprise-Team — ermöglichen, mehr Deals abzuschließen, mit einem Werkzeug, das seine Sprache spricht, seine Daten respektiert und mit ihm wächst.",
@@ -720,7 +720,7 @@
       "timeline": {
         "1": {
           "year": "2025",
-          "title": "CRM Gallo entsteht",
+          "title": "Gallo CRM entsteht",
           "body": "Erster Prototyp wird lebendig: Pipeline, KI-Lead-Scoring und UI in 3 Sprachen."
         },
         "2": {
@@ -864,7 +864,7 @@
     },
     "testimonial": {
       "1": {
-        "quote": "Wir haben zwei Tools durch CRM Gallo ersetzt — das KI-Scoring fing zwei warme Leads ab, die wir sonst im Rauschen verloren hätten.",
+        "quote": "Wir haben zwei Tools durch Gallo CRM ersetzt — das KI-Scoring fing zwei warme Leads ab, die wir sonst im Rauschen verloren hätten.",
         "author": "Andrea Müller",
         "role": "Head of Sales, B2B SaaS"
       },
@@ -991,7 +991,7 @@
         "a": "Jeder Lead erhält einen Score 0-100 basierend auf ausgefüllten Feldern, protokollierten Aktivitäten und historischem Kontext. Wir nutzen Claude Sonnet für die Argumentation, mit heuristischem Fallback wenn der Provider offline ist. Transparent: Sie sehen immer, welches Modell geantwortet hat und auf welchen Daten."
       },
       "7": {
-        "q": "Kann ich CRM Gallo selbst hosten?",
+        "q": "Kann ich Gallo CRM selbst hosten?",
         "a": "Ja. Der Quellcode ist öffentlich unter AGPL-3.0. Repo klonen, docker compose up ausführen, und Ihre Instanz läuft in 5 Minuten. Wir pflegen aktuelle Docker-Images und Deploy-Guides für AWS, GCP, Hetzner und Scaleway."
       },
       "8": {
@@ -999,7 +999,7 @@
         "a": "Stripe für Abrechnung, IMAP/SMTP für E-Mail, Google/Outlook Calendar für Termine, Slack für Benachrichtigungen. REST-API + Webhooks für individuelle Integrationen. Öffentliche Roadmap umfasst HubSpot, Pipedrive, Notion, Zapier."
       },
       "9": {
-        "q": "Ist CRM Gallo DSGVO-konform?",
+        "q": "Ist Gallo CRM DSGVO-konform?",
         "a": "Ja. EU-Datenresidenz, Verschlüsselung at-rest und in-transit, unveränderliche Audit-Logs, Self-Service-Export und Recht auf Vergessenwerden umgesetzt. Ein Auftragsverarbeitungsvertrag ist für Premium-Pläne verfügbar."
       },
       "10": {
@@ -1062,7 +1062,7 @@
     "backToHome": "Zur Startseite",
     "terms": {
       "title": "Nutzungsbedingungen",
-      "intro": "Diese Bedingungen regeln Ihren Zugang zu und die Nutzung von CRM Gallo. Bitte sorgfältig lesen.",
+      "intro": "Diese Bedingungen regeln Ihren Zugang zu und die Nutzung von Gallo CRM. Bitte sorgfältig lesen.",
       "s1": {
         "title": "Annahme der Bedingungen"
       },
@@ -1105,7 +1105,7 @@
     },
     "cookies": {
       "title": "Cookie-Richtlinie",
-      "intro": "Diese Richtlinie erklärt, wie CRM Gallo Cookies und ähnliche Technologien verwendet, wenn Sie unsere Website besuchen oder den Service nutzen.",
+      "intro": "Diese Richtlinie erklärt, wie Gallo CRM Cookies und ähnliche Technologien verwendet, wenn Sie unsere Website besuchen oder den Service nutzen.",
       "s1": {
         "title": "Was sind Cookies?"
       },

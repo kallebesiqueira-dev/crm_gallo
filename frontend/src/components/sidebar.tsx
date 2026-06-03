@@ -55,12 +55,9 @@ export function Sidebar() {
   return (
     <aside className="hidden w-64 shrink-0 border-r bg-card md:flex md:flex-col">
       <div className="border-b px-6 py-5">
-        <div className="flex items-center gap-2.5">
-          <Logo size="md" iconOnly priority={false} />
-          <div>
-            <div className="text-sm font-semibold tracking-tight">{tApp("name")}</div>
-            <div className="text-xs text-muted-foreground">{tApp("tagline")}</div>
-          </div>
+        <div className="flex flex-col gap-2">
+          <Logo size="lg" priority={false} />
+          <div className="text-xs text-muted-foreground">{tApp("tagline")}</div>
         </div>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">

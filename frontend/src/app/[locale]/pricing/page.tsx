@@ -28,6 +28,7 @@ import { ComparisonSection } from "@/components/marketing/comparison-section";
 import { Reveal, RevealGroup } from "@/components/marketing/reveal";
 import { FuturisticBackground } from "@/components/marketing/futuristic-background";
 import { Footer } from "@/components/marketing/footer";
+import { TiltCard } from "@/components/marketing/tilt-card";
 import { Logo } from "@/components/logo";
 import { SmoothScroll } from "@/components/marketing/smooth-scroll";
 import { SearchParamWatcher } from "@/components/search-param-watcher";
@@ -40,6 +41,73 @@ const PLAN_GRADIENT: Record<PlanId, string> = {
   standard: "from-primary/20 to-blue-500/0",
   premium: "from-amber-500/20 via-fuchsia-500/10 to-pink-500/0",
 };
+
+// Static mirror of backend/app/billing/catalog.py. The public marketing page
+// must always show prices even when the billing API isn't reachable (e.g.
+// the frontend running without a backend). When the API responds, its data
+// wins; this is only the fallback.
+const FALLBACK_PLANS: PlanOut[] = [
+  {
+    id: "free",
+    name: "Free",
+    tagline: "Get started and validate with your team.",
+    monthly_eur: 0,
+    yearly_eur_per_user: 0,
+    yearly_total_eur: 0,
+    seat_limit: 2,
+    features: [
+      "Up to 2 users",
+      "Leads, customers, deals and pipeline",
+      "AI scoring (lightweight model)",
+      "Email support",
+    ],
+    highlighted: false,
+    requires_payment: false,
+    trial_days: 0,
+  },
+  {
+    id: "standard",
+    name: "Standard",
+    tagline: "For growing sales teams.",
+    monthly_eur: 19,
+    yearly_eur_per_user: 15.2,
+    yearly_total_eur: 182.4,
+    seat_limit: null,
+    features: [
+      "Unlimited users",
+      "Everything in Free",
+      "Advanced AI scoring (Claude Sonnet)",
+      "Unlimited AI assistant",
+      "Reports and visual charts",
+      "Trash with restore",
+      "Priority support",
+    ],
+    highlighted: true,
+    requires_payment: true,
+    trial_days: 0,
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    tagline: "For teams that scale with automation.",
+    monthly_eur: 49,
+    yearly_eur_per_user: 39.2,
+    yearly_total_eur: 470.4,
+    seat_limit: null,
+    features: [
+      "Everything in Standard",
+      "Workflow automations",
+      "Email and calendar integrations",
+      "RAG: assistant with knowledge base",
+      "API + Webhooks",
+      "Full audit log",
+      "Dedicated account manager",
+    ],
+    highlighted: false,
+    requires_payment: true,
+    trial_days: 14,
+  },
+];
 
 export default function PricingPage() {
   const t = useTranslations("pricing");
@@ -59,7 +127,10 @@ export default function PricingPage() {
   // attaches Lenis to the document root, no per-page ref needed.
 
   useEffect(() => {
-    api.plans().then(setPlans).catch(() => setPlans([]));
+    api
+      .plans()
+      .then((p) => setPlans(p.length ? p : FALLBACK_PLANS))
+      .catch(() => setPlans(FALLBACK_PLANS));
   }, []);
 
   // `?stripe=cancel` comes back from an abandoned Checkout — surface a
@@ -172,6 +243,7 @@ export default function PricingPage() {
             standalone
             className="relative mx-auto flex w-full max-w-[480px] items-center justify-center"
           >
+            <TiltCard max={12} glare={false} className="relative w-full">
             {/* Dashed outer ring */}
             <svg
               aria-hidden
@@ -182,20 +254,18 @@ export default function PricingPage() {
               <circle cx="256" cy="256" r="252" stroke="currentColor" strokeWidth="1.5" strokeDasharray="6 9" />
             </svg>
 
-            {/* Inner aspect-square so the colored blob and image scale
-                consistently across breakpoints without manual hxw values. */}
+            {/* Inner aspect-square so the colored blob and image scale together. */}
             <div className="relative aspect-square w-full">
-              {/* Colored gradient blob — orange→rose→pink to echo the reference */}
+              {/* Colored gradient blob */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-500 via-rose-500 to-pink-500 shadow-2xl shadow-rose-500/30 dark:shadow-rose-500/40" />
               {/* Inner glossy highlight */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/10 to-white/25 mix-blend-overlay" />
 
-              {/* The gallo image, clipped to the circle. object-cover so the
-                  bird's silhouette fills the disc nicely. */}
+              {/* The gallo image, clipped to the circle. */}
               <div className="absolute inset-0 overflow-hidden rounded-full ring-1 ring-white/10">
                 <Image
-                  src="/gallo_img.png"
-                  alt=""
+                  src="/gallo-hero.png"
+                  alt="GALLO CRM dashboard"
                   fill
                   priority
                   sizes="(min-width: 1024px) 480px, 90vw"
@@ -203,8 +273,7 @@ export default function PricingPage() {
                 />
               </div>
 
-              {/* Floating "award" card — overlaps bottom-left of the image,
-                  same idea as the reference's "The Best Design Awards" card. */}
+              {/* Floating "award" card */}
               <div className="absolute -bottom-5 -left-4 z-10 flex items-center gap-3 rounded-xl border bg-background/95 px-4 py-3 shadow-2xl backdrop-blur-xl sm:-left-8">
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-lg shadow-orange-500/30">
                   <Award className="h-4 w-4" />
@@ -219,13 +288,13 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              {/* Floating "stat" chip — top-right, gives the visual extra
-                  density without competing with the headline. */}
+              {/* Floating "stat" chip */}
               <div className="absolute -right-2 top-6 z-10 hidden items-center gap-2 rounded-full border bg-background/95 px-3 py-1.5 text-[11px] font-medium shadow-xl backdrop-blur-xl sm:flex">
                 <Sparkles className="h-3 w-3 text-violet-500" />
                 <span>{t("heroBadge")}</span>
               </div>
             </div>
+            </TiltCard>
           </Reveal>
 
           {/* RIGHT — text column. Single RevealGroup orchestrates the
@@ -414,14 +483,18 @@ export default function PricingPage() {
           >
             {plans === null && <PlanSkeleton count={3} />}
             {plans?.map((plan) => (
-              <Reveal key={plan.id} variant="card">
-                <PlanCard
-                  plan={plan}
-                  cycle={cycle}
-                  moneyFmt={moneyFmt}
-                  busy={busyPlan === plan.id}
-                  onChoose={() => handleChoose(plan)}
-                />
+              <Reveal key={plan.id} variant="card" className="h-full">
+                {/* Vitrine: each price card tilts in 3D toward the cursor with
+                    a glass sheen — a little showroom for the plans. */}
+                <TiltCard max={6} glare={false} className="h-full rounded-2xl">
+                  <PlanCard
+                    plan={plan}
+                    cycle={cycle}
+                    moneyFmt={moneyFmt}
+                    busy={busyPlan === plan.id}
+                    onChoose={() => handleChoose(plan)}
+                  />
+                </TiltCard>
               </Reveal>
             ))}
           </RevealGroup>
@@ -615,7 +688,7 @@ function PlanCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border bg-card p-7 transition-all",
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-7 transition-all",
         plan.highlighted
           ? "border-primary/40 shadow-2xl shadow-primary/10 ring-1 ring-primary/20 lg:-translate-y-2"
           : "hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg",

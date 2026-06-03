@@ -14,9 +14,9 @@ import { Reveal, RevealGroup } from "@/components/marketing/reveal";
 import { cn } from "@/lib/utils";
 
 /**
- * "Why CRM Gallo" comparison band — three-column lockup with the Gallo
+ * "Why Gallo CRM" comparison band — three-column lockup with the Gallo
  * mascot in the centre, an "other CRMs" card on the left (deliberately
- * muted), and a "CRM Gallo" card on the right (full colour, gradient
+ * muted), and a "Gallo CRM" card on the right (full colour, gradient
  * accents). Inspired by Datacrazy's split-comparison hero, adapted to
  * our dark, futuristic surface.
  *
@@ -141,8 +141,8 @@ export function ComparisonSection() {
 
               {/* The mascot — bubble-inflates on hover to invite interaction */}
               <Image
-                src="/gallino.png"
-                alt="CRM Gallo mascot"
+                src="/gallo-mascot.png"
+                alt="GALLO CRM mascot"
                 fill
                 priority
                 sizes="(min-width: 1024px) 440px, 80vw"
@@ -151,7 +151,7 @@ export function ComparisonSection() {
             </div>
           </Reveal>
 
-          {/* RIGHT — CRM Gallo (vibrant, gradient accents) */}
+          {/* RIGHT — Gallo CRM (vibrant, gradient accents) */}
           <Reveal standalone variant="fade-left" className="order-3 lg:col-span-4">
             <ComparisonCard
               tone="primary"

@@ -19,7 +19,7 @@ export default function TermsPage() {
 
       <LegalSection number={1} title={t("s1.title")}>
         <p>
-          By accessing or using CRM Gallo (the &ldquo;Service&rdquo;), you
+          By accessing or using Gallo CRM (the &ldquo;Service&rdquo;), you
           agree to be bound by these Terms of Service and our Privacy Policy.
           If you do not agree, you must not access or use the Service.
         </p>
@@ -32,7 +32,7 @@ export default function TermsPage() {
 
       <LegalSection number={2} title={t("s2.title")}>
         <p>
-          CRM Gallo is a multilingual, AI-assisted customer relationship
+          Gallo CRM is a multilingual, AI-assisted customer relationship
           management platform offered as a hosted service and as open-source
           software under the GNU AGPL-3.0 licence. Self-hosted deployments
           are governed by the AGPL-3.0 licence text rather than by these
@@ -99,7 +99,7 @@ export default function TermsPage() {
           and improve the Service.
         </p>
         <p>
-          The CRM Gallo software is licensed, not sold. Our trademarks, logos
+          The Gallo CRM software is licensed, not sold. Our trademarks, logos
           and branding remain our property. The platform&rsquo;s source code is
           released under the AGPL-3.0 licence and may be used and modified
           accordingly.
@@ -152,7 +152,7 @@ export default function TermsPage() {
 
       <LegalSection number={11} title={t("s11.title")}>
         <p>
-          You agree to indemnify and hold CRM Gallo harmless from any
+          You agree to indemnify and hold Gallo CRM harmless from any
           claims, losses or expenses (including reasonable legal fees)
           arising from your use of the Service or breach of these Terms.
         </p>

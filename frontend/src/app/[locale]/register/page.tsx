@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Check } from "lucide-react";
@@ -78,14 +79,21 @@ export default function RegisterPage() {
   return (
     <AuthShell
       brand={
-        <div className="space-y-8">
-          <div>
-            <h1 className="bg-gradient-to-br from-foreground via-foreground to-foreground/60 bg-clip-text text-4xl font-semibold leading-tight tracking-tight text-transparent sm:text-5xl">
-              {tMarketing("registerHeroTitle")}
-            </h1>
-            <p className="mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
-              {tMarketing("heroSubheadline")}
-            </p>
+        <div className="flex flex-col items-center gap-7 text-center lg:px-6">
+          <div className="relative">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-violet-600/25 blur-3xl"
+            />
+            <Image
+              src="/gallo-login.png"
+              alt="GALLO CRM"
+              width={245}
+              height={439}
+              priority
+              sizes="(min-width: 1024px) 260px, 45vw"
+              className="h-auto w-auto max-h-[58vh] select-none drop-shadow-[0_24px_60px_rgba(124,58,237,0.30)]"
+            />
           </div>
           <ul className="space-y-3">
             {benefits.map((b) => (

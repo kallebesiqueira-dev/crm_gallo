@@ -24,7 +24,7 @@ export default function CookiesPage() {
           website. They are widely used to make websites work, or work more
           efficiently, as well as to provide information to the site owners.
           Similar technologies (local storage, pixels, SDKs) are covered by
-          this policy where used by CRM Gallo.
+          this policy where used by Gallo CRM.
         </p>
       </LegalSection>
 

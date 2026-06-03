@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "CRM Gallo",
+    "name": "GALLO CRM",
     "tagline": "CRM piloté par l'IA pour les entreprises modernes"
   },
   "nav": {
@@ -87,7 +87,7 @@
     "acceptInviteSubtitle": "Vous rejoignez {org} en tant que {role}.",
     "inviteEmailPinned": "L'e-mail est fixé par l'invitation et ne peut pas être modifié.",
     "acceptAndJoin": "Accepter et se connecter",
-    "inviteBrandTitle": "Bienvenue sur CRM Gallo",
+    "inviteBrandTitle": "Bienvenue sur Gallo CRM",
     "inviteBrandSubtitle": "Terminez votre compte pour rejoindre l'équipe."
   },
   "dashboard": {
@@ -639,7 +639,7 @@
   },
   "marketing": {
     "loginHeroTitle": "Concluez plus d'affaires avec un copilote IA à vos côtés.",
-    "loginHeroSubtitle": "CRM Gallo unifie votre pipeline, vos contacts et vos conversations — multilingue, respectueux de la vie privée, IA native.",
+    "loginHeroSubtitle": "Gallo CRM unifie votre pipeline, vos contacts et vos conversations — multilingue, respectueux de la vie privée, IA native.",
     "registerHeroTitle": "Votre équipe de vente, accélérée.",
     "badgeAi": "IA native",
     "badgeMultilingual": "7 langues",
@@ -679,7 +679,7 @@
       "eyebrow": "Notre objectif",
       "line1": "Nous ne sommes pas qu'un CRM.",
       "line2": "La seule limite, c'est votre créativité.",
-      "line3": "Connectez n'importe quoi, automatisez tout. CRM Gallo est la plateforme qui s'adapte à votre façon de travailler — pas l'inverse.",
+      "line3": "Connectez n'importe quoi, automatisez tout. Gallo CRM est la plateforme qui s'adapte à votre façon de travailler — pas l'inverse.",
       "pillars": {
         "connect": {
           "title": "Connectez n'importe quoi",
@@ -699,7 +699,7 @@
       "eyebrow": "À propos de nous",
       "title": "Nous construisons le CRM que nous aurions toujours voulu avoir.",
       "lead": "Nous sommes une petite équipe européenne d'ingénieurs et de commerciaux convaincus qu'un bon CRM doit s'effacer derrière le vrai travail, pas ajouter de la friction.",
-      "body": "Nous avons travaillé dans des startups B2B et des agences multilingues où les outils commerciaux étaient lourds, chers et jamais vraiment localisés. Alors nous en avons construit un différent : open source, IA-natif, multilingue dès le premier jour, avec la confidentialité européenne au cœur. CRM Gallo est notre réponse — un copilote honnête pour ceux qui vendent.",
+      "body": "Nous avons travaillé dans des startups B2B et des agences multilingues où les outils commerciaux étaient lourds, chers et jamais vraiment localisés. Alors nous en avons construit un différent : open source, IA-natif, multilingue dès le premier jour, avec la confidentialité européenne au cœur. Gallo CRM est notre réponse — un copilote honnête pour ceux qui vendent.",
       "missionTitle": "Notre mission",
       "missionSubtitle": "Pourquoi nous existons",
       "missionBody": "Permettre à chaque équipe commerciale — du fondateur solo au groupe enterprise — de closer plus d'affaires avec un outil qui parle sa langue, respecte ses données et grandit avec elle.",
@@ -720,7 +720,7 @@
       "timeline": {
         "1": {
           "year": "2025",
-          "title": "Naissance de CRM Gallo",
+          "title": "Naissance de Gallo CRM",
           "body": "Le premier prototype prend vie : pipeline, scoring IA et UI en 3 langues."
         },
         "2": {
@@ -864,7 +864,7 @@
     },
     "testimonial": {
       "1": {
-        "quote": "Nous avons remplacé deux outils par CRM Gallo et le scoring IA a rattrapé deux prospects chauds que nous aurions perdus dans le bruit.",
+        "quote": "Nous avons remplacé deux outils par Gallo CRM et le scoring IA a rattrapé deux prospects chauds que nous aurions perdus dans le bruit.",
         "author": "Andrea Müller",
         "role": "Head of Sales, SaaS B2B"
       },
@@ -991,7 +991,7 @@
         "a": "Chaque lead reçoit un score 0-100 basé sur les champs remplis, les activités enregistrées et le contexte historique. Nous utilisons Claude Sonnet pour le raisonnement avec un fallback heuristique si le provider est hors-ligne. Transparent : vous voyez toujours quel modèle a répondu et sur quelles données."
       },
       "7": {
-        "q": "Puis-je auto-héberger CRM Gallo ?",
+        "q": "Puis-je auto-héberger Gallo CRM ?",
         "a": "Oui. Le code est public sous AGPL-3.0. Clonez le repo, lancez docker compose up et votre instance est en ligne en 5 minutes. Nous maintenons des images Docker à jour et des guides de déploiement pour AWS, GCP, Hetzner et Scaleway."
       },
       "8": {
@@ -999,7 +999,7 @@
         "a": "Stripe pour la facturation, IMAP/SMTP pour l'email, Google/Outlook Calendar pour l'agenda, Slack pour les notifications. API REST + webhooks pour des intégrations sur-mesure. Roadmap publique inclut HubSpot, Pipedrive, Notion, Zapier."
       },
       "9": {
-        "q": "CRM Gallo est-il conforme au RGPD ?",
+        "q": "Gallo CRM est-il conforme au RGPD ?",
         "a": "Oui. Données hébergées dans l'UE, chiffrement at-rest et in-transit, logs d'audit immuables, export self-service et droit à l'oubli implémentés. Un Data Processing Agreement est disponible sur les plans Premium."
       },
       "10": {
@@ -1062,7 +1062,7 @@
     "backToHome": "Retour à l'accueil",
     "terms": {
       "title": "Conditions d'utilisation",
-      "intro": "Ces Conditions régissent votre accès et votre utilisation de CRM Gallo. Merci de les lire attentivement.",
+      "intro": "Ces Conditions régissent votre accès et votre utilisation de Gallo CRM. Merci de les lire attentivement.",
       "s1": {
         "title": "Acceptation des conditions"
       },
@@ -1105,7 +1105,7 @@
     },
     "cookies": {
       "title": "Politique de cookies",
-      "intro": "Cette politique explique comment CRM Gallo utilise les cookies et technologies similaires lorsque vous visitez notre site ou utilisez le service.",
+      "intro": "Cette politique explique comment Gallo CRM utilise les cookies et technologies similaires lorsque vous visitez notre site ou utilisez le service.",
       "s1": {
         "title": "Qu'est-ce qu'un cookie ?"
       },
