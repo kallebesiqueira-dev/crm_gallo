@@ -1,15 +1,16 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.models import (
     BillingCycle,
     ContractStatus,
     Currency,
     DealStage,
+    DocumentType,
     LeadStage,
     Plan,
     QuoteStatus,
@@ -707,14 +708,22 @@ class QuoteOut(BaseModel):
 
 # ---------- E-signature (ADR-016) ----------
 class SignatureRequestCreate(BaseModel):
-    """Raise a signing envelope against a quote. The quote must be `sent`
-    (you sign a delivered proposal, not a draft). The provider is taken
-    from server config, never the client."""
+    """Raise a signing envelope against a quote OR a contract. Provide
+    exactly one of `quote_id` / `contract_id`; the document must be `sent`
+    (you sign a delivered proposal/agreement, not a draft). The provider is
+    taken from server config, never the client."""
 
-    quote_id: uuid.UUID
+    quote_id: uuid.UUID | None = None
+    contract_id: uuid.UUID | None = None
     signer_name: Annotated[str, Field(min_length=1, max_length=255)]
     signer_email: EmailStr
     message: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def _exactly_one_document(self) -> "SignatureRequestCreate":
+        if (self.quote_id is None) == (self.contract_id is None):
+            raise ValueError("Provide exactly one of quote_id or contract_id.")
+        return self
 
 
 class SignatureSignIn(BaseModel):
@@ -732,7 +741,8 @@ class SignatureDeclineIn(BaseModel):
 class SignatureRequestOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
-    quote_id: uuid.UUID
+    quote_id: uuid.UUID | None
+    contract_id: uuid.UUID | None
     provider: str
     status: SignatureStatus
     signer_name: str
@@ -758,15 +768,17 @@ class SignatureRequestOut(BaseModel):
 
 class SignatureSignContext(BaseModel):
     """The minimal, unauthenticated view the signer sees on the signing
-    page — no internal ids, owners, or org plumbing. Marks the request
-    `viewed` as a side effect of being fetched."""
+    page — no internal ids, owners, or org plumbing. Works for both quote
+    and contract envelopes via the generic `document_*` fields. Marks the
+    request `viewed` as a side effect of being fetched."""
 
     status: SignatureStatus
     signer_name: str
-    quote_number: str
-    quote_title: str
-    quote_total: float
-    quote_currency: Currency
+    document_type: Literal["quote", "contract"]
+    document_number: str
+    document_title: str
+    document_total: float
+    document_currency: Currency
     organization_name: str
 
 
@@ -832,6 +844,7 @@ class ContractOut(BaseModel):
     deal_id: uuid.UUID | None
     customer_id: uuid.UUID | None
     owner_id: uuid.UUID | None
+    applied_template_id: uuid.UUID | None
     superseded_by: uuid.UUID | None
     sent_at: datetime | None
     signed_at: datetime | None
@@ -839,6 +852,48 @@ class ContractOut(BaseModel):
     terminated_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+# ---------- Document templates (merge fields — ADR-016) ----------
+class DocumentTemplateCreate(BaseModel):
+    """A new reusable template body with `{{ token }}` merge fields. The
+    body is operator-authored text — tokens are substituted (allow-list),
+    never evaluated. `doc_type` defaults to `contract` (the only target
+    wired today)."""
+
+    name: Annotated[str, Field(min_length=1, max_length=120)]
+    body: str = ""
+    doc_type: DocumentType = DocumentType.contract
+    is_default: bool = False
+
+
+class DocumentTemplateUpdate(BaseModel):
+    """Partial edit of a template. All fields optional."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    body: str | None = None
+    is_default: bool | None = None
+
+
+class DocumentTemplateOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    doc_type: DocumentType
+    name: str
+    body: str
+    is_default: bool
+    created_by_user_id: uuid.UUID | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class MergeFieldOut(BaseModel):
+    """One entry in the merge-field catalog, for the UI field picker."""
+
+    token: str
+    label: str
+    description: str
+    example: str
 
 
 # ---------- Tasks ----------

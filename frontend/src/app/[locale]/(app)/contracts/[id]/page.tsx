@@ -20,7 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type Contract, type FileAttachment } from "@/lib/api";
+import { SignaturePanel } from "@/components/signature-panel";
+import { api, type Contract, type DocumentTemplate, type FileAttachment } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { STATUS_VARIANT } from "../status";
 
@@ -28,12 +29,16 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const t = useTranslations("contracts");
   const tCommon = useTranslations("common");
+  const tTpl = useTranslations("documentTemplates");
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
 
   const [contract, setContract] = useState<Contract | null>(null);
   const [docs, setDocs] = useState<FileAttachment[]>([]);
+  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [applying, setApplying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,10 +59,26 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
     if (!token) return;
     api.getContract(token, id).then(setContract).catch((e) => setError(String(e)));
     loadDocs();
+    api.listDocumentTemplates(token).then(setTemplates).catch(() => {});
     return () => {
       if (pollTimer.current) clearTimeout(pollTimer.current);
     };
   }, [id, loadDocs]);
+
+  async function applyTemplate() {
+    if (!selectedTemplate) return;
+    const token = getToken();
+    if (!token) return;
+    setApplying(true);
+    setError(null);
+    try {
+      setContract(await api.applyContractTemplate(token, id, selectedTemplate));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setApplying(false);
+    }
+  }
 
   async function act(fn: () => Promise<Contract>) {
     setBusy(true);
@@ -282,6 +303,39 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
         </CardContent>
       </Card>
 
+      {isDraft && templates.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-wrap items-end gap-2 p-4">
+            <div className="min-w-[200px] flex-1 space-y-1.5">
+              <label
+                htmlFor="apply-template"
+                className="text-xs uppercase tracking-wider text-muted-foreground"
+              >
+                {tTpl("applyToContract")}
+              </label>
+              <select
+                id="apply-template"
+                value={selectedTemplate}
+                onChange={(e) => setSelectedTemplate(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">{tTpl("chooseTemplate")}</option>
+                {templates.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.name}
+                    {tpl.is_default ? ` (${tTpl("default")})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button onClick={applyTemplate} disabled={applying || !selectedTemplate}>
+              {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              {tTpl("apply")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {contract.body && (
         <Card>
           <CardHeader>
@@ -341,6 +395,12 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
           )}
         </CardContent>
       </Card>
+
+      <SignaturePanel
+        documentId={contract.id}
+        documentType="contract"
+        documentStatus={contract.status}
+      />
     </div>
   );
 }

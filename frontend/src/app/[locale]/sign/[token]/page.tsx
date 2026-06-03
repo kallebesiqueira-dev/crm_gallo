@@ -147,13 +147,13 @@ export default function SignPage({ params }: PageProps) {
 
         <div className="rounded-lg border bg-card p-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            {t("sign.quoteLabel", { number: ctx!.quote_number })}
+            {t(`sign.documentLabel.${ctx!.document_type}`, { number: ctx!.document_number })}
           </p>
-          <p className="mt-1 font-medium">{ctx!.quote_title}</p>
+          <p className="mt-1 font-medium">{ctx!.document_title}</p>
           <div className="mt-3 flex items-center justify-between border-t pt-3 text-sm">
             <span className="text-muted-foreground">{t("sign.totalLabel")}</span>
             <span className="font-semibold tabular-nums">
-              {money(ctx!.quote_total, ctx!.quote_currency)}
+              {money(ctx!.document_total, ctx!.document_currency)}
             </span>
           </div>
         </div>

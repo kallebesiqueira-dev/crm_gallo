@@ -219,6 +219,30 @@
     "delete": "Delete",
     "confirmDelete": "Delete pipeline \"{name}\"?"
   },
+  "documentTemplates": {
+    "title": "Document templates",
+    "new": "New template",
+    "adminOnly": "Only admins and managers can author templates.",
+    "intro": "Reusable contract bodies with merge fields that are filled in when you apply a template to a contract.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Standard service agreement",
+    "bodyLabel": "Body",
+    "bodyPlaceholder": "This agreement is made between your organisation and the customer…",
+    "fieldsLabel": "Insert a field",
+    "setDefault": "Set as default",
+    "cancel": "Cancel",
+    "save": "Save",
+    "empty": "No templates yet.",
+    "emptyBody": "(empty)",
+    "default": "Default",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Delete template \"{name}\"?",
+    "applyToContract": "Apply a template",
+    "chooseTemplate": "Choose a template…",
+    "apply": "Apply",
+    "noTemplate": "No template"
+  },
   "teams": {
     "title": "Teams",
     "adminOnly": "Only admins and managers can create or delete teams.",
@@ -509,7 +533,10 @@
       "brandTitle": "A document awaits your signature",
       "brandSubtitle": "Review the details and sign securely — no account required.",
       "heading": "{org} requests your signature",
-      "quoteLabel": "Quote {number}",
+      "documentLabel": {
+        "quote": "Quote {number}",
+        "contract": "Contract {number}"
+      },
       "totalLabel": "Total",
       "typedName": "Type your full name to sign",
       "typedNamePlaceholder": "Jane Doe",

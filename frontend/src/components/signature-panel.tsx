@@ -26,11 +26,13 @@ const STATUS_VARIANT: Record<SignatureStatus, BadgeProps["variant"]> = {
 const CANCELLABLE: SignatureStatus[] = ["drafted", "sent", "viewed"];
 
 export function SignaturePanel({
-  quoteId,
-  quoteStatus,
+  documentId,
+  documentType,
+  documentStatus,
 }: {
-  quoteId: string;
-  quoteStatus: string;
+  documentId: string;
+  documentType: "quote" | "contract";
+  documentStatus: string;
 }) {
   const t = useTranslations("signatures");
   const tCommon = useTranslations("common");
@@ -49,12 +51,14 @@ export function SignaturePanel({
     const token = getToken();
     if (!token) return;
     try {
-      const page = await api.listSignatureRequests(token, quoteId);
+      const filter =
+        documentType === "quote" ? { quote_id: documentId } : { contract_id: documentId };
+      const page = await api.listSignatureRequests(token, filter);
       setRequests(page.items);
     } catch {
       /* non-fatal — panel just stays empty */
     }
-  }, [quoteId]);
+  }, [documentId, documentType]);
 
   useEffect(() => {
     load();
@@ -68,7 +72,9 @@ export function SignaturePanel({
     setError(null);
     try {
       await api.createSignatureRequest(token, {
-        quote_id: quoteId,
+        ...(documentType === "quote"
+          ? { quote_id: documentId }
+          : { contract_id: documentId }),
         signer_name: signerName.trim(),
         signer_email: signerEmail.trim(),
         message: message.trim() || null,
@@ -144,7 +150,7 @@ export function SignaturePanel({
     }
   }
 
-  const canRequest = quoteStatus === "sent";
+  const canRequest = documentStatus === "sent";
 
   return (
     <Card>

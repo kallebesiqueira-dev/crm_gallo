@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import { SignaturePanel } from "@/components/signature-panel";
-import { api, type FileAttachment, type Quote } from "@/lib/api";
+import { api, type DocumentTemplate, type FileAttachment, type Quote } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { STATUS_VARIANT } from "../status";
 
@@ -29,12 +29,15 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const t = useTranslations("quotes");
   const tCommon = useTranslations("common");
+  const tTpl = useTranslations("documentTemplates");
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
 
   const [quote, setQuote] = useState<Quote | null>(null);
   const [docs, setDocs] = useState<FileAttachment[]>([]);
+  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
   const [busy, setBusy] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +58,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
     if (!token) return;
     api.getQuote(token, id).then(setQuote).catch((e) => setError(String(e)));
     loadDocs();
+    api.listDocumentTemplates(token).then(setTemplates).catch(() => {});
     return () => {
       if (pollTimer.current) clearTimeout(pollTimer.current);
     };
@@ -109,7 +113,11 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
     setBusy(true);
     setError(null);
     try {
-      const contract = await api.createContractFromQuote(token, id);
+      const contract = await api.createContractFromQuote(
+        token,
+        id,
+        selectedTemplate || undefined,
+      );
       router.push(`/${locale}/contracts/${contract.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
@@ -221,10 +229,27 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
             </>
           )}
           {isAccepted && (
-            <Button size="sm" disabled={busy} onClick={handleCreateContract}>
-              <FileSignature className="h-4 w-4" />
-              {t("createContract")}
-            </Button>
+            <>
+              {templates.length > 0 && (
+                <select
+                  aria-label={tTpl("chooseTemplate")}
+                  value={selectedTemplate}
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">{tTpl("noTemplate")}</option>
+                  {templates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <Button size="sm" disabled={busy} onClick={handleCreateContract}>
+                <FileSignature className="h-4 w-4" />
+                {t("createContract")}
+              </Button>
+            </>
           )}
           {canResend && (
             <Button size="sm" variant="outline" disabled={busy} onClick={handleResend}>
@@ -349,7 +374,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
         </CardContent>
       </Card>
 
-      <SignaturePanel quoteId={quote.id} quoteStatus={quote.status} />
+      <SignaturePanel documentId={quote.id} documentType="quote" documentStatus={quote.status} />
     </div>
   );
 }

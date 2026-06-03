@@ -22,6 +22,7 @@ from app.api import (
     customers,
     dashboard,
     deals,
+    document_templates,
     invites,
     leads,
     notes,
@@ -274,6 +275,7 @@ app.include_router(customers.router)
 app.include_router(deals.router)
 app.include_router(quotes.router)
 app.include_router(contracts.router)
+app.include_router(document_templates.router)
 app.include_router(signatures.router)
 app.include_router(tasks.router)
 app.include_router(dashboard.router)

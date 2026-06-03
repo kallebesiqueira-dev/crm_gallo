@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Enum,
@@ -112,6 +113,17 @@ class ContractStatus(str, enum.Enum):
     active = "active"
     terminated = "terminated"
     expired = "expired"
+
+
+class DocumentType(str, enum.Enum):
+    """The kind of document a merge-field template targets (ADR-016).
+
+    Only `contract` is wired today (templates seed `Contract.body`);
+    the enum exists so quote / invoice templates can be added later
+    without a schema change to the discriminator.
+    """
+
+    contract = "contract"
 
 
 class SignatureStatus(str, enum.Enum):
@@ -704,6 +716,14 @@ class Contract(SoftDeleteMixin, Base):
     body: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
 
+    # Provenance: the template (if any) whose rendered output seeded
+    # `body`. The render is materialised at apply-time — `body` is frozen
+    # text, NOT late-bound — so this is for traceability only and survives
+    # the template being later edited or deleted (SET NULL).
+    applied_template_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("document_templates.id", ondelete="SET NULL")
+    )
+
     # Revision chain: the prior version points forward to its replacement.
     superseded_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("contracts.id", ondelete="SET NULL")
@@ -723,29 +743,25 @@ class Contract(SoftDeleteMixin, Base):
     )
 
 
-class SignatureRequest(SoftDeleteMixin, Base):
-    """An e-signature envelope raised against a Quote (ADR-016).
+class DocumentTemplate(SoftDeleteMixin, Base):
+    """A reusable, admin-authored document body with merge fields (ADR-016).
 
-    A request asks one external signer (the customer) to sign a document —
-    here, a sent quote. Signing is delegated to a `SignatureProvider`
-    (`app/signing/providers.py`): the dev/low-stakes `manual` provider signs
-    in-app via an opaque `sign_token` link; the `skribble`/`scrive` adapters
-    delegate to a QES/eIDAS vendor and report completion back through the
-    inbound webhook receiver. A homegrown click-to-accept is NOT a qualified
-    signature — the provider seam is what keeps the upgrade to QES a config
-    change, not a rewrite.
+    The `body` is free text containing allow-listed `{{ token }}`
+    placeholders (e.g. `{{ customer.name }}`, `{{ contract.value }}`,
+    `{{ line_items }}`). Applying a template to a draft contract
+    resolves those tokens against the contract's context and writes the
+    rendered string into `Contract.body` — a one-shot materialisation,
+    not a live binding. The token catalog + render live in
+    `app/documents/merge.py`; substitution is plain regex against a
+    resolved string map (NO expression eval — the body is operator-
+    authored legal text, so SSTI is out of scope by construction).
 
-    Tenant-scoped with RLS + a denormalised `organization_id` (same invariant
-    as `quote_line_items` — every tenant table isolates at the row level
-    rather than via a join). Soft-deletable so it lands in the trash bin like
-    every other tenant entity.
-
-    Completion side effect: when the signer signs a request whose quote is
-    still `sent`, the quote transitions to `accepted` (a signed quote IS an
-    acceptance) — see `app/api/signatures.py`.
+    Org-scoped + RLS + soft-deletable like every tenant entity. One
+    template may be flagged `is_default` per (org, doc_type) — enforced
+    in the API, not the schema, since toggling is a mutate.
     """
 
-    __tablename__ = "signature_requests"
+    __tablename__ = "document_templates"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
@@ -754,10 +770,79 @@ class SignatureRequest(SoftDeleteMixin, Base):
         nullable=False,
         index=True,
     )
-    quote_id: Mapped[uuid.UUID] = mapped_column(
+
+    doc_type: Mapped[DocumentType] = mapped_column(
+        Enum(DocumentType), default=DocumentType.contract, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class SignatureRequest(SoftDeleteMixin, Base):
+    """An e-signature envelope raised against a Quote or a Contract (ADR-016).
+
+    A request asks one external signer (the customer) to sign a document —
+    a sent quote or a sent contract. Signing is delegated to a
+    `SignatureProvider` (`app/signing/providers.py`): the dev/low-stakes
+    `manual` provider signs in-app via an opaque `sign_token` link; the
+    `skribble`/`scrive` adapters delegate to a QES/eIDAS vendor and report
+    completion back through the inbound webhook receiver. A homegrown
+    click-to-accept is NOT a qualified signature — the provider seam is what
+    keeps the upgrade to QES a config change, not a rewrite.
+
+    The signed document is referenced by exactly ONE of `quote_id` /
+    `contract_id` — both nullable FKs with `ON DELETE CASCADE`, guarded by a
+    DB CHECK so a request always points at precisely one document. Typed FKs
+    (rather than a polymorphic `entity_type`/`entity_id`) preserve referential
+    integrity for the legal-signature record and let the completion side
+    effect stay typed.
+
+    Tenant-scoped with RLS + a denormalised `organization_id` (same invariant
+    as `quote_line_items` — every tenant table isolates at the row level
+    rather than via a join). Soft-deletable so it lands in the trash bin like
+    every other tenant entity.
+
+    Completion side effect (see `app/api/signatures.py`): signing a request
+    whose quote is still `sent` transitions that quote to `accepted` (a signed
+    quote IS an acceptance); signing a request whose contract is still `sent`
+    transitions that contract to `signed`.
+    """
+
+    __tablename__ = "signature_requests"
+    __table_args__ = (
+        # Exactly one document link is set — a request signs a quote XOR a
+        # contract, never both, never neither.
+        CheckConstraint(
+            "(quote_id IS NOT NULL) <> (contract_id IS NOT NULL)",
+            name="ck_signature_requests_one_document",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    quote_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("quotes.id", ondelete="CASCADE"),
-        nullable=False,
+        index=True,
+    )
+    contract_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("contracts.id", ondelete="CASCADE"),
         index=True,
     )
 

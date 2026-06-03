@@ -196,6 +196,7 @@ export interface Contract {
   deal_id: string | null;
   customer_id: string | null;
   owner_id: string | null;
+  applied_template_id: string | null;
   superseded_by: string | null;
   sent_at: string | null;
   signed_at: string | null;
@@ -203,6 +204,39 @@ export interface Contract {
   terminated_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type DocumentType = "contract";
+
+export interface DocumentTemplate {
+  id: string;
+  doc_type: DocumentType;
+  name: string;
+  body: string;
+  is_default: boolean;
+  created_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DocumentTemplateCreate {
+  name: string;
+  body?: string;
+  doc_type?: DocumentType;
+  is_default?: boolean;
+}
+
+export interface DocumentTemplateUpdate {
+  name?: string;
+  body?: string;
+  is_default?: boolean;
+}
+
+export interface MergeField {
+  token: string;
+  label: string;
+  description: string;
+  example: string;
 }
 
 export interface ContractCreate {
@@ -248,7 +282,10 @@ export type SignatureStatus =
 
 export interface SignatureRequest {
   id: string;
-  quote_id: string;
+  // Exactly one of quote_id / contract_id is set — the request signs a quote
+  // XOR a contract (DB CHECK).
+  quote_id: string | null;
+  contract_id: string | null;
   provider: string;
   status: SignatureStatus;
   signer_name: string;
@@ -274,10 +311,11 @@ export interface SignatureRequest {
 export interface SignatureSignContext {
   status: SignatureStatus;
   signer_name: string;
-  quote_number: string;
-  quote_title: string;
-  quote_total: number;
-  quote_currency: Currency;
+  document_type: "quote" | "contract";
+  document_number: string;
+  document_title: string;
+  document_total: number;
+  document_currency: Currency;
   organization_name: string;
 }
 
@@ -1088,8 +1126,18 @@ export const api = {
     request<Contract>(`/api/contracts/${id}`, { token }),
   createContract: (token: string, payload: ContractCreate) =>
     request<Contract>("/api/contracts", { method: "POST", token, body: JSON.stringify(payload) }),
-  createContractFromQuote: (token: string, quoteId: string) =>
-    request<Contract>(`/api/contracts/from-quote/${quoteId}`, { method: "POST", token }),
+  createContractFromQuote: (token: string, quoteId: string, templateId?: string) => {
+    const qs = templateId ? `?template_id=${encodeURIComponent(templateId)}` : "";
+    return request<Contract>(`/api/contracts/from-quote/${quoteId}${qs}`, {
+      method: "POST",
+      token,
+    });
+  },
+  applyContractTemplate: (token: string, contractId: string, templateId: string) =>
+    request<Contract>(`/api/contracts/${contractId}/apply-template/${templateId}`, {
+      method: "POST",
+      token,
+    }),
   updateContract: (token: string, id: string, payload: ContractUpdate) =>
     request<Contract>(`/api/contracts/${id}`, {
       method: "PATCH",
@@ -1116,14 +1164,25 @@ export const api = {
       { method: "POST", token },
     ),
 
-  // Signature requests on quotes (ADR-016)
-  listSignatureRequests: (token: string, quote_id: string) => {
-    const params = new URLSearchParams({ quote_id });
+  // Signature requests on a quote or contract (ADR-016)
+  listSignatureRequests: (
+    token: string,
+    filter: { quote_id?: string; contract_id?: string },
+  ) => {
+    const params = new URLSearchParams();
+    if (filter.quote_id) params.set("quote_id", filter.quote_id);
+    if (filter.contract_id) params.set("contract_id", filter.contract_id);
     return request<Page<SignatureRequest>>(`/api/signatures?${params.toString()}`, { token });
   },
   createSignatureRequest: (
     token: string,
-    payload: { quote_id: string; signer_name: string; signer_email: string; message?: string | null },
+    payload: {
+      quote_id?: string;
+      contract_id?: string;
+      signer_name: string;
+      signer_email: string;
+      message?: string | null;
+    },
   ) =>
     request<SignatureRequest>("/api/signatures", {
       method: "POST",
@@ -1138,6 +1197,30 @@ export const api = {
     request<SignatureRequest>(`/api/signatures/${id}/cancel`, { method: "POST", token }),
   deleteSignatureRequest: (token: string, id: string) =>
     request<void>(`/api/signatures/${id}`, { method: "DELETE", token }),
+
+  // Merge-field document templates (ADR-016)
+  listMergeFields: (token: string, docType: DocumentType = "contract") =>
+    request<MergeField[]>(`/api/document-templates/fields?doc_type=${docType}`, { token }),
+  listDocumentTemplates: (token: string, docType?: DocumentType) => {
+    const qs = docType ? `?doc_type=${docType}` : "";
+    return request<DocumentTemplate[]>(`/api/document-templates${qs}`, { token });
+  },
+  getDocumentTemplate: (token: string, id: string) =>
+    request<DocumentTemplate>(`/api/document-templates/${id}`, { token }),
+  createDocumentTemplate: (token: string, payload: DocumentTemplateCreate) =>
+    request<DocumentTemplate>("/api/document-templates", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  updateDocumentTemplate: (token: string, id: string, payload: DocumentTemplateUpdate) =>
+    request<DocumentTemplate>(`/api/document-templates/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteDocumentTemplate: (token: string, id: string) =>
+    request<void>(`/api/document-templates/${id}`, { method: "DELETE", token }),
 
   // Public signer surface — no token; the URL token IS the credential.
   getSigningContext: (signToken: string) =>

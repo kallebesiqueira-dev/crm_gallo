@@ -219,6 +219,30 @@
     "delete": "Excluir",
     "confirmDelete": "Excluir o pipeline \"{name}\"?"
   },
+  "documentTemplates": {
+    "title": "Modelos de documento",
+    "new": "Novo modelo",
+    "adminOnly": "Apenas administradores e gestores podem criar modelos.",
+    "intro": "Corpos de contrato reutilizáveis com campos de mesclagem preenchidos ao aplicar um modelo a um contrato.",
+    "nameLabel": "Nome",
+    "namePlaceholder": "Contrato de serviço padrão",
+    "bodyLabel": "Corpo",
+    "bodyPlaceholder": "Este contrato é celebrado entre a sua organização e o cliente…",
+    "fieldsLabel": "Inserir um campo",
+    "setDefault": "Definir como padrão",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "empty": "Ainda não há modelos.",
+    "emptyBody": "(vazio)",
+    "default": "Padrão",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "confirmDelete": "Excluir o modelo \"{name}\"?",
+    "applyToContract": "Aplicar um modelo",
+    "chooseTemplate": "Escolher um modelo…",
+    "apply": "Aplicar",
+    "noTemplate": "Sem modelo"
+  },
   "teams": {
     "title": "Equipes",
     "adminOnly": "Apenas admins e managers podem criar ou excluir equipes.",
@@ -509,7 +533,10 @@
       "brandTitle": "Um documento aguarda a sua assinatura",
       "brandSubtitle": "Reveja os detalhes e assine com segurança — sem necessidade de conta.",
       "heading": "{org} solicita a sua assinatura",
-      "quoteLabel": "Orçamento {number}",
+      "documentLabel": {
+        "quote": "Orçamento {number}",
+        "contract": "Contrato {number}"
+      },
       "totalLabel": "Total",
       "typedName": "Digite o seu nome completo para assinar",
       "typedNamePlaceholder": "João Silva",

@@ -25,9 +25,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
+from app.documents import build_contract_context, render_merge
 from app.events import EventType, record_event
 from app.logging_setup import get_logger
-from app.models import Contract, ContractStatus, Quote, QuoteStatus, User
+from app.models import Contract, ContractStatus, DocumentTemplate, Quote, QuoteStatus, User
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import ContractCreate, ContractOut, ContractUpdate
 from app.services.contracts import next_contract_number
@@ -147,6 +148,7 @@ async def create_contract(
 )
 async def create_contract_from_quote(
     quote_id: uuid.UUID,
+    template_id: uuid.UUID | None = Query(default=None),
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
@@ -157,7 +159,8 @@ async def create_contract_from_quote(
     (→ contract `value`), currency, and deal/customer links. The quote
     must be `accepted` (you don't paper a proposal the customer hasn't
     agreed to). The new contract starts as a `draft` you then refine
-    (term, renewal, body) before sending.
+    (term, renewal, body) before sending. If `template_id` is given, its
+    merge fields are rendered into the new contract's `body` at creation.
     """
     quote = (
         await db.execute(
@@ -192,6 +195,12 @@ async def create_contract_from_quote(
     )
     db.add(contract)
     await db.flush()
+
+    if template_id is not None:
+        tpl = await _load_org_template(db, template_id, org_id)
+        context = await build_contract_context(db, contract)
+        contract.body = render_merge(tpl.body, context)
+        contract.applied_template_id = tpl.id
 
     await record_audit(
         db,
@@ -254,6 +263,60 @@ async def update_contract(
         entity_id=contract.id,
         organization_id=org_id,
         metadata={"fields": list(changes.keys())},
+    )
+    await db.commit()
+    return await _get_contract_or_404(db, contract.id, org_id)
+
+
+async def _load_org_template(
+    db: AsyncSession, template_id: uuid.UUID, org_id: uuid.UUID
+) -> DocumentTemplate:
+    tpl = (
+        await db.execute(
+            select(DocumentTemplate).where(
+                DocumentTemplate.id == template_id,
+                DocumentTemplate.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if not tpl or tpl.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return tpl
+
+
+@router.post("/{contract_id}/apply-template/{template_id}", response_model=ContractOut)
+async def apply_template(
+    contract_id: uuid.UUID,
+    template_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Contract:
+    """Render a template's merge fields into a draft contract's `body`.
+
+    Resolves the allow-listed tokens against the contract's context and
+    writes the result into `body` — a one-shot materialisation (the body
+    is frozen text afterwards, NOT re-rendered if the template changes).
+    Draft-only (409 otherwise); records `applied_template_id` for
+    provenance.
+    """
+    contract = await _get_contract_or_404(db, contract_id, org_id)
+    ensure_can_mutate(user, contract.owner_id)
+    _require_draft(contract)
+    tpl = await _load_org_template(db, template_id, org_id)
+
+    context = await build_contract_context(db, contract)
+    contract.body = render_merge(tpl.body, context)
+    contract.applied_template_id = tpl.id
+
+    await record_audit(
+        db,
+        actor=user,
+        action="contract.apply_template",
+        entity_type="contract",
+        entity_id=contract.id,
+        organization_id=org_id,
+        metadata={"template_id": str(tpl.id), "template_name": tpl.name},
     )
     await db.commit()
     return await _get_contract_or_404(db, contract.id, org_id)

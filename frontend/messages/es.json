@@ -219,6 +219,30 @@
     "delete": "Eliminar",
     "confirmDelete": "¿Eliminar el pipeline \"{name}\"?"
   },
+  "documentTemplates": {
+    "title": "Plantillas de documento",
+    "new": "Nueva plantilla",
+    "adminOnly": "Solo los administradores y gerentes pueden crear plantillas.",
+    "intro": "Cuerpos de contrato reutilizables con campos de combinación que se rellenan al aplicar una plantilla a un contrato.",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Contrato de servicio estándar",
+    "bodyLabel": "Cuerpo",
+    "bodyPlaceholder": "Este contrato se celebra entre su organización y el cliente…",
+    "fieldsLabel": "Insertar un campo",
+    "setDefault": "Establecer como predeterminada",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "empty": "Aún no hay plantillas.",
+    "emptyBody": "(vacío)",
+    "default": "Predeterminada",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar la plantilla \"{name}\"?",
+    "applyToContract": "Aplicar una plantilla",
+    "chooseTemplate": "Elegir una plantilla…",
+    "apply": "Aplicar",
+    "noTemplate": "Sin plantilla"
+  },
   "teams": {
     "title": "Equipos",
     "adminOnly": "Solo administradores y managers pueden crear o eliminar equipos.",
@@ -509,7 +533,10 @@
       "brandTitle": "Un documento espera tu firma",
       "brandSubtitle": "Revisa los detalles y firma de forma segura — no se requiere cuenta.",
       "heading": "{org} solicita tu firma",
-      "quoteLabel": "Presupuesto {number}",
+      "documentLabel": {
+        "quote": "Presupuesto {number}",
+        "contract": "Contrato {number}"
+      },
       "totalLabel": "Total",
       "typedName": "Escribe tu nombre completo para firmar",
       "typedNamePlaceholder": "Juan Pérez",

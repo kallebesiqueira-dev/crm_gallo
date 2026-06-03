@@ -219,6 +219,30 @@
     "delete": "Löschen",
     "confirmDelete": "Pipeline „{name}\" löschen?"
   },
+  "documentTemplates": {
+    "title": "Dokumentvorlagen",
+    "new": "Neue Vorlage",
+    "adminOnly": "Nur Administratoren und Manager können Vorlagen erstellen.",
+    "intro": "Wiederverwendbare Vertragstexte mit Seriendruckfeldern, die beim Anwenden einer Vorlage auf einen Vertrag ausgefüllt werden.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Standard-Dienstleistungsvertrag",
+    "bodyLabel": "Text",
+    "bodyPlaceholder": "Dieser Vertrag wird zwischen Ihrer Organisation und dem Kunden geschlossen…",
+    "fieldsLabel": "Feld einfügen",
+    "setDefault": "Als Standard festlegen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "empty": "Noch keine Vorlagen.",
+    "emptyBody": "(leer)",
+    "default": "Standard",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "confirmDelete": "Vorlage „{name}\" löschen?",
+    "applyToContract": "Vorlage anwenden",
+    "chooseTemplate": "Vorlage wählen…",
+    "apply": "Anwenden",
+    "noTemplate": "Keine Vorlage"
+  },
   "teams": {
     "title": "Teams",
     "adminOnly": "Nur Admins und Manager können Teams erstellen oder löschen.",
@@ -509,7 +533,10 @@
       "brandTitle": "Ein Dokument wartet auf Ihre Signatur",
       "brandSubtitle": "Prüfen Sie die Details und signieren Sie sicher — kein Konto erforderlich.",
       "heading": "{org} bittet um Ihre Signatur",
-      "quoteLabel": "Angebot {number}",
+      "documentLabel": {
+        "quote": "Angebot {number}",
+        "contract": "Vertrag {number}"
+      },
       "totalLabel": "Gesamt",
       "typedName": "Geben Sie Ihren vollständigen Namen ein, um zu signieren",
       "typedNamePlaceholder": "Max Mustermann",

@@ -12,6 +12,7 @@ import { SessionsCard } from "@/components/sessions-card";
 import { TeamCard } from "@/components/team-card";
 import { PipelinesCard } from "@/components/pipelines-card";
 import { TeamsCard } from "@/components/teams-card";
+import { DocumentTemplatesCard } from "@/components/document-templates-card";
 import { api, type User } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { locales, localeLabels, type Locale } from "@/i18n/config";
@@ -114,6 +115,8 @@ export default function SettingsPage() {
   // for now — Phase 2's `get_current_membership` is the server-side
   // source of truth, this is just a UX gate.
   const canInvite = user.role === "admin";
+  // Templates seed contract boilerplate — admins + managers may author.
+  const canManageTemplates = user.role === "admin" || user.role === "manager";
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -240,6 +243,10 @@ export default function SettingsPage() {
           Lead/Deal.stage to pipeline_stage_id so changes here flow
           to the kanban + list filters. Same admin/manager gating. */}
       <PipelinesCard canManage={canInvite} />
+
+      {/* Merge-field document templates — author reusable contract
+          bodies with {{ token }} placeholders. Admin/manager gated. */}
+      <DocumentTemplatesCard canManage={canManageTemplates} />
     </div>
   );
 }

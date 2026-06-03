@@ -14,8 +14,11 @@ Two signing surfaces feed `signed`:
   * a VENDOR provider (Skribble/Scrive) — completion arrives via the inbound,
     HMAC-verified webhook (`POST /webhook`).
 
-Completion side effect: signing a request whose quote is still `sent`
-transitions that quote to `accepted` — a signed quote IS an acceptance.
+A request signs exactly one document — a quote XOR a contract (`quote_id` /
+`contract_id`, guarded by a DB CHECK). Completion side effect: signing a
+request whose quote is still `sent` transitions that quote to `accepted` (a
+signed quote IS an acceptance); signing a request whose contract is still
+`sent` transitions that contract to `signed`.
 
 RLS note: `signature_requests` is tenant-isolated by the `app.current_org_id`
 GUC. The unauthenticated token + webhook paths have no logged-in user, so the
@@ -42,6 +45,8 @@ from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.logging_setup import get_logger
 from app.models import (
+    Contract,
+    ContractStatus,
     FileAttachment,
     Organization,
     Quote,
@@ -68,6 +73,12 @@ log = get_logger(__name__)
 _CANCELLABLE = {SignatureStatus.drafted, SignatureStatus.sent, SignatureStatus.viewed}
 # States the signer can act on (sign / view / decline) once the envelope is out.
 _OPEN_FOR_SIGNER = {SignatureStatus.sent, SignatureStatus.viewed}
+
+
+def _doc_ref(req: SignatureRequest) -> dict:
+    """The document this request signs, for event payloads — exactly one of
+    the two is set."""
+    return {"quote_id": req.quote_id, "contract_id": req.contract_id}
 
 
 # ---------- token helpers ----------
@@ -182,6 +193,65 @@ async def _maybe_accept_quote(
     )
 
 
+async def _maybe_sign_contract(
+    db: AsyncSession, *, contract_id: uuid.UUID, org_id: uuid.UUID
+) -> None:
+    """A completed signature moves the still-open contract to `signed`
+    (mirrors the contract state machine's manual sign transition)."""
+    contract = (
+        await db.execute(
+            select(Contract).where(Contract.id == contract_id, Contract.organization_id == org_id)
+        )
+    ).scalar_one_or_none()
+    if contract is None or contract.status != ContractStatus.sent:
+        return
+    contract.status = ContractStatus.signed
+    contract.signed_at = datetime.now(UTC)
+    await record_audit(
+        db,
+        actor=None,
+        action="contract.sign",
+        entity_type="contract",
+        entity_id=contract.id,
+        organization_id=org_id,
+        metadata={"number": contract.number, "version": contract.version, "via": "signature"},
+    )
+    await record_event(
+        db,
+        event_type=EventType.contract_signed,
+        organization_id=org_id,
+        payload={
+            "contract_id": contract.id,
+            "number": contract.number,
+            "version": contract.version,
+            "value": contract.value,
+            "owner_id": contract.owner_id,
+            "via": "signature",
+        },
+    )
+
+
+async def _load_document_summary(
+    db: AsyncSession, req: SignatureRequest
+) -> tuple[str, str, str, float, str] | None:
+    """(document_type, number, title, total, currency) for the signed
+    document, or None if it has since been deleted. Exactly one of
+    quote_id/contract_id is set (DB CHECK)."""
+    if req.quote_id is not None:
+        q = (
+            await db.execute(select(Quote).where(Quote.id == req.quote_id))
+        ).scalar_one_or_none()
+        if q is None:
+            return None
+        return ("quote", q.number, q.title, float(q.total), q.currency)
+    c = (
+        await db.execute(select(Contract).where(Contract.id == req.contract_id))
+    ).scalar_one_or_none()
+    if c is None:
+        return None
+    return ("contract", c.number, c.title, float(c.value), c.currency)
+
+
 async def _complete_signature(
     db: AsyncSession,
     req: SignatureRequest,
@@ -191,18 +261,20 @@ async def _complete_signature(
     user_agent: str | None,
     via: str,
 ) -> None:
-    """Mark a request `signed`, persist the audit trail to S3, and accept the
-    underlying quote. Shared by the manual sign endpoint and the inbound
-    vendor webhook. Caller commits."""
+    """Mark a request `signed`, persist the audit trail to S3, and advance the
+    underlying document (quote → accepted, contract → signed). Shared by the
+    manual sign endpoint and the inbound vendor webhook. Caller commits."""
     now = datetime.now(UTC)
-    quote_number = (
-        await db.execute(select(Quote.number).where(Quote.id == req.quote_id))
-    ).scalar_one_or_none()
+    summary = await _load_document_summary(db, req)
+    doc_type = summary[0] if summary else ("quote" if req.quote_id else "contract")
+    doc_number = summary[1] if summary else None
 
     audit_trail = {
         "signature_request_id": str(req.id),
-        "quote_id": str(req.quote_id),
-        "quote_number": quote_number,
+        "document_type": doc_type,
+        "quote_id": str(req.quote_id) if req.quote_id else None,
+        "contract_id": str(req.contract_id) if req.contract_id else None,
+        "document_number": doc_number,
         "provider": req.provider,
         "signer_name": req.signer_name,
         "signer_email": req.signer_email,
@@ -216,7 +288,7 @@ async def _complete_signature(
         db,
         organization_id=req.organization_id,
         request_id=req.id,
-        filename=f"signature-{quote_number or req.id}-audit.json",
+        filename=f"signature-{doc_number or req.id}-audit.json",
         audit_trail=audit_trail,
     )
 
@@ -241,19 +313,23 @@ async def _complete_signature(
         organization_id=req.organization_id,
         payload={
             "signature_request_id": req.id,
-            "quote_id": req.quote_id,
+            **_doc_ref(req),
             "provider": req.provider,
             "signer_email": req.signer_email,
             "via": via,
         },
     )
-    await _maybe_accept_quote(db, quote_id=req.quote_id, org_id=req.organization_id)
+    if req.quote_id is not None:
+        await _maybe_accept_quote(db, quote_id=req.quote_id, org_id=req.organization_id)
+    else:
+        await _maybe_sign_contract(db, contract_id=req.contract_id, org_id=req.organization_id)
 
 
 # ---------- authenticated CRUD ----------
 @router.get("", response_model=CursorPage[SignatureRequestOut])
 async def list_signature_requests(
     quote_id: uuid.UUID | None = Query(default=None),
+    contract_id: uuid.UUID | None = Query(default=None),
     status_filter: SignatureStatus | None = Query(default=None, alias="status"),
     limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     cursor: str | None = Query(default=None, description="opaque keyset cursor"),
@@ -264,6 +340,8 @@ async def list_signature_requests(
     stmt = select(SignatureRequest).where(SignatureRequest.organization_id == org_id)
     if quote_id is not None:
         stmt = stmt.where(SignatureRequest.quote_id == quote_id)
+    if contract_id is not None:
+        stmt = stmt.where(SignatureRequest.contract_id == contract_id)
     if status_filter is not None:
         stmt = stmt.where(SignatureRequest.status == status_filter)
     return await paginate(db, stmt, SignatureRequest, limit=limit, cursor=cursor)
@@ -276,28 +354,57 @@ async def create_signature_request(
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ) -> SignatureRequestOut:
-    quote = (
-        await db.execute(
-            select(Quote).where(Quote.id == payload.quote_id, Quote.organization_id == org_id)
-        )
-    ).scalar_one_or_none()
-    if quote is None or quote.deleted_at is not None:
-        raise HTTPException(status_code=404, detail="Quote not found")
-    if quote.status != QuoteStatus.sent:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Only a sent quote can be sent for signature (current: {quote.status.value}).",
-        )
+    # Exactly one of quote_id/contract_id is set (schema validator + DB CHECK).
+    # Resolve the referenced document, enforce it is in `sent` state, and link
+    # its most recent generated PDF as the (informational) source attachment.
+    entity_type: str
+    entity_id: uuid.UUID
+    if payload.quote_id is not None:
+        quote = (
+            await db.execute(
+                select(Quote).where(Quote.id == payload.quote_id, Quote.organization_id == org_id)
+            )
+        ).scalar_one_or_none()
+        if quote is None or quote.deleted_at is not None:
+            raise HTTPException(status_code=404, detail="Quote not found")
+        if quote.status != QuoteStatus.sent:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Only a sent quote can be sent for signature "
+                    f"(current: {quote.status.value})."
+                ),
+            )
+        entity_type, entity_id = "quote", quote.id
+    else:
+        contract = (
+            await db.execute(
+                select(Contract).where(
+                    Contract.id == payload.contract_id, Contract.organization_id == org_id
+                )
+            )
+        ).scalar_one_or_none()
+        if contract is None or contract.deleted_at is not None:
+            raise HTTPException(status_code=404, detail="Contract not found")
+        if contract.status != ContractStatus.sent:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Only a sent contract can be sent for signature "
+                    f"(current: {contract.status.value})."
+                ),
+            )
+        entity_type, entity_id = "contract", contract.id
 
-    # Link the most recent generated quote PDF as the source document, if one
-    # exists — purely informational (the signer sees the quote summary; the
-    # PDF is the formal artifact). None is fine.
+    # Link the most recent generated PDF as the source document, if one exists
+    # — purely informational (the signer sees the summary; the PDF is the
+    # formal artifact). None is fine.
     doc_id = (
         await db.execute(
             select(FileAttachment.id)
             .where(
-                FileAttachment.entity_type == "quote",
-                FileAttachment.entity_id == quote.id,
+                FileAttachment.entity_type == entity_type,
+                FileAttachment.entity_id == entity_id,
                 FileAttachment.organization_id == org_id,
             )
             .order_by(FileAttachment.created_at.desc())
@@ -307,7 +414,8 @@ async def create_signature_request(
 
     req = SignatureRequest(
         organization_id=org_id,
-        quote_id=quote.id,
+        quote_id=payload.quote_id,
+        contract_id=payload.contract_id,
         provider=get_settings().signing_provider.lower(),
         status=SignatureStatus.drafted,
         signer_name=payload.signer_name,
@@ -325,7 +433,7 @@ async def create_signature_request(
         entity_type="signature_request",
         entity_id=req.id,
         organization_id=org_id,
-        metadata={"quote_id": str(quote.id), "provider": req.provider},
+        metadata={f"{entity_type}_id": str(entity_id), "provider": req.provider},
     )
     await db.commit()
     return _to_out(await _get_request_or_404(db, req.id, org_id))
@@ -384,7 +492,7 @@ async def send_signature_request(
         organization_id=org_id,
         payload={
             "signature_request_id": req.id,
-            "quote_id": req.quote_id,
+            **_doc_ref(req),
             "provider": req.provider,
             "signer_email": req.signer_email,
         },
@@ -421,7 +529,7 @@ async def cancel_signature_request(
         db,
         event_type=EventType.signature_cancelled,
         organization_id=org_id,
-        payload={"signature_request_id": req.id, "quote_id": req.quote_id},
+        payload={"signature_request_id": req.id, **_doc_ref(req)},
     )
     await db.commit()
     return _to_out(await _get_request_or_404(db, req.id, org_id))
@@ -462,11 +570,10 @@ async def view_signing_page(
     if req.status in (SignatureStatus.declined, SignatureStatus.cancelled):
         raise HTTPException(status_code=410, detail=f"This request was {req.status.value}.")
 
-    quote = (
-        await db.execute(select(Quote).where(Quote.id == req.quote_id))
-    ).scalar_one_or_none()
-    if quote is None:
-        raise HTTPException(status_code=404, detail="The quote no longer exists.")
+    summary = await _load_document_summary(db, req)
+    if summary is None:
+        raise HTTPException(status_code=404, detail="The document no longer exists.")
+    doc_type, doc_number, doc_title, doc_total, doc_currency = summary
     org_name = (
         await db.execute(select(Organization.name).where(Organization.id == req.organization_id))
     ).scalar_one_or_none() or "CRM Gallo"
@@ -478,17 +585,18 @@ async def view_signing_page(
             db,
             event_type=EventType.signature_viewed,
             organization_id=req.organization_id,
-            payload={"signature_request_id": req.id, "quote_id": req.quote_id},
+            payload={"signature_request_id": req.id, **_doc_ref(req)},
         )
         await db.commit()
 
     return SignatureSignContext(
         status=req.status,
         signer_name=req.signer_name,
-        quote_number=quote.number,
-        quote_title=quote.title,
-        quote_total=float(quote.total),
-        quote_currency=quote.currency,
+        document_type=doc_type,
+        document_number=doc_number,
+        document_title=doc_title,
+        document_total=doc_total,
+        document_currency=doc_currency,
         organization_name=org_name,
     )
 
@@ -539,7 +647,7 @@ async def decline_signature(
         db,
         event_type=EventType.signature_declined,
         organization_id=req.organization_id,
-        payload={"signature_request_id": req.id, "quote_id": req.quote_id},
+        payload={"signature_request_id": req.id, **_doc_ref(req)},
     )
     await db.commit()
     return _to_out(await _get_request_by_token(db, token))
@@ -607,7 +715,7 @@ async def signature_webhook(
                 db,
                 event_type=EventType.signature_viewed,
                 organization_id=org_id,
-                payload={"signature_request_id": req.id, "quote_id": req.quote_id},
+                payload={"signature_request_id": req.id, **_doc_ref(req)},
             )
             await db.commit()
     elif event == "signed":
@@ -624,7 +732,7 @@ async def signature_webhook(
                 db,
                 event_type=EventType.signature_declined,
                 organization_id=org_id,
-                payload={"signature_request_id": req.id, "quote_id": req.quote_id},
+                payload={"signature_request_id": req.id, **_doc_ref(req)},
             )
             await db.commit()
     else:

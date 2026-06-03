@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import (
+    Contract,
+    ContractStatus,
     Organization,
     Quote,
     QuoteLineItem,
@@ -211,7 +213,8 @@ def test_view_marks_viewed(admin_client):
     assert page.status_code == 200, page.text
     ctx = page.json()
     assert ctx["status"] == "viewed"
-    assert ctx["quote_number"] == q["number"]
+    assert ctx["document_type"] == "quote"
+    assert ctx["document_number"] == q["number"]
     assert ctx["signer_name"] == "Jane Signer"
 
     # The request itself is now `viewed`.
@@ -376,3 +379,105 @@ def test_cross_org_returns_404(
 
 def test_random_id_404(admin_client: CsrfAwareClient):
     assert admin_client.get(f"/api/signatures/{uuid.uuid4()}").status_code == 404
+
+
+# ---------- signing a contract (a request signs a quote XOR a contract) ----------
+
+
+def _sent_contract(client: CsrfAwareClient) -> dict:
+    """Create a contract and move it to `sent` — the only state a signature
+    request can be raised from."""
+    r = client.post(
+        "/api/contracts", json={"title": "Service agreement", "value": 9000.0, "currency": "EUR"}
+    )
+    assert r.status_code == 201, r.text
+    c = r.json()
+    client.post(f"/api/contracts/{c['id']}/send").raise_for_status()
+    return c
+
+
+def _create_contract_request(client: CsrfAwareClient, contract_id: str) -> dict:
+    r = client.post(
+        "/api/signatures",
+        json={
+            "contract_id": contract_id,
+            "signer_name": "Jane Signer",
+            "signer_email": "jane@example.com",
+        },
+    )
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def test_create_from_sent_contract(admin_client):
+    c = _sent_contract(admin_client)
+    r = admin_client.post(
+        "/api/signatures",
+        json={"contract_id": c["id"], "signer_name": "Jane", "signer_email": "jane@example.com"},
+    )
+    assert r.status_code == 201, r.text
+    req = r.json()
+    assert req["status"] == "drafted"
+    assert req["contract_id"] == c["id"]
+    assert req["quote_id"] is None
+
+
+def test_cannot_create_from_draft_contract(admin_client):
+    c = admin_client.post(
+        "/api/contracts", json={"title": "Draft", "value": 100.0, "currency": "EUR"}
+    ).json()
+    r = admin_client.post(
+        "/api/signatures",
+        json={"contract_id": c["id"], "signer_name": "X", "signer_email": "x@example.com"},
+    )
+    assert r.status_code == 409
+
+
+def test_create_against_missing_contract_404(admin_client):
+    r = admin_client.post(
+        "/api/signatures",
+        json={
+            "contract_id": str(uuid.uuid4()),
+            "signer_name": "X",
+            "signer_email": "x@example.com",
+        },
+    )
+    assert r.status_code == 404
+
+
+def test_must_provide_exactly_one_document_422(admin_client):
+    base = {"signer_name": "X", "signer_email": "x@example.com"}
+    # Neither set.
+    assert admin_client.post("/api/signatures", json=base).status_code == 422
+    # Both set.
+    both = {**base, "quote_id": str(uuid.uuid4()), "contract_id": str(uuid.uuid4())}
+    assert admin_client.post("/api/signatures", json=both).status_code == 422
+
+
+def test_manual_sign_signs_and_advances_contract(admin_client):
+    c = _sent_contract(admin_client)
+    req = _create_contract_request(admin_client, c["id"])
+    token = _token_from_url(_send(admin_client, req["id"])["signing_url"])
+
+    page = admin_client.get(f"/api/signatures/sign/{token}")
+    assert page.status_code == 200, page.text
+    ctx = page.json()
+    assert ctx["document_type"] == "contract"
+    assert ctx["document_number"] == c["number"]
+
+    signed = admin_client.post(f"/api/signatures/sign/{token}", json={"typed_name": "Jane"})
+    assert signed.status_code == 200, signed.text
+    assert signed.json()["status"] == "signed"
+
+    # A signed signature advances a `sent` contract to `signed`.
+    assert admin_client.get(f"/api/contracts/{c['id']}").json()["status"] == "signed"
+
+
+def test_list_filter_by_contract_id(admin_client):
+    c = _sent_contract(admin_client)
+    req = _create_contract_request(admin_client, c["id"])
+    filtered = admin_client.get(f"/api/signatures?contract_id={c['id']}")
+    assert filtered.status_code == 200
+    items = filtered.json()["items"]
+    assert any(item["id"] == req["id"] for item in items)
+    assert all(item["contract_id"] == c["id"] for item in items)

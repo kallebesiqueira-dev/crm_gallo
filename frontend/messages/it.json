@@ -219,6 +219,30 @@
     "delete": "Elimina",
     "confirmDelete": "Eliminare il pipeline \"{name}\"?"
   },
+  "documentTemplates": {
+    "title": "Modelli di documento",
+    "new": "Nuovo modello",
+    "adminOnly": "Solo amministratori e manager possono creare modelli.",
+    "intro": "Corpi di contratto riutilizzabili con campi di unione compilati quando applichi un modello a un contratto.",
+    "nameLabel": "Nome",
+    "namePlaceholder": "Contratto di servizio standard",
+    "bodyLabel": "Corpo",
+    "bodyPlaceholder": "Il presente contratto è stipulato tra la tua organizzazione e il cliente…",
+    "fieldsLabel": "Inserisci un campo",
+    "setDefault": "Imposta come predefinito",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "empty": "Ancora nessun modello.",
+    "emptyBody": "(vuoto)",
+    "default": "Predefinito",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "confirmDelete": "Eliminare il modello \"{name}\"?",
+    "applyToContract": "Applica un modello",
+    "chooseTemplate": "Scegli un modello…",
+    "apply": "Applica",
+    "noTemplate": "Nessun modello"
+  },
   "teams": {
     "title": "Team",
     "adminOnly": "Solo admin e manager possono creare o eliminare team.",
@@ -509,7 +533,10 @@
       "brandTitle": "Un documento attende la tua firma",
       "brandSubtitle": "Controlla i dettagli e firma in sicurezza — nessun account richiesto.",
       "heading": "{org} richiede la tua firma",
-      "quoteLabel": "Preventivo {number}",
+      "documentLabel": {
+        "quote": "Preventivo {number}",
+        "contract": "Contratto {number}"
+      },
       "totalLabel": "Totale",
       "typedName": "Digita il tuo nome completo per firmare",
       "typedNamePlaceholder": "Mario Rossi",

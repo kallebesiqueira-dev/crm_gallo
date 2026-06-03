@@ -219,6 +219,30 @@
     "delete": "Supprimer",
     "confirmDelete": "Supprimer le pipeline « {name} » ?"
   },
+  "documentTemplates": {
+    "title": "Modèles de document",
+    "new": "Nouveau modèle",
+    "adminOnly": "Seuls les administrateurs et les managers peuvent créer des modèles.",
+    "intro": "Corps de contrat réutilisables avec des champs de fusion remplis lors de l'application d'un modèle à un contrat.",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Contrat de service standard",
+    "bodyLabel": "Corps",
+    "bodyPlaceholder": "Ce contrat est conclu entre votre organisation et le client…",
+    "fieldsLabel": "Insérer un champ",
+    "setDefault": "Définir par défaut",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "empty": "Aucun modèle pour le moment.",
+    "emptyBody": "(vide)",
+    "default": "Par défaut",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirmDelete": "Supprimer le modèle « {name} » ?",
+    "applyToContract": "Appliquer un modèle",
+    "chooseTemplate": "Choisir un modèle…",
+    "apply": "Appliquer",
+    "noTemplate": "Aucun modèle"
+  },
   "teams": {
     "title": "Équipes",
     "adminOnly": "Seuls les admins et managers peuvent créer ou supprimer des équipes.",
@@ -509,7 +533,10 @@
       "brandTitle": "Un document attend votre signature",
       "brandSubtitle": "Vérifiez les détails et signez en toute sécurité — aucun compte requis.",
       "heading": "{org} demande votre signature",
-      "quoteLabel": "Devis {number}",
+      "documentLabel": {
+        "quote": "Devis {number}",
+        "contract": "Contrat {number}"
+      },
       "totalLabel": "Total",
       "typedName": "Saisissez votre nom complet pour signer",
       "typedNamePlaceholder": "Jean Dupont",

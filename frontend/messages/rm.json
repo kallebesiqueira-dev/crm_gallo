@@ -219,6 +219,30 @@
     "delete": "Stizzar",
     "confirmDelete": "Stizzar il pipeline \"{name}\"?"
   },
+  "documentTemplates": {
+    "title": "Models da document",
+    "new": "Nov model",
+    "adminOnly": "Mo administraturs e managers pon crear models.",
+    "intro": "Cuntegns da contract reutilisabels cun champs da fusiun che vegnan emplenids cur ch'ins applitgescha in model ad in contract.",
+    "nameLabel": "Num",
+    "namePlaceholder": "Contract da servetsch standard",
+    "bodyLabel": "Cuntegn",
+    "bodyPlaceholder": "Quest contract vegn fatg tranter tia organisaziun ed il client…",
+    "fieldsLabel": "Inserir in champ",
+    "setDefault": "Definir sco standard",
+    "cancel": "Interrumper",
+    "save": "Memorisar",
+    "empty": "Anc nagins models.",
+    "emptyBody": "(vid)",
+    "default": "Standard",
+    "edit": "Modifitgar",
+    "delete": "Stizzar",
+    "confirmDelete": "Stizzar il model \"{name}\"?",
+    "applyToContract": "Applitgar in model",
+    "chooseTemplate": "Tscherner in model…",
+    "apply": "Applitgar",
+    "noTemplate": "Nagin model"
+  },
   "teams": {
     "title": "Teams",
     "adminOnly": "Mo administraturs e manager pon crear u stizzar teams.",
@@ -509,7 +533,10 @@
       "brandTitle": "In document spetga vossa signatura",
       "brandSubtitle": "Controllai ils detagls e suttascrivai segir — nagin conto necessari.",
       "heading": "{org} dumonda vossa signatura",
-      "quoteLabel": "Offerta {number}",
+      "documentLabel": {
+        "quote": "Offerta {number}",
+        "contract": "Contratto {number}"
+      },
       "totalLabel": "Total",
       "typedName": "Tippai voss num cumplet per suttascriver",
       "typedNamePlaceholder": "Gion Casper",
