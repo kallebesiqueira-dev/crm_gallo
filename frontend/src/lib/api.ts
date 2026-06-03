@@ -170,6 +170,50 @@ export interface QuoteUpdate {
   line_items?: QuoteLineItemInput[];
 }
 
+export type SignatureStatus =
+  | "drafted"
+  | "sent"
+  | "viewed"
+  | "signed"
+  | "countersigned"
+  | "declined"
+  | "cancelled";
+
+export interface SignatureRequest {
+  id: string;
+  quote_id: string;
+  provider: string;
+  status: SignatureStatus;
+  signer_name: string;
+  signer_email: string;
+  message: string | null;
+  external_id: string | null;
+  document_attachment_id: string | null;
+  signed_document_key: string | null;
+  owner_id: string | null;
+  sent_at: string | null;
+  viewed_at: string | null;
+  signed_at: string | null;
+  declined_at: string | null;
+  decline_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  // Where the signer goes to sign. Set by the server on /send (manual
+  // provider builds it from the token); null on plain reads.
+  signing_url: string | null;
+}
+
+/** The minimal, unauthenticated view the signer sees on /sign/[token]. */
+export interface SignatureSignContext {
+  status: SignatureStatus;
+  signer_name: string;
+  quote_number: string;
+  quote_title: string;
+  quote_total: number;
+  quote_currency: Currency;
+  organization_name: string;
+}
+
 export interface DashboardStats {
   total_leads: number;
   leads_by_stage: Record<string, number>;
@@ -950,6 +994,43 @@ export const api = {
       `/api/quotes/${id}/pdf`,
       { method: "POST", token },
     ),
+
+  // Signature requests on quotes (ADR-016)
+  listSignatureRequests: (token: string, quote_id: string) => {
+    const params = new URLSearchParams({ quote_id });
+    return request<Page<SignatureRequest>>(`/api/signatures?${params.toString()}`, { token });
+  },
+  createSignatureRequest: (
+    token: string,
+    payload: { quote_id: string; signer_name: string; signer_email: string; message?: string | null },
+  ) =>
+    request<SignatureRequest>("/api/signatures", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  getSignatureRequest: (token: string, id: string) =>
+    request<SignatureRequest>(`/api/signatures/${id}`, { token }),
+  sendSignatureRequest: (token: string, id: string) =>
+    request<SignatureRequest>(`/api/signatures/${id}/send`, { method: "POST", token }),
+  cancelSignatureRequest: (token: string, id: string) =>
+    request<SignatureRequest>(`/api/signatures/${id}/cancel`, { method: "POST", token }),
+  deleteSignatureRequest: (token: string, id: string) =>
+    request<void>(`/api/signatures/${id}`, { method: "DELETE", token }),
+
+  // Public signer surface — no token; the URL token IS the credential.
+  getSigningContext: (signToken: string) =>
+    request<SignatureSignContext>(`/api/signatures/sign/${encodeURIComponent(signToken)}`),
+  submitSignature: (signToken: string, typed_name: string) =>
+    request<SignatureRequest>(`/api/signatures/sign/${encodeURIComponent(signToken)}`, {
+      method: "POST",
+      body: JSON.stringify({ typed_name }),
+    }),
+  declineSignature: (signToken: string, reason?: string | null) =>
+    request<SignatureRequest>(`/api/signatures/sign/${encodeURIComponent(signToken)}/decline`, {
+      method: "POST",
+      body: JSON.stringify({ reason: reason ?? null }),
+    }),
 
   // Dashboard
   stats: (token: string) => request<DashboardStats>("/api/dashboard/stats", { token }),

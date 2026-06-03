@@ -7,19 +7,9 @@ import { FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { api, type Quote, type QuoteStatus } from "@/lib/api";
+import { api, type Quote } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-
-export const STATUS_VARIANT: Record<
-  QuoteStatus,
-  "secondary" | "warning" | "success" | "danger" | "outline"
-> = {
-  draft: "secondary",
-  sent: "warning",
-  accepted: "success",
-  declined: "danger",
-  expired: "outline",
-};
+import { STATUS_VARIANT } from "./status";
 
 export default function QuotesPage() {
   const t = useTranslations("quotes");
