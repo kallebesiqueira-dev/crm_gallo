@@ -15,6 +15,7 @@
     "contracts": "Contracts",
     "documents": "Documents",
     "assistant": "Assistent IA",
+    "imports": "Importaziuns",
     "reports": "Rapports",
     "billing": "Quint",
     "settings": "Parameters",
@@ -141,6 +142,40 @@
     "aiSummary": "Resumaziun IA",
     "summarize": "Resumar",
     "noSummary": "Nagina resumaziun anc. Cliccai sin Resumar per generar."
+  },
+  "imports": {
+    "title": "Importaziuns",
+    "subtitle": "Importar interessents e clients dad ina datoteca CSV u Excel.",
+    "startTitle": "Cumenzar in import",
+    "entityType": "Importar en",
+    "entityLead": "Interessents",
+    "entityCustomer": "Clients",
+    "mode": "En cas da correspundenza",
+    "modeCreate": "Sursiglir ils existents",
+    "modeUpsert": "Actualisar ils existents",
+    "modeCreateHint": "Lingias che correspundan ad ina endataziun existenta tras e-mail u telefon vegnan sursiglidas.",
+    "modeUpsertHint": "Lingias che correspundan ad ina endataziun existenta actualiseschan ses champs betg vids.",
+    "file": "Datoteca",
+    "fileHint": "CSV u XLSX, fin 50 000 lingias.",
+    "startButton": "Cumenzar l'import",
+    "downloadTemplate": "Telechargiar il model",
+    "recentTitle": "Imports recents",
+    "empty": "Anc nagins imports.",
+    "colFile": "Datoteca",
+    "colEntity": "Tip",
+    "colStatus": "Status",
+    "colResult": "Resultat",
+    "colCreated": "Cumenzà",
+    "status": {
+      "pending": "En spetga",
+      "processing": "En lavur",
+      "completed": "Terminà",
+      "failed": "Fallì"
+    },
+    "resultSummary": "{created} creads · {updated} actualisads · {skipped} sursiglids · {errors} errurs",
+    "pollNote": "Questa pagina vegn actualisada automaticamain durant ch'in import è en lavur.",
+    "uploadFailed": "Errur durant il transferiment. Controllai la datoteca ed empruvai danovamain.",
+    "templateFailed": "Betg pussaivel da generar il model."
   },
   "pipeline": {
     "title": "Pipeline",
@@ -570,7 +605,8 @@
     "noPermission": "Vus n'avais betg ils dretgs per quai.",
     "back": "Enavos",
     "saved": "Memorisà",
-    "loadMore": "Chargiar dapli"
+    "loadMore": "Chargiar dapli",
+    "exportCsv": "Exportar CSV"
   },
   "marketing": {
     "loginHeroTitle": "Serra dapli affars cun in copilot IA a tes maun.",

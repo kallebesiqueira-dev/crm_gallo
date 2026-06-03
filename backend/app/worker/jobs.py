@@ -34,6 +34,10 @@ from app.models import (
     Contract,
     Customer,
     Deal,
+    ImportEntityType,
+    ImportJob,
+    ImportMode,
+    ImportStatus,
     Lead,
     Organization,
     Quote,
@@ -61,6 +65,19 @@ _WEBHOOK_AUTO_PAUSE_THRESHOLD = 10
 # Truncate received bodies so a misbehaving receiver returning a
 # 1 MB HTML error page doesn't bloat the deliveries table.
 _WEBHOOK_RESPONSE_EXCERPT_BYTES = 2048
+
+# Cap on per-row errors persisted to `ImportJob.error_report`. A 50k-row
+# file that's malformed on every line would otherwise write a multi-MB
+# JSONB blob; 1000 sampled errors is plenty for a user to see the shape
+# of what's wrong and fix the source file. `error_count` still reflects
+# the TRUE total — only the detailed report is sampled.
+_IMPORT_ERROR_REPORT_CAP = 1000
+
+# Which ORM model each importable entity writes to.
+_IMPORT_MODELS = {
+    ImportEntityType.lead: Lead,
+    ImportEntityType.customer: Customer,
+}
 
 
 async def score_lead(ctx: dict, lead_id: str, organization_id: str) -> dict:
@@ -850,3 +867,255 @@ async def generate_contract_pdf(ctx: dict, contract_id: str, organization_id: st
         size_bytes=att_size,
     )
     return {"status": "generated", "attachment_id": att_id, "size_bytes": att_size}
+
+
+def _dedupe_keys(clean: dict) -> tuple[str | None, str | None]:
+    """The two match keys for one validated row: `lower(email)` and the
+    digits-normalised phone. Either may be None (the column was blank)."""
+    from app.imports import normalize_phone
+
+    email = clean.get("email")
+    email_key = email.strip().lower() if email else None
+    phone_key = normalize_phone(clean.get("phone"))
+    return email_key, phone_key
+
+
+async def process_import(ctx: dict, import_job_id: str, organization_id: str) -> dict:
+    """Run one bulk import: download → parse → validate → dedupe → write.
+
+    Enqueued by `POST /api/imports` after the file is uploaded to S3 and
+    the `ImportJob` row created (`pending`). The worker is `crm_app`
+    (NOBYPASSRLS), so the RLS GUC must be set before any tenant-table
+    access — including reading the job row itself.
+
+    Failure model:
+      * A whole-file failure (unreadable, empty, missing required header)
+        sets `status=failed` + `error_message`; nothing is imported.
+      * A per-row validation/dedupe outcome is counted
+        (created/updated/skipped/error) and, for errors, sampled into
+        `error_report` (capped). The job still ends `completed`.
+
+    Atomicity & idempotency: all data writes happen in ONE transaction
+    that also stamps the final counters/status, so a crash mid-write
+    rolls back cleanly and arq's retry redoes the whole file from
+    scratch (existing rows then match as dupes — create skips them,
+    upsert re-applies the same values). The only non-idempotent effect
+    of a retry is re-counting, which is fine because counters are
+    overwritten, not incremented across runs. A job already `completed`
+    is never reprocessed.
+    """
+    from app.imports import (
+        ImportParseError,
+        get_spec,
+        normalize_phone,
+        parse_table,
+        resolve_headers,
+        validate_row,
+    )
+    from app.storage import get_object
+
+    SessionLocal = ctx["SessionLocal"]
+    job_uuid = uuid.UUID(import_job_id)
+    org_uuid = uuid.UUID(organization_id)
+
+    set_current_org_id(org_uuid)
+
+    # Phase 1 — claim the job (pending/processing → processing) and read the
+    # fields we need, then release the connection before the S3 download +
+    # CPU-bound parse/validate. A completed job is a no-op (double-dispatch
+    # or a retry after success).
+    async with SessionLocal() as db:
+        job = (
+            await db.execute(
+                select(ImportJob).where(
+                    ImportJob.id == job_uuid, ImportJob.organization_id == org_uuid
+                )
+            )
+        ).scalar_one_or_none()
+        if job is None:
+            log.warning("process_import.job_missing", import_job_id=import_job_id)
+            return {"status": "missing"}
+        if job.status == ImportStatus.completed:
+            return {"status": "already_completed"}
+        job.status = ImportStatus.processing
+        entity_type = job.entity_type
+        mode = job.mode
+        storage_key = job.storage_key
+        content_type = job.content_type
+        filename = job.filename
+        created_by = job.created_by_user_id
+        await db.commit()
+
+    spec = get_spec(entity_type.value)
+    model = _IMPORT_MODELS[entity_type]
+
+    # Phase 2 — download + parse + validate with NO DB connection held.
+    # parse_table caps at MAX_ROWS and raises ImportParseError on a
+    # whole-file problem; resolve_headers reports missing required columns.
+    try:
+        content = await get_object(storage_key)
+        headers, raw_rows = await asyncio.to_thread(
+            parse_table, content, content_type, filename
+        )
+        header_to_field, missing = resolve_headers(spec, headers)
+        if missing:
+            raise ImportParseError(
+                "Missing required column(s): " + ", ".join(missing)
+            )
+    except ImportParseError as exc:
+        async with SessionLocal() as db:
+            job = (
+                await db.execute(select(ImportJob).where(ImportJob.id == job_uuid))
+            ).scalar_one_or_none()
+            if job is not None:
+                job.status = ImportStatus.failed
+                job.error_message = str(exc)
+                job.finished_at = datetime.now(UTC)
+                await record_audit(
+                    db,
+                    actor=None,
+                    action="import.failed",
+                    entity_type="import_job",
+                    entity_id=job_uuid,
+                    organization_id=org_uuid,
+                    metadata={"reason": str(exc), "via": "worker"},
+                )
+                await db.commit()
+        log.warning(
+            "process_import.failed",
+            import_job_id=import_job_id,
+            organization_id=organization_id,
+            reason=str(exc),
+        )
+        return {"status": "failed", "reason": str(exc)}
+
+    # Phase 3 — one transaction: build the dedupe index from existing rows,
+    # then create/upsert/skip each validated row, then stamp counters +
+    # status. Atomic, so a mid-write crash rolls back the whole import.
+    created = updated = skipped = errors = 0
+    error_report: list[dict] = []
+
+    async with SessionLocal() as db:
+        # Existing-record dedupe index: key → row id. Built once from a
+        # narrow projection (id/email/phone) so we don't load full ORM
+        # objects for the whole org just to test membership. `setdefault`
+        # keeps the FIRST match deterministic if the org already holds
+        # duplicate keys.
+        email_to_id: dict[str, uuid.UUID] = {}
+        phone_to_id: dict[str, uuid.UUID] = {}
+        existing = await db.execute(
+            select(model.id, model.email, model.phone).where(
+                model.organization_id == org_uuid
+            )
+        )
+        for rid, email, phone in existing:
+            if email:
+                email_to_id.setdefault(email.strip().lower(), rid)
+            pk = normalize_phone(phone)
+            if pk:
+                phone_to_id.setdefault(pk, rid)
+
+        for offset, raw in enumerate(raw_rows):
+            # +2: row 1 is the header, and humans count from 1.
+            row_no = offset + 2
+            clean, row_errors = validate_row(spec, raw, header_to_field)
+            if clean is None:
+                errors += 1
+                if len(error_report) < _IMPORT_ERROR_REPORT_CAP:
+                    for e in row_errors:
+                        error_report.append({"row": row_no, **e})
+                continue
+
+            email_key, phone_key = _dedupe_keys(clean)
+            match_id = (
+                (email_key and email_to_id.get(email_key))
+                or (phone_key and phone_to_id.get(phone_key))
+                or None
+            )
+
+            if match_id is not None:
+                if mode == ImportMode.upsert:
+                    record = (
+                        await db.execute(select(model).where(model.id == match_id))
+                    ).scalar_one_or_none()
+                    if record is not None:
+                        # Only non-empty incoming values overwrite — a blank
+                        # cell is "no change", not "clear the field".
+                        for fld, val in clean.items():
+                            if val is not None:
+                                setattr(record, fld, val)
+                        updated += 1
+                    else:
+                        skipped += 1
+                else:
+                    skipped += 1
+                continue
+
+            # New record. owner defaults to the importer so the rows land
+            # in their pipeline view; org_id is set explicitly (RLS would
+            # reject a row whose org_id doesn't match the GUC anyway).
+            obj = model(**clean, organization_id=org_uuid)
+            if hasattr(obj, "owner_id") and created_by is not None:
+                obj.owner_id = created_by
+            db.add(obj)
+            await db.flush()  # assign PK so within-file dupes match this row
+            created += 1
+            if email_key:
+                email_to_id.setdefault(email_key, obj.id)
+            if phone_key:
+                phone_to_id.setdefault(phone_key, obj.id)
+
+        job = (
+            await db.execute(select(ImportJob).where(ImportJob.id == job_uuid))
+        ).scalar_one_or_none()
+        if job is None:
+            # Job deleted mid-flight (org teardown). Abandon the writes.
+            await db.rollback()
+            log.warning("process_import.job_vanished", import_job_id=import_job_id)
+            return {"status": "missing"}
+        job.status = ImportStatus.completed
+        job.total_rows = len(raw_rows)
+        job.created_count = created
+        job.updated_count = updated
+        job.skipped_count = skipped
+        job.error_count = errors
+        job.error_report = error_report or None
+        job.finished_at = datetime.now(UTC)
+        await record_audit(
+            db,
+            actor=None,
+            action="import.completed",
+            entity_type="import_job",
+            entity_id=job_uuid,
+            organization_id=org_uuid,
+            metadata={
+                "entity_type": entity_type.value,
+                "mode": mode.value,
+                "total_rows": len(raw_rows),
+                "created": created,
+                "updated": updated,
+                "skipped": skipped,
+                "errors": errors,
+                "via": "worker",
+            },
+        )
+        await db.commit()
+
+    log.info(
+        "process_import.done",
+        import_job_id=import_job_id,
+        organization_id=organization_id,
+        total_rows=len(raw_rows),
+        created=created,
+        updated=updated,
+        skipped=skipped,
+        errors=errors,
+    )
+    return {
+        "status": "completed",
+        "total_rows": len(raw_rows),
+        "created": created,
+        "updated": updated,
+        "skipped": skipped,
+        "errors": errors,
+    }

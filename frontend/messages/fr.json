@@ -15,6 +15,7 @@
     "contracts": "Contrats",
     "documents": "Documents",
     "assistant": "Assistant IA",
+    "imports": "Imports",
     "reports": "Rapports",
     "billing": "Facturation",
     "settings": "Paramètres",
@@ -141,6 +142,40 @@
     "aiSummary": "Résumé IA",
     "summarize": "Résumer",
     "noSummary": "Aucun résumé. Cliquez sur Résumer pour en générer un."
+  },
+  "imports": {
+    "title": "Imports",
+    "subtitle": "Importez des prospects et des clients depuis un fichier CSV ou Excel.",
+    "startTitle": "Démarrer un import",
+    "entityType": "Importer dans",
+    "entityLead": "Prospects",
+    "entityCustomer": "Clients",
+    "mode": "En cas de correspondance",
+    "modeCreate": "Ignorer les existants",
+    "modeUpsert": "Mettre à jour les existants",
+    "modeCreateHint": "Les lignes correspondant à un enregistrement existant par e-mail ou téléphone sont ignorées.",
+    "modeUpsertHint": "Les lignes correspondant à un enregistrement existant mettent à jour ses champs non vides.",
+    "file": "Fichier",
+    "fileHint": "CSV ou XLSX, jusqu'à 50 000 lignes.",
+    "startButton": "Démarrer l'import",
+    "downloadTemplate": "Télécharger le modèle",
+    "recentTitle": "Imports récents",
+    "empty": "Aucun import pour le moment.",
+    "colFile": "Fichier",
+    "colEntity": "Type",
+    "colStatus": "Statut",
+    "colResult": "Résultat",
+    "colCreated": "Démarré",
+    "status": {
+      "pending": "En attente",
+      "processing": "En cours",
+      "completed": "Terminé",
+      "failed": "Échoué"
+    },
+    "resultSummary": "{created} créés · {updated} mis à jour · {skipped} ignorés · {errors} erreurs",
+    "pollNote": "Cette page se rafraîchit automatiquement pendant un import.",
+    "uploadFailed": "Échec de l'envoi. Vérifiez le fichier et réessayez.",
+    "templateFailed": "Impossible de générer le modèle."
   },
   "pipeline": {
     "title": "Pipeline",
@@ -570,7 +605,8 @@
     "noPermission": "Vous n'avez pas la permission de faire cela.",
     "back": "Retour",
     "saved": "Enregistré",
-    "loadMore": "Charger plus"
+    "loadMore": "Charger plus",
+    "exportCsv": "Exporter en CSV"
   },
   "marketing": {
     "loginHeroTitle": "Concluez plus d'affaires avec un copilote IA à vos côtés.",

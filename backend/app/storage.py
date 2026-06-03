@@ -108,6 +108,21 @@ async def put_object(key: str, body: bytes | IO[bytes], content_type: str) -> No
     await asyncio.to_thread(_sync)
 
 
+async def get_object(key: str) -> bytes:
+    """Download the full object at `key` into memory.
+
+    Used by the bulk-import worker to pull the uploaded CSV/XLSX back
+    for parsing. Import files are bounded by `MAX_ROWS` upstream and the
+    upload size limit, so reading the whole body is fine — we don't need
+    streaming here the way the export side does."""
+
+    def _sync():
+        resp = _s3().get_object(Bucket=_settings.s3_bucket, Key=key)
+        return resp["Body"].read()
+
+    return await asyncio.to_thread(_sync)
+
+
 async def delete_object(key: str) -> None:
     """Hard-delete from the bucket. Called from the attachment soft-
     delete endpoint — the DB row stays (audit + restore), the blob

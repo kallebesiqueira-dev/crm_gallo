@@ -17,7 +17,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -124,6 +124,47 @@ class DocumentType(str, enum.Enum):
     """
 
     contract = "contract"
+
+
+class ImportEntityType(str, enum.Enum):
+    """Which CRM entity a bulk import targets (ADR-016 imports slice).
+
+    Only the two contact-shaped entities are importable today — they
+    carry the email/phone keys the dedupe logic matches on. Deals/tasks
+    would need a customer-linkage resolution step, deferred.
+    """
+
+    lead = "lead"
+    customer = "customer"
+
+
+class ImportMode(str, enum.Enum):
+    """How a row that matches an existing record is handled.
+
+    `create`  — matched rows are skipped (insert-only; safest default).
+    `upsert`  — matched rows have their non-empty columns updated.
+    Match key is `(org, lower(email))` first, then normalised phone.
+    """
+
+    create = "create"
+    upsert = "upsert"
+
+
+class ImportStatus(str, enum.Enum):
+    """Lifecycle of an import job (driven by the `process_import` worker).
+
+        pending ──▶ processing ──▶ completed
+                                └▶ failed   (fatal parse/read error)
+
+    A `completed` job may still carry per-row errors in `error_report` —
+    `failed` is reserved for a whole-file failure (unreadable, unknown
+    columns, empty), where nothing was imported.
+    """
+
+    pending = "pending"
+    processing = "processing"
+    completed = "completed"
+    failed = "failed"
 
 
 class SignatureStatus(str, enum.Enum):
@@ -786,6 +827,68 @@ class DocumentTemplate(SoftDeleteMixin, Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class ImportJob(Base):
+    """One bulk-import run of a CSV/XLSX file into leads or customers.
+
+    The HTTP layer uploads the file to S3 and creates this row in
+    `pending`; the `process_import` worker job downloads it, parses +
+    validates row-by-row, dedupes against existing records, and writes
+    back the outcome counters + a capped per-row `error_report`. The SPA
+    polls `GET /api/imports/{id}` until `status` is terminal.
+
+    Org-scoped + RLS like every tenant table. NOT soft-deletable — an
+    import job is an operational record (think: a receipt), not a CRM
+    entity a user trashes/restores; a retention prune is the eventual
+    cleanup path, not the trash bin.
+
+    `error_report` is a JSONB list of `{row, field, message}` objects,
+    capped (see the worker) so a 50k-row file that's wrong on every line
+    can't bloat the row to megabytes.
+    """
+
+    __tablename__ = "import_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    entity_type: Mapped[ImportEntityType] = mapped_column(Enum(ImportEntityType), nullable=False)
+    mode: Mapped[ImportMode] = mapped_column(
+        Enum(ImportMode), default=ImportMode.create, nullable=False
+    )
+    status: Mapped[ImportStatus] = mapped_column(
+        Enum(ImportStatus), default=ImportStatus.pending, nullable=False
+    )
+
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(512), nullable=False)
+
+    total_rows: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    updated_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    skipped_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    error_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # List[{row:int, field:str|None, message:str}] — capped in the worker.
+    error_report: Mapped[list | None] = mapped_column(JSONB)
+    # Set only on a whole-file failure (unreadable / unknown columns).
+    error_message: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class SignatureRequest(SoftDeleteMixin, Base):

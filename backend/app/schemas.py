@@ -11,6 +11,9 @@ from app.models import (
     Currency,
     DealStage,
     DocumentType,
+    ImportEntityType,
+    ImportMode,
+    ImportStatus,
     LeadStage,
     Plan,
     QuoteStatus,
@@ -236,6 +239,38 @@ class FileAttachmentDownloadOut(BaseModel):
 
     url: str
     expires_in: int
+
+
+class ImportJobOut(BaseModel):
+    """One bulk-import job — created `pending`, polled by the SPA until
+    `status` is terminal (`completed` / `failed`). The counters and
+    `error_report` are zero/empty until the worker finishes."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    entity_type: ImportEntityType
+    mode: ImportMode
+    status: ImportStatus
+    filename: str
+    total_rows: int
+    created_count: int
+    updated_count: int
+    skipped_count: int
+    error_count: int
+    # List[{row:int, field:str|None, message:str}] — capped in the worker.
+    error_report: list[dict] | None = None
+    error_message: str | None = None
+    created_at: datetime
+    finished_at: datetime | None = None
+
+
+class ImportTemplateOut(BaseModel):
+    """Canonical column headers for an entity's import template (a `*`
+    suffix marks required columns), so the SPA can offer a starter file."""
+
+    entity_type: ImportEntityType
+    headers: list[str]
 
 
 class NoteCreate(BaseModel):

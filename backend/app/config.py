@@ -56,6 +56,17 @@ class Settings(BaseSettings):
     # belong on a dedicated DMS, not the CRM record.
     attachment_max_bytes: int = 25 * 1024 * 1024
 
+    # ---- Bulk imports (ADR-016) ----
+    # Hard cap on an uploaded import file, bytes. 10 MB comfortably holds
+    # the MAX_ROWS (50k) contact CSV/XLSX the parser accepts; bigger files
+    # are almost always a wrong-file mistake, so we reject at the edge
+    # before paying for an S3 round-trip + a worker dispatch.
+    import_max_upload_bytes: int = 10 * 1024 * 1024
+    # Per-org cap on import jobs started in a rolling 24h window. Stops a
+    # script (or a stuck retry loop) from flooding the worker; a human
+    # doing real imports never approaches it.
+    import_daily_cap: int = 50
+
     # ---- Sentry ----
     # Empty DSN = SDK disabled (no init, no network calls). The smoke
     # path is "deploy with an empty DSN and nothing changes"; pasting

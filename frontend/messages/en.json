@@ -15,6 +15,7 @@
     "contracts": "Contracts",
     "documents": "Documents",
     "assistant": "AI Assistant",
+    "imports": "Imports",
     "reports": "Reports",
     "billing": "Billing",
     "settings": "Settings",
@@ -141,6 +142,40 @@
     "aiSummary": "AI summary",
     "summarize": "Summarize",
     "noSummary": "No summary yet. Click Summarize to generate one."
+  },
+  "imports": {
+    "title": "Imports",
+    "subtitle": "Bulk-import leads and customers from a CSV or Excel file.",
+    "startTitle": "Start an import",
+    "entityType": "Import into",
+    "entityLead": "Leads",
+    "entityCustomer": "Customers",
+    "mode": "On a match",
+    "modeCreate": "Skip existing",
+    "modeUpsert": "Update existing",
+    "modeCreateHint": "Rows that match an existing record by email or phone are skipped.",
+    "modeUpsertHint": "Rows that match an existing record update its non-empty fields.",
+    "file": "File",
+    "fileHint": "CSV or XLSX, up to 50,000 rows.",
+    "startButton": "Start import",
+    "downloadTemplate": "Download template",
+    "recentTitle": "Recent imports",
+    "empty": "No imports yet.",
+    "colFile": "File",
+    "colEntity": "Type",
+    "colStatus": "Status",
+    "colResult": "Result",
+    "colCreated": "Started",
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "resultSummary": "{created} created · {updated} updated · {skipped} skipped · {errors} errors",
+    "pollNote": "This page refreshes automatically while an import is running.",
+    "uploadFailed": "Upload failed. Check the file and try again.",
+    "templateFailed": "Could not generate the template."
   },
   "pipeline": {
     "title": "Pipeline",
@@ -570,7 +605,8 @@
     "noPermission": "You don't have permission to do this.",
     "back": "Back",
     "saved": "Saved",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "exportCsv": "Export CSV"
   },
   "marketing": {
     "loginHeroTitle": "Close more deals with an AI copilot at your side.",

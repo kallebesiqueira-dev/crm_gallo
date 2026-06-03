@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Download, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -81,12 +81,20 @@ export default function CustomersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <Button asChild>
-          <Link href={`/${locale}/customers/new`}>
-            <Plus className="h-4 w-4" />
-            {t("new")}
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <a href={api.exportUrl("customer")}>
+              <Download className="h-4 w-4" />
+              {tCommon("exportCsv")}
+            </a>
+          </Button>
+          <Button asChild>
+            <Link href={`/${locale}/customers/new`}>
+              <Plus className="h-4 w-4" />
+              {t("new")}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-md">

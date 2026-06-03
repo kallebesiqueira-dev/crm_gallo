@@ -15,6 +15,7 @@
     "contracts": "Contratti",
     "documents": "Documenti",
     "assistant": "Assistente IA",
+    "imports": "Importazioni",
     "reports": "Report",
     "billing": "Fatturazione",
     "settings": "Impostazioni",
@@ -141,6 +142,40 @@
     "aiSummary": "Riassunto IA",
     "summarize": "Riassumi",
     "noSummary": "Nessun riassunto. Clicca Riassumi per generarne uno."
+  },
+  "imports": {
+    "title": "Importazioni",
+    "subtitle": "Importa lead e clienti da un file CSV o Excel.",
+    "startTitle": "Avvia importazione",
+    "entityType": "Importa in",
+    "entityLead": "Lead",
+    "entityCustomer": "Clienti",
+    "mode": "In caso di corrispondenza",
+    "modeCreate": "Salta esistenti",
+    "modeUpsert": "Aggiorna esistenti",
+    "modeCreateHint": "Le righe che corrispondono a un record esistente per email o telefono vengono saltate.",
+    "modeUpsertHint": "Le righe che corrispondono a un record esistente aggiornano i suoi campi non vuoti.",
+    "file": "File",
+    "fileHint": "CSV o XLSX, fino a 50.000 righe.",
+    "startButton": "Avvia importazione",
+    "downloadTemplate": "Scarica modello",
+    "recentTitle": "Importazioni recenti",
+    "empty": "Ancora nessuna importazione.",
+    "colFile": "File",
+    "colEntity": "Tipo",
+    "colStatus": "Stato",
+    "colResult": "Risultato",
+    "colCreated": "Avviata",
+    "status": {
+      "pending": "In attesa",
+      "processing": "In corso",
+      "completed": "Completata",
+      "failed": "Non riuscita"
+    },
+    "resultSummary": "{created} creati · {updated} aggiornati · {skipped} saltati · {errors} errori",
+    "pollNote": "Questa pagina si aggiorna automaticamente durante un'importazione.",
+    "uploadFailed": "Caricamento non riuscito. Controlla il file e riprova.",
+    "templateFailed": "Impossibile generare il modello."
   },
   "pipeline": {
     "title": "Pipeline",
@@ -570,7 +605,8 @@
     "noPermission": "Non hai i permessi per farlo.",
     "back": "Indietro",
     "saved": "Salvato",
-    "loadMore": "Carica altri"
+    "loadMore": "Carica altri",
+    "exportCsv": "Esporta CSV"
   },
   "marketing": {
     "loginHeroTitle": "Chiudi più trattative con un copilota IA al tuo fianco.",

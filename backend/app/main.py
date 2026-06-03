@@ -23,6 +23,8 @@ from app.api import (
     dashboard,
     deals,
     document_templates,
+    exports,
+    imports,
     invites,
     leads,
     notes,
@@ -287,6 +289,8 @@ app.include_router(webhooks.router)
 app.include_router(activities.router)
 app.include_router(notes.router)
 app.include_router(attachments.router)
+app.include_router(imports.router)
+app.include_router(exports.router)
 app.include_router(teams.router)
 app.include_router(pipelines.router)
 app.include_router(notifications.router)

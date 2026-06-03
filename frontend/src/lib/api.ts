@@ -493,6 +493,38 @@ export interface FileAttachment {
   created_at: string;
 }
 
+export type ImportEntityType = "lead" | "customer";
+export type ImportMode = "create" | "upsert";
+export type ImportStatus = "pending" | "processing" | "completed" | "failed";
+
+export interface ImportRowError {
+  row: number;
+  field: string | null;
+  message: string;
+}
+
+export interface ImportJob {
+  id: string;
+  entity_type: ImportEntityType;
+  mode: ImportMode;
+  status: ImportStatus;
+  filename: string;
+  total_rows: number;
+  created_count: number;
+  updated_count: number;
+  skipped_count: number;
+  error_count: number;
+  error_report: ImportRowError[] | null;
+  error_message: string | null;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface ImportTemplate {
+  entity_type: ImportEntityType;
+  headers: string[];
+}
+
 export interface Note {
   id: string;
   entity_type: "lead" | "customer" | "deal";
@@ -916,6 +948,57 @@ export const api = {
     request<void>(`/api/attachments/${encodeURIComponent(id)}`, {
       method: "DELETE",
     }),
+
+  // ---- Bulk imports (CSV / XLSX → leads / customers) ----
+  listImports: (limit = 25, offset = 0) => {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    return request<ImportJob[]>(`/api/imports?${params.toString()}`);
+  },
+
+  getImport: (id: string) => request<ImportJob>(`/api/imports/${encodeURIComponent(id)}`),
+
+  importTemplate: (entity_type: ImportEntityType) => {
+    const params = new URLSearchParams({ entity_type });
+    return request<ImportTemplate>(`/api/imports/template?${params.toString()}`);
+  },
+
+  // Multipart upload — like uploadAttachment, the browser must own the
+  // multipart boundary so we can't route through the JSON `request()`
+  // helper. CSRF header + cookies are attached manually.
+  async createImport(
+    entity_type: ImportEntityType,
+    mode: ImportMode,
+    file: File,
+  ): Promise<ImportJob> {
+    const form = new FormData();
+    form.append("entity_type", entity_type);
+    form.append("mode", mode);
+    form.append("file", file);
+    const csrf = readCookie("csrf_token");
+    const res = await fetch(`${API_URL}/api/imports`, {
+      method: "POST",
+      body: form,
+      headers: csrf ? { "X-CSRF-Token": csrf } : undefined,
+      credentials: "include",
+    });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        detail = (await res.json())?.detail || detail;
+      } catch {
+        /* ignore */
+      }
+      throw new ApiError(res.status, detail);
+    }
+    return res.json();
+  },
+
+  // ---- Exports (streaming CSV download) ----
+  // Returns the absolute URL; the caller navigates the browser to it so
+  // the file streams straight from the API as an attachment. Cookies ride
+  // along on the top-level navigation, so auth still applies.
+  exportUrl: (entity_type: ImportEntityType) =>
+    `${API_URL}/api/exports/${encodeURIComponent(entity_type)}?format=csv`,
 
   // ---- Notes (markdown notes per Lead/Customer/Deal) ----
   listNotes: (entity_type: "lead" | "customer" | "deal", entity_id: string) => {

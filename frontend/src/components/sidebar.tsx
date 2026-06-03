@@ -16,6 +16,7 @@ import {
   ScrollText,
   Target,
   Trash2,
+  Upload,
   Users,
   Workflow,
 } from "lucide-react";
@@ -32,6 +33,7 @@ const NAV = [
   { href: "quotes", label: "quotes", icon: FileText },
   { href: "contracts", label: "contracts", icon: FileSignature },
   { href: "assistant", label: "assistant", icon: Sparkles },
+  { href: "imports", label: "imports", icon: Upload },
   { href: "reports", label: "reports", icon: BarChart3 },
   { href: "billing", label: "billing", icon: CreditCard },
   { href: "trash", label: "trash", icon: Trash2 },

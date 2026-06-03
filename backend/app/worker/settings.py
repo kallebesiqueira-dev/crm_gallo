@@ -38,6 +38,7 @@ from app.worker.jobs import (
     generate_contract_pdf,
     generate_deal_pdf,
     generate_quote_pdf,
+    process_import,
     score_lead,
     send_email,
 )
@@ -98,6 +99,7 @@ class WorkerSettings:
         generate_deal_pdf,
         generate_quote_pdf,
         generate_contract_pdf,
+        process_import,
     ]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1

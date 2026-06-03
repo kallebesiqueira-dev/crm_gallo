@@ -15,6 +15,7 @@
     "contracts": "Verträge",
     "documents": "Dokumente",
     "assistant": "KI-Assistent",
+    "imports": "Importe",
     "reports": "Berichte",
     "billing": "Abrechnung",
     "settings": "Einstellungen",
@@ -141,6 +142,40 @@
     "aiSummary": "KI-Zusammenfassung",
     "summarize": "Zusammenfassen",
     "noSummary": "Noch keine Zusammenfassung. Klicken Sie auf Zusammenfassen."
+  },
+  "imports": {
+    "title": "Importe",
+    "subtitle": "Leads und Kunden per CSV- oder Excel-Datei importieren.",
+    "startTitle": "Import starten",
+    "entityType": "Importieren in",
+    "entityLead": "Leads",
+    "entityCustomer": "Kunden",
+    "mode": "Bei Übereinstimmung",
+    "modeCreate": "Vorhandene überspringen",
+    "modeUpsert": "Vorhandene aktualisieren",
+    "modeCreateHint": "Zeilen, die per E-Mail oder Telefon mit einem vorhandenen Datensatz übereinstimmen, werden übersprungen.",
+    "modeUpsertHint": "Zeilen, die mit einem vorhandenen Datensatz übereinstimmen, aktualisieren dessen nicht-leere Felder.",
+    "file": "Datei",
+    "fileHint": "CSV oder XLSX, bis zu 50.000 Zeilen.",
+    "startButton": "Import starten",
+    "downloadTemplate": "Vorlage herunterladen",
+    "recentTitle": "Letzte Importe",
+    "empty": "Noch keine Importe.",
+    "colFile": "Datei",
+    "colEntity": "Typ",
+    "colStatus": "Status",
+    "colResult": "Ergebnis",
+    "colCreated": "Gestartet",
+    "status": {
+      "pending": "Ausstehend",
+      "processing": "Wird verarbeitet",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen"
+    },
+    "resultSummary": "{created} erstellt · {updated} aktualisiert · {skipped} übersprungen · {errors} Fehler",
+    "pollNote": "Diese Seite wird automatisch aktualisiert, während ein Import läuft.",
+    "uploadFailed": "Upload fehlgeschlagen. Bitte Datei prüfen und erneut versuchen.",
+    "templateFailed": "Vorlage konnte nicht erstellt werden."
   },
   "pipeline": {
     "title": "Pipeline",
@@ -570,7 +605,8 @@
     "noPermission": "Sie haben keine Berechtigung dafür.",
     "back": "Zurück",
     "saved": "Gespeichert",
-    "loadMore": "Mehr laden"
+    "loadMore": "Mehr laden",
+    "exportCsv": "CSV exportieren"
   },
   "marketing": {
     "loginHeroTitle": "Schließen Sie mehr Deals — mit einem KI-Copiloten an Ihrer Seite.",
