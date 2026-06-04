@@ -16,6 +16,7 @@ session that bypasses RLS for setup.
 from __future__ import annotations
 
 import uuid
+from datetime import UTC
 
 import pytest
 from sqlalchemy.orm import Session
@@ -30,7 +31,6 @@ from app.models import (
     User,
 )
 from tests.conftest import CsrfAwareClient
-
 
 # ---------- per-entity seeders ----------
 
@@ -67,22 +67,38 @@ def _persist(db: Session, row):
 # entity_type -> config. `has_get_detail` is False for tasks: the API
 # (and the frontend) only expose PATCH/DELETE on /api/tasks/{id}, no GET.
 _ENTITIES = {
-    "lead": dict(
-        seeder=_seed_lead, list_path="/api/leads", prefix="/api/leads",
-        patch={"notes": "x"}, paginated=True, has_get_detail=True,
-    ),
-    "customer": dict(
-        seeder=_seed_customer, list_path="/api/customers", prefix="/api/customers",
-        patch={"notes": "x"}, paginated=True, has_get_detail=True,
-    ),
-    "deal": dict(
-        seeder=_seed_deal, list_path="/api/deals", prefix="/api/deals",
-        patch={"notes": "x"}, paginated=False, has_get_detail=True,
-    ),
-    "task": dict(
-        seeder=_seed_task, list_path="/api/tasks", prefix="/api/tasks",
-        patch={"title": "x"}, paginated=False, has_get_detail=False,
-    ),
+    "lead": {
+        "seeder": _seed_lead,
+        "list_path": "/api/leads",
+        "prefix": "/api/leads",
+        "patch": {"notes": "x"},
+        "paginated": True,
+        "has_get_detail": True,
+    },
+    "customer": {
+        "seeder": _seed_customer,
+        "list_path": "/api/customers",
+        "prefix": "/api/customers",
+        "patch": {"notes": "x"},
+        "paginated": True,
+        "has_get_detail": True,
+    },
+    "deal": {
+        "seeder": _seed_deal,
+        "list_path": "/api/deals",
+        "prefix": "/api/deals",
+        "patch": {"notes": "x"},
+        "paginated": False,
+        "has_get_detail": True,
+    },
+    "task": {
+        "seeder": _seed_task,
+        "list_path": "/api/tasks",
+        "prefix": "/api/tasks",
+        "patch": {"title": "x"},
+        "paginated": False,
+        "has_get_detail": False,
+    },
 }
 
 
@@ -152,10 +168,10 @@ def test_cross_org_trash_is_404(
     other_org: Organization,
     foreign_user: User,
 ):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     row = _ENTITIES[entity_type]["seeder"](db, other_org, foreign_user)
-    row.deleted_at = datetime.now(timezone.utc)
+    row.deleted_at = datetime.now(UTC)
     db.commit()
 
     # Not listed in the requesting org's trash.
@@ -164,9 +180,7 @@ def test_cross_org_trash_is_404(
     assert str(row.id) not in {item["id"] for item in r.json()}
 
     # Restore + hard-delete of a foreign row look like it doesn't exist.
-    assert (
-        admin_client.post(f"/api/trash/{entity_type}/{row.id}/restore").status_code == 404
-    )
+    assert admin_client.post(f"/api/trash/{entity_type}/{row.id}/restore").status_code == 404
     assert admin_client.delete(f"/api/trash/{entity_type}/{row.id}").status_code == 404
 
 
