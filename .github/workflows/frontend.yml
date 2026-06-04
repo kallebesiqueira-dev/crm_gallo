@@ -51,10 +51,8 @@ jobs:
         # behind its own incremental checker.
         run: npx tsc --noEmit
 
-      # vitest is a P1 backlog item; once `tests/` exists in frontend/
-      # uncomment the step below.
-      # - name: Unit tests (vitest)
-      #   run: npm run test -- --run
+      - name: Unit tests (vitest)
+        run: npm run test -- --run
 
       - name: Build (next build)
         # Catches build-only errors (broken dynamic imports, missing
