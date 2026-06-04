@@ -635,7 +635,8 @@
     "back": "Zurück",
     "saved": "Gespeichert",
     "loadMore": "Mehr laden",
-    "exportCsv": "CSV exportieren"
+    "exportCsv": "CSV exportieren",
+    "versionConflict": "Dieser Datensatz wurde geändert, seit Sie ihn geöffnet haben. Laden Sie neu, um die aktuelle Version zu sehen."
   },
   "marketing": {
     "loginHeroTitle": "Schließen Sie mehr Deals — mit einem KI-Copiloten an Ihrer Seite.",

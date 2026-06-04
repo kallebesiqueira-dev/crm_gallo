@@ -635,7 +635,8 @@
     "back": "Enavos",
     "saved": "Memorisà",
     "loadMore": "Chargiar dapli",
-    "exportCsv": "Exportar CSV"
+    "exportCsv": "Exportar CSV",
+    "versionConflict": "Quest record è vegnì midà dapi che ti l'has avert. Chargia danovamain per vesair la versiun pli nova."
   },
   "marketing": {
     "loginHeroTitle": "Serra dapli affars cun in copilot IA a tes maun.",

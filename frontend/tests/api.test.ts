@@ -71,6 +71,42 @@ describe("request() headers", () => {
   });
 });
 
+describe("optimistic locking (If-Match)", () => {
+  it.each([
+    ["updateCustomer", () => api.updateCustomer("tok", "c1", { company: "Acme" }, 3)],
+    ["updateDeal", () => api.updateDeal("tok", "d1", { stage: "qualified" }, 3)],
+    ["updateTask", () => api.updateTask("tok", "t1", { status: "done" }, 3)],
+  ])("%s sends If-Match with the passed version", async (_name, call) => {
+    fetchMock.mockResolvedValueOnce(mockResponse(200, { id: "x", version: 4 }));
+    await call();
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.method).toBe("PATCH");
+    expect(init.headers["If-Match"]).toBe("3");
+  });
+
+  it("omits If-Match when no version is passed (server stays v1-lenient)", async () => {
+    fetchMock.mockResolvedValueOnce(mockResponse(200, { id: "c1", version: 1 }));
+    await api.updateCustomer("tok", "c1", { company: "Acme" });
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers["If-Match"]).toBeUndefined();
+  });
+
+  it("sends If-Match:'0' for a freshly-created row (version 0 is truthy-safe)", async () => {
+    fetchMock.mockResolvedValueOnce(mockResponse(200, { id: "t1", version: 1 }));
+    await api.updateTask("tok", "t1", { status: "done" }, 0);
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers["If-Match"]).toBe("0");
+  });
+
+  it("surfaces a 412 as an ApiError the UI can branch on", async () => {
+    fetchMock.mockResolvedValueOnce(mockResponse(412, { detail: "version mismatch" }));
+    await expect(api.updateCustomer("tok", "c1", { company: "Acme" }, 1)).rejects.toMatchObject({
+      name: "ApiError",
+      status: 412,
+    });
+  });
+});
+
 describe("request() responses", () => {
   it("returns parsed json on 200", async () => {
     fetchMock.mockResolvedValueOnce(mockResponse(200, { id: "l1", first_name: "Ann" }));

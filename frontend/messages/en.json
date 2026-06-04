@@ -635,7 +635,8 @@
     "back": "Back",
     "saved": "Saved",
     "loadMore": "Load more",
-    "exportCsv": "Export CSV"
+    "exportCsv": "Export CSV",
+    "versionConflict": "This record was changed since you opened it. Reload to see the latest."
   },
   "marketing": {
     "loginHeroTitle": "Close more deals with an AI copilot at your side.",

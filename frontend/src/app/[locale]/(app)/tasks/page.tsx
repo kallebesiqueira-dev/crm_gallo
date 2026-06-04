@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { api, type Task, type TaskPriority, type TaskStatus } from "@/lib/api";
+import { api, ApiError, type Task, type TaskPriority, type TaskStatus } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 const STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
@@ -27,10 +27,12 @@ const PRIORITY_VARIANT: Record<TaskPriority, "secondary" | "warning" | "danger">
 
 export default function TasksPage() {
   const t = useTranslations("tasks");
+  const tCommon = useTranslations("common");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [dueDate, setDueDate] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
     const token = getToken();
@@ -62,8 +64,20 @@ export default function TasksPage() {
     const token = getToken();
     if (!token) return;
     const next = STATUSES[(STATUSES.indexOf(task.status) + 1) % STATUSES.length];
-    const updated = await api.updateTask(token, task.id, { status: next });
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+    setError(null);
+    try {
+      const updated = await api.updateTask(token, task.id, { status: next }, task.version);
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 412) {
+        // The task changed under us — surface a conflict and reload so
+        // the row carries the fresh version for the next attempt.
+        setError(tCommon("versionConflict"));
+        refresh();
+      } else {
+        throw e;
+      }
+    }
   }
 
   async function remove(task: Task) {
@@ -76,6 +90,8 @@ export default function TasksPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <Card>
         <CardHeader>

@@ -635,7 +635,8 @@
     "back": "Volver",
     "saved": "Guardado",
     "loadMore": "Cargar más",
-    "exportCsv": "Exportar CSV"
+    "exportCsv": "Exportar CSV",
+    "versionConflict": "Este registro se modificó desde que lo abriste. Recarga para ver la versión más reciente."
   },
   "marketing": {
     "loginHeroTitle": "Cierra más negocios con un copiloto de IA a tu lado.",

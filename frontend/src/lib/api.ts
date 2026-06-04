@@ -71,6 +71,7 @@ export interface Customer {
   ai_summary: string | null;
   ai_summary_updated_at: string | null;
   owner_id: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -87,6 +88,7 @@ export interface Deal {
   customer_id: string | null;
   owner_id: string | null;
   sort_index: number;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -102,6 +104,7 @@ export interface Task {
   customer_id: string | null;
   deal_id: string | null;
   lead_id: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -1125,11 +1128,12 @@ export const api = {
   createCustomer: (token: string, payload: Partial<Customer>) =>
     request<Customer>("/api/customers", { method: "POST", token, body: JSON.stringify(payload) }),
   getCustomer: (token: string, id: string) => request<Customer>(`/api/customers/${id}`, { token }),
-  updateCustomer: (token: string, id: string, payload: Partial<Customer>) =>
+  updateCustomer: (token: string, id: string, payload: Partial<Customer>, version?: number) =>
     request<Customer>(`/api/customers/${id}`, {
       method: "PATCH",
       token,
       body: JSON.stringify(payload),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
     }),
   summarizeCustomer: (token: string, id: string) =>
     request<Customer>(`/api/customers/${id}/summarize`, { method: "POST", token }),
@@ -1140,8 +1144,13 @@ export const api = {
   listDeals: (token: string) => request<Deal[]>("/api/deals", { token }),
   createDeal: (token: string, payload: Partial<Deal>) =>
     request<Deal>("/api/deals", { method: "POST", token, body: JSON.stringify(payload) }),
-  updateDeal: (token: string, id: string, payload: Partial<Deal>) =>
-    request<Deal>(`/api/deals/${id}`, { method: "PATCH", token, body: JSON.stringify(payload) }),
+  updateDeal: (token: string, id: string, payload: Partial<Deal>, version?: number) =>
+    request<Deal>(`/api/deals/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
+    }),
   moveDeal: (token: string, id: string, stage: DealStage, sort_index: number) =>
     request<Deal>(`/api/deals/${id}/move`, {
       method: "POST",
@@ -1162,8 +1171,13 @@ export const api = {
   },
   createTask: (token: string, payload: Partial<Task>) =>
     request<Task>("/api/tasks", { method: "POST", token, body: JSON.stringify(payload) }),
-  updateTask: (token: string, id: string, payload: Partial<Task>) =>
-    request<Task>(`/api/tasks/${id}`, { method: "PATCH", token, body: JSON.stringify(payload) }),
+  updateTask: (token: string, id: string, payload: Partial<Task>, version?: number) =>
+    request<Task>(`/api/tasks/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
+    }),
   deleteTask: (token: string, id: string) =>
     request<void>(`/api/tasks/${id}`, { method: "DELETE", token }),
 

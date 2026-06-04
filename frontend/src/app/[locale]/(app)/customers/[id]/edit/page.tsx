@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 export default function EditCustomerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +20,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [version, setVersion] = useState<number | null>(null);
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -51,6 +52,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
           website: c.website ?? "",
           notes: c.notes ?? "",
         });
+        setVersion(c.version);
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
@@ -72,10 +74,18 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
       ) as Record<string, string | null>;
       payload.first_name = form.first_name;
       payload.last_name = form.last_name;
-      await api.updateCustomer(token, id, payload);
+      await api.updateCustomer(token, id, payload, version ?? undefined);
       router.push(`/${locale}/customers/${id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      if (e instanceof ApiError && e.status === 412) {
+        // Someone edited this record since we loaded it. Reload the
+        // latest so the user can re-apply their change on top.
+        setError(tCommon("versionConflict"));
+        const fresh = await api.getCustomer(token, id).catch(() => null);
+        if (fresh) setVersion(fresh.version);
+      } else {
+        setError(e instanceof Error ? e.message : "Failed");
+      }
     } finally {
       setBusy(false);
     }
