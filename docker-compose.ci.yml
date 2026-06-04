@@ -1,0 +1,24 @@
+# CI override for the e2e smoke (.github/workflows/e2e.yml).
+#
+# The deterministic core Playwright test (register → login → create lead →
+# logout) never scores a lead and never uploads a file, so it needs only
+# Postgres + Redis + the API + the web app. The base compose makes `backend`
+# wait for `ollama` AND `minio` to be healthy; pulling the ~2 GB Ollama image
+# and its model on every CI run would be slow and flaky for zero benefit here.
+#
+# `!override` replaces (rather than merges with) the base `depends_on`, so the
+# Ollama/MinIO conditions are dropped. The backend's LLM and S3 clients are
+# lazy — they're only constructed when a request actually scores or uploads —
+# so the API boots cleanly with neither service present. The AI-scoring test
+# (gated behind SCORE_E2E) is skipped in CI, so the model is never called.
+#
+# Bring up exactly: db, redis, backend, frontend. `worker` is intentionally not
+# started (nothing in the core path enqueues a job, and it also waits on
+# Ollama); name only the four services in `docker compose up`.
+services:
+  backend:
+    depends_on: !override
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started

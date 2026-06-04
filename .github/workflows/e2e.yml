@@ -1,0 +1,103 @@
+name: e2e
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - "docker-compose.yml"
+      - "docker-compose.ci.yml"
+      - ".github/workflows/e2e.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - "docker-compose.yml"
+      - "docker-compose.ci.yml"
+      - ".github/workflows/e2e.yml"
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Dev defaults only — no real secrets. Stripe/email/Sentry are empty
+      # (no-op), the JWT secret is a non-production placeholder, and
+      # ENVIRONMENT=development so startup secret validation stays lenient.
+      - name: Seed .env (dev defaults)
+        run: cp .env.example .env
+
+      # Build + start only what the core smoke needs (see docker-compose.ci.yml):
+      # Postgres, Redis, the API, the web app. No Ollama, no MinIO, no worker.
+      # The backend's `alembic upgrade head` runs on container start, so once
+      # /health answers the schema is migrated and the API is serving.
+      - name: Start stack
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build db redis backend frontend
+
+      - name: Wait for backend /health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8001/health >/dev/null 2>&1; then
+              echo "backend healthy"; exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::backend never became healthy"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs backend
+          exit 1
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3030/en/login >/dev/null 2>&1; then
+              echo "frontend up"; exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::frontend never came up"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs frontend
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # SCORE_E2E is unset, so the LLM-backed scoring test self-skips and only
+      # the deterministic core golden path runs. playwright.config picks up
+      # CI=true automatically (github reporter, 1 retry).
+      - name: Run e2e (core golden path)
+        working-directory: frontend
+        run: npx playwright test
+
+      - name: Dump stack logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml logs
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v

@@ -1,7 +1,7 @@
 # Engineering Backlog & Project Status
 
 > **Living document.** Update when work changes state. Read this first when resuming work.
-> **Last reviewed:** 2026-06-04
+> **Last reviewed:** 2026-06-04 (reconciled "Next milestone" — ADR-016 Documents stack fully shipped + pushed)
 
 ---
 
@@ -81,7 +81,14 @@ For the user-facing story, see [README.md](README.md). This document is the engi
 *(nothing committed — pick the next P1 item)*
 
 ### ⏭️ Next milestone
-**P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking) and the **Transactional-email workstream** (DONE 2026-06-01, ADR-017 — provider abstraction + worker delivery + 7-locale templates; invites + reset now send for real). The **PDF foundation** (ADR-016, first slice) is now DONE (2026-06-02 — WeasyPrint render in the worker, deal-summary PDF stored as a FileAttachment; see §3 Documents). Cursor pagination (TD-11) is now DONE (2026-06-02 — keyset on leads/customers/quotes). The remaining pre-paying-customer work is the rest of **Documents/Contracts** (`Contract` entity + e-signature via Skribble/Scrive, ADR-016). See §3 P1 + the gaps added 2026-06-01 (contracts, public API, omnichannel) and the new tech-debt rows TD-30…TD-41.
+**P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking), the **Transactional-email workstream** (DONE 2026-06-01, ADR-017), and the **full ADR-016 Documents stack** — PDF foundation, versioned Quotes, versioned Contracts (backend + frontend + create-from-quote), merge-field templates, e-signature on both quotes and contracts, bulk Imports/Exports, and the Public API + API keys are ALL DONE and pushed to `main` (commits `4cfb6bc`/`37dcf6b`/`40ea9b2`/`b0374dc`/`5a02240`/`a7c5c1a`/`2e0302a`/`380898d`). Cursor pagination (TD-11) and money→Decimal (TD-30) done too. **CI is green** on all 4 workflows; frontend Vitest + backend cross-org RLS guard + Playwright e2e (core gate + opt-in scoring) all landed 2026-06-04.
+
+**Genuine remaining pre-paying-customer candidates (none started):**
+- **Run the e2e in CI** — the core Playwright smoke is deterministic but un-wired; needs the full docker stack stood up in GH Actions (db+redis+worker+ollama+backend+frontend). Heaviest-but-highest-signal gate.
+- **Auth hardening leftovers** — MFA mandatory for admin/manager (§P1 191), MFA secret at-rest encryption (192), DB-load of user on `/refresh` to honor `is_active=false` instantly (189).
+- **Audit SELECT strict policy / repo grep guard** (§Database 169) — today audit cross-org safety leans on app-layer filtering.
+- **Per-resource lifecycle + audit-matrix tests** (§Tests 212–213) — only Lead is exercised end-to-end.
+- **Staging env + post-deploy smoke** (231) — deferred until a host is chosen.
 
 ---
 
