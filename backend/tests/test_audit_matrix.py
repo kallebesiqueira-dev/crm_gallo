@@ -31,7 +31,6 @@ from sqlalchemy.orm import Session
 from app.models import AuditLog, User
 from tests.conftest import CsrfAwareClient
 
-
 # (entity_type, plural_path, create_body, patch_body)
 ENTITIES = [
     (
