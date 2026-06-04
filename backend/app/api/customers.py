@@ -4,9 +4,11 @@ from datetime import UTC, datetime
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import ENTITY_CUSTOMER, ActivityType, record_activity
+from app.api._errors import raise_for_duplicate_email
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
@@ -66,7 +68,11 @@ async def create_customer(
     data["owner_id"] = data.get("owner_id") or user.id
     customer = Customer(**data, organization_id=org_id)
     db.add(customer)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise_for_duplicate_email(exc, "customer")
     await record_audit(
         db,
         actor=user,
@@ -130,7 +136,11 @@ async def update_customer(
         actor=user,
         metadata={"fields": list(changes.keys())},
     )
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise_for_duplicate_email(exc, "customer")
     await db.refresh(customer)
     return customer
 
