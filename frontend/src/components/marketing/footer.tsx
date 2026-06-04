@@ -204,20 +204,13 @@ export function Footer() {
             </div>
             <dl className="mt-4 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-2 text-xs leading-relaxed text-muted-foreground">
               {/* Ragione sociale, sede legale, phone and domain are REAL.
-                  Partita IVA + Codice Fiscale are TEMPORARY dummy numbers
-                  (12345678901) — replace with the real Partita IVA once it
-                  is issued (for an S.r.l. the Codice Fiscale equals it). */}
+                  Partita IVA is a TEMPORARY dummy number (12345678901) —
+                  replace with the real one once it is issued. */}
               <dt className="text-foreground/80">{tMarketing("footerBusinessName")}</dt>
               <dd className="break-words">GALLO CRM S.r.l.</dd>
 
-              <dt className="text-foreground/80">Codice Fiscale</dt>
-              <dd className="font-mono break-words">12345678901</dd>
-
               <dt className="text-foreground/80">{tMarketing("footerVAT")}</dt>
               <dd className="font-mono break-words">IT12345678901</dd>
-
-              <dt className="text-foreground/80">{tMarketing("footerSector")}</dt>
-              <dd className="break-words">Sales &amp; Distribution</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerAddress")}</dt>
               <dd className="break-words">
@@ -239,10 +232,10 @@ export function Footer() {
               <dt className="text-foreground/80">{tMarketing("footerEmail")}</dt>
               <dd>
                 <a
-                  href="mailto:commercial@gallocrm.com"
+                  href="mailto:contatto@gallocrm.com"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  commercial@gallocrm.com
+                  contatto@gallocrm.com
                 </a>
               </dd>
 
