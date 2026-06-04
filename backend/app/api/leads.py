@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 import sqlalchemy as sa
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,16 +10,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.api._errors import raise_for_duplicate_email
 from app.audit import record_audit
+from app.config import get_settings
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.models import Lead, LeadStage, User
 from app.notifications import NotificationType, notify
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
+from app.rate_limit import limiter, user_or_ip_key
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
 from app.services.ai_scoring import score_lead
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
+settings = get_settings()
 
 
 # All endpoints here are tenant-scoped via `get_current_org_id`. Every
@@ -252,7 +255,9 @@ async def delete_lead(
 
 
 @router.post("/{lead_id}/score", response_model=LeadOut)
+@limiter.limit(f"{settings.rate_limit_score_per_hour}/hour", key_func=user_or_ip_key)
 async def score(
+    request: Request,
     lead_id: uuid.UUID,
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
@@ -295,7 +300,9 @@ async def score(
 
 
 @router.post("/{lead_id}/score-async", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit(f"{settings.rate_limit_score_per_hour}/hour", key_func=user_or_ip_key)
 async def score_async(
+    request: Request,
     lead_id: uuid.UUID,
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),

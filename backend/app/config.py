@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     rate_limit_login_per_minute: int = 5
     rate_limit_register_per_minute: int = 5
     rate_limit_password_reset_per_minute: int = 3
+    # LLM-cost protection — per-user (see app.rate_limit.user_or_ip_key).
+    rate_limit_score_per_hour: int = 10
+    rate_limit_assistant_per_minute: int = 30
 
     # ---- S3-compatible object storage (FileAttachments) ----
     # Defaults match the MinIO sidecar in docker-compose; swap the

@@ -323,9 +323,8 @@ Auth is browser cookie + CSRF, which can't do server-to-server, and routes aren'
 - [ ] Stable sort key (always `(updated_at DESC, id DESC)`) — same order twice for the same data.
 
 #### Rate limiting beyond /login
-- [ ] `/api/auth/register` (5/min/IP, already P1 but flag here)
-- [ ] `/api/assistant/chat` (30/min/user — LLM cost protection)
-- [ ] `/api/leads/{id}/score` (10/hour/user — LLM cost protection)
+- [x] `/api/auth/register` (5/min/IP) — done 2026-05-30 (`@limiter.limit`, IP-keyed).
+- [x] **`/api/assistant/chat` (30/min/user) + `/api/leads/{id}/score` (10/hour/user) — LLM cost protection, done 2026-06-04.** The slowapi default keys on IP (`get_remote_address`), which is wrong for authenticated cost-bearing routes — a whole office behind one NAT would share a bucket. Added `app/rate_limit.py::user_or_ip_key`: reads the JWT `sub` from the same access cookie / Bearer header `get_current_user` uses → `user:{id}` bucket, falling back to `ip:{addr}` when no/invalid token (the route's auth dep rejects those anyway). Config knobs `rate_limit_score_per_hour=10` / `rate_limit_assistant_per_minute=30`. The hour cap is applied to BOTH `/score` and `/score-async` (same LLM cost) — note they get **separate** buckets (slowapi scopes per route), so the effective ceiling is 10 each; acceptable for cost protection since the frontend uses one path. Test `tests/test_rate_limit_llm.py` exhausts `/score` against a non-existent lead (404 fires before the LLM call, but each attempt still burns a slot) → 11th is 429; verified repeatable (`limiter.reset()` clears the Redis bucket between tests). No assistant-cap test (would need 31 real LLM calls).
 - [ ] Imports endpoint (1 concurrent/org)
 - [ ] Webhook receiver endpoints (per-org bucket)
 - [x] **Move from SlowAPI's in-process limiter to Redis-backed** — done 2026-06-01. `app/rate_limit.py` passes `storage_uri=settings.redis_url` + `key_prefix="rl:"` + `in_memory_fallback_enabled=True` to `Limiter(...)`. `limits[redis]` (transitive via slowapi) provides the `RedisStorage` backend. Verified: 6th /login in a minute returns 429; Redis shows `LIMITS:LIMITER/rl:/<ip>//api/auth/login/5/1/minute` key. `limiter.reset()` propagates to Redis (pytest fixture still works — 51/51 green). In-memory fallback means a Redis outage degrades to per-replica counting instead of refusing every request.
