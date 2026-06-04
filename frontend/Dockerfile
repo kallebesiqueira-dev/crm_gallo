@@ -3,15 +3,16 @@
 # =============================================================================
 # Multi-stage build for the Next.js frontend.
 #
-#   deps    → installs ALL deps (incl. dev). docker-compose targets THIS stage
-#             for local dev (compose `target: deps`), so `npm run dev` over the
-#             bind mount has its toolchain + node_modules.
+#   deps    → installs ALL deps (incl. dev). Shared base for dev + builder.
+#   dev     → deps + app source + `npm run dev`. docker-compose targets THIS.
+#             Local dev bind-mounts the source over it (live reload); CI e2e
+#             runs the BAKED source with no bind mount (see
+#             docker-compose.ci.yml), so the source must be in the image.
 #   builder → produces the standalone production build (.next/standalone).
 #   runner  → DEFAULT (final) stage: slim runtime with only the traced
 #             production output. `docker build ./frontend` and the CI Trivy
-#             scan get THIS image — the dev-only toolchain (playwright, vitest,
-#             eslint and their node-tar/glob/cross-spawn transitives, TD-44)
-#             is simply not present, so those HIGH CVEs disappear.
+#             scan get THIS image — no dev toolchain, and the esbuild Go
+#             binary is stripped (see below).
 # =============================================================================
 
 # ---- deps -------------------------------------------------------------------
@@ -20,8 +21,21 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
+# ---- dev --------------------------------------------------------------------
+# Mirrors the original dev image: source baked in + `npm run dev`. Runs as a
+# non-root user that owns /app, so `next dev` can write /app/.next even when
+# the CI e2e job drops the bind mount.
+FROM deps AS dev
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN addgroup -S app && adduser -S appuser -G app
+COPY . .
+RUN chown -R appuser:app /app
+USER appuser
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
+
 # ---- builder ----------------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM deps AS builder
 WORKDIR /app
 
 # NEXT_PUBLIC_* are inlined into the browser bundle at build time, so they must
@@ -66,6 +80,13 @@ ENV NODE_ENV=production \
 COPY --from=builder --chown=appuser:app /app/.next/standalone ./
 COPY --from=builder --chown=appuser:app /app/.next/static ./.next/static
 COPY --from=builder --chown=appuser:app /app/public ./public
+
+# esbuild ships a prebuilt Go binary (built with an old Go toolchain, so Trivy
+# flags ~18 Go-stdlib HIGH/CRITICAL CVEs against it). It is a build-time tool
+# that the production server (`node server.js`) never invokes, yet next's
+# dependency trace copies it into the standalone bundle. Drop it so the runtime
+# image carries no Go binary and the Trivy gate stays clean.
+RUN rm -rf node_modules/@esbuild node_modules/esbuild
 
 USER appuser
 EXPOSE 3000

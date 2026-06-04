@@ -5,15 +5,19 @@
 # is being consciously deferred with a stated reason.
 #
 # Review rule: anything reachable from the *runtime* attack surface gets
-# upgraded, not ignored. The entries below are all build/dev tooling that
-# only lands in the image because frontend/Dockerfile is a dev container
-# (`npm ci` installs devDependencies, CMD is `npm run dev`). They are not
-# part of the served Next.js runtime an external client can reach.
+# upgraded, not ignored. The entries below are build-tooling transitives
+# (tar / glob / minimatch / cross-spawn) that Next.js's standalone output
+# trace still copies into the production runner image even though the served
+# request handlers never invoke them. The CVEs are ReDoS / DoS / archive
+# path-traversal that need attacker-controlled input reaching those libs'
+# APIs — input the served app never feeds them.
 #
-# Proper fix (logged as tech debt, skills.md): give the frontend a
-# multi-stage production Dockerfile (`next build` + standalone output, no
-# devDependencies) so this whole class of dev-toolchain CVEs stops landing
-# in the scanned image. Once that exists, delete this file.
+# History: the frontend used to be a dev container, so this list also had to
+# cover playwright/vitest/eslint etc. Those are GONE now — frontend/Dockerfile
+# is a multi-stage production image (`next build` + standalone, no dev deps)
+# and the runner stage strips the esbuild Go binary (2 CRITICAL + HIGH Go
+# CVEs) outright. Only the standalone-traced transitives below remain, so this
+# file stays — but it should never grow back to cover a dev toolchain.
 
 # --- frontend dev-toolchain transitives (node_modules build tools) ---
 # (rollup's CVE-2026-27606 is NOT listed here — it's actually fixed via a
