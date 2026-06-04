@@ -2,7 +2,7 @@
 
 Coverage:
   * Fresh deal starts at version=0
-  * PATCH with no If-Match still works (v1 leniency) but bumps version
+  * PATCH with no If-Match → 428 Precondition Required (strict mode)
   * PATCH with correct If-Match works + bumps version
   * PATCH with stale If-Match returns 412
   * Concurrent edit scenario: two clients read v=0, both PATCH with
@@ -20,12 +20,13 @@ def test_new_deal_starts_at_version_zero(admin_client):
     assert r["version"] == 0
 
 
-def test_patch_without_if_match_still_works_and_bumps_version(admin_client):
-    """v1 leniency: header is optional. Logged as a warning server-side."""
+def test_patch_without_if_match_returns_428(admin_client):
+    """Strict mode: the header is required; a missing one is rejected, not mutated."""
     deal = admin_client.post("/api/deals", json={"title": "no-header probe"}).json()
     r = admin_client.patch(f"/api/deals/{deal['id']}", json={"title": "renamed"})
-    assert r.status_code == 200, r.text
-    assert r.json()["version"] == 1
+    assert r.status_code == 428, r.text
+    after = admin_client.get(f"/api/deals/{deal['id']}").json()
+    assert after["version"] == 0
 
 
 def test_patch_with_correct_if_match_bumps_version(admin_client):

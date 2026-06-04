@@ -4,7 +4,7 @@ Mirrors `test_deal_locking.py` for the two entities that adopted the
 `version` column in migration `9a8b7c6d5e4f`. The shared guard lives in
 `app/api/_concurrency.py::check_if_match`:
   * fresh row starts at version=0
-  * PATCH with no If-Match still works (v1 leniency) but bumps version
+  * PATCH with no If-Match → 428 Precondition Required (strict mode)
   * PATCH with correct If-Match works + bumps version
   * PATCH with stale If-Match → 412
   * malformed If-Match → 400
@@ -35,13 +35,13 @@ def test_new_row_starts_at_version_zero(
 
 
 @pytest.mark.parametrize("plural,create_body", RESOURCES, ids=IDS)
-def test_patch_without_if_match_works_and_bumps(
+def test_patch_without_if_match_returns_428(
     plural: str, create_body: dict, admin_client: CsrfAwareClient
 ):
     row = admin_client.post(f"/api/{plural}", json=create_body).json()
     r = admin_client.patch(f"/api/{plural}/{row['id']}", json=create_body)
-    assert r.status_code == 200, r.text
-    assert r.json()["version"] == 1
+    # the guard rejects before any write, so the row is left untouched
+    assert r.status_code == 428, r.text
 
 
 @pytest.mark.parametrize("plural,create_body", RESOURCES, ids=IDS)

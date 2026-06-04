@@ -4,9 +4,10 @@ Deal pioneered the pattern (migration `4d3d59906702`); Customer and
 Task adopt it (`9a8b7c6d5e4f`). Each carries a `version int` bumped on
 every mutation. Clients echo the value they last read as `If-Match`;
 a mismatch means someone else wrote in between → 412 Precondition
-Failed (RFC 7232 §4.2). v1 keeps the header OPTIONAL — a missing header
-logs a warning (rollout signal) and proceeds, so the frontend doesn't
-have to land in lockstep.
+Failed (RFC 7232 §4.2). The header is REQUIRED (strict mode, 2026-06-04):
+a missing header → 428 Precondition Required (RFC 6585 §3). The frontend
+echoes `version` on every mutation path (customer PATCH, task PATCH,
+deal `/move`), so there is no lenient rollout window left.
 """
 
 from __future__ import annotations
@@ -27,8 +28,11 @@ def check_if_match(
     current_version: int,
     if_match: str | None,
 ) -> None:
-    """Raise 412 if `if_match` disagrees with `current_version`; 400 if it
-    is not an integer. A missing header is lenient (logs `{entity}.if_match_missing`).
+    """Enforce the optimistic-locking precondition.
+
+    - missing header → 428 Precondition Required
+    - non-integer value → 400 Bad Request
+    - value ≠ `current_version` → 412 Precondition Failed
     """
     if if_match is None:
         log.warning(
@@ -36,7 +40,10 @@ def check_if_match(
             entity_id=str(entity_id),
             current_version=current_version,
         )
-        return
+        raise HTTPException(
+            status_code=status.HTTP_428_PRECONDITION_REQUIRED,
+            detail="If-Match header is required for this mutation.",
+        )
     # Accept both the bare form (`If-Match: 7`) and the RFC etag-quoted
     # form (`If-Match: "7"`) for client ergonomics.
     raw = if_match.strip().strip('"')

@@ -87,9 +87,11 @@ def test_deal_won_emits_two_events(admin_client, admin_user: User, db: Session):
     deal = admin_client.post(
         "/api/deals", json={"title": "Probe", "stage": "new", "value": 1000}
     ).json()
-    # Move to won
+    # Move to won (strict mode requires If-Match)
     admin_client.post(
-        f"/api/deals/{deal['id']}/move", json={"stage": "won", "sort_index": 0}
+        f"/api/deals/{deal['id']}/move",
+        json={"stage": "won", "sort_index": 0},
+        headers={"If-Match": str(deal["version"])},
     ).raise_for_status()
 
     events = db.execute(

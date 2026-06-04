@@ -44,7 +44,9 @@ def test_customer_lifecycle(admin_client: CsrfAwareClient):
     assert r.status_code == 200
     assert r.json()["first_name"] == "Cycle"
 
-    r = admin_client.patch(f"/api/customers/{cid}", json={"company": "Acme"})
+    r = admin_client.patch(
+        f"/api/customers/{cid}", json={"company": "Acme"}, headers={"If-Match": "0"}
+    )
     assert r.status_code == 200
     assert r.json()["company"] == "Acme"
 
@@ -73,8 +75,10 @@ def test_deal_lifecycle(admin_client: CsrfAwareClient):
     r = admin_client.get(f"/api/deals/{did}")
     assert r.status_code == 200
 
-    # PATCH (If-Match omitted — optimistic locking is lenient when absent).
-    r = admin_client.patch(f"/api/deals/{did}", json={"stage": "qualified"})
+    # PATCH with the current version (strict mode requires If-Match).
+    r = admin_client.patch(
+        f"/api/deals/{did}", json={"stage": "qualified"}, headers={"If-Match": "0"}
+    )
     assert r.status_code == 200, r.text
     assert r.json()["stage"] == "qualified"
 
@@ -100,7 +104,7 @@ def test_task_lifecycle(admin_client: CsrfAwareClient):
 
     assert tid in _ids(admin_client.get("/api/tasks").json())
 
-    r = admin_client.patch(f"/api/tasks/{tid}", json={"status": "done"})
+    r = admin_client.patch(f"/api/tasks/{tid}", json={"status": "done"}, headers={"If-Match": "0"})
     assert r.status_code == 200, r.text
     assert r.json()["status"] == "done"
 

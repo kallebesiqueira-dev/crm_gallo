@@ -99,11 +99,13 @@ def test_audit_matrix_full_lifecycle(
     # create
     r = admin_client.post(f"/api/{plural}", json=create_body)
     assert r.status_code == 201, r.text
-    eid = r.json()["id"]
+    created = r.json()
+    eid = created["id"]
     _assert_stamped(db, eid, f"{entity_type}.create", admin_user)
 
-    # update
-    r = admin_client.patch(f"/api/{plural}/{eid}", json=patch_body)
+    # update — version-bearing entities (customer/deal/task) require If-Match (strict mode)
+    patch_headers = {"If-Match": str(created["version"])} if "version" in created else {}
+    r = admin_client.patch(f"/api/{plural}/{eid}", json=patch_body, headers=patch_headers)
     assert r.status_code == 200, r.text
     _assert_stamped(db, eid, f"{entity_type}.update", admin_user)
 

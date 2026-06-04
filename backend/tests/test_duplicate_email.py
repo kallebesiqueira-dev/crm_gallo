@@ -57,10 +57,15 @@ def test_duplicate_email_on_update_returns_409(plural: str, admin_client: CsrfAw
         f"/api/{plural}",
         json={"first_name": "Mover", "last_name": "Email", "email": "mover@example.com"},
     )
-    mover_id = r.json()["id"]
+    mover = r.json()
+    mover_id = mover["id"]
 
     # PATCH the second row onto the first row's email → collision on commit.
-    r = admin_client.patch(f"/api/{plural}/{mover_id}", json={"email": "held@example.com"})
+    # customers carry a version → strict mode needs If-Match; leads don't.
+    headers = {"If-Match": str(mover["version"])} if "version" in mover else {}
+    r = admin_client.patch(
+        f"/api/{plural}/{mover_id}", json={"email": "held@example.com"}, headers=headers
+    )
     assert r.status_code == 409, r.text
     assert "already exists" in r.json()["detail"].lower()
 

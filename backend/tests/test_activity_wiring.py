@@ -21,7 +21,9 @@ def test_customer_mutations_emit_activities(admin_client: CsrfAwareClient):
     assert r.status_code == 201, r.text
     cid = r.json()["id"]
 
-    r = admin_client.patch(f"/api/customers/{cid}", json={"company": "Acme Inc"})
+    r = admin_client.patch(
+        f"/api/customers/{cid}", json={"company": "Acme Inc"}, headers={"If-Match": "0"}
+    )
     assert r.status_code == 200, r.text
 
     types = _types(admin_client, "customer", cid)
