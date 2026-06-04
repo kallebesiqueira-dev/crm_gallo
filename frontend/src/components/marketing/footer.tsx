@@ -203,11 +203,12 @@ export function Footer() {
               {tMarketing("footerCompany")}
             </div>
             <dl className="mt-4 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-2 text-xs leading-relaxed text-muted-foreground">
-              {/* PLACEHOLDER registry data — replace with the real registered
-                  Italian entity once the Partita IVA is issued (ragione
-                  sociale, Partita IVA, Codice Fiscale / REA, sede legale). */}
+              {/* Ragione sociale, sede legale and phone below are the REAL
+                  registered entity. Partita IVA + Codice Fiscale (and the
+                  e-mail / site domain) are PLACEHOLDERS until the Partita IVA
+                  is issued — replace them then. */}
               <dt className="text-foreground/80">{tMarketing("footerBusinessName")}</dt>
-              <dd className="break-words">Gallo Trading Italia S.r.l.</dd>
+              <dd className="break-words">GALLO CRM S.r.l.</dd>
 
               <dt className="text-foreground/80">Codice Fiscale</dt>
               <dd className="font-mono break-words">00000000000</dd>
@@ -220,40 +221,40 @@ export function Footer() {
 
               <dt className="text-foreground/80">{tMarketing("footerAddress")}</dt>
               <dd className="break-words">
-                Via Roma 1
+                Via Statale 21
                 <br />
-                20121 Milano (MI), Italia
+                21030 Marchirolo (VA), Italia
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerPhone")}</dt>
               <dd>
                 <a
-                  href="tel:+390200000000"
+                  href="tel:+393717403464"
                   className="font-mono break-words transition-colors hover:text-foreground"
                 >
-                  +39 02 0000 0000
+                  +39 371 740 3464
                 </a>
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerEmail")}</dt>
               <dd>
                 <a
-                  href="mailto:commercial@gallotrading-demo.it"
+                  href="mailto:commercial@gallocrm.it"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  commercial@gallotrading-demo.it
+                  commercial@gallocrm.it
                 </a>
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerWebsite")}</dt>
               <dd>
                 <a
-                  href="https://www.gallotrading-demo.it"
+                  href="https://www.gallocrm.it"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  www.gallotrading-demo.it
+                  www.gallocrm.it
                 </a>
               </dd>
             </dl>
