@@ -15,6 +15,18 @@
 # Bring up exactly: db, redis, backend, frontend. `worker` is intentionally not
 # started (nothing in the core path enqueues a job, and it also waits on
 # Ollama); name only the four services in `docker compose up`.
+#
+# The base compose bind-mounts the source (`./frontend:/app`, `./backend:/app`)
+# for hot reload and layers anonymous volumes over `/app/node_modules` +
+# `/app/.next`. That's a dev convenience and it actively breaks on a Linux CI
+# runner: the containers run as a non-root user, but the anonymous `.next`
+# volume is created root-owned, so `next dev` can't write `/app/.next/cache`
+# (EACCES) and never comes up. (Docker Desktop on Windows/macOS papers over the
+# uid mismatch, which is why it works locally.) We `!override` the volumes to
+# empty so each container runs purely from its freshly-built image filesystem,
+# which the Dockerfiles already `chown` to the app user. CI rebuilds the images
+# from the checked-out code on every run, so dropping the bind mount loses
+# nothing — it actually exercises the built artifact rather than a mount.
 services:
   backend:
     depends_on: !override
@@ -22,3 +34,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    volumes: !override []
+  frontend:
+    volumes: !override []
