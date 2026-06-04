@@ -464,7 +464,11 @@ async def mfa_disable(
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh(request: Request, response: Response) -> Token:
+async def refresh(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+) -> Token:
     """Mint a fresh access token from the refresh cookie AND rotate
     the refresh token itself. Detects reuse of already-rotated
     tokens as a theft signal and revokes the entire user's sessions.
@@ -524,9 +528,36 @@ async def refresh(request: Request, response: Response) -> Token:
             detail="Refresh token invalid or revoked",
         )
 
-    # Happy path: rotate.
+    # Re-load the user from the DB so a deactivated account is rejected
+    # at refresh time, not just on the next protected call. The refresh
+    # token alone (a Redis entry) carries no liveness signal — an admin
+    # who flips `is_active=False` would otherwise keep handing the user
+    # fresh 15-min access tokens until their current one expired. If the
+    # account is gone or disabled, burn every session so the still-live
+    # refresh token can't keep minting credentials, then 401.
+    try:
+        user_uuid = uuid.UUID(user_id_str)
+    except (ValueError, TypeError):
+        user_uuid = None
+    user = (
+        (await db.execute(select(User).where(User.id == user_uuid))).scalar_one_or_none()
+        if user_uuid is not None
+        else None
+    )
+    if user is None or not user.is_active:
+        await revoke_user_sessions_except(user_id_str, None)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account is inactive",
+        )
+
+    # Happy path: rotate. Stamp the user's real role into the new access
+    # token (the claim is cosmetic today — get_current_user re-reads role
+    # from the DB — but "unknown" was a latent trap if that ever changes).
     new_refresh = _new_refresh_token()
-    new_access = Token(access_token=create_access_token(subject=user_id_str, role="unknown"))
+    new_access = Token(
+        access_token=create_access_token(subject=user_id_str, role=user.role.value)
+    )
     ua = (request.headers.get("user-agent") or "")[:200]
     ip = request.client.host if request.client else ""
     await rotate_refresh_token(

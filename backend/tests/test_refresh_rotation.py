@@ -14,6 +14,9 @@ HTTP surface that ties them together.
 
 from __future__ import annotations
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.models import User
 
 
@@ -98,6 +101,30 @@ def test_reuse_detection_revokes_all_user_sessions(client, admin_user: User):
     client.cookies.set("refresh_token", rotated, domain="testserver.local", path="/api/auth")
     r = client.post("/api/auth/refresh")
     assert r.status_code == 401, r.text
+
+
+def test_refresh_rejects_deactivated_user(client, admin_user: User, db: Session):
+    """A user disabled out-of-band (is_active=False) must be rejected at
+    /refresh — not handed a fresh 15-min access token that only the next
+    protected call would catch. The live refresh token is also burned, so
+    a follow-up /refresh can't keep minting credentials either."""
+    client.post(
+        "/api/auth/login",
+        data={"username": admin_user.email, "password": "PytestPass2026!"},
+    ).raise_for_status()
+    assert client.cookies.get("refresh_token") is not None
+
+    # Admin flips the account off out-of-band.
+    db.execute(text("UPDATE users SET is_active = false WHERE id = :id"), {"id": str(admin_user.id)})
+    db.commit()
+
+    r = client.post("/api/auth/refresh")
+    assert r.status_code == 401, r.text
+    assert "inactive" in r.json()["detail"].lower()
+
+    # Sessions were revoked: a second attempt is still 401 (no new token).
+    r2 = client.post("/api/auth/refresh")
+    assert r2.status_code == 401, r2.text
 
 
 def test_refresh_without_cookie_returns_plain_401(client):
