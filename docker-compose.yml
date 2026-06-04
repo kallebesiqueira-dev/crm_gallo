@@ -136,7 +136,14 @@ services:
       disable: true
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      # Local dev + CI e2e target the `dev` stage (toolchain + node_modules +
+      # baked source). Local dev bind-mounts the source over it for live
+      # reload; CI e2e drops the bind mount and runs the baked source. The
+      # command is `npm run dev`. Production / CI image scan build the default
+      # `runner` stage (slim, standalone, no dev toolchain → Trivy-clean).
+      target: dev
     container_name: crm_gallo_frontend
     restart: unless-stopped
     env_file: .env
