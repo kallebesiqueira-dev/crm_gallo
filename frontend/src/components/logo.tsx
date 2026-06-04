@@ -52,8 +52,8 @@ export function Logo({
     <Image
       src="/gallo-logo.png"
       alt={label}
-      width={267}
-      height={255}
+      width={256}
+      height={256}
       priority={priority}
       className="w-auto select-none rounded-xl"
       style={{ height: px, width: "auto" }}
