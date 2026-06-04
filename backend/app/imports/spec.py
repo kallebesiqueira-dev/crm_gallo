@@ -47,7 +47,7 @@ def normalize_phone(raw: str | None) -> str | None:
     """Reduce a phone to digits (keeping a leading +) for dedupe matching.
 
     Not a libphonenumber-grade normaliser — just enough that
-    `"+41 79 123 45 67"` and `"+41791234567"` collide. Returns None when
+    `"+39 333 123 4567"` and `"+393331234567"` collide. Returns None when
     there's nothing dialable left.
     """
     if not raw:

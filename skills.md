@@ -286,7 +286,7 @@ These are the modules every serious CRM has and we don't.
 
 #### Transactional email (workstream — DONE 2026-06-01, see ADR-017)
 Invites and password-reset used to only `log.info("…dispatched", url=…)`. Solved ONCE as a workstream (provider abstraction + worker delivery + localized templates), not per-feature.
-- [x] Provider behind `app/email/sender.py::send(*, to, template, locale, ctx, dedupe_key)` — swappable via `EMAIL_PROVIDER`: `console` (dev default, logs, never raises), `resend` (httpx → api.resend.com), `smtp` (stdlib smtplib in a thread, STARTTLS). `get_provider()` factory; unknown → console fallback. SMTP self-host path is the EU/CH data-sovereignty answer (ADR-014).
+- [x] Provider behind `app/email/sender.py::send(*, to, template, locale, ctx, dedupe_key)` — swappable via `EMAIL_PROVIDER`: `console` (dev default, logs, never raises), `resend` (httpx → api.resend.com), `smtp` (stdlib smtplib in a thread, STARTTLS). `get_provider()` factory; unknown → console fallback. SMTP self-host path is the EU data-sovereignty answer (ADR-014).
 - [ ] Deliverability: SPF + DKIM + DMARC on a dedicated sending subdomain; bounce/complaint webhook → suppression list. **(prod-infra follow-up — not code)**
 - [x] Localized HTML+text templates (7 locales en/pt/de/fr/it/rm/es), rendered server-side in `app/email/render.py`. HTML part uses an **autoescaping** Jinja env (XSS-in-inbox defense — `<script>` in an org name is escaped; verified by `test_email.py`); text part is a separate non-escaping env. Branded inline-CSS table layout.
 - [x] Sent through the worker (Arq `send_email` job) so a slow provider never blocks the request; inherits the worker's `max_tries=5` backoff. Callers (invite create, password reset) enqueue best-effort (try/except, URL still logged as recovery fallback) so a Redis hiccup never 500s a user action. Deferred import breaks the email↔worker import cycle.
@@ -452,7 +452,7 @@ Items below are real debt, not new features. Listed once so we stop re-discoveri
 | TD-29 | `pytest==8.3.3` has GHSA-6w46-j5rx-g56g (tmp-dir DoS on shared runners). Fixed in 9.0.3 but `pytest-asyncio==0.24.0` is incompatible with pytest 9; need to bump both together. Dev-only; ignored in CI `pip-audit`. | S | P2 |
 | TD-30 | ~~**Money stored as `float`**.~~ **DONE 2026-06-02 (ADR-015).** All 9 money columns (`leads.budget`, `deals.value`, `quotes.{subtotal,tax_rate,tax_amount,total}`, `quote_line_items.{quantity,unit_price,line_total}`) migrated `double precision → Numeric` (hand-written migration `d9f1a2b3c4e5`). Models `Mapped[Decimal]`; `app/money.py` helper (`q2` half-up, `ZERO`); quote totals + `billing/catalog.py` + dashboard FX now exact Decimal arithmetic. Strategy: **Decimal in / float out** — input schemas use `Decimal` (Pydantic routes JSON float→Decimal via str, no binary tail), output schemas keep `float` so JSON stays clean numbers (frontend untouched). `audit.py`/`events.py` `_to_jsonable` gained a `Decimal→float` branch. Smoke: 3×9.99 + 1.5×10.10 @7.7% → 45.12/3.47/48.59 exact. 111/111. | S | ✅ |
 | TD-31 | **`crm_app` DB password hardcoded** in a migration (`crm_app_dev_2026`). Must rotate via `ALTER ROLE` + secrets manager before any non-local deploy; update `APP_DATABASE_URL`. | S | P0 (deploy blocker) |
-| TD-32 | **Customer PII sent to Anthropic (US)** for scoring/summary/RAG. Conflicts with the EU/Swiss data-residency selling point + GDPR Art. 44+ transfer. No redaction, no EU-region option, no per-tenant opt-out to local Ollama. | M | P1 — see ADR-014 |
+| TD-32 | **Customer PII sent to Anthropic (US)** for scoring/summary/RAG. Conflicts with the EU data-residency selling point + GDPR Art. 44+ transfer. No redaction, no EU-region option, no per-tenant opt-out to local Ollama. | M | P1 — see ADR-014 |
 | TD-33 | **GDPR erasure vs soft-delete vs append-only audit**: soft-deleted rows and immutable `audit_logs`/`activities` still hold PII. "Right to erasure" needs a hard-delete/anonymize path that keeps the immutable trail intact (opaque actor id + erase the PII projection). | M | P1 (before GDPR endpoints) |
 | TD-34 | **No automated dependency updates** — CVEs are hand-patched (see 2026-06-01 hot-patch). Add Dependabot/Renovate + an SBOM + an AGPL license-compat check on new deps. | S | P2 |
 | TD-35 | **No timezone policy.** A "calendar local-date" bug was already fixed reactively. Decide + document: store UTC, render in a per-user/per-org tz preference; tasks/due-dates/reminders must be tz-aware. | S | P1 |
@@ -554,7 +554,7 @@ Compact ADRs. Add one whenever you make a non-obvious technical choice.
 ### ADR-014 — AI data residency: redact or localize PII before it leaves the tenant
 **Date:** 2026-06-01 (proposed)
 **Decision:** Before any customer PII reaches a hosted LLM (Anthropic, US), apply a per-org policy (`ai_pii_mode` / `ai_data_region`): (a) redact/pseudonymize identifying fields, (b) route sensitive tenants to local Ollama, or (c) use an EU-region inference endpoint. Default to redaction.
-**Why:** The product's wedge is EU/Swiss data sovereignty (Romansh, AGPL, self-host). Silently shipping names/emails/notes to a US API contradicts that and is a GDPR Art. 44+ transfer concern. This is a *selling point*, not just compliance.
+**Why:** The product's wedge is EU data sovereignty (AGPL, self-host, 7-locale UI incl. Romansh). Silently shipping names/emails/notes to a US API contradicts that and is a GDPR Art. 44+ transfer concern. This is a *selling point*, not just compliance.
 **Consequence:** Scoring/summary/RAG prompts need a redaction pass + a provider router keyed on the org policy. Local-Ollama tenants get lower AI quality — surface that trade-off in the plan. Also defend RAG against prompt injection on user-uploaded docs.
 
 ### ADR-015 — Money as integer minor units, never float
@@ -563,10 +563,10 @@ Compact ADRs. Add one whenever you make a non-obvious technical choice.
 **Why:** Binary floats can't represent `0.10` exactly; sums drift and rounding bugs in money destroy trust in a paid CRM.
 **Consequence:** Migration `d9f1a2b3c4e5` converted all 9 amount columns; `app/money.py` (`q2` half-up + `ZERO`) is the shared helper. Wire format = **Decimal in / float out** (Pydantic float→Decimal goes via str so no binary tail; output stays clean JSON numbers). Multi-currency (CHF/GBP) is now a column add, not a refactor.
 
-### ADR-016 — E-signature via a qualified EU/CH provider, not homegrown
+### ADR-016 — E-signature via a qualified eIDAS (EU) provider, not homegrown
 **Date:** 2026-06-01 (proposed)
-**Decision:** For legally-binding contracts, integrate a QES/eIDAS provider — **Skribble** (Swiss) or **Scrive** — rather than building signing in-house. A homegrown click-to-accept is allowed only for low-stakes consent (terms, opt-ins).
-**Why:** A qualified electronic signature has legal weight in CH/EU that a checkbox + IP log does not, and self-certifying QES is out of scope. A provider is faster and defensible. Reinforces the Swiss positioning.
+**Decision:** For legally-binding contracts, integrate a QES/eIDAS provider — **Skribble** or **Scrive** (both eIDAS, EU-wide incl. Italy) — rather than building signing in-house. A homegrown click-to-accept is allowed only for low-stakes consent (terms, opt-ins).
+**Why:** A qualified electronic signature has legal weight across the EU that a checkbox + IP log does not, and self-certifying QES is out of scope. A provider is faster and defensible. Reinforces the EU/Italy positioning.
 **Consequence:** Per-envelope cost + an external dependency on the signing path; inbound completion via the existing webhook layer. Store the signed PDF + the provider's audit trail in S3.
 
 ### ADR-017 — Transactional email as a provider-abstracted worker workstream

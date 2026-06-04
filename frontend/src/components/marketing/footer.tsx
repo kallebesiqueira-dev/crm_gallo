@@ -203,54 +203,51 @@ export function Footer() {
               {tMarketing("footerCompany")}
             </div>
             <dl className="mt-4 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-2 text-xs leading-relaxed text-muted-foreground">
+              {/* Ragione sociale, sede legale, phone and domain are REAL.
+                  Partita IVA is a TEMPORARY dummy number (12345678901) —
+                  replace with the real one once it is issued. */}
               <dt className="text-foreground/80">{tMarketing("footerBusinessName")}</dt>
-              <dd className="break-words">Gallo Trading Suisse SA</dd>
-
-              <dt className="text-foreground/80">UID</dt>
-              <dd className="font-mono break-words">CHE-456.789.123</dd>
+              <dd className="break-words">GALLO CRM S.r.l.</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerVAT")}</dt>
-              <dd className="font-mono break-words">CHE-456.789.123 MWST</dd>
-
-              <dt className="text-foreground/80">{tMarketing("footerSector")}</dt>
-              <dd className="break-words">Sales &amp; Distribution</dd>
+              <dd className="font-mono break-words">IT12345678901</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerAddress")}</dt>
               <dd className="break-words">
-                Via Nassa 18
+                Via Statale 21
                 <br />
-                6900 Lugano, Switzerland
+                21030 Marchirolo (VA), Italia
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerPhone")}</dt>
               <dd>
                 <a
-                  href="tel:+41915554488"
+                  href="tel:+393717403464"
                   className="font-mono break-words transition-colors hover:text-foreground"
                 >
-                  +41 91 555 44 88
+                  +39 371 740 3464
                 </a>
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerEmail")}</dt>
               <dd>
                 <a
-                  href="mailto:commercial@gallotrading-demo.ch"
+                  href="mailto:contatto@gallocrm.com"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  commercial@gallotrading-demo.ch
+                  contatto@gallocrm.com
                 </a>
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerWebsite")}</dt>
               <dd>
                 <a
-                  href="https://www.gallotrading-demo.ch"
+                  href="https://www.gallocrm.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  www.gallotrading-demo.ch
+                  www.gallocrm.com
                 </a>
               </dd>
             </dl>

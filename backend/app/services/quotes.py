@@ -28,7 +28,7 @@ def recompute_totals(quote: Quote) -> None:
 
     All money is Decimal (ADR-015) — exact per-line rounding + exact
     summation, no binary-float drift. `tax_rate` is a percentage
-    (7.7 → 7.7%). Rounding is applied per line and again on the tax so
+    (22 → 22%). Rounding is applied per line and again on the tax so
     the printed numbers always add up.
     """
     subtotal = ZERO

@@ -10,7 +10,7 @@ and `SIGNING_PROVIDER` config picks the implementation.
                  click-to-accept is NOT a qualified signature (ADR-016) —
                  fine for internal demos and low-stakes consent, never for
                  a legally-binding contract.
-  * `skribble` — Swiss QES/eIDAS provider (legally binding in CH/EU).
+  * `skribble` — eIDAS QES provider (legally binding across the EU, incl. Italy).
   * `scrive`   — EU e-sign provider (global fallback alongside DocuSign /
                  Dropbox Sign).
 
