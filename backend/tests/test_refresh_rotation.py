@@ -115,7 +115,9 @@ def test_refresh_rejects_deactivated_user(client, admin_user: User, db: Session)
     assert client.cookies.get("refresh_token") is not None
 
     # Admin flips the account off out-of-band.
-    db.execute(text("UPDATE users SET is_active = false WHERE id = :id"), {"id": str(admin_user.id)})
+    db.execute(
+        text("UPDATE users SET is_active = false WHERE id = :id"), {"id": str(admin_user.id)}
+    )
     db.commit()
 
     r = client.post("/api/auth/refresh")

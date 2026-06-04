@@ -67,12 +67,16 @@ def _audit_actions(db: Session, entity_id: str) -> set[str]:
 
 
 def _assert_stamped(db: Session, entity_id: str, action: str, admin_user: User) -> None:
-    row = db.execute(
-        select(AuditLog).where(
-            AuditLog.action == action,
-            AuditLog.entity_id == entity_id,
+    row = (
+        db.execute(
+            select(AuditLog).where(
+                AuditLog.action == action,
+                AuditLog.entity_id == entity_id,
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert row, f"no audit row for {action}"
     assert row[-1].actor_id == admin_user.id, f"{action}: wrong actor"
     assert row[-1].organization_id == admin_user.last_active_org_id, f"{action}: wrong org"
