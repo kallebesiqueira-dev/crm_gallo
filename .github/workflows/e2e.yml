@@ -74,9 +74,32 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Install Playwright browser
+      # Cache the downloaded Chromium build (~150 MB) keyed on the exact
+      # @playwright/test version, so a re-run with an unchanged version
+      # skips the download. The OS-level libs (`install-deps`) live in
+      # apt, not ~/.cache/ms-playwright, so they're (cheaply) re-applied
+      # on every run regardless of the browser cache.
+      - name: Resolve Playwright version
+        id: pw
+        working-directory: frontend
+        run: echo "version=$(node -e "console.log(require('@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browser
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright browser (cache miss)
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         working-directory: frontend
         run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        working-directory: frontend
+        run: npx playwright install-deps chromium
 
       # SCORE_E2E is unset, so the LLM-backed scoring test self-skips and only
       # the deterministic core golden path runs. playwright.config picks up
