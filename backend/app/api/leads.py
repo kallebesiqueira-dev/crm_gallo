@@ -154,6 +154,16 @@ async def update_lead(
     prev_stage = lead.stage
     for field, value in changes.items():
         setattr(lead, field, value)
+    # Flush the entity change HERE so a per-org email collision surfaces as
+    # a 409 now. The record_audit/record_activity/record_event/notify calls
+    # below each issue their own flush, which would otherwise raise the
+    # IntegrityError outside any handler (escaping as a 500) before we reach
+    # the commit.
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise_for_duplicate_email(exc, "lead")
     await record_audit(
         db,
         actor=user,
@@ -215,11 +225,7 @@ async def update_lead(
             actor=user,
             metadata={"fields": list(changes.keys())},
         )
-    try:
-        await db.commit()
-    except IntegrityError as exc:
-        await db.rollback()
-        raise_for_duplicate_email(exc, "lead")
+    await db.commit()
     await db.refresh(lead)
     return lead
 

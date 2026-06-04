@@ -118,6 +118,15 @@ async def update_customer(
     changes.pop("organization_id", None)
     for field, value in changes.items():
         setattr(customer, field, value)
+    # Flush the entity change HERE so a per-org email collision surfaces as
+    # a 409 now. record_activity/record_audit below issue their own flush,
+    # which would otherwise raise the IntegrityError outside any handler
+    # (escaping as a 500) before we reach the commit.
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise_for_duplicate_email(exc, "customer")
     await record_audit(
         db,
         actor=user,
@@ -136,11 +145,7 @@ async def update_customer(
         actor=user,
         metadata={"fields": list(changes.keys())},
     )
-    try:
-        await db.commit()
-    except IntegrityError as exc:
-        await db.rollback()
-        raise_for_duplicate_email(exc, "customer")
+    await db.commit()
     await db.refresh(customer)
     return customer
 
