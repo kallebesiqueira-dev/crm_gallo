@@ -131,7 +131,7 @@ export function OrgSwitcher({
               setError(null);
             }}
           />
-          <div className="absolute right-0 z-40 mt-1 w-72 overflow-hidden rounded-md border border-border bg-popover shadow-lg">
+          <div className="absolute right-0 z-40 mt-1 w-72 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
             <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Switch organization
             </div>

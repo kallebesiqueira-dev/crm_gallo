@@ -192,25 +192,29 @@ export default function PricingPage() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#040509]/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <Logo href="/" size="md" label={tApp("name")} />
-          <nav className="hidden items-center gap-6 text-sm md:flex">
-            <a href="#manifesto" className="text-muted-foreground hover:text-foreground">
-              {tMarketing("navManifesto")}
-            </a>
-            <a href="#about" className="text-muted-foreground hover:text-foreground">
-              {tMarketing("navAbout")}
-            </a>
-            <a href="#values" className="text-muted-foreground hover:text-foreground">
-              {tMarketing("navValues")}
-            </a>
-            <a href="#features" className="text-muted-foreground hover:text-foreground">
-              {tMarketing("navFeatures")}
-            </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground">
-              {tMarketing("navPricing")}
-            </a>
-            <a href="#faq" className="text-muted-foreground hover:text-foreground">
-              {tMarketing("navFaq")}
-            </a>
+          <nav className="hidden items-center gap-7 text-sm font-medium md:flex">
+            {[
+              { href: "#manifesto", label: tMarketing("navManifesto") },
+              { href: "#about", label: tMarketing("navAbout") },
+              { href: "#values", label: tMarketing("navValues") },
+              { href: "#features", label: tMarketing("navFeatures") },
+              { href: "#pricing", label: tMarketing("navPricing") },
+              { href: "#faq", label: tMarketing("navFaq") },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="group relative tracking-wide text-muted-foreground/90 transition-colors duration-300 hover:text-foreground"
+              >
+                {item.label}
+                {/* Neon violet->fuchsia underline that slides in on hover —
+                    picks up the page's gradient/futuristic theme. */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-1.5 left-0 h-px w-full origin-left scale-x-0 rounded-full bg-gradient-to-r from-violet-400 via-fuchsia-400 to-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.7)] transition-transform duration-300 ease-out group-hover:scale-x-100"
+                />
+              </a>
+            ))}
           </nav>
           <div className="flex items-center gap-2">
             {/* No ThemeToggle on the landing — the page is forced dark via

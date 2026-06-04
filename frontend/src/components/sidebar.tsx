@@ -36,14 +36,15 @@ const NAV = [
   { href: "imports", label: "imports", icon: Upload },
   { href: "reports", label: "reports", icon: BarChart3 },
   { href: "billing", label: "billing", icon: CreditCard },
-  { href: "trash", label: "trash", icon: Trash2 },
   // `audit` is admin/manager-only on the backend (403 for sales_agent).
   // We don't role-gate the sidebar link in v1 — a sales_agent landing
   // on the page sees a friendly "forbidden" message. Adding a server-
   // side role check to the sidebar would need to wait on the user
   // load, which causes layout flash.
   { href: "audit", label: "audit", icon: ScrollText },
+  // Settings + Trash pinned to the very bottom of the nav.
   { href: "settings", label: "settings", icon: Settings },
+  { href: "trash", label: "trash", icon: Trash2 },
 ] as const;
 
 export function Sidebar() {

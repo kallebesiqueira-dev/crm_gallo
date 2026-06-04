@@ -88,7 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen bg-muted/30">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-background px-6 py-3">
+          <header className="relative z-50 flex flex-wrap items-center justify-between gap-3 border-b bg-background px-6 py-3">
             <div className="flex items-center gap-3">
               {/* Org switcher hides itself when the user has 0–1 memberships,
                   so single-tenant installs see the same chrome as before. */}
