@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  */
 type LogoSize = "sm" | "md" | "lg";
 
-const SIZE: Record<LogoSize, number> = { sm: 32, md: 42, lg: 60 };
+const SIZE: Record<LogoSize, number> = { sm: 38, md: 50, lg: 72 };
 
 interface LogoProps {
   size?: LogoSize;
@@ -52,8 +52,8 @@ export function Logo({
     <Image
       src="/gallo-logo.png"
       alt={label}
-      width={267}
-      height={255}
+      width={256}
+      height={256}
       priority={priority}
       className="w-auto select-none rounded-xl"
       style={{ height: px, width: "auto" }}
