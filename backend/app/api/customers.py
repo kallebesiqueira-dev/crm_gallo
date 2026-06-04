@@ -2,12 +2,13 @@ import uuid
 from datetime import UTC, datetime
 
 import sqlalchemy as sa
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import ENTITY_CUSTOMER, ActivityType, record_activity
+from app.api._concurrency import check_if_match
 from app.api._errors import raise_for_duplicate_email
 from app.audit import record_audit
 from app.database import get_db
@@ -111,13 +112,21 @@ async def update_customer(
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
+    if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> Customer:
     customer = await _get_customer_or_404(db, customer_id, org_id)
     ensure_can_mutate(user, customer.owner_id)
+    check_if_match(
+        entity="customer",
+        entity_id=customer.id,
+        current_version=customer.version,
+        if_match=if_match,
+    )
     changes = payload.model_dump(exclude_unset=True)
     changes.pop("organization_id", None)
     for field, value in changes.items():
         setattr(customer, field, value)
+    customer.version = customer.version + 1
     # Flush the entity change HERE so a per-org email collision surfaces as
     # a 409 now. record_activity/record_audit below issue their own flush,
     # which would otherwise raise the IntegrityError outside any handler

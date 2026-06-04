@@ -1,10 +1,11 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api._concurrency import check_if_match
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
@@ -96,9 +97,16 @@ async def update_task(
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
+    if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> Task:
     task = await _get_task_or_404(db, task_id, org_id)
     ensure_can_mutate(user, task.assignee_id)
+    check_if_match(
+        entity="task",
+        entity_id=task.id,
+        current_version=task.version,
+        if_match=if_match,
+    )
     changes = payload.model_dump(exclude_unset=True)
     changes.pop("organization_id", None)
     # Snapshot assignee BEFORE setattr so we can detect reassignment
@@ -107,6 +115,7 @@ async def update_task(
     prev_assignee_id = task.assignee_id
     for field, value in changes.items():
         setattr(task, field, value)
+    task.version = task.version + 1
     await record_audit(
         db,
         actor=user,

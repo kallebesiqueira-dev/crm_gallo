@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import ENTITY_DEAL, ActivityType, record_activity
+from app.api._concurrency import check_if_match
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
@@ -19,39 +20,12 @@ log = get_logger(__name__)
 
 
 def _check_if_match(deal: Deal, if_match: str | None) -> None:
-    """Optimistic locking guard (TD-12). v1 leniency: if the header
-    is missing, log a warning and proceed — gives the frontend a
-    rollout window without breaking existing clients. When the
-    header IS present and disagrees with the current `version`, we
-    refuse with 412 Precondition Failed (per RFC 7232 §4.2; the
-    catalog of "matching header didn't match"). 409 would be the
-    other reasonable choice; 412 is the protocol-correct one.
-    """
-    if if_match is None:
-        log.warning(
-            "deal.if_match_missing",
-            deal_id=str(deal.id),
-            current_version=deal.version,
-        )
-        return
-    # Header is sent as a plain integer string (`If-Match: 7`). The
-    # RFC strict form is `If-Match: "7"` (etag-quoted); accept both
-    # for client-side ergonomics — strip surrounding quotes.
-    raw = if_match.strip().strip('"')
-    try:
-        sent = int(raw)
-    except ValueError:
-        raise HTTPException(
-            status_code=400, detail=f"If-Match must be an integer, got {if_match!r}"
-        ) from None
-    if sent != deal.version:
-        raise HTTPException(
-            status_code=412,
-            detail=(
-                f"Deal version mismatch: client has {sent}, "
-                f"current is {deal.version}. Reload before retrying."
-            ),
-        )
+    check_if_match(
+        entity="deal",
+        entity_id=deal.id,
+        current_version=deal.version,
+        if_match=if_match,
+    )
 
 
 async def _get_deal_or_404(db: AsyncSession, deal_id: uuid.UUID, org_id: uuid.UUID) -> Deal:

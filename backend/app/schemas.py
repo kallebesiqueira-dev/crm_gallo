@@ -651,6 +651,8 @@ class CustomerOut(CustomerBase):
     owner_id: uuid.UUID | None
     ai_summary: str | None
     ai_summary_updated_at: datetime | None
+    # Optimistic locking marker (TD-12) — echo back as `If-Match` on PATCH.
+    version: int = 0
     created_at: datetime
     updated_at: datetime
 
@@ -1005,6 +1007,8 @@ class TaskUpdate(BaseModel):
 class TaskOut(TaskBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
+    # Optimistic locking marker (TD-12) — echo back as `If-Match` on PATCH.
+    version: int = 0
     created_at: datetime
     updated_at: datetime
 
