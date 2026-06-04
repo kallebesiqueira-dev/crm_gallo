@@ -203,54 +203,57 @@ export function Footer() {
               {tMarketing("footerCompany")}
             </div>
             <dl className="mt-4 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-2 text-xs leading-relaxed text-muted-foreground">
+              {/* PLACEHOLDER registry data — replace with the real registered
+                  Italian entity once the Partita IVA is issued (ragione
+                  sociale, Partita IVA, Codice Fiscale / REA, sede legale). */}
               <dt className="text-foreground/80">{tMarketing("footerBusinessName")}</dt>
-              <dd className="break-words">Gallo Trading Suisse SA</dd>
+              <dd className="break-words">Gallo Trading Italia S.r.l.</dd>
 
-              <dt className="text-foreground/80">UID</dt>
-              <dd className="font-mono break-words">CHE-456.789.123</dd>
+              <dt className="text-foreground/80">Codice Fiscale</dt>
+              <dd className="font-mono break-words">00000000000</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerVAT")}</dt>
-              <dd className="font-mono break-words">CHE-456.789.123 MWST</dd>
+              <dd className="font-mono break-words">IT00000000000</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerSector")}</dt>
               <dd className="break-words">Sales &amp; Distribution</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerAddress")}</dt>
               <dd className="break-words">
-                Via Nassa 18
+                Via Roma 1
                 <br />
-                6900 Lugano, Switzerland
+                20121 Milano (MI), Italia
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerPhone")}</dt>
               <dd>
                 <a
-                  href="tel:+41915554488"
+                  href="tel:+390200000000"
                   className="font-mono break-words transition-colors hover:text-foreground"
                 >
-                  +41 91 555 44 88
+                  +39 02 0000 0000
                 </a>
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerEmail")}</dt>
               <dd>
                 <a
-                  href="mailto:commercial@gallotrading-demo.ch"
+                  href="mailto:commercial@gallotrading-demo.it"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  commercial@gallotrading-demo.ch
+                  commercial@gallotrading-demo.it
                 </a>
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerWebsite")}</dt>
               <dd>
                 <a
-                  href="https://www.gallotrading-demo.ch"
+                  href="https://www.gallotrading-demo.it"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  www.gallotrading-demo.ch
+                  www.gallotrading-demo.it
                 </a>
               </dd>
             </dl>

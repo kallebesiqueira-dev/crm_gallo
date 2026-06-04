@@ -628,7 +628,7 @@ class Quote(SoftDeleteMixin, Base):
     # Money columns are server-computed (recompute_totals in
     # app/services/quotes.py). Stored as Numeric/Decimal — never float —
     # so per-line rounding + summation are exact (ADR-015 / TD-30).
-    # `tax_rate` is a percentage (e.g. 7.700 for Swiss VAT);
+    # `tax_rate` is a percentage (e.g. 22.000 for the standard Italian IVA);
     # tax_amount = q2(subtotal * tax_rate / 100).
     subtotal: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"), nullable=False)
     tax_rate: Mapped[Decimal] = mapped_column(Numeric(6, 3), default=Decimal("0"), nullable=False)
