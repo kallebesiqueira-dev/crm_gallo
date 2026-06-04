@@ -136,7 +136,13 @@ services:
       disable: true
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      # Local dev targets the `deps` stage (full toolchain + node_modules);
+      # the source comes from the bind mount below and the command is
+      # `npm run dev`. Production / CI build the default `runner` stage
+      # (slim, standalone, no dev toolchain → Trivy-clean).
+      target: deps
     container_name: crm_gallo_frontend
     restart: unless-stopped
     env_file: .env

@@ -1,0 +1,27 @@
+# Keep the host's install/build artifacts out of the build context.
+# Critical: without excluding node_modules, `COPY . .` in the builder stage
+# would clobber the clean linux node_modules with the host's (Windows) one.
+node_modules
+.next
+out
+
+# VCS + tooling
+.git
+.gitignore
+.dockerignore
+Dockerfile
+
+# Local env / secrets — never bake into an image
+.env
+.env.*
+
+# Tests + reports (not needed for the production build)
+playwright-report
+test-results
+coverage
+
+# Logs + editor cruft
+npm-debug.log*
+yarn-error.log*
+.vscode
+*.md
