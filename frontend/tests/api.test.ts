@@ -84,6 +84,15 @@ describe("optimistic locking (If-Match)", () => {
     expect(init.headers["If-Match"]).toBe("3");
   });
 
+  it("moveDeal forwards the deal version as If-Match", async () => {
+    fetchMock.mockResolvedValueOnce(mockResponse(200, { id: "d1", version: 5 }));
+    await api.moveDeal("tok", "d1", "qualified", 2, 4);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${API_URL}/api/deals/d1/move`);
+    expect(init.method).toBe("POST");
+    expect(init.headers["If-Match"]).toBe("4");
+  });
+
   it("omits If-Match when no version is passed (server stays v1-lenient)", async () => {
     fetchMock.mockResolvedValueOnce(mockResponse(200, { id: "c1", version: 1 }));
     await api.updateCustomer("tok", "c1", { company: "Acme" });

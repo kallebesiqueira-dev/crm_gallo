@@ -1151,11 +1151,18 @@ export const api = {
       body: JSON.stringify(payload),
       headers: version !== undefined ? { "If-Match": String(version) } : undefined,
     }),
-  moveDeal: (token: string, id: string, stage: DealStage, sort_index: number) =>
+  moveDeal: (
+    token: string,
+    id: string,
+    stage: DealStage,
+    sort_index: number,
+    version?: number,
+  ) =>
     request<Deal>(`/api/deals/${id}/move`, {
       method: "POST",
       token,
       body: JSON.stringify({ stage, sort_index }),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
     }),
   getDeal: (token: string, id: string) => request<Deal>(`/api/deals/${id}`, { token }),
   deleteDeal: (token: string, id: string) =>

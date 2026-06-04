@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type Deal, type DealStage } from "@/lib/api";
+import { api, ApiError, type Deal, type DealStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -128,9 +128,13 @@ export default function PipelinePage() {
     const token = getToken();
     if (!token) return;
     try {
-      await api.moveDeal(token, dealId, targetStage, newSortIndex);
-    } catch {
-      // revert on failure
+      const updated = await api.moveDeal(token, dealId, targetStage, newSortIndex, moving.version);
+      setDeals((prev) => prev.map((d) => (d.id === dealId ? updated : d)));
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 412) {
+        setError(tCommon("versionConflict"));
+      }
+      // revert (and resync version) on any failure
       const refreshed = await api.listDeals(token);
       setDeals(refreshed);
     }
