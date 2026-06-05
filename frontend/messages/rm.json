@@ -963,7 +963,9 @@
       "support": "Sustegn",
       "supportDedicated": "Dedicà",
       "supportPriority": "Prioritar",
-      "supportEmail": "E-mail"
+      "supportEmail": "E-mail",
+      "contracts": "Contracts & signatura electronica",
+      "audit": "Protocol da revisiun"
     },
     "faqTitle": "Dumondas frequentas",
     "faq": {
@@ -1021,9 +1023,13 @@
         "name": "Standard",
         "shortPrice": "€19/mais"
       },
+      "business": {
+        "name": "Business",
+        "shortPrice": "€39/mais"
+      },
       "premium": {
         "name": "Premium",
-        "shortPrice": "€49/mais"
+        "shortPrice": "€59/mais"
       }
     }
   },

@@ -70,26 +70,41 @@ CATALOG: dict[Plan, PlanDescriptor] = {
             "Everything in Free",
             "Advanced AI scoring (Claude Sonnet)",
             "Unlimited AI assistant",
+            "Quotes & PDF proposals",
             "Reports and visual charts",
-            "Trash with restore",
             "Priority support",
         ],
         highlighted=True,
+        requires_payment=True,
+    ),
+    Plan.business: PlanDescriptor(
+        id=Plan.business,
+        name="Business",
+        tagline="For teams closing deals end-to-end.",
+        monthly_eur=Decimal("39.00"),
+        seat_limit=None,
+        features=[
+            "Everything in Standard",
+            "Contracts & e-signature (eIDAS)",
+            "Bulk imports & exports",
+            "Teams & custom pipelines",
+            "Full audit log",
+            "Outgoing webhooks",
+        ],
         requires_payment=True,
     ),
     Plan.premium: PlanDescriptor(
         id=Plan.premium,
         name="Premium",
         tagline="For teams that scale with automation.",
-        monthly_eur=Decimal("49.00"),
+        monthly_eur=Decimal("59.00"),
         seat_limit=None,
         features=[
-            "Everything in Standard",
+            "Everything in Business",
             "Workflow automations",
             "Email and calendar integrations",
             "RAG: assistant with knowledge base",
-            "API + Webhooks",
-            "Full audit log",
+            "Public API + API keys",
             "Dedicated account manager",
         ],
         requires_payment=True,
@@ -103,7 +118,7 @@ def get_plan(plan: Plan) -> PlanDescriptor:
 
 
 def list_plans() -> list[PlanDescriptor]:
-    return [CATALOG[p] for p in (Plan.free, Plan.standard, Plan.premium)]
+    return [CATALOG[p] for p in (Plan.free, Plan.standard, Plan.business, Plan.premium)]
 
 
 def resolve_stripe_price_id(plan: Plan, cycle: BillingCycle) -> str | None:

@@ -114,6 +114,8 @@ class Settings(BaseSettings):
     # Price IDs — create one per (plan, cycle) in your Stripe dashboard.
     stripe_price_standard_monthly: str = ""
     stripe_price_standard_yearly: str = ""
+    stripe_price_business_monthly: str = ""
+    stripe_price_business_yearly: str = ""
     stripe_price_premium_monthly: str = ""
     stripe_price_premium_yearly: str = ""
 

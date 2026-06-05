@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 const PLAN_GRADIENT: Record<PlanId, string> = {
   free: "from-slate-500/10 to-slate-500/0",
   standard: "from-primary/20 to-blue-500/0",
+  business: "from-violet-500/20 via-blue-500/10 to-violet-500/0",
   premium: "from-amber-500/20 via-fuchsia-500/10 to-pink-500/0",
 };
 
@@ -87,20 +88,39 @@ const FALLBACK_PLANS: PlanOut[] = [
     trial_days: 0,
   },
   {
-    id: "premium",
-    name: "Premium",
-    tagline: "For teams that scale with automation.",
-    monthly_eur: 49,
-    yearly_eur_per_user: 39.2,
-    yearly_total_eur: 470.4,
+    id: "business",
+    name: "Business",
+    tagline: "For teams closing deals end-to-end.",
+    monthly_eur: 39,
+    yearly_eur_per_user: 31.2,
+    yearly_total_eur: 374.4,
     seat_limit: null,
     features: [
       "Everything in Standard",
+      "Contracts & e-signature (eIDAS)",
+      "Bulk imports & exports",
+      "Teams & custom pipelines",
+      "Full audit log",
+      "Outgoing webhooks",
+    ],
+    highlighted: false,
+    requires_payment: true,
+    trial_days: 0,
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    tagline: "For teams that scale with automation.",
+    monthly_eur: 59,
+    yearly_eur_per_user: 47.2,
+    yearly_total_eur: 566.4,
+    seat_limit: null,
+    features: [
+      "Everything in Business",
       "Workflow automations",
       "Email and calendar integrations",
       "RAG: assistant with knowledge base",
-      "API + Webhooks",
-      "Full audit log",
+      "Public API + API keys",
       "Dedicated account manager",
     ],
     highlighted: false,
@@ -481,7 +501,7 @@ export default function PricingPage() {
           </RevealGroup>
 
           <RevealGroup
-            className="mt-12 grid gap-6 lg:grid-cols-3"
+            className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
             stagger={0.12}
             delayChildren={0.15}
           >
@@ -792,6 +812,8 @@ function buildMatrix(plans: PlanOut[], t: (k: string) => string): Row[] {
     { label: t("matrix.aiScoringPro"), cells: plans.map((p) => p.id !== "free") },
     { label: t("matrix.aiAssistant"), cells: plans.map((p) => p.id !== "free") },
     { label: t("matrix.reports"), cells: plans.map((p) => p.id !== "free") },
+    { label: t("matrix.contracts"), cells: plans.map((p) => p.id === "business" || p.id === "premium") },
+    { label: t("matrix.audit"), cells: plans.map((p) => p.id === "business" || p.id === "premium") },
     { label: t("matrix.automations"), cells: plans.map((p) => p.id === "premium") },
     { label: t("matrix.integrations"), cells: plans.map((p) => p.id === "premium") },
     { label: t("matrix.rag"), cells: plans.map((p) => p.id === "premium") },
@@ -799,7 +821,11 @@ function buildMatrix(plans: PlanOut[], t: (k: string) => string): Row[] {
     {
       label: t("matrix.support"),
       cells: plans.map((p) =>
-        p.id === "premium" ? t("matrix.supportDedicated") : p.id === "standard" ? t("matrix.supportPriority") : t("matrix.supportEmail"),
+        p.id === "premium"
+          ? t("matrix.supportDedicated")
+          : p.id === "free"
+            ? t("matrix.supportEmail")
+            : t("matrix.supportPriority"),
       ),
     },
   ];
