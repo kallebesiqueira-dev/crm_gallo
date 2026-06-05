@@ -30,8 +30,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -fsS "http://localhost:${PORT:-8000}/health" || exit 1
 
-# Run migrations, then launch the API. `${PORT:-8000}` lets the platform
-# (Railway/Fly/etc.) inject the listen port while still defaulting to 8000
-# for local `docker run`. In docker-compose the service `command:` overrides
+# Boot: wait briefly for the platform's private network to come up, run
+# migrations (retrying until the DB is reachable — Railway's private mesh
+# takes a few seconds at container start, so a connect on the very first
+# tick times out), then exec the API. `${PORT:-8000}` lets the platform
+# (Railway/Fly/etc.) inject the listen port while defaulting to 8000 for
+# local `docker run`. In docker-compose the service `command:` overrides
 # this CMD, so the compose flow is unchanged.
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "echo 'boot: waiting for private network'; sleep 8; n=0; until alembic upgrade head; do n=$((n+1)); if [ $n -ge 12 ]; then echo 'migrations failed after retries'; exit 1; fi; echo \"db not ready, retry $n\"; sleep 5; done; exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
