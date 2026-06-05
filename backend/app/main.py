@@ -33,6 +33,7 @@ from app.api import (
     orgs,
     outbox,
     pipelines,
+    public,
     quotes,
     signatures,
     tasks,
@@ -274,6 +275,8 @@ app.add_middleware(RequestContextMiddleware)
 
 app.include_router(auth.router)
 app.include_router(billing.router)
+# Public, unauthenticated marketing surface (landing chatbot). Rate-limited.
+app.include_router(public.router)
 app.include_router(leads.router)
 app.include_router(customers.router)
 app.include_router(deals.router)

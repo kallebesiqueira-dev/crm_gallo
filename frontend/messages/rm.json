@@ -1081,6 +1081,23 @@
     "seatLimitReachedBanner": "Ti has cuntanschì il limit da posts dal plan Free. Fa upgrade per cuntinuar.",
     "canceledBanner": "Tes abonnament finescha a la fin dal period. Reactivescha cura ti vuls dal portal da quint."
   },
+  "chatbot": {
+    "launcherLabel": "Avrir l'assistent GALLO",
+    "title": "Assistent GALLO",
+    "subtitle": "Dumonda davart funcziuns, plans e segirezza",
+    "greeting": "Tgau! 👋 Jau sun l'assistent da GALLO CRM. Dumonda mai tut davart funcziuns, plans, l'examen gratuit, la segirezza u co cumenzar.",
+    "placeholder": "Tippa tia dumonda…",
+    "send": "Trametter",
+    "close": "Serrar il chat",
+    "sending": "Pensa…",
+    "error": "Jau n'hai betg pudì cuntanscher l'assistent en quest mument.",
+    "retry": "Emprova anc ina giada",
+    "fallbackNote": "Resposta offline",
+    "disclaimer": "Assistent IA — las respostas pon esser incumplettas. Nagin conto necessari.",
+    "suggest1": "Tge cuntegna il plan Free?",
+    "suggest2": "Èn mias datas segiras?",
+    "suggest3": "Co cumenz jau?"
+  },
   "legal": {
     "eyebrow": "Legal",
     "lastUpdated": "Ultima actualisaziun",

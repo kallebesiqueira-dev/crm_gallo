@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # LLM-cost protection — per-user (see app.rate_limit.user_or_ip_key).
     rate_limit_score_per_hour: int = 10
     rate_limit_assistant_per_minute: int = 30
+    # Public, unauthenticated landing chatbot — keyed per-IP. Generous enough
+    # for a real visitor conversation, low enough to blunt scraping/abuse of
+    # the (cost-bearing) LLM from an anonymous endpoint.
+    rate_limit_chatbot_per_minute: int = 20
 
     # ---- S3-compatible object storage (FileAttachments) ----
     # Defaults match the MinIO sidecar in docker-compose; swap the
@@ -115,6 +119,19 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = ""  # e.g. openai/gpt-oss-120b  (Groq) / mistral-small-latest
 
+    # Google Gemini key. Gemini exposes an OpenAI-compatible endpoint, so it is
+    # wired through the generic `openai_compat` provider (LLM_BASE_URL=
+    # https://generativelanguage.googleapis.com/v1beta/openai , LLM_API_KEY=
+    # this key, LLM_MODEL=gemini-2.0-flash). Kept as a named env var so the
+    # value is discoverable in deploy config.
+    gemini_api_key: str = ""
+
+    # ---- Public landing chatbot (ADR: pre-sales assistant) ----
+    # Master switch for the unauthenticated POST /api/public/chatbot endpoint.
+    # When false the endpoint always returns the static fallback (source=
+    # "fallback") so the marketing site keeps working with the AI turned off.
+    public_chatbot_enabled: bool = True
+
     # ---- Stripe ----
     # When STRIPE_SECRET_KEY is empty, paid plans surface a clear error
     # and the Free plan keeps working. Set these for staging/production.
@@ -129,6 +146,14 @@ class Settings(BaseSettings):
     stripe_price_business_yearly: str = ""
     stripe_price_premium_monthly: str = ""
     stripe_price_premium_yearly: str = ""
+
+    # Landing-checkout price aliases. The public landing CTA addresses the three
+    # paid tiers by simple names (starter→Standard, pro→Business, enterprise→
+    # Premium). These take precedence for the public checkout; when unset it
+    # falls back to the monthly price IDs above, so a single set of IDs works.
+    stripe_starter_price_id: str = ""
+    stripe_pro_price_id: str = ""
+    stripe_enterprise_price_id: str = ""
 
     # Where Stripe redirects after checkout. Must point to the frontend.
     stripe_success_url: str = "http://localhost:3030/en/billing?stripe=success"

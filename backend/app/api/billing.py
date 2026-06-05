@@ -25,12 +25,15 @@ from app.database import get_db
 from app.deps import get_current_org, require_roles
 from app.logging_setup import get_logger
 from app.models import Organization, OrgMembership, Plan, User, UserRole
+from app.rate_limit import limiter
 from app.schemas import BillingMe, PlanOut, UpgradeRequest
 from app.services.stripe_service import (
+    PUBLIC_PLAN_KEYS,
     StripeError,
     StripeNotConfigured,
     create_checkout_session,
     create_portal_session,
+    create_public_checkout_session,
     process_event,
     verify_webhook,
 )
@@ -128,6 +131,40 @@ async def checkout(
         url = await create_checkout_session(
             org=org, actor=user, plan=payload.plan, cycle=payload.billing_cycle, db=db
         )
+    except StripeNotConfigured as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
+    except StripeError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e)) from e
+    return CheckoutResponse(url=url)
+
+
+class PublicCheckoutRequest(BaseModel):
+    # Plan KEY only — the price is resolved + validated server-side. The client
+    # never sends an amount or a Stripe price id.
+    plan: str
+
+
+@router.post("/create-checkout-session", response_model=CheckoutResponse)
+@limiter.limit(f"{settings.rate_limit_register_per_minute}/minute")
+async def create_checkout_session_public(
+    request: Request, payload: PublicCheckoutRequest
+) -> CheckoutResponse:
+    """Public landing checkout — no auth, per-IP rate-limited.
+
+    The frontend sends only a plan key (standard/business/premium, or the
+    starter/pro/enterprise aliases); the price is resolved server-side so a
+    tampered request can never choose its own amount. Returns a hosted Stripe
+    Checkout URL. 503 when Stripe isn't configured (frontend falls back to the
+    direct link / sign-up).
+    """
+    plan_key = (payload.plan or "").strip().lower()
+    if plan_key not in PUBLIC_PLAN_KEYS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unknown or non-payable plan.",
+        )
+    try:
+        url = await create_public_checkout_session(plan_key)
     except StripeNotConfigured as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
     except StripeError as e:

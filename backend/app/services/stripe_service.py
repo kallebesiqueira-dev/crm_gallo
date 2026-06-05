@@ -166,6 +166,64 @@ async def create_checkout_session(
     return session.url
 
 
+# Landing-page checkout: maps a public plan key → a server-side price id. The
+# frontend only ever sends the *plan name*; the price is resolved here so a
+# tampered request can never pick its own amount. starter/pro/enterprise are
+# accepted as aliases of standard/business/premium for template parity.
+def _public_price_id(plan_key: str) -> str | None:
+    mapping = {
+        "standard": settings.stripe_starter_price_id or settings.stripe_price_standard_monthly,
+        "business": settings.stripe_pro_price_id or settings.stripe_price_business_monthly,
+        "premium": settings.stripe_enterprise_price_id or settings.stripe_price_premium_monthly,
+        "starter": settings.stripe_starter_price_id or settings.stripe_price_standard_monthly,
+        "pro": settings.stripe_pro_price_id or settings.stripe_price_business_monthly,
+        "enterprise": settings.stripe_enterprise_price_id or settings.stripe_price_premium_monthly,
+    }
+    return mapping.get(plan_key.strip().lower()) or None
+
+
+PUBLIC_PLAN_KEYS = ("standard", "business", "premium", "starter", "pro", "enterprise")
+
+
+async def create_public_checkout_session(plan_key: str) -> str:
+    """Unauthenticated landing checkout. No Organization exists yet, so Stripe
+    collects the email and creates the Customer; the buyer is reconciled to an
+    org when they create/link an account (webhook + future onboarding). Returns
+    a Stripe Checkout URL. Price is resolved server-side — never trusted from
+    the client."""
+    _ensure_configured()
+
+    price_id = _public_price_id(plan_key)
+    if not price_id:
+        raise StripeError(
+            f"No Stripe Price ID configured for plan '{plan_key}'. "
+            "Set STRIPE_STARTER_PRICE_ID / STRIPE_PRO_PRICE_ID / "
+            "STRIPE_ENTERPRISE_PRICE_ID (or the per-plan monthly IDs)."
+        )
+
+    plan_norm = plan_key.strip().lower()
+
+    def _create_session() -> Any:
+        # Subscription mode always creates a Customer + collects the email, so
+        # no `customer_creation` flag is needed (it is invalid here).
+        return stripe.checkout.Session.create(
+            mode="subscription",
+            line_items=[{"price": price_id, "quantity": 1}],
+            allow_promotion_codes=True,
+            billing_address_collection="auto",
+            success_url=settings.stripe_success_url,
+            cancel_url=settings.stripe_cancel_url,
+            metadata={"plan": plan_norm, "source": "landing"},
+            subscription_data={"metadata": {"plan": plan_norm, "source": "landing"}},
+        )
+
+    try:
+        session = await asyncio.to_thread(_create_session)
+    except stripe.StripeError as e:
+        raise StripeError(f"Stripe checkout create failed: {e}") from e
+    return session.url
+
+
 # ---------- Customer Portal ----------
 
 
@@ -320,9 +378,91 @@ async def _on_subscription_deleted(event: dict[str, Any], db: AsyncSession) -> N
     )
 
 
+async def _on_subscription_changed(event: dict[str, Any], db: AsyncSession) -> None:
+    """customer.subscription.created / updated — keep the org's plan + lifecycle
+    fields in sync with Stripe (the source of truth). A subscription with no
+    linked org yet (landing checkout before account creation) is logged, not
+    treated as an error."""
+    sub = event["data"]["object"]
+    customer_id = sub.get("customer")
+    if not customer_id:
+        return
+    org = await _find_org_by_customer(customer_id, db)
+    if not org:
+        log.info(
+            "stripe.subscription.unlinked",
+            customer=customer_id,
+            subscription_id=sub.get("id"),
+            status=sub.get("status"),
+        )
+        return
+
+    org.stripe_subscription_id = sub.get("id")
+    sub_status = sub.get("status")
+    plan_meta = (sub.get("metadata") or {}).get("plan")
+    if plan_meta:
+        try:
+            org.plan = Plan(plan_meta)
+        except ValueError:
+            log.warning("stripe.subscription.unknown_plan", plan=plan_meta)
+
+    now = datetime.now(UTC)
+    if sub_status in ("active", "trialing"):
+        org.plan_started_at = org.plan_started_at or now
+        org.plan_renewed_at = now
+        org.plan_canceled_at = None
+    elif sub_status in ("canceled", "unpaid", "incomplete_expired"):
+        org.plan_canceled_at = now
+
+    await record_audit(
+        db,
+        actor=None,
+        action="billing.subscription.updated",
+        entity_type="billing",
+        entity_id=org.id,
+        organization_id=org.id,
+        metadata={"status": sub_status, "subscription_id": sub.get("id")},
+    )
+
+
+async def _on_invoice_payment_failed(event: dict[str, Any], db: AsyncSession) -> None:
+    """invoice.payment_failed — record the dunning event. The plan is left
+    intact (Stripe retries); `customer.subscription.deleted` is what actually
+    downgrades after Stripe gives up."""
+    invoice = event["data"]["object"]
+    customer_id = invoice.get("customer")
+    if not customer_id:
+        return
+    org = await _find_org_by_customer(customer_id, db)
+    if not org:
+        return
+    log.warning(
+        "stripe.invoice.payment_failed",
+        organization_id=str(org.id),
+        invoice_id=invoice.get("id"),
+        attempt_count=invoice.get("attempt_count"),
+    )
+    await record_audit(
+        db,
+        actor=None,
+        action="billing.invoice.payment_failed",
+        entity_type="billing",
+        entity_id=org.id,
+        organization_id=org.id,
+        metadata={
+            "invoice_id": invoice.get("id"),
+            "amount_due": invoice.get("amount_due"),
+            "attempt_count": invoice.get("attempt_count"),
+        },
+    )
+
+
 _HANDLERS = {
     "checkout.session.completed": _on_checkout_completed,
+    "customer.subscription.created": _on_subscription_changed,
+    "customer.subscription.updated": _on_subscription_changed,
+    "customer.subscription.deleted": _on_subscription_deleted,
     "invoice.paid": _on_invoice_paid,
     "invoice.payment_succeeded": _on_invoice_paid,
-    "customer.subscription.deleted": _on_subscription_deleted,
+    "invoice.payment_failed": _on_invoice_payment_failed,
 }

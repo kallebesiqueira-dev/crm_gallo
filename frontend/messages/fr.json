@@ -1081,6 +1081,23 @@
     "seatLimitReachedBanner": "Vous avez atteint la limite de sièges du plan Free. Mettez à niveau pour ajouter des utilisateurs.",
     "canceledBanner": "Votre abonnement se terminera à la fin de la période. Réactivez à tout moment depuis le portail de facturation."
   },
+  "chatbot": {
+    "launcherLabel": "Ouvrir l'assistant GALLO",
+    "title": "Assistant GALLO",
+    "subtitle": "Posez vos questions sur les fonctionnalités, les offres et la sécurité",
+    "greeting": "Bonjour ! 👋 Je suis l'assistant GALLO CRM. Posez-moi toutes vos questions sur les fonctionnalités, les offres, l'essai gratuit, la sécurité ou la prise en main.",
+    "placeholder": "Saisissez votre question…",
+    "send": "Envoyer",
+    "close": "Fermer le chat",
+    "sending": "Réflexion…",
+    "error": "Je n'ai pas pu joindre l'assistant pour le moment.",
+    "retry": "Réessayer",
+    "fallbackNote": "Réponse hors ligne",
+    "disclaimer": "Assistant IA — les réponses peuvent être imparfaites. Aucun compte requis.",
+    "suggest1": "Que comprend l'offre Free ?",
+    "suggest2": "Mes données sont-elles sécurisées ?",
+    "suggest3": "Comment démarrer ?"
+  },
   "legal": {
     "eyebrow": "Mentions légales",
     "lastUpdated": "Dernière mise à jour",
