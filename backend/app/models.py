@@ -194,6 +194,7 @@ class SignatureStatus(str, enum.Enum):
 class Plan(str, enum.Enum):
     free = "free"
     standard = "standard"
+    business = "business"
     premium = "premium"
 
 

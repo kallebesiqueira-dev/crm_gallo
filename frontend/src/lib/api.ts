@@ -619,7 +619,7 @@ export interface TrashItem {
   deleted_at: string;
 }
 
-export type PlanId = "free" | "standard" | "premium";
+export type PlanId = "free" | "standard" | "business" | "premium";
 export type BillingCycle = "monthly" | "yearly";
 
 export interface PlanOut {

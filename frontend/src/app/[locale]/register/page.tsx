@@ -16,7 +16,7 @@ import { api, type PlanId } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-const PLAN_OPTIONS: PlanId[] = ["free", "standard", "premium"];
+const PLAN_OPTIONS: PlanId[] = ["free", "standard", "business", "premium"];
 
 export default function RegisterPage() {
   const tAuth = useTranslations("auth");
@@ -120,7 +120,7 @@ export default function RegisterPage() {
         {/* Plan picker */}
         <div className="space-y-2">
           <Label>{tAuth("chooseStartingPlan")}</Label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {PLAN_OPTIONS.map((p) => (
               <button
                 key={p}

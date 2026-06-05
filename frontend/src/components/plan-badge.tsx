@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Crown, Sparkles, Zap } from "lucide-react";
+import { Briefcase, Crown, Sparkles, Zap } from "lucide-react";
 import type { PlanId } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,11 @@ const PLAN_STYLE: Record<PlanId, { className: string; Icon: typeof Crown }> = {
   standard: {
     className: "border-primary/30 bg-primary/10 text-primary",
     Icon: Zap,
+  },
+  business: {
+    className:
+      "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+    Icon: Briefcase,
   },
   premium: {
     className:

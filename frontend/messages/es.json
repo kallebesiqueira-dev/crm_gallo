@@ -963,7 +963,9 @@
       "support": "Soporte",
       "supportDedicated": "Dedicado",
       "supportPriority": "Prioritario",
-      "supportEmail": "Email"
+      "supportEmail": "Email",
+      "contracts": "Contratos y firma electrónica",
+      "audit": "Registro de auditoría"
     },
     "faqTitle": "Preguntas frecuentes",
     "faq": {
@@ -1021,9 +1023,13 @@
         "name": "Standard",
         "shortPrice": "€19/mes"
       },
+      "business": {
+        "name": "Business",
+        "shortPrice": "€39/mes"
+      },
       "premium": {
         "name": "Premium",
-        "shortPrice": "€49/mes"
+        "shortPrice": "€59/mes"
       }
     }
   },

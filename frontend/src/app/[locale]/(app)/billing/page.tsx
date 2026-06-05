@@ -25,12 +25,14 @@ import { cn } from "@/lib/utils";
 const PLAN_ACCENT: Record<PlanId, string> = {
   free: "from-slate-500/20 via-slate-500/5 to-transparent",
   standard: "from-primary/30 via-primary/10 to-transparent",
+  business: "from-violet-500/30 via-blue-500/10 to-transparent",
   premium: "from-amber-500/30 via-fuchsia-500/15 to-transparent",
 };
 
 const PLAN_BADGE: Record<PlanId, string> = {
   free: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20",
   standard: "bg-primary/10 text-primary border-primary/20",
+  business: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20",
   premium:
     "bg-gradient-to-r from-amber-500/15 to-fuchsia-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
 };
