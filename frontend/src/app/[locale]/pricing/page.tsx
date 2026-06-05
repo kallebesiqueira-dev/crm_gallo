@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,8 +34,16 @@ import { Logo } from "@/components/logo";
 import { SmoothScroll } from "@/components/marketing/smooth-scroll";
 import { SearchParamWatcher } from "@/components/search-param-watcher";
 import { api, type PlanOut, type PlanId, type BillingCycle } from "@/lib/api";
+import { createPublicCheckoutSession } from "@/lib/public-api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+
+// Lazy + client-only: keeps the chatbot and its logic out of the first paint
+// and the SSR HTML. The landing renders fully without it.
+const LandingChatbot = dynamic(
+  () => import("@/components/marketing/chatbot/landing-chatbot"),
+  { ssr: false },
+);
 
 const PLAN_GRADIENT: Record<PlanId, string> = {
   free: "from-slate-500/10 to-slate-500/0",
@@ -175,23 +184,40 @@ export default function PricingPage() {
       return;
     }
     const token = getToken();
-    if (!token) {
-      router.push(`/${locale}/register?plan=${plan.id}&cycle=${cycle}`);
+    if (token) {
+      // Authenticated: in-app, org-scoped upgrade.
+      setBusyPlan(plan.id);
+      setBanner(null);
+      try {
+        const { url } = await api.checkout(token, plan.id, cycle);
+        window.location.assign(url);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Checkout failed";
+        setBanner(
+          msg.includes("503") || msg.toLowerCase().includes("not configured")
+            ? t("stripeNotConfigured")
+            : msg,
+        );
+        setBusyPlan(null);
+      }
+      return;
+    }
+    // Unauthenticated visitor — prefer a hosted Stripe Checkout link, then a
+    // backend-created session (price validated server-side), then fall back to
+    // free sign-up so the CTA always does something useful.
+    const directUrl = process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_URL;
+    if (directUrl) {
+      window.location.assign(directUrl);
       return;
     }
     setBusyPlan(plan.id);
     setBanner(null);
     try {
-      const { url } = await api.checkout(token, plan.id, cycle);
+      const url = await createPublicCheckoutSession(plan.id);
       window.location.assign(url);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Checkout failed";
-      setBanner(
-        msg.includes("503") || msg.toLowerCase().includes("not configured")
-          ? t("stripeNotConfigured")
-          : msg,
-      );
+    } catch {
       setBusyPlan(null);
+      router.push(`/${locale}/register?plan=${plan.id}&cycle=${cycle}`);
     }
   }
 
@@ -662,6 +688,9 @@ export default function PricingPage() {
 
       {/* ============================== FOOTER ============================== */}
       <Footer />
+
+      {/* Floating pre-sales chatbot — lazy, never blocks first paint. */}
+      <LandingChatbot />
     </div>
     </SmoothScroll>
   );

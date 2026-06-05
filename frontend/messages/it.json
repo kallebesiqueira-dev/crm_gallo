@@ -1081,6 +1081,23 @@
     "seatLimitReachedBanner": "Hai raggiunto il limite di utenti del piano Free. Fai upgrade per continuare.",
     "canceledBanner": "Il tuo abbonamento terminerà a fine periodo. Riattiva dal portal di fatturazione quando vuoi."
   },
+  "chatbot": {
+    "launcherLabel": "Apri l'assistente GALLO",
+    "title": "Assistente GALLO",
+    "subtitle": "Chiedi di funzionalità, piani e sicurezza",
+    "greeting": "Ciao! 👋 Sono l'assistente GALLO CRM. Chiedimi qualsiasi cosa su funzionalità, piani, prova gratuita, sicurezza o come iniziare.",
+    "placeholder": "Scrivi la tua domanda…",
+    "send": "Invia",
+    "close": "Chiudi la chat",
+    "sending": "Sto pensando…",
+    "error": "Al momento non sono riuscito a contattare l'assistente.",
+    "retry": "Riprova",
+    "fallbackNote": "Risposta offline",
+    "disclaimer": "Assistente IA — le risposte potrebbero non essere perfette. Nessun account richiesto.",
+    "suggest1": "Cosa include il piano Free?",
+    "suggest2": "I miei dati sono al sicuro?",
+    "suggest3": "Come inizio?"
+  },
   "legal": {
     "eyebrow": "Legale",
     "lastUpdated": "Ultimo aggiornamento",

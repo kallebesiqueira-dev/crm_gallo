@@ -1081,6 +1081,23 @@
     "seatLimitReachedBanner": "Sie haben das Sitzplatzlimit des Free-Plans erreicht. Upgraden Sie, um weitere Benutzer hinzuzufügen.",
     "canceledBanner": "Ihr Abonnement endet zum Periodenende. Reaktivieren Sie jederzeit über das Abrechnungsportal."
   },
+  "chatbot": {
+    "launcherLabel": "GALLO-Assistenten öffnen",
+    "title": "GALLO-Assistent",
+    "subtitle": "Fragen Sie zu Funktionen, Tarifen & Sicherheit",
+    "greeting": "Hallo! 👋 Ich bin der GALLO-CRM-Assistent. Fragen Sie mich alles zu Funktionen, Tarifen, der kostenlosen Testphase, Sicherheit oder zum Einstieg.",
+    "placeholder": "Geben Sie Ihre Frage ein…",
+    "send": "Senden",
+    "close": "Chat schließen",
+    "sending": "Denkt nach…",
+    "error": "Ich konnte den Assistenten gerade nicht erreichen.",
+    "retry": "Erneut versuchen",
+    "fallbackNote": "Offline-Antwort",
+    "disclaimer": "KI-Assistent — Antworten können fehlerhaft sein. Kein Konto erforderlich.",
+    "suggest1": "Was ist im Free-Plan enthalten?",
+    "suggest2": "Sind meine Daten sicher?",
+    "suggest3": "Wie fange ich an?"
+  },
   "legal": {
     "eyebrow": "Rechtliches",
     "lastUpdated": "Zuletzt aktualisiert",

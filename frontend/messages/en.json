@@ -1081,6 +1081,23 @@
     "seatLimitReachedBanner": "You've reached the Free plan seat limit. Upgrade to keep adding users.",
     "canceledBanner": "Your subscription will end at the period end. Reactivate from the billing portal anytime."
   },
+  "chatbot": {
+    "launcherLabel": "Open the GALLO assistant",
+    "title": "GALLO assistant",
+    "subtitle": "Ask about features, plans & security",
+    "greeting": "Hi! 👋 I'm the GALLO CRM assistant. Ask me anything about features, plans, the free trial, security, or how to get started.",
+    "placeholder": "Type your question…",
+    "send": "Send",
+    "close": "Close chat",
+    "sending": "Thinking…",
+    "error": "I couldn't reach the assistant just now.",
+    "retry": "Try again",
+    "fallbackNote": "Offline answer",
+    "disclaimer": "AI assistant — answers may be imperfect. No account needed.",
+    "suggest1": "What's included in the Free plan?",
+    "suggest2": "Is my data secure?",
+    "suggest3": "How do I get started?"
+  },
   "legal": {
     "eyebrow": "Legal",
     "lastUpdated": "Last updated",
