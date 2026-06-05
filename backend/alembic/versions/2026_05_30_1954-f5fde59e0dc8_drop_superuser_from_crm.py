@@ -55,6 +55,28 @@ RUNTIME_TABLES = (
 
 
 def upgrade() -> None:
+    # Portability: in docker-compose the bootstrap superuser is `crm`
+    # (POSTGRES_USER=crm), so the role already exists. On a managed
+    # Postgres (Railway / Scaleway / RDS) the bootstrap role is
+    # different (e.g. `postgres`), so `crm` must exist for the
+    # `ALTER DEFAULT PRIVILEGES ... FOR ROLE crm` statements below to be
+    # valid. Idempotent — a no-op wherever `crm` already exists. On a
+    # managed DB the tables end up owned by the bootstrap role, not
+    # `crm`, but each migration also issues explicit
+    # `GRANT ... TO crm_app`, so the runtime role's access does not
+    # depend on these default-privilege rules.
+    op.execute(
+        """
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'crm') THEN
+            CREATE ROLE crm;
+          END IF;
+        END
+        $$;
+        """
+    )
+
     # Create crm_app role idempotently. Password is fine for local dev;
     # the docker-compose network isolates Postgres from the host
     # network anyway.
