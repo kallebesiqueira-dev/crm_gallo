@@ -334,6 +334,36 @@ class PasswordResetToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class EmailVerificationToken(Base):
+    """Single-use, time-bounded credential for the email-verification flow.
+
+    Mirrors `PasswordResetToken` exactly. Minted on self-registration for
+    every user that is NOT auto-verified (i.e. not the first user, not an
+    invitee). The token (URL-safe, ~43 chars from `secrets.token_urlsafe(32)`)
+    is delivered out-of-band — today via the dev log line
+    `email_verification.dispatched url=…`, eventually via SMTP. Possession
+    of a valid (not-expired, not-used) token marks the bound user's email
+    verified, which is the precondition for logging in.
+
+    Burning: `used_at` is set once the email is confirmed; any further
+    attempt with the same token returns 410 Gone.
+    """
+
+    __tablename__ = "email_verification_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class MfaBackupCode(Base):
     """Single-use one-time recovery code for the TOTP MFA flow.
 
@@ -396,6 +426,15 @@ class User(Base):
     )
     locale: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Email verification (anti-abuse on the Free tier). Self-signups land
+    # with `email_verified=False` and must click the link in their
+    # verification email before they can log in. The very first user (the
+    # install founder) and invited users — who already proved control of
+    # their inbox via the invite link — are created verified. Existing
+    # rows are grandfathered verified by the migration's server_default
+    # (true), which is then cleared so new rows fall back to this model
+    # default (False).
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # TOTP MFA. `mfa_secret` is the base32 shared secret bound to the
     # user's authenticator app — plaintext in v1 (env-level encryption
     # is a follow-up; today the DB itself is the trust boundary).

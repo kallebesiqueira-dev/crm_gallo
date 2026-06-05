@@ -358,6 +358,10 @@ async def register_with_invite(
         role=invite.role,  # legacy column — kept in sync with membership.role
         locale=payload.locale,
         last_active_org_id=org.id,
+        # Invited users reached this endpoint via a link emailed to their
+        # address, so control of the inbox is already proven — skip the
+        # separate email-verification step.
+        email_verified=True,
     )
     db.add(user)
     await db.flush()

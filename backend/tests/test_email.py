@@ -12,6 +12,7 @@ import pytest
 from app.email import (
     TEMPLATE_INVITE,
     TEMPLATE_PASSWORD_RESET,
+    TEMPLATE_VERIFY_EMAIL,
     get_provider,
     render,
 )
@@ -25,6 +26,7 @@ _INVITE_CTX = {
     "expires_at": "2026-06-08",
 }
 _RESET_CTX = {"url": "https://app.example/reset-password/tok456", "expires_hours": 1}
+_VERIFY_CTX = {"url": "https://app.example/verify-email/tok789", "expires_hours": 24}
 
 
 @pytest.mark.parametrize("locale", SUPPORTED_LOCALES)
@@ -45,6 +47,15 @@ def test_password_reset_renders_all_locales(locale: str):
     assert msg.subject
     assert _RESET_CTX["url"] in msg.html
     assert _RESET_CTX["url"] in msg.text
+
+
+@pytest.mark.parametrize("locale", SUPPORTED_LOCALES)
+def test_verify_email_renders_all_locales(locale: str):
+    msg = render(TEMPLATE_VERIFY_EMAIL, locale, _VERIFY_CTX)
+    assert msg.subject
+    assert _VERIFY_CTX["url"] in msg.html
+    assert _VERIFY_CTX["url"] in msg.text
+    assert msg.html.startswith("<!DOCTYPE html>")
 
 
 def test_html_escapes_user_controlled_org_name():

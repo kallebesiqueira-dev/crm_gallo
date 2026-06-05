@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,11 @@ export default function RegisterPage() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // When the backend requires email confirmation we swap the form for a
+  // "check your inbox" screen instead of logging the user in.
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
 
   // The starting plan can be deep-linked via ?plan=… (set by the pricing
   // cards). `planParam` is fed by <SearchParamWatcher> so useSearchParams()
@@ -52,6 +57,14 @@ export default function RegisterPage() {
     setError(null);
     try {
       const res = await api.register({ email, password, full_name: fullName, locale });
+      // Common path: self-signup must confirm their email first. No token
+      // is issued — show the "check your inbox" screen instead of logging
+      // in. (The first user / install founder is auto-verified and comes
+      // back with a token, falling through to the login+redirect below.)
+      if (res.verification_required || !res.token) {
+        setVerificationSent(true);
+        return;
+      }
       setToken(res.token.access_token);
       if (selectedPlan !== "free") {
         router.push(`/${res.user.locale || locale}/billing?upgrade=${selectedPlan}`);
@@ -67,6 +80,19 @@ export default function RegisterPage() {
       }
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function resendVerification() {
+    setResendBusy(true);
+    try {
+      await api.verifyEmailResend(email);
+    } catch {
+      // Resend is best-effort and the backend always 204s for a valid
+      // request shape — never block the UI on it.
+    } finally {
+      setResendDone(true);
+      setResendBusy(false);
     }
   }
 
@@ -111,6 +137,40 @@ export default function RegisterPage() {
       <Suspense fallback={null}>
         <SearchParamWatcher name="plan" onValue={setPlanParam} />
       </Suspense>
+      {verificationSent ? (
+        <div className="space-y-6">
+          <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-500/10 text-emerald-500">
+            <MailCheck className="h-6 w-6" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold tracking-tight">
+              {tAuth("verifySentTitle")}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {tAuth("verifySentBody", { email })}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">{tAuth("verifySentNote")}</p>
+          {resendDone ? (
+            <p className="text-sm text-emerald-600">{tAuth("verifyResendDone")}</p>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={resendBusy}
+              onClick={resendVerification}
+            >
+              {resendBusy ? tAuth("verifyResendSending") : tAuth("verifyResend")}
+            </Button>
+          )}
+          <p className="text-center text-sm text-muted-foreground">
+            <Link href={`/${locale}/login`} className="font-medium text-primary hover:underline">
+              {tMarketing("backToLogin")}
+            </Link>
+          </p>
+        </div>
+      ) : (
       <div className="space-y-6">
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">{tAuth("createAccount")}</h2>
@@ -228,6 +288,7 @@ export default function RegisterPage() {
           </Link>
         </p>
       </div>
+      )}
     </AuthShell>
   );
 }

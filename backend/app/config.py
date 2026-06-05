@@ -135,9 +135,13 @@ class Settings(BaseSettings):
     # with SPF/DKIM/DMARC in prod — see ADR-017 consequences.
     email_from: str = "no-reply@crmgallo.app"
     email_from_name: str = "CRM Gallo"
-    # Frontend origin used to build links in emails (invite / reset).
+    # Frontend origin used to build links in emails (invite / reset / verify).
     # Single source of truth instead of deriving from the Stripe URL.
     frontend_base_url: str = "http://localhost:3030"
+    # How long an email-verification link stays valid. 24h is generous —
+    # the link is sent the moment someone self-registers, so a same-day
+    # confirmation is the norm; a day of slack covers "I'll do it tonight".
+    email_verification_ttl_hours: int = 24
     # Resend (SaaS). Empty key + provider=resend → send() raises and
     # the worker retries; the call-site fallback log still has the URL.
     resend_api_key: str = ""

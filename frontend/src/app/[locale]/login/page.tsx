@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/marketing/auth-shell";
-import { api, isMfaChallenge } from "@/lib/api";
+import { api, ApiError, isMfaChallenge } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -30,11 +30,18 @@ export default function LoginPage() {
   // login.
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  // Set when login fails with 403 email_not_verified — swaps the generic
+  // error for a "verify your email" notice + a resend button.
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setNeedsVerification(false);
+    setResendDone(false);
     try {
       const res = await api.login(email, password);
       if (isMfaChallenge(res)) {
@@ -45,9 +52,29 @@ export default function LoginPage() {
       setToken(res.token.access_token);
       router.push(`/${res.user.locale || locale}/dashboard`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Login failed");
+      // 403 with the exact `email_not_verified` detail → the account
+      // exists but hasn't confirmed its email. Show the verify + resend
+      // UI instead of the generic error.
+      if (e instanceof ApiError && e.status === 403 && e.message === "email_not_verified") {
+        setNeedsVerification(true);
+      } else {
+        setError(e instanceof Error ? e.message : "Login failed");
+      }
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function resendVerification() {
+    setResendBusy(true);
+    try {
+      await api.verifyEmailResend(email);
+    } catch {
+      // Resend is best-effort — the backend always 204s for a valid
+      // request shape, so never block the UI on it.
+    } finally {
+      setResendDone(true);
+      setResendBusy(false);
     }
   }
 
@@ -200,6 +227,27 @@ export default function LoginPage() {
                   }}
                 />
               </div>
+
+              {needsVerification && (
+                <div className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                  <div>{tAuth("loginNotVerified")}</div>
+                  {resendDone ? (
+                    <p className="text-emerald-600 dark:text-emerald-400">
+                      {tAuth("verifyResendDone")}
+                    </p>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={resendBusy}
+                      onClick={resendVerification}
+                    >
+                      {resendBusy ? tAuth("verifyResendSending") : tAuth("verifyResend")}
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
