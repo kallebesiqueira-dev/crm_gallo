@@ -28,6 +28,10 @@ USER appuser
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -fsS http://localhost:8000/health || exit 1
+    CMD curl -fsS "http://localhost:${PORT:-8000}/health" || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run migrations, then launch the API. `${PORT:-8000}` lets the platform
+# (Railway/Fly/etc.) inject the listen port while still defaulting to 8000
+# for local `docker run`. In docker-compose the service `command:` overrides
+# this CMD, so the compose flow is unchanged.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
