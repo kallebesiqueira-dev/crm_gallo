@@ -60,12 +60,12 @@ interface SocialLink {
 // All hrefs are placeholders for now. Wire them to real accounts when
 // the channels go live; the design holds either way.
 const SOCIAL_LINKS: SocialLink[] = [
-  { id: "whatsapp",  label: "WhatsApp",  href: "#",                       Icon: null },
+  { id: "whatsapp",  label: "WhatsApp",  href: "https://wa.me/393717403464", Icon: null },
   { id: "instagram", label: "Instagram", href: "#",                       Icon: Instagram },
   { id: "facebook",  label: "Facebook",  href: "#",                       Icon: Facebook },
   { id: "linkedin",  label: "LinkedIn",  href: "#",                       Icon: Linkedin },
   { id: "youtube",   label: "YouTube",   href: "#",                       Icon: Youtube },
-  { id: "email",     label: "Email",     href: "mailto:hello@crmgallo.com", Icon: Mail },
+  { id: "email",     label: "Email",     href: "mailto:gallo-crm@hotmail.com", Icon: Mail },
 ];
 
 export function Footer() {
@@ -203,14 +203,13 @@ export function Footer() {
               {tMarketing("footerCompany")}
             </div>
             <dl className="mt-4 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-2 text-xs leading-relaxed text-muted-foreground">
-              {/* Ragione sociale, sede legale, phone and domain are REAL.
-                  Partita IVA is a TEMPORARY dummy number (12345678901) —
-                  replace with the real one once it is issued. */}
+              {/* Real registered entity: GALLO CRM S.r.l., Marchirolo (VA),
+                  Partita IVA IT03270000777. */}
               <dt className="text-foreground/80">{tMarketing("footerBusinessName")}</dt>
               <dd className="break-words">GALLO CRM S.r.l.</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerVAT")}</dt>
-              <dd className="font-mono break-words">IT12345678901</dd>
+              <dd className="font-mono break-words">IT03270000777</dd>
 
               <dt className="text-foreground/80">{tMarketing("footerAddress")}</dt>
               <dd className="break-words">
@@ -232,22 +231,22 @@ export function Footer() {
               <dt className="text-foreground/80">{tMarketing("footerEmail")}</dt>
               <dd>
                 <a
-                  href="mailto:contatto@gallocrm.com"
+                  href="mailto:gallo-crm@hotmail.com"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  contatto@gallocrm.com
+                  gallo-crm@hotmail.com
                 </a>
               </dd>
 
               <dt className="text-foreground/80">{tMarketing("footerWebsite")}</dt>
               <dd>
                 <a
-                  href="https://www.gallocrm.com"
+                  href="https://www.gallo-crm.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="break-words transition-colors hover:text-foreground"
                 >
-                  www.gallocrm.com
+                  www.gallo-crm.com
                 </a>
               </dd>
             </dl>
