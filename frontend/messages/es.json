@@ -393,7 +393,11 @@
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "disableButton": "Desactivar 2FA",
-    "disabling": "Desactivando…"
+    "disabling": "Desactivando…",
+    "forcedTitle": "Se requiere autenticación de dos factores",
+    "forcedSubtitle": "Tu rol requiere un segundo factor. Configura la 2FA abajo para continuar a tu espacio de trabajo.",
+    "forcedContinue": "Continuar al panel",
+    "forcedSignOut": "Cerrar sesión"
   },
   "attachments": {
     "title": "Adjuntos",

@@ -23,7 +23,7 @@ import { api, type MfaSetup, type MfaStatus } from "@/lib/api";
  * Backup codes are returned ONCE by /mfa/enable. We show them inline
  * with a download/copy affordance and warn they won't be shown again.
  */
-export function MfaCard() {
+export function MfaCard({ onEnabled }: { onEnabled?: () => void } = {}) {
   const t = useTranslations("mfa");
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -78,6 +78,7 @@ export function MfaCard() {
       setSetup(null);
       setEnrollCode("");
       await refresh();
+      onEnabled?.();
     } catch (err) {
       setEnrollError(err instanceof Error ? err.message : "Invalid code");
     } finally {

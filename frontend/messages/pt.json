@@ -393,7 +393,11 @@
     "showPassword": "Mostrar senha",
     "hidePassword": "Ocultar senha",
     "disableButton": "Desativar 2FA",
-    "disabling": "Desativando…"
+    "disabling": "Desativando…",
+    "forcedTitle": "Autenticação de dois fatores obrigatória",
+    "forcedSubtitle": "Sua função exige um segundo fator. Configure o 2FA abaixo para continuar para o seu espaço de trabalho.",
+    "forcedContinue": "Continuar para o painel",
+    "forcedSignOut": "Sair"
   },
   "attachments": {
     "title": "Anexos",

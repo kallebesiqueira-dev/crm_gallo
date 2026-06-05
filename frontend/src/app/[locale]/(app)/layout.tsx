@@ -13,7 +13,13 @@ import { PlanBadge } from "@/components/plan-badge";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { Button } from "@/components/ui/button";
-import { api, setUnauthorizedHandler, type BillingMe, type User } from "@/lib/api";
+import {
+  api,
+  setMfaEnrollmentHandler,
+  setUnauthorizedHandler,
+  type BillingMe,
+  type User,
+} from "@/lib/api";
 import { clearToken, getToken, isExpired, onTokenChange } from "@/lib/auth";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -29,7 +35,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setUnauthorizedHandler(() => {
       router.replace(`/${locale}/login`);
     });
-    return () => setUnauthorizedHandler(null);
+    // Privileged user without MFA: server gates every data endpoint with
+    // 403 `mfa_enrollment_required`. Send them to forced enrollment.
+    setMfaEnrollmentHandler(() => {
+      router.replace(`/${locale}/mfa-setup`);
+    });
+    return () => {
+      setUnauthorizedHandler(null);
+      setMfaEnrollmentHandler(null);
+    };
   }, [locale, router]);
 
   useEffect(() => {

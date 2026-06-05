@@ -568,6 +568,20 @@ class MfaLoginChallenge(BaseModel):
     mfa_token: str
 
 
+class MfaSetupRequired(BaseModel):
+    """Returned from /login when the user holds a privileged role but
+    hasn't enrolled in MFA and the `mfa_required_for_privileged` policy
+    is on. Unlike the challenge, a FULL session is started (cookies set)
+    so the client can reach /mfa/setup + /mfa/enable — every tenant-data
+    endpoint stays blocked (403 `mfa_enrollment_required`) until they
+    finish. The `token` mirrors AuthResponse for the cookie-less callers.
+    """
+
+    mfa_setup_required: bool = True
+    user: UserOut
+    token: Token
+
+
 class PasswordResetConfirm(BaseModel):
     """Body of POST /api/auth/password-reset/confirm. The `token` is the
     URL-safe credential delivered out-of-band; `new_password` replaces

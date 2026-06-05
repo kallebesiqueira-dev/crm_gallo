@@ -393,7 +393,11 @@
     "showPassword": "Mostra password",
     "hidePassword": "Nascondi password",
     "disableButton": "Disattiva 2FA",
-    "disabling": "Disattivazione…"
+    "disabling": "Disattivazione…",
+    "forcedTitle": "Autenticazione a due fattori richiesta",
+    "forcedSubtitle": "Il tuo ruolo richiede un secondo fattore. Configura la 2FA qui sotto per continuare verso il tuo spazio di lavoro.",
+    "forcedContinue": "Continua alla dashboard",
+    "forcedSignOut": "Esci"
   },
   "attachments": {
     "title": "Allegati",

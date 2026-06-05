@@ -393,7 +393,11 @@
     "showPassword": "Mussar il pled-clav",
     "hidePassword": "Zuppentar il pled-clav",
     "disableButton": "Deactivar 2FA",
-    "disabling": "Deactivar…"
+    "disabling": "Deactivar…",
+    "forcedTitle": "Autentificaziun a dus facturs necessaria",
+    "forcedSubtitle": "Tia rolla dovra in segund factur. Configurar la 2FA sutvart per cuntinuar a tes spazi da lavur.",
+    "forcedContinue": "Cuntinuar al cumpass",
+    "forcedSignOut": "Sortir"
   },
   "attachments": {
     "title": "Agiuntas",

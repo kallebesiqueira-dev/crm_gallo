@@ -439,10 +439,26 @@ export interface MfaChallenge {
   mfa_token: string;
 }
 
-export type LoginResponse = AuthResponse | MfaChallenge;
+/** Returned by /login when the user holds a privileged role, hasn't
+ *  enrolled in MFA, and the server's `mfa_required_for_privileged`
+ *  policy is on. A full session IS started (cookies set) — but every
+ *  tenant-data endpoint stays 403 `mfa_enrollment_required` until the
+ *  user finishes enrolling, so the client should route straight to the
+ *  forced-enrollment page. Carries `user`/`token` like AuthResponse. */
+export interface MfaSetupRequired {
+  mfa_setup_required: true;
+  user: User;
+  token: { access_token: string; token_type: string };
+}
+
+export type LoginResponse = AuthResponse | MfaChallenge | MfaSetupRequired;
 
 export function isMfaChallenge(r: LoginResponse): r is MfaChallenge {
   return (r as MfaChallenge).mfa_required === true;
+}
+
+export function isMfaSetupRequired(r: LoginResponse): r is MfaSetupRequired {
+  return (r as MfaSetupRequired).mfa_setup_required === true;
 }
 
 export interface MfaStatus {
@@ -670,6 +686,14 @@ export function setUnauthorizedHandler(fn: (() => void) | null) {
   onUnauthorized = fn;
 }
 
+// Hook for the app shell to redirect a privileged-but-unenrolled user
+// into forced MFA setup. Fired when any data endpoint answers
+// 403 `mfa_enrollment_required` (the server's choke-point gate).
+let onMfaEnrollmentRequired: (() => void) | null = null;
+export function setMfaEnrollmentHandler(fn: (() => void) | null) {
+  onMfaEnrollmentRequired = fn;
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const REFRESH_PATH = "/api/auth/refresh";
 
@@ -765,6 +789,12 @@ async function request<T>(
       } catch {
         /* ignore */
       }
+    }
+    // Privileged user who hasn't enrolled in MFA (server policy on):
+    // every data endpoint is gated until they finish. Bounce them into
+    // forced enrollment instead of surfacing a wall of raw 403s.
+    if (res.status === 403 && detail === "mfa_enrollment_required") {
+      onMfaEnrollmentRequired?.();
     }
     throw new ApiError(res.status, detail);
   }

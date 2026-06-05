@@ -393,7 +393,11 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
     "disableButton": "Désactiver la 2FA",
-    "disabling": "Désactivation…"
+    "disabling": "Désactivation…",
+    "forcedTitle": "Authentification à deux facteurs requise",
+    "forcedSubtitle": "Votre rôle exige un second facteur. Configurez la 2FA ci-dessous pour continuer vers votre espace de travail.",
+    "forcedContinue": "Continuer vers le tableau de bord",
+    "forcedSignOut": "Se déconnecter"
   },
   "attachments": {
     "title": "Pièces jointes",

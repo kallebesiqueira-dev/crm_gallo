@@ -19,7 +19,7 @@ from app.cookies import (
     set_auth_cookies,
 )
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, holds_privileged_role
 from app.mfa import (
     consume_backup_code,
     count_unused_backup_codes,
@@ -58,6 +58,7 @@ from app.schemas import (
     MfaEnableRequest,
     MfaLoginChallenge,
     MfaSetupOut,
+    MfaSetupRequired,
     MfaStatusOut,
     MfaVerifyRequest,
     PasswordChange,
@@ -358,6 +359,24 @@ async def login(
         )
         await db.commit()
         return MfaLoginChallenge(mfa_token=create_mfa_challenge_token(subject=str(user.id)))
+
+    # Privileged user who hasn't enrolled, with the policy on: start a
+    # full session (so they can reach /mfa/setup + /mfa/enable) but flag
+    # the client to route straight into forced enrollment. The teeth are
+    # server-side — get_current_org_id blocks every tenant-data endpoint
+    # with 403 `mfa_enrollment_required` until they finish; this signal
+    # is just the UX hint so they don't bounce off a wall of 403s.
+    if settings.mfa_required_for_privileged and await holds_privileged_role(db, user.id):
+        await record_audit(
+            db,
+            actor=user,
+            action="user.login_mfa_setup_required",
+            entity_type="user",
+            entity_id=user.id,
+        )
+        await db.commit()
+        token = await _start_session(request, response, user)
+        return MfaSetupRequired(user=UserOut.model_validate(user), token=token)
 
     await record_audit(
         db,

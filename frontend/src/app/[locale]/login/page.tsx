@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/marketing/auth-shell";
-import { api, ApiError, isMfaChallenge } from "@/lib/api";
+import { api, ApiError, isMfaChallenge, isMfaSetupRequired } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -47,6 +47,15 @@ export default function LoginPage() {
       if (isMfaChallenge(res)) {
         setMfaToken(res.mfa_token);
         setMfaCode("");
+        return;
+      }
+      // Privileged user who must enroll before reaching any data. The
+      // session cookies are already set, so route straight into the
+      // forced-enrollment page rather than the dashboard (which would
+      // just 403 every data fetch).
+      if (isMfaSetupRequired(res)) {
+        setToken(res.token.access_token);
+        router.push(`/${res.user.locale || locale}/mfa-setup`);
         return;
       }
       setToken(res.token.access_token);

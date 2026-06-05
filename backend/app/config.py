@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     rate_limit_login_per_minute: int = 5
     rate_limit_register_per_minute: int = 5
     rate_limit_password_reset_per_minute: int = 3
+
+    # ---- MFA policy ----
+    # When true, any user who holds an admin/manager role in ANY org is
+    # required to enroll in TOTP MFA. Until they do, every tenant-data
+    # endpoint returns 403 `mfa_enrollment_required` (the choke point is
+    # `get_current_org_id`); only the MFA-enrollment + session endpoints
+    # stay reachable so they can complete setup. Off by default so a
+    # fresh install / dev never gets locked out — flip it on per deploy.
+    mfa_required_for_privileged: bool = False
     # LLM-cost protection — per-user (see app.rate_limit.user_or_ip_key).
     rate_limit_score_per_hour: int = 10
     rate_limit_assistant_per_minute: int = 30

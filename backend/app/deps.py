@@ -5,10 +5,13 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.cookies import ACCESS_TOKEN_COOKIE
 from app.database import get_db, set_current_org_id
 from app.models import Organization, OrgMembership, User, UserRole
 from app.security import decode_token
+
+settings = get_settings()
 
 # `auto_error=False` so a missing Authorization header doesn't 401
 # before we get a chance to check the cookie. The cookie path is the
@@ -76,6 +79,25 @@ def is_privileged(user: User) -> bool:
     return user.role in PRIVILEGED_ROLES
 
 
+async def holds_privileged_role(db: AsyncSession, user_id: uuid.UUID) -> bool:
+    """True if the user is admin OR manager in ANY organization.
+
+    Role is per-org (`OrgMembership.role`), so "is this user privileged"
+    is a membership question, not a `User.role` one. Used by the MFA
+    policy: if you wield admin/manager power anywhere, you must have a
+    second factor. A single matching membership is enough — we LIMIT 1.
+    """
+    result = await db.execute(
+        select(OrgMembership.user_id)
+        .where(
+            OrgMembership.user_id == user_id,
+            OrgMembership.role.in_(PRIVILEGED_ROLES),
+        )
+        .limit(1)
+    )
+    return result.scalar_one_or_none() is not None
+
+
 def can_mutate(user: User, owner_id: uuid.UUID | None) -> bool:
     """Permissive ownership: any authenticated user reads;
     only owner or admin/manager mutates. Orphan records (owner_id is None)
@@ -117,6 +139,20 @@ async def get_current_org_id(
     that would let a logged-in attacker enumerate other tenants by
     swapping the id. This dep is the single source of truth.
     """
+    # MFA policy choke point. EVERY tenant-data endpoint resolves the org
+    # through this dep, while the MFA-enrollment + session endpoints
+    # (get_current_user only) bypass it — so blocking here forces a
+    # privileged user to enroll before touching any data, without locking
+    # them out of the very endpoints they need to do so. The membership
+    # lookup only runs while the flag is on AND the user hasn't enrolled
+    # yet, so an enrolled user (the steady state) pays nothing.
+    if settings.mfa_required_for_privileged and not user.mfa_enabled:
+        if await holds_privileged_role(db, user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="mfa_enrollment_required",
+            )
+
     if user.last_active_org_id is not None:
         org_id = user.last_active_org_id
     else:
