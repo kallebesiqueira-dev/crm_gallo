@@ -174,6 +174,7 @@ seat-cap 402, create new org, auto-switch verified, list orgs (2), create+accept
 - [x] `file_attachments` brought under RLS — done 2026-06-02 (TD-42, migration `c8e4d3f9a1b2`). Was the last tenant table relying on app-layer filtering only; now ENABLE + FORCE with the standard GUC policy.
 - [ ] Audit_logs SELECT policy is RLS-advisory (not strict) — relies on app-layer filtering. If a future route reads audit cross-org without a `WHERE organization_id` clause it will leak. Add a lint or repo grep guard if this risks regression.
 - [ ] `crm_app` password (`crm_app_dev_2026`) is hardcoded in migration. Rotate via `ALTER ROLE crm_app PASSWORD '…'` before any non-local deploy and update `APP_DATABASE_URL`.
+- [x] **`.env.example` scrubbed of concrete credentials — DONE 2026-06-05.** The git-tracked template no longer ships any real-looking secret: the `crm_app_dev_2026` DB password, the `crm:crm` owner creds, the `minioadmin/minioadmin` S3 keys, and `POSTGRES_PASSWORD=crm` are all replaced with `CHANGE_ME` placeholders. Real dev values live only in the gitignored `.env`. Also added the new `MFA_REQUIRED_FOR_PRIVILEGED=false` flag (§191, a feature flag not a secret) to both files. (The migration-hardcoded `crm_app` password above is a separate, still-open item.)
 - [ ] Future data-touching migrations run as `crm` (owner, RLS-respecting under FORCE) — they must either set the GUC or temporarily `DISABLE ROW LEVEL SECURITY` around the data step. Pure DDL is unaffected.
 
 **Watch out for:**
