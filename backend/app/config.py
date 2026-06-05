@@ -104,6 +104,17 @@ class Settings(BaseSettings):
     ollama_url: str = "http://ollama:11434"
     ollama_model: str = "qwen2.5:3b"
 
+    # ---- Generic OpenAI-compatible LLM (Groq / Mistral / Cerebras / OpenRouter / vLLM) ----
+    # Set llm_provider="openai_compat" + these three to use ANY provider whose
+    # API speaks the OpenAI `POST /chat/completions` shape. Keeps the AI layer
+    # vendor-neutral: swap Groq (fast, free — good for tests) → Mistral (EU /
+    # GDPR for production) → a self-hosted vLLM by changing env vars only, no
+    # code change. Empty key → the provider raises a clear "not configured"
+    # error and chat_completion falls back to another configured provider.
+    llm_base_url: str = ""  # e.g. https://api.groq.com/openai/v1
+    llm_api_key: str = ""
+    llm_model: str = ""  # e.g. openai/gpt-oss-120b  (Groq) / mistral-small-latest
+
     # ---- Stripe ----
     # When STRIPE_SECRET_KEY is empty, paid plans surface a clear error
     # and the Free plan keeps working. Set these for staging/production.

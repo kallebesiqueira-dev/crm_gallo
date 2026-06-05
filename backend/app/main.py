@@ -383,6 +383,16 @@ async def ready():
                     "status": "degraded",
                     "detail": "ANTHROPIC_API_KEY empty",
                 }
+        elif settings.llm_provider == "openai_compat":
+            # Vendor-neutral cloud LLM (Groq / Mistral / Cerebras / …). A
+            # base URL + key signals intent; deep checks live on the gen path.
+            if settings.llm_api_key and settings.llm_base_url:
+                components["llm"] = {"status": "ok", "provider": "openai_compat"}
+            else:
+                components["llm"] = {
+                    "status": "degraded",
+                    "detail": "LLM_BASE_URL/LLM_API_KEY empty",
+                }
         else:
             components["llm"] = {
                 "status": "degraded",
