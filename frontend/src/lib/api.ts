@@ -369,6 +369,9 @@ export interface User {
   role: string;
   locale: string;
   is_active: boolean;
+  // Whether the user confirmed their email. False for fresh self-signups
+  // until they click the verification link; true otherwise.
+  email_verified: boolean;
   // Which org the user is currently working in. Frontend reads this
   // to highlight the active item in the org switcher and to decide
   // which workspace's data to render.
@@ -414,6 +417,18 @@ export interface Invite {
 export interface AuthResponse {
   user: User;
   token: { access_token: string; token_type: string };
+}
+
+/** Returned by /register. When `verification_required` is true the user
+ *  must confirm their email before logging in — `token` is null and the
+ *  frontend shows a "check your email" screen. When false (the first
+ *  user / install founder, auto-verified) a session was started and
+ *  `token` carries the access token for an immediate login. */
+export interface RegisterResponse {
+  verification_required: boolean;
+  email: string;
+  user: User;
+  token: { access_token: string; token_type: string } | null;
 }
 
 /** Returned by /login when the user has MFA enabled — instead of the
@@ -791,7 +806,7 @@ export const api = {
     return res.json();
   },
   register: (payload: { email: string; password: string; full_name: string; locale: string }) =>
-    request<AuthResponse>("/api/auth/register", {
+    request<RegisterResponse>("/api/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
@@ -815,6 +830,24 @@ export const api = {
     request<void>("/api/auth/password-reset/confirm", {
       method: "POST",
       body: JSON.stringify({ token, new_password }),
+    }),
+
+  // ---- Email verification ----
+  // Confirm step: clicking the link in the verification email posts the
+  // token here. On success the backend marks the email verified AND
+  // starts a session (sets cookies), returning AuthResponse so the user
+  // is logged straight in.
+  verifyEmailConfirm: (token: string) =>
+    request<AuthResponse>("/api/auth/verify-email/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
+  // Resend step: always 204 (no enumeration). A fresh link is sent only
+  // when the email maps to an active, not-yet-verified user.
+  verifyEmailResend: (email: string) =>
+    request<void>("/api/auth/verify-email/resend", {
+      method: "POST",
+      body: JSON.stringify({ email }),
     }),
 
   // ---- MFA (TOTP) ----

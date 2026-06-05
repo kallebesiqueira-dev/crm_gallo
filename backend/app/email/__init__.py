@@ -11,6 +11,7 @@ from app.email.providers import get_provider
 from app.email.render import (
     TEMPLATE_INVITE,
     TEMPLATE_PASSWORD_RESET,
+    TEMPLATE_VERIFY_EMAIL,
     RenderedEmail,
     render,
 )
@@ -19,6 +20,7 @@ from app.email.sender import send
 __all__ = [
     "TEMPLATE_INVITE",
     "TEMPLATE_PASSWORD_RESET",
+    "TEMPLATE_VERIFY_EMAIL",
     "RenderedEmail",
     "get_provider",
     "render",

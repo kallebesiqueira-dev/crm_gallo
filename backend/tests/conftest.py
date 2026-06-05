@@ -153,6 +153,11 @@ def _make_user(
         role=role,
         locale="en",
         last_active_org_id=org.id,
+        # Seeded directly (out-of-band, like the first user / an invitee),
+        # so treat as already email-verified — otherwise login would 403
+        # with email_not_verified. The verification flow is exercised
+        # explicitly in test_auth.py.
+        email_verified=True,
     )
     db.add(user)
     db.flush()

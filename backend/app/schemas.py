@@ -58,6 +58,11 @@ class UserOut(BaseModel):
     role: UserRole
     locale: str
     is_active: bool
+    # Whether the user has confirmed their email. False for fresh
+    # self-signups until they click the verification link; true for the
+    # first user, invited users, and everyone grandfathered by the
+    # migration.
+    email_verified: bool = True
     # The org the user is currently working in. Frontend reads this to
     # highlight the active workspace in the org switcher and to know
     # which workspace it's pulling data from.
@@ -68,6 +73,30 @@ class UserOut(BaseModel):
 class AuthResponse(BaseModel):
     user: UserOut
     token: Token
+
+
+class RegisterResponse(BaseModel):
+    """Body of POST /api/auth/register.
+
+    Two outcomes share this shape so the frontend can branch on a single
+    field:
+
+      - `verification_required=True` (the common self-signup case): the
+        user must confirm their email before logging in. No session is
+        started, so `token` is null. The frontend shows a "check your
+        email" screen.
+      - `verification_required=False` (the very first user / install
+        founder, auto-verified): a full session was started and `token`
+        carries the access token, so the frontend logs them straight in.
+
+    `user` is always present so the frontend can read the resolved locale
+    for the post-signup redirect.
+    """
+
+    verification_required: bool
+    email: EmailStr
+    user: UserOut
+    token: Token | None = None
 
 
 class UserUpdate(BaseModel):
@@ -546,6 +575,22 @@ class PasswordResetConfirm(BaseModel):
 
     token: Annotated[str, Field(min_length=20, max_length=80)]
     new_password: Annotated[str, Field(min_length=8, max_length=128)]
+
+
+class EmailVerifyConfirm(BaseModel):
+    """Body of POST /api/auth/verify-email/confirm. The `token` is the
+    URL-safe credential from the verification email; confirming it marks
+    the bound user's email verified and starts a session."""
+
+    token: Annotated[str, Field(min_length=20, max_length=80)]
+
+
+class EmailVerifyResend(BaseModel):
+    """Body of POST /api/auth/verify-email/resend. Always responds 204 (no
+    enumeration); a fresh link is only minted when the email maps to an
+    active, not-yet-verified user."""
+
+    email: EmailStr
 
 
 # ---------- Leads ----------

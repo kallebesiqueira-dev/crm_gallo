@@ -30,6 +30,7 @@ _DEFAULT_LOCALE = "en"
 # Template identifiers — the public `send()` API takes one of these.
 TEMPLATE_INVITE = "invite"
 TEMPLATE_PASSWORD_RESET = "password_reset"
+TEMPLATE_VERIFY_EMAIL = "verify_email"
 
 # Two envs: HTML escapes ctx (XSS defense in the inbox), text does not.
 _html_env = Environment(autoescape=select_autoescape(["html", "xml"]))
@@ -246,6 +247,85 @@ _TEMPLATES: dict[str, dict[str, dict]] = {
             "expiry": "Este enlace caduca en {{ expires_hours }} hora(s). Si caduca, solicita uno nuevo.",
         },
     },
+    TEMPLATE_VERIFY_EMAIL: {
+        "en": {
+            "subject": "Confirm your email for {{ app_name }}",
+            "preheader": "Confirm your email address to activate your account.",
+            "heading": "Confirm your email",
+            "paragraphs": [
+                "Thanks for signing up for {{ app_name }}.",
+                "Click the button below to confirm your email address and activate your account.",
+            ],
+            "button": "Confirm email",
+            "expiry": "This link expires in {{ expires_hours }} hour(s). If it expires, request a new one from the sign-in page.",
+        },
+        "pt": {
+            "subject": "Confirme seu e-mail para {{ app_name }}",
+            "preheader": "Confirme seu endereço de e-mail para ativar sua conta.",
+            "heading": "Confirme seu e-mail",
+            "paragraphs": [
+                "Obrigado por se cadastrar no {{ app_name }}.",
+                "Clique no botão abaixo para confirmar seu endereço de e-mail e ativar sua conta.",
+            ],
+            "button": "Confirmar e-mail",
+            "expiry": "Este link expira em {{ expires_hours }} hora(s). Se expirar, solicite um novo na página de login.",
+        },
+        "de": {
+            "subject": "Bestätigen Sie Ihre E-Mail für {{ app_name }}",
+            "preheader": "Bestätigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.",
+            "heading": "E-Mail bestätigen",
+            "paragraphs": [
+                "Danke, dass Sie sich bei {{ app_name }} registriert haben.",
+                "Klicken Sie auf die Schaltfläche unten, um Ihre E-Mail-Adresse zu bestätigen und Ihr Konto zu aktivieren.",
+            ],
+            "button": "E-Mail bestätigen",
+            "expiry": "Dieser Link läuft in {{ expires_hours }} Stunde(n) ab. Fordern Sie danach auf der Anmeldeseite einen neuen an.",
+        },
+        "fr": {
+            "subject": "Confirmez votre e-mail pour {{ app_name }}",
+            "preheader": "Confirmez votre adresse e-mail pour activer votre compte.",
+            "heading": "Confirmez votre e-mail",
+            "paragraphs": [
+                "Merci de vous être inscrit à {{ app_name }}.",
+                "Cliquez sur le bouton ci-dessous pour confirmer votre adresse e-mail et activer votre compte.",
+            ],
+            "button": "Confirmer l'e-mail",
+            "expiry": "Ce lien expire dans {{ expires_hours }} heure(s). S'il expire, demandez-en un nouveau depuis la page de connexion.",
+        },
+        "it": {
+            "subject": "Conferma la tua e-mail per {{ app_name }}",
+            "preheader": "Conferma il tuo indirizzo e-mail per attivare il tuo account.",
+            "heading": "Conferma la tua e-mail",
+            "paragraphs": [
+                "Grazie per esserti registrato su {{ app_name }}.",
+                "Clicca sul pulsante qui sotto per confermare il tuo indirizzo e-mail e attivare il tuo account.",
+            ],
+            "button": "Conferma e-mail",
+            "expiry": "Questo link scade tra {{ expires_hours }} ora/e. Se scade, richiedine uno nuovo dalla pagina di accesso.",
+        },
+        "rm": {
+            "subject": "Confermai Voss e-mail per {{ app_name }}",
+            "preheader": "Confermai Voss adressa d'e-mail per activar Voss conto.",
+            "heading": "Confermar Voss e-mail",
+            "paragraphs": [
+                "Grazia per Vus esser annunzià tar {{ app_name }}.",
+                "Cliccai sin il buttun sutvart per confermar Voss adressa d'e-mail ed activar Voss conto.",
+            ],
+            "button": "Confermar l'e-mail",
+            "expiry": "Quai link scada en {{ expires_hours }} ura(s). Sch'el scada, dumandai in nov sin la pagina d'annunzia.",
+        },
+        "es": {
+            "subject": "Confirma tu correo para {{ app_name }}",
+            "preheader": "Confirma tu dirección de correo para activar tu cuenta.",
+            "heading": "Confirma tu correo",
+            "paragraphs": [
+                "Gracias por registrarte en {{ app_name }}.",
+                "Haz clic en el botón de abajo para confirmar tu dirección de correo y activar tu cuenta.",
+            ],
+            "button": "Confirmar correo",
+            "expiry": "Este enlace caduca en {{ expires_hours }} hora(s). Si caduca, solicita uno nuevo en la página de inicio de sesión.",
+        },
+    },
 }
 
 
@@ -296,6 +376,7 @@ def render(template: str, locale: str | None, ctx: dict) -> RenderedEmail:
     `ctx` must carry the placeholder vars the template references:
       - invite          → org_name, role, url, expires_at
       - password_reset  → url, expires_hours
+      - verify_email    → url, expires_hours
     `app_name` is injected automatically. Missing vars render empty
     (Jinja default), so a typo in a call site degrades to a blank,
     not a crash.

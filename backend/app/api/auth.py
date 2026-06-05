@@ -29,6 +29,7 @@ from app.mfa import (
     verify_totp,
 )
 from app.models import (
+    EmailVerificationToken,
     MfaBackupCode,
     Organization,
     OrgMembership,
@@ -50,6 +51,8 @@ from app.redis_client import (
 )
 from app.schemas import (
     AuthResponse,
+    EmailVerifyConfirm,
+    EmailVerifyResend,
     MfaDisableRequest,
     MfaEnableOut,
     MfaEnableRequest,
@@ -61,6 +64,7 @@ from app.schemas import (
     PasswordResetConfirm,
     PasswordResetRequest,
     RegisterRequest,
+    RegisterResponse,
     SessionOut,
     SessionsRevokeOthersOut,
     Token,
@@ -79,6 +83,10 @@ log = structlog.get_logger(__name__)
 PASSWORD_RESET_TTL_HOURS = 1
 
 settings = get_settings()
+# Email-verification link lifetime. Sourced from settings so operators can
+# tune it per-env without a code change (mirrors how the reset TTL is a
+# module constant — kept as a name here for symmetry at the call sites).
+EMAIL_VERIFICATION_TTL_HOURS = settings.email_verification_ttl_hours
 # Frontend origin for the reset link. Reads the configured setting so
 # prod emits real https links, not localhost.
 FRONTEND_BASE_URL = settings.frontend_base_url
@@ -129,14 +137,59 @@ async def _start_session(request: Request, response: Response, user: User) -> To
     return token
 
 
-@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+async def _send_verification_email(db: AsyncSession, user: User) -> None:
+    """Mint a fresh single-use verification token for `user`, persist it,
+    audit the dispatch, and enqueue the verification email.
+
+    Shared by /register (initial send) and /verify-email/resend. Mirrors
+    the password-reset dispatch: the URL is logged regardless of provider
+    so an operator can always recover the link, and the email enqueue is
+    best-effort (a Redis hiccup must not 500 the caller). The caller is
+    responsible for committing the surrounding transaction.
+    """
+    token_value = secrets.token_urlsafe(32)
+    db.add(
+        EmailVerificationToken(
+            user_id=user.id,
+            token=token_value,
+            expires_at=datetime.now(UTC) + timedelta(hours=EMAIL_VERIFICATION_TTL_HOURS),
+        )
+    )
+    await record_audit(
+        db,
+        actor=user,
+        action="user.email_verification_sent",
+        entity_type="user",
+        entity_id=user.id,
+    )
+
+    verify_url = f"{FRONTEND_BASE_URL}/verify-email/{token_value}"
+    log.info(
+        "email_verification.dispatched",
+        user_email=user.email,
+        url=verify_url,
+        expires_in_hours=EMAIL_VERIFICATION_TTL_HOURS,
+    )
+    try:
+        await email_service.send(
+            to=user.email,
+            template=email_service.TEMPLATE_VERIFY_EMAIL,
+            locale=user.locale,
+            ctx={"url": verify_url, "expires_hours": EMAIL_VERIFICATION_TTL_HOURS},
+            dedupe_key=f"verify:{token_value}",
+        )
+    except Exception:
+        log.warning("email_verification.email_enqueue_failed", exc_info=True)
+
+
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit(f"{settings.rate_limit_register_per_minute}/minute")
 async def register(
     request: Request,
     response: Response,
     payload: RegisterRequest,
     db: AsyncSession = Depends(get_db),
-) -> AuthResponse:
+) -> RegisterResponse:
     existing = await db.execute(select(User).where(User.email == payload.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -145,7 +198,8 @@ async def register(
     # cannot both end up as admin. Falls back to count==0 inside the lock.
     await db.execute(select(func.pg_advisory_xact_lock(0xC0FFEE)))
     count = (await db.execute(select(func.count()).select_from(User))).scalar_one()
-    role = UserRole.admin if count == 0 else UserRole.sales_agent
+    is_first_user = count == 0
+    role = UserRole.admin if is_first_user else UserRole.sales_agent
 
     # Resolve (or bootstrap) the org this user lands in BEFORE the seat
     # check — seat enforcement is now per-org, so we need the org id.
@@ -179,6 +233,9 @@ async def register(
             detail=reason or "Seat limit reached. Please upgrade your plan.",
         )
 
+    # The first user (install founder) is auto-verified so they can't lock
+    # themselves out while bootstrapping. Every other self-signup must
+    # confirm their email before logging in (anti-abuse on the Free tier).
     user = User(
         email=payload.email,
         full_name=payload.full_name,
@@ -186,6 +243,7 @@ async def register(
         role=role,
         locale=payload.locale,
         last_active_org_id=org.id,
+        email_verified=is_first_user,
     )
     db.add(user)
     await db.flush()
@@ -201,12 +259,35 @@ async def register(
         entity_type="user",
         entity_id=user.id,
         organization_id=org.id,
-        metadata={"role": user.role.value, "first_user": role == UserRole.admin},
+        metadata={"role": user.role.value, "first_user": is_first_user},
     )
+
+    if is_first_user:
+        # Auto-verified founder → start a session and log them straight in,
+        # exactly as before this feature.
+        await db.commit()
+        await db.refresh(user)
+        token = await _start_session(request, response, user)
+        return RegisterResponse(
+            verification_required=False,
+            email=user.email,
+            user=UserOut.model_validate(user),
+            token=token,
+        )
+
+    # Everyone else: mint + send a verification link in the SAME
+    # transaction as the user/membership insert, then return a body that
+    # tells the frontend to show the "check your email" screen. No session
+    # is started — login is gated on email_verified.
+    await _send_verification_email(db, user)
     await db.commit()
     await db.refresh(user)
-    token = await _start_session(request, response, user)
-    return AuthResponse(user=UserOut.model_validate(user), token=token)
+    return RegisterResponse(
+        verification_required=True,
+        email=user.email,
+        user=UserOut.model_validate(user),
+        token=None,
+    )
 
 
 # Pre-computed bcrypt hash of a long random string. Used to keep
@@ -253,6 +334,16 @@ async def login(
         )
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User disabled")
+
+    # Gate login on a confirmed email (anti-abuse on the Free tier). The
+    # frontend keys off the exact `email_not_verified` detail string to
+    # render a "verify your email" + resend UI. Checked BEFORE the MFA
+    # branch so an unverified account never even reaches an MFA challenge.
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="email_not_verified",
+        )
 
     if user.mfa_enabled:
         # Don't start a session yet — issue an MFA challenge instead.
@@ -851,6 +942,83 @@ async def confirm_password_reset(
         entity_type="user",
         entity_id=user.id,
     )
+    await db.commit()
+
+
+@router.post("/verify-email/confirm", response_model=AuthResponse)
+@limiter.limit(f"{settings.rate_limit_password_reset_per_minute}/minute")
+async def confirm_email_verification(
+    request: Request,
+    response: Response,
+    payload: EmailVerifyConfirm,
+    db: AsyncSession = Depends(get_db),
+) -> AuthResponse:
+    """Consume a verification token to mark the user's email confirmed,
+    then log them straight in.
+
+    Token validation mirrors confirm_password_reset's distinct codes so
+    the UI can render a precise dead-link message:
+      - unknown / never-existed token → 404
+      - already used token → 410 Gone
+      - expired token → 410 Gone
+
+    On success we start a full session (cookies + body) so clicking the
+    link in the email lands the user in the dashboard without a second
+    login step.
+    """
+    result = await db.execute(
+        select(EmailVerificationToken).where(EmailVerificationToken.token == payload.token)
+    )
+    verification = result.scalar_one_or_none()
+    if verification is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token")
+    if verification.used_at is not None:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Token already used")
+    if verification.expires_at < datetime.now(UTC):
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Token expired")
+
+    user = await db.get(User, verification.user_id)
+    if user is None or not user.is_active:
+        # The user disappeared or was disabled between issuance and
+        # confirm — treat as a dead link.
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Account unavailable")
+
+    user.email_verified = True
+    verification.used_at = datetime.now(UTC)
+    await record_audit(
+        db,
+        actor=user,
+        action="user.email_verified",
+        entity_type="user",
+        entity_id=user.id,
+    )
+    await db.commit()
+    await db.refresh(user)
+    token = await _start_session(request, response, user)
+    return AuthResponse(user=UserOut.model_validate(user), token=token)
+
+
+@router.post("/verify-email/resend", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(f"{settings.rate_limit_password_reset_per_minute}/minute")
+async def resend_email_verification(
+    request: Request,
+    payload: EmailVerifyResend,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Re-send the verification link for an unconfirmed account.
+
+    Always returns 204 — even if the email is unknown, the account is
+    disabled, or it's already verified — to avoid leaking which addresses
+    have accounts or their verification state. A fresh token is minted +
+    emailed only when the email maps to an active, not-yet-verified user.
+    """
+    result = await db.execute(select(User).where(User.email == payload.email))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active or user.email_verified:
+        # Silent no-op — same response shape as the happy path.
+        return
+
+    await _send_verification_email(db, user)
     await db.commit()
 
 
