@@ -144,8 +144,7 @@ async def chat_completion(
     """
     provider = settings.llm_provider.lower()
     order = [provider] + [
-        p for p in ("openai_compat", "anthropic")
-        if p != provider and _provider_configured(p)
+        p for p in ("openai_compat", "anthropic") if p != provider and _provider_configured(p)
     ]
     errors: list[str] = []
     for name in order:

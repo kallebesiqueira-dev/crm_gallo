@@ -73,8 +73,15 @@ _FALLBACK_RULES: list[tuple[tuple[str, ...], str]] = [
     ),
     (
         (
-            "security", "secure", "data", "gdpr", "privacy",
-            "sicurezza", "dati", "datenschutz", "données",
+            "security",
+            "secure",
+            "data",
+            "gdpr",
+            "privacy",
+            "sicurezza",
+            "dati",
+            "datenschutz",
+            "données",
         ),
         "Security is core: EU data residency, GDPR-aware, encryption in transit and "
         "at rest, immutable audit logs, tenant isolation and optional 2FA. GALLO CRM "
@@ -82,8 +89,16 @@ _FALLBACK_RULES: list[tuple[tuple[str, ...], str]] = [
     ),
     (
         (
-            "start", "begin", "sign up", "signup", "register",
-            "começ", "iniziare", "anfangen", "commencer", "empezar",
+            "start",
+            "begin",
+            "sign up",
+            "signup",
+            "register",
+            "começ",
+            "iniziare",
+            "anfangen",
+            "commencer",
+            "empezar",
         ),
         "Getting started takes under a minute: click “Start free” / open "
         "the sign-up page, create your account (no card for the Free plan) and "
