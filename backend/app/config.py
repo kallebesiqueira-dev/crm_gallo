@@ -32,6 +32,14 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
 
+    # Domain attribute for the auth cookies. Empty => host-only (cookie scoped
+    # to the exact API host — fine when the SPA and API share an origin). Set to
+    # a shared parent like ".gallo-crm.com" when the frontend and API live on
+    # DIFFERENT subdomains (app.gallo-crm.com ↔ api.gallo-crm.com) so the
+    # JS-readable csrf cookie is visible to the SPA and the auth cookie is sent
+    # to both — without it the SPA can't tell it's logged in after login.
+    cookie_domain: str = ""
+
     rate_limit_login_per_minute: int = 5
     rate_limit_register_per_minute: int = 5
     rate_limit_password_reset_per_minute: int = 3

@@ -80,6 +80,11 @@ def set_auth_cookies(
     access_max_age = settings.jwt_access_token_expire_minutes * 60
     refresh_max_age = settings.refresh_token_expire_days * 86400
     secure = settings.is_production
+    # Cross-subdomain: when the SPA (app.gallo-crm.com) and API
+    # (api.gallo-crm.com) differ, scope the cookies to the shared parent so
+    # the SPA can read the csrf cookie and both subdomains receive the auth
+    # cookie. Empty COOKIE_DOMAIN => host-only (same-origin / dev default).
+    domain = settings.cookie_domain or None
 
     response.set_cookie(
         key=ACCESS_TOKEN_COOKIE,
@@ -89,6 +94,7 @@ def set_auth_cookies(
         secure=secure,
         samesite="lax",
         path="/",
+        domain=domain,
     )
     # CSRF cookie outlives the access cookie — the SPA still needs to
     # send X-CSRF-Token when calling /refresh after the access JWT has
@@ -103,6 +109,7 @@ def set_auth_cookies(
         secure=secure,
         samesite="lax",
         path="/",
+        domain=domain,
     )
     if refresh_token is not None:
         response.set_cookie(
@@ -113,6 +120,7 @@ def set_auth_cookies(
             secure=secure,
             samesite="lax",
             path=REFRESH_TOKEN_PATH,
+            domain=domain,
         )
 
 
@@ -123,6 +131,7 @@ def clear_auth_cookies(response: Response) -> None:
     silently). The refresh cookie needs its narrower path to delete."""
     settings = get_settings()
     secure = settings.is_production
+    domain = settings.cookie_domain or None
     for key in (ACCESS_TOKEN_COOKIE, CSRF_TOKEN_COOKIE):
         response.delete_cookie(
             key=key,
@@ -130,6 +139,7 @@ def clear_auth_cookies(response: Response) -> None:
             secure=secure,
             samesite="lax",
             httponly=(key == ACCESS_TOKEN_COOKIE),
+            domain=domain,
         )
     response.delete_cookie(
         key=REFRESH_TOKEN_COOKIE,
@@ -137,4 +147,5 @@ def clear_auth_cookies(response: Response) -> None:
         secure=secure,
         samesite="lax",
         httponly=True,
+        domain=domain,
     )
