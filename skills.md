@@ -1,7 +1,7 @@
 # Engineering Backlog & Project Status
 
 > **Living document.** Update when work changes state. Read this first when resuming work.
-> **Last reviewed:** 2026-06-04 (reconciled "Next milestone" — ADR-016 Documents stack fully shipped + pushed)
+> **Last reviewed:** 2026-06-06 (added §5 Product surface / menu gaps — integrations, Performance/KPI, Comunicazioni, Utenti e Permessi, Sicurezza, Automazioni; reconciled against the user's target nav)
 
 ---
 
@@ -412,6 +412,109 @@ Auth is browser cookie + CSRF, which can't do server-to-server, and routes aren'
 - **Shadow reads**: during migrations, run new + old query, compare, log divergences before cutting over
 - **Backfill scripts with checkpoints**: large data ops resume from last successful batch on crash
 - **Chaos testing**: periodically kill Redis/worker/LLM in staging; verify graceful degradation
+
+---
+
+## 3.5. Product surface / menu gaps (reviewed 2026-06-06)
+
+Gap analysis of the **target nav** (user-defined, 2026-06-06) against what ships today. The target menu:
+`Dashboard · Lead · Clienti · Pipeline · Attività · Calendario · Comunicazioni · Preventivi · Contratti · Automazioni · Assistente IA · Importazioni · Integrazioni · Report · Performance · Fatturazione · Utenti e Permessi · Audit log · Sicurezza · Impostazioni · Cestino`
+
+**Already shipped** (in the sidebar today): Dashboard, Lead, Clienti, Pipeline, Attività, Calendario, Preventivi, Contratti, Assistente IA, Importazioni, Report, Fatturazione, Audit log, Impostazioni, Cestino. Plus **Webhooks/API** and **Stripe** are done (just not surfaced as their own nav entries — API keys + webhooks live under Settings; billing under Fatturazione).
+
+The six missing nav modules and the integration connectors, by priority. **Each is a backlog stub — nothing built yet.**
+
+### 💰 Prioritization principle — free-first (user decision 2026-06-06)
+**Build the features we can ship on our own stack at zero recurring external cost FIRST.** Anything that needs a paid third-party vendor (per-message/per-minute fees, paid API tiers, ad-platform spend, e-sign envelopes, a second payment processor) is **deferred — "só se escalar"** (only once the product scales / a paying customer needs it). These items are tagged **💲 paid vendor — defer until scale** below; everything untagged is 🟢 self-built/free and fair game now. Note: Google/Microsoft **OAuth login is free** (no per-user cost), so SSO-via-OAuth counts as 🟢; SAML stays deferred as an enterprise-deal item.
+
+### 🟢 Build-now queue — free / self-built, user-prioritized (2026-06-06)
+The immediate work order. All five are pure code on the existing Postgres + FastAPI + Next stack — **no external vendor, no recurring cost.** Ordered as the user listed them:
+1. [ ] **Company / Account (B2B entity)** — new `companies` table (org-scoped RLS, soft-delete); `Lead`/`Customer`/`Deal` gain a nullable `company_id`; Account detail page rolls up its contacts + deals + activity. **Do this first** — it's the schema decision the others build on (custom fields, tags, merge all want to target Company too), and retrofitting after data grows is painful. Keep `Customer` = the person, `Company` = the org.
+2. [ ] **Custom fields** — `custom_field_definitions` (org, entity_type, key, label, type, options, required, position) + a JSONB `custom_fields` column on lead/customer/deal/company. Wire into forms, detail, list columns, filters, and the CSV/XLSX importer. Highest adoption driver.
+3. [ ] **Tags / Segmentação** — `tags` (org, name, color) + tagging join (polymorphic or per-entity) + **saved segments** (stored filter JSON) + bulk tag/untag actions on list pages.
+4. [ ] **Duplicate merge** — detect candidates (email / phone / fuzzy name; the importer already dedupes on insert, this is the in-app *merge of two existing rows*) + a merge UI that re-parents deals/activities/notes/attachments to the survivor and soft-deletes the loser. Audit the merge.
+5. [ ] **Web-to-Lead (básico)** — public unauthenticated `POST /api/public/forms/{token}/submit` → creates a Lead in the token's org; an embeddable `<script>`/iframe snippet; **free anti-spam** (honeypot field + per-IP rate limit now; Cloudflare Turnstile / hCaptcha free tier later). The front door for organic inbound (and later the Ads connector).
+
+### 🟧 P1 — competitive table-stakes before scaling
+
+#### Automazioni (no-/low-code automation module)
+A user-facing module on top of the existing outbox/event bus (the engine is live — see "Outbox + event bus", the visual builder is the gap; cf. the P3 "Automation builder" stub which this supersedes/expands). v1 = a fixed recipe catalog, not a free-form node editor:
+- [ ] **Follow-up automatico** — schedule an email/task N days after a lead/deal enters a state.
+- [ ] **Lembrete de lead parado (stale-lead reminder)** — fire when a lead/deal has had no activity for N days (cron scan + `activities.last_at`).
+- [ ] **Mudança automática de etapa (auto stage change)** — move a deal stage on a trigger (e.g. quote accepted → stage "Won").
+- [ ] **Envio automático de email/WhatsApp** — action node hitting the email provider (live) / WhatsApp (P3 connector below).
+- [ ] **Criação automática de tarefa** — spawn a Task on a trigger (e.g. new lead → "Call within 24h").
+- [ ] Data model: `automation_rules` (org-scoped RLS, trigger JSON + condition JSON + action JSON, enabled flag) + execution log. Triggers subscribe to outbox events; time-based ones run as an arq cron. Idempotency per (rule, entity, fire-window).
+
+#### Performance / KPI (sales analytics — distinct from ops/Prometheus metrics)
+The existing "CRM-specific metrics" + Prometheus items are **system observability**. This is a **sales-performance dashboard** for the user, a separate nav entry from Report:
+- [ ] **Metas (goals/targets)** — per-rep / per-team / per-period revenue or deal-count targets + attainment %.
+- [ ] **Vendas por vendedor (sales per rep)** — leaderboard of closed-won value by owner.
+- [ ] **Taxa de conversão (conversion rate)** — lead→customer and stage-to-stage funnel conversion.
+- [ ] **Tempo médio para fechar deal (avg time-to-close)** — mean/median days from deal-created to won, by rep/stage.
+- [ ] **Leads perdidos (lost leads)** — count + reason breakdown of lost/declined.
+- [ ] Backend: aggregate queries over deals/leads/activities (lean on the existing `(org, stage, updated_at)` indices); a `sales_goals` table for targets.
+
+#### Utenti e Permessi (Users & Permissions module)
+Today: fixed roles `admin`/`manager`/`sales_agent` (`OrgMembership.role`) + team invites (`<TeamCard>` in Settings). The gap is a **dedicated admin module** and **custom/granular permissions**:
+- [ ] Promote Team management out of Settings into its own **Utenti e Permessi** nav entry (list members, change role, deactivate, pending invites — wraps the existing invites API).
+- [ ] **Custom roles + granular permissions** (beyond the 3 fixed roles) — a permissions matrix (per-module CRUD) if customers ask; today RBAC is hard-coded in `require_roles`/`ensure_can_mutate`.
+- [ ] **Accessi (access view)** — per-user last-login + active-session count (sessions API exists; surface it per-user here).
+
+### 🟨 P2 — integration connectors (most have a P3 stub already; promote as demand lands)
+
+#### Integrazioni (a single Integrations hub page)
+- [ ] **Integrations hub** — one nav page listing all connectors with connect/disconnect + status, instead of scattering them across Settings. The umbrella for everything below.
+- [ ] **PayPal** (alongside Stripe) — **💲 paid vendor — defer until scale.** Transaction fees + we already have Stripe covering payments; a second processor only earns its keep at volume. Provider seam over the current Stripe-only billing (`app/billing/`).
+- [ ] **Zapier / Make** — 🟢 mostly free packaging. Cheapest path to "1000 integrations": expose a few triggers (new lead/customer/deal) + actions over the existing Public API + outgoing webhooks; publish a Zapier/Make app (listing is free). Fair game once the Public API surface is wider.
+- [ ] **Meta Ads / Google Ads (lead ingestion)** — **💲 defer until scale.** Pull leads from Lead Ads / Google Lead Form extensions (OAuth + platform webhook/polling). Tied to ad-platform accounts/app-review + only valuable to customers already spending on ads. Pairs with Web-to-Lead (built now).
+- [ ] **WhatsApp** — **💲 paid vendor — defer until scale** (WhatsApp Business Cloud API = paid per-message + Meta Business verification). See P3 "Omnichannel inbox"; promote for a Lusophone/LatAm launch when a customer needs it.
+- [ ] **Gmail / Outlook** — see P3 "Email integration" (IMAP/Gmail/Outlook sync, threads on customers).
+- [ ] **Google Calendar (+ Outlook)** — see P3 "Calendar sync" (events ↔ Task model).
+- [x] **Webhooks / API** — DONE (Public API `/api/v1` + API keys + outgoing HMAC webhooks). Surface under the hub.
+- [x] **Stripe** — DONE (Checkout + Portal + signed webhooks). Surface under the hub.
+
+#### Comunicazioni (unified communications hub)
+Centralise customer conversation across channels in one nav entry (largely the P3 "Omnichannel inbox", widened):
+- [ ] **Email** — inbound/outbound threads attached to a Lead/Customer (builds on the email provider + the P3 Gmail/Outlook sync).
+- [ ] **WhatsApp** — **💲 paid vendor — defer until scale** (omnichannel-inbox connector, P3).
+- [ ] **Chamadas (calls)** — **💲 paid vendor — defer until scale.** Click-to-call / call logging via a telephony provider (Twilio Voice / Aircall); store call records + recordings (S3).
+- [ ] **SMS** — **💲 paid vendor — defer until scale.** Outbound/inbound SMS (Twilio) as another `Message` channel.
+- [ ] **Histórico de conversa (conversation history)** — the unified timeline per contact (the `Conversation` + `Message` models from the omnichannel stub).
+- [ ] **Templates** — reusable message templates per channel (extends the existing `document_templates` merge-field engine to email/WhatsApp/SMS bodies).
+
+### 🟧 Sicurezza (security settings page) — mixed priority
+
+A consolidated **Sicurezza** nav entry. Most pieces exist but are scattered across Settings; one of them is genuinely missing:
+- [x] **MFA** — DONE (TOTP enrol/enable/disable + backup codes; mandatory-for-privileged flag §191; secret encrypted at rest §192). Surface here.
+- [x] **Sessões ativas (active sessions)** — DONE (`<SessionsCard>` — list + revoke + sign-out-others). Surface here.
+- [x] **Logs de acesso (access logs)** — covered by the Audit log (login events recorded). Could add a security-filtered view.
+- [ ] **IP allowlist** — **NOT yet tracked (P1 security).** Per-org allowlist of source IPs/CIDRs enforced at the auth layer (and optionally per API key). The one net-new security feature in this list.
+- [x] **Permissões (permissions)** — see "Utenti e Permessi" above (custom roles is the gap).
+
+### 🧠 Engineer's review — competitive-CRM gaps NOT on the target menu (2026-06-06)
+
+Reviewed the target nav as a principal engineer against the HubSpot/Pipedrive/Zoho feature bar. The items below are **genuinely absent from both the menu and this backlog** — curated to the high-value ones, not an exhaustive dump. **First, what already exists** so we don't re-spec it: in-app **Notifications** (model + type), **custom Pipelines + Stages** (per-org, with `win_probability` / `is_won` / `is_lost` → a forecast widget is feasible today), **Teams**, **Notes**, **Activities** timeline, soft-delete + Trash, full audit log.
+
+#### 🟧 P1 — high leverage, customers will ask early
+- [ ] **SSO / social login (Google + Microsoft OIDC), SAML later** — today auth is email+password+MFA only. "Sign in with Google/Microsoft" is table-stakes for B2B and removes a signup-friction wall; SAML is the enterprise-deal unlock. Belongs under **Sicurezza / Auth**. Net-new (no `oauth`/`sub` fields on `User` today).
+- [ ] **Custom fields (per-org schema extension)** on leads/customers/deals/etc. — the single biggest adoption driver in mid-market CRM; every team models its own data. Needs a `custom_field_definitions` + JSONB values column (or EAV) with type/validation. Touches forms, list columns, filters, imports, the API. Large but defining.
+- [ ] **Lead assignment / routing rules** — auto-assign new leads by round-robin / territory / owner rules. Overlaps the Automações engine but is a distinct first-class config (sales ops expect it). Pairs directly with the Ads + web-form inbound below.
+
+#### 🟨 P2 — strong competitive parity
+- [ ] **Company / Account as a first-class B2B entity** — today `Customer` conflates person and company; B2B CRMs separate **Account (company) ↔ Contact (person)** with deals hung off the account and multiple contacts per account. This is an architectural decision to make *before* the data grows (retrofitting later is painful). Flag for a design call.
+- [ ] **Products / Price book (catalog)** — quotes/contracts use free-form `quote_line_items` today; a reusable product+price catalog gives consistent pricing, reporting by product, and faster quoting. Feeds the existing quote engine.
+- [ ] **Web-to-lead forms + embeddable capture / landing pages** — inbound lead capture (public form → Lead row, with spam/captcha + rate limit). The natural front door for the Meta/Google Ads connector and for organic inbound.
+- [ ] **Duplicate detection & merge** (contacts / companies) — imports already dedupe on insert (email→phone), but there's no in-app *merge* of two existing records. Core data-hygiene feature.
+- [ ] **Tags / segments / saved smart lists + bulk actions** — ad-hoc tagging, saved filtered views, and mass operations (bulk assign/email/delete/tag). Heavy daily-driver feature for sales teams.
+- [ ] **Custom report builder + scheduled/emailed reports + weighted-pipeline forecasting** — Report/Performance today are fixed views; let users build/save reports, schedule them by email, and surface a forecast using the `PipelineStage.win_probability` that already exists.
+- [ ] **Meeting scheduler / booking links (Calendly-style)** — public booking pages that write to the calendar/Task model. Pairs with the P3 Google/Outlook Calendar sync.
+- [ ] **Email open / click tracking** — engagement signals on sent emails (tracking pixel + redirect links), surfaced on the contact timeline. Pairs with Comunicazioni.
+
+#### 🟦 P3 — lifecycle / polish (some already stubbed elsewhere)
+- [ ] **GDPR: per-user/per-org data export + right-to-erasure + data-retention policies** — already listed under P3 "GDPR"; restated here so the menu review is complete.
+- [ ] **Onboarding wizard / sample data / first-run empty states** — drives activation & trial→paid conversion; cheap relative to impact.
+- [ ] **Inbound webhook receivers (per-org)** — outgoing webhooks are done; a generic *inbound* receiver (verified, per-org bucket) lets external systems push events in. Rate-limit stub already noted in §3 P1 "Webhook receiver endpoints".
 
 ---
 
