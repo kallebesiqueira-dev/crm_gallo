@@ -117,6 +117,13 @@ class Settings(BaseSettings):
     # production) so Sentry can split inbox by deployment.
     sentry_environment: str = ""
 
+    # ---- Ops / metrics ----
+    # Bearer token guarding GET /metrics. In production the endpoint is
+    # private: unset → /metrics returns 404; set → callers must send
+    # `Authorization: Bearer <token>`. Outside production /metrics stays
+    # open so a local Prometheus / `curl` works with zero config.
+    metrics_token: str = ""
+
     llm_provider: str = "ollama"
 
     anthropic_api_key: str = ""

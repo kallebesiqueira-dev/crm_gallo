@@ -3,7 +3,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -103,11 +103,16 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
+# Interactive docs + the OpenAPI schema enumerate every route and shape —
+# useful in dev, needless attack-surface in prod. Disabled when production.
 app = FastAPI(
     title="CRM Gallo API",
     description="AI-powered multilingual CRM backend",
     version="0.2.0",
     lifespan=lifespan,
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
 )
 
 app.state.limiter = limiter
@@ -259,6 +264,46 @@ class RequestContextMiddleware:
         log.info("request", status=status_holder["status"], duration_ms=elapsed_ms)
 
 
+class SecurityHeadersMiddleware:
+    """Stamp baseline security headers onto every response.
+
+    Pure ASGI so it composes with the other hand-rolled middleware and
+    applies uniformly — including CSRF 403s and the 500 fallback. HSTS
+    and a lock-down CSP are production-only: HSTS must not be cached
+    from a plain-http dev origin, and `default-src 'none'` would break
+    the Swagger UI that only exists outside production.
+    """
+
+    _BASE = [
+        (b"x-content-type-options", b"nosniff"),
+        (b"x-frame-options", b"DENY"),
+        (b"referrer-policy", b"strict-origin-when-cross-origin"),
+    ]
+    _PROD = [
+        (b"strict-transport-security", b"max-age=63072000; includeSubDomains; preload"),
+        (b"content-security-policy", b"default-src 'none'; frame-ancestors 'none'; base-uri 'none'"),
+    ]
+
+    def __init__(self, app):
+        self.app = app
+        self._headers = self._BASE + (self._PROD if settings.is_production else [])
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_headers(message):
+            if message["type"] == "http.response.start":
+                ours = {k for k, _ in self._headers}
+                headers = [h for h in (message.get("headers") or []) if h[0].lower() not in ours]
+                headers.extend(self._headers)
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
+
+
 # Order matters: outer middleware runs first on the request path AND
 # last on the response path. We want request-context (logging) to be
 # the OUTERMOST so it sees every request and every response status,
@@ -271,6 +316,9 @@ app.add_middleware(CSRFMiddleware)
 # /metrics scrapes themselves get the request-id logging.
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(RequestContextMiddleware)
+# Outermost: stamps security headers on the FINAL response, whatever
+# inner layer produced it (CSRF 403, 500 fallback, normal 2xx).
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 app.include_router(auth.router)
@@ -322,9 +370,19 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/metrics", include_in_schema=False)
-async def metrics():
+async def metrics(request: Request):
     """Prometheus scrape endpoint. Hidden from the OpenAPI schema
-    because it's an ops-facing surface, not an API consumer one."""
+    because it's an ops-facing surface, not an API consumer one.
+
+    In production the metrics (request volumes, per-route latencies,
+    tenant-adjacent cardinality) are not for public eyes: require a
+    bearer token, and return 404 — not 401/403 — when it's missing or
+    unset so the endpoint doesn't even advertise its own existence."""
+    if settings.is_production:
+        expected = settings.metrics_token
+        provided = request.headers.get("authorization", "")
+        if not expected or not _consteq(provided, f"Bearer {expected}"):
+            raise HTTPException(status_code=404)
     return metrics_response()
 
 
