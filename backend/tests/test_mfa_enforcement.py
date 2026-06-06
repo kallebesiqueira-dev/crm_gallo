@@ -108,3 +108,30 @@ def test_mfa_endpoints_reachable_while_blocked(
     _login(client, admin_user.email)
     assert client.get("/api/auth/mfa/status").status_code == 200
     assert client.post("/api/auth/mfa/setup").status_code == 200
+
+
+def test_setup_enable_round_trips_through_encrypted_secret(
+    client: CsrfAwareClient, admin_user: User, db: Session
+):
+    """End-to-end proof of §192: the secret returned by /setup is stored
+    ENCRYPTED at rest, yet /enable validates a real TOTP code computed
+    from it — so the decrypt-on-read path produces the exact secret the
+    user's authenticator holds. Also asserts the DB column does NOT hold
+    the plaintext base32."""
+    import pyotp
+    from sqlalchemy import text
+
+    _login(client, admin_user.email)
+    secret = client.post("/api/auth/mfa/setup").json()["secret"]
+
+    # The raw secret must NOT be what's sitting in the column.
+    stored = db.execute(
+        text("SELECT mfa_secret FROM users WHERE id = :id"), {"id": str(admin_user.id)}
+    ).scalar_one()
+    assert stored != secret
+    assert secret not in stored
+
+    code = pyotp.TOTP(secret).now()
+    r = client.post("/api/auth/mfa/enable", json={"code": code})
+    assert r.status_code == 200, r.text
+    assert len(r.json()["backup_codes"]) == 10

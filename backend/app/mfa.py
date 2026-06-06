@@ -8,10 +8,11 @@ Two pieces:
      and stashes — bcrypt-hashed at rest, single-use, for "phone died"
      scenarios.
 
-The TOTP secret is generated on /mfa/setup and stored as-is on the
-user row. It is NOT considered active until /mfa/enable validates the
-first code from the user. Production should encrypt this at rest; v1
-trusts the DB as the boundary.
+The TOTP secret is generated on /mfa/setup and stored on the user row,
+encrypted at rest by the `EncryptedSecret` column type (Fernet — see
+app/crypto.py), so a leaked DB dump can't be used to clone an
+authenticator. It is NOT considered active until /mfa/enable validates
+the first code from the user.
 """
 
 from __future__ import annotations

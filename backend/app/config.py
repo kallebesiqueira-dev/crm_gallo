@@ -117,6 +117,15 @@ class Settings(BaseSettings):
     # production) so Sentry can split inbox by deployment.
     sentry_environment: str = ""
 
+    # ---- Crypto / secrets-at-rest ----
+    # Fernet key (urlsafe-base64, 32 bytes) encrypting the TOTP MFA
+    # secret in `users.mfa_secret`. Leave empty to derive a key from
+    # JWT_SECRET automatically (always-on encryption, zero ops); set a
+    # dedicated key in production to decouple MFA secrets from JWT
+    # rotation. Generate one with:
+    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    mfa_encryption_key: str = ""
+
     # ---- Ops / metrics ----
     # Bearer token guarding GET /metrics. In production the endpoint is
     # private: unset → /metrics returns 404; set → callers must send

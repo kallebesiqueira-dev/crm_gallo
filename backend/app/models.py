@@ -20,6 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.crypto import EncryptedSecret
 from app.database import Base
 
 
@@ -436,13 +437,15 @@ class User(Base):
     # default (False).
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # TOTP MFA. `mfa_secret` is the base32 shared secret bound to the
-    # user's authenticator app — plaintext in v1 (env-level encryption
-    # is a follow-up; today the DB itself is the trust boundary).
+    # user's authenticator app, encrypted at rest via `EncryptedSecret`
+    # (Fernet) so a DB dump can't be used to clone authenticators — see
+    # app/crypto.py. Plaintext in Python, ciphertext in the column (hence
+    # the width: a Fernet token of a 32-byte secret is ~140 chars).
     # Populated when /setup runs; only honoured when `mfa_enabled` is
     # True. `mfa_enrolled_at` records the moment the user finished
     # /enable so audit traces have a timestamp.
     mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    mfa_secret: Mapped[str | None] = mapped_column(String(64))
+    mfa_secret: Mapped[str | None] = mapped_column(EncryptedSecret(255))
     mfa_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Which org the user is currently working in. Set on login from the
