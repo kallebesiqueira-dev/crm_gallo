@@ -19,7 +19,7 @@ interface Props {
   entityId: string;
 }
 
-function readable(hex: string): string {
+export function readable(hex: string): string {
   // Pick black/white text for contrast against the chip's background.
   const c = hex.replace("#", "");
   if (c.length !== 6) return "#fff";
@@ -28,6 +28,24 @@ function readable(hex: string): string {
   const b = parseInt(c.slice(4, 6), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.6 ? "#1e293b" : "#ffffff";
+}
+
+/** Read-only chip row for list views — no picker, no mutation. */
+export function TagChipList({ tags }: { tags: Tag[] }) {
+  if (tags.length === 0) return <span className="text-muted-foreground">—</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {tags.map((tag) => (
+        <span
+          key={tag.id}
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+          style={{ backgroundColor: tag.color, color: readable(tag.color) }}
+        >
+          {tag.name}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 export function EntityTags({ entityType, entityId }: Props) {

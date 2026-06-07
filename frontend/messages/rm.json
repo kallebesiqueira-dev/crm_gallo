@@ -664,7 +664,9 @@
     "saved": "Memorisà",
     "loadMore": "Chargiar dapli",
     "exportCsv": "Exportar CSV",
-    "versionConflict": "Quest record è vegnì midà dapi che ti l'has avert. Chargia danovamain per vesair la versiun pli nova."
+    "versionConflict": "Quest record è vegnì midà dapi che ti l'has avert. Chargia danovamain per vesair la versiun pli nova.",
+    "selectAll": "Selecziunar tut",
+    "select": "Selecziunar"
   },
   "marketing": {
     "loginHeroTitle": "Serra dapli affars cun in copilot IA a tes maun.",
@@ -1270,7 +1272,20 @@
     "memberNote": "Mintgin po crear etichettas. Renumnar, midar la colur e stizzar è resalvà ad administraturs e managers.",
     "addTag": "Agiuntar etichetta",
     "remove": "Allontanar",
-    "noneYet": "Anc naginas etichettas — creeschan tschertas en ils parameters."
+    "noneYet": "Anc naginas etichettas — creeschan tschertas en ils parameters.",
+    "selected": "{count} tschernids",
+    "pickTag": "Tscherner in'etichetta",
+    "addToSelected": "Agiuntar",
+    "removeFromSelected": "Allontanar",
+    "clearSelection": "Stizzar la selecziun"
+  },
+  "segments": {
+    "title": "Vistas memorisadas",
+    "save": "Memorisar la vista",
+    "savePrompt": "Dà in num a questa vista",
+    "empty": "Naginas memorisadas.",
+    "delete": "Stizzar",
+    "confirmDelete": "Stizzar la vista \"{name}\"?"
   },
   "duplicates": {
     "title": "Dubladuras",

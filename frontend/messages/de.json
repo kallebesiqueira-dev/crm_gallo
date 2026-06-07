@@ -664,7 +664,9 @@
     "saved": "Gespeichert",
     "loadMore": "Mehr laden",
     "exportCsv": "CSV exportieren",
-    "versionConflict": "Dieser Datensatz wurde geändert, seit Sie ihn geöffnet haben. Laden Sie neu, um die aktuelle Version zu sehen."
+    "versionConflict": "Dieser Datensatz wurde geändert, seit Sie ihn geöffnet haben. Laden Sie neu, um die aktuelle Version zu sehen.",
+    "selectAll": "Alle auswählen",
+    "select": "Auswählen"
   },
   "marketing": {
     "loginHeroTitle": "Schließen Sie mehr Deals — mit einem KI-Copiloten an Ihrer Seite.",
@@ -1270,7 +1272,20 @@
     "memberNote": "Jeder kann Tags erstellen. Umbenennen, Umfärben und Löschen sind Administratoren und Managern vorbehalten.",
     "addTag": "Tag hinzufügen",
     "remove": "Entfernen",
-    "noneYet": "Noch keine Tags – erstellen Sie welche in den Einstellungen."
+    "noneYet": "Noch keine Tags – erstellen Sie welche in den Einstellungen.",
+    "selected": "{count} ausgewählt",
+    "pickTag": "Tag auswählen",
+    "addToSelected": "Hinzufügen",
+    "removeFromSelected": "Entfernen",
+    "clearSelection": "Aufheben"
+  },
+  "segments": {
+    "title": "Gespeicherte Ansichten",
+    "save": "Ansicht speichern",
+    "savePrompt": "Diese Ansicht benennen",
+    "empty": "Keine gespeichert.",
+    "delete": "Löschen",
+    "confirmDelete": "Ansicht \"{name}\" löschen?"
   },
   "duplicates": {
     "title": "Duplikate",

@@ -664,7 +664,9 @@
     "saved": "Saved",
     "loadMore": "Load more",
     "exportCsv": "Export CSV",
-    "versionConflict": "This record was changed since you opened it. Reload to see the latest."
+    "versionConflict": "This record was changed since you opened it. Reload to see the latest.",
+    "selectAll": "Select all",
+    "select": "Select"
   },
   "marketing": {
     "loginHeroTitle": "Close more deals with an AI copilot at your side.",
@@ -1270,7 +1272,20 @@
     "memberNote": "Anyone can create tags. Renaming, recolouring and deleting are limited to admins and managers.",
     "addTag": "Add tag",
     "remove": "Remove",
-    "noneYet": "No tags yet — create some in Settings."
+    "noneYet": "No tags yet — create some in Settings.",
+    "selected": "{count} selected",
+    "pickTag": "Select a tag",
+    "addToSelected": "Add",
+    "removeFromSelected": "Remove",
+    "clearSelection": "Clear"
+  },
+  "segments": {
+    "title": "Saved views",
+    "save": "Save view",
+    "savePrompt": "Name this view",
+    "empty": "None saved.",
+    "delete": "Delete",
+    "confirmDelete": "Delete view \"{name}\"?"
   },
   "duplicates": {
     "title": "Duplicates",

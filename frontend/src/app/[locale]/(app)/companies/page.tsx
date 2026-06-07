@@ -8,20 +8,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type Company } from "@/lib/api";
+import { TagChipList } from "@/components/entity-tags";
+import { BulkTagBar } from "@/components/bulk-tag-bar";
+import { SegmentBar } from "@/components/segment-bar";
+import { api, type Company, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 export default function CompaniesPage() {
   const t = useTranslations("companies");
   const tCommon = useTranslations("common");
+  const tTags = useTranslations("tags");
   const locale = useLocale();
   const confirm = useConfirm();
   const [items, setItems] = useState<Company[]>([]);
+  const [tagMap, setTagMap] = useState<Record<string, Tag[]>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function loadTags(ids: string[]) {
+    const token = getToken();
+    if (!token || ids.length === 0) return;
+    try {
+      const rows = await api.listTagAssignments(token, "company", ids);
+      setTagMap((prev) => {
+        const next = { ...prev };
+        for (const row of rows) next[row.entity_id] = row.tags;
+        return next;
+      });
+    } catch {
+      /* chips are non-critical — ignore */
+    }
+  }
 
   useEffect(() => {
     const token = getToken();
@@ -33,6 +54,9 @@ export default function CompaniesPage() {
           setItems(page.items);
           setCursor(page.next_cursor);
           setHasMore(page.has_more);
+          setTagMap({});
+          setSelected(new Set());
+          loadTags(page.items.map((c) => c.id));
         })
         .catch(() => {
           setItems([]);
@@ -41,6 +65,7 @@ export default function CompaniesPage() {
         });
     }, 200);
     return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
   async function loadMore() {
@@ -52,11 +77,27 @@ export default function CompaniesPage() {
       setItems((prev) => [...prev, ...page.items]);
       setCursor(page.next_cursor);
       setHasMore(page.has_more);
+      loadTags(page.items.map((c) => c.id));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     } finally {
       setLoadingMore(false);
     }
+  }
+
+  function toggleRow(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((prev) =>
+      prev.size === items.length ? new Set() : new Set(items.map((c) => c.id)),
+    );
   }
 
   async function handleDelete(company: Company) {
@@ -99,6 +140,21 @@ export default function CompaniesPage() {
         />
       </div>
 
+      <SegmentBar
+        entityType="company"
+        currentFilters={{ q }}
+        onApply={(f) => setQ(typeof f.q === "string" ? f.q : "")}
+      />
+
+      {selected.size > 0 && (
+        <BulkTagBar
+          entityType="company"
+          selectedIds={Array.from(selected)}
+          onApplied={() => loadTags(Array.from(selected))}
+          onClear={() => setSelected(new Set())}
+        />
+      )}
+
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
@@ -113,9 +169,19 @@ export default function CompaniesPage() {
           <table className="w-full min-w-[40rem] text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
+                <th className="w-10 px-4 py-3 text-left font-medium">
+                  <input
+                    type="checkbox"
+                    aria-label={tCommon("selectAll")}
+                    className="h-4 w-4 rounded border-input"
+                    checked={items.length > 0 && selected.size === items.length}
+                    onChange={toggleAll}
+                  />
+                </th>
                 <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("industry")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("country")}</th>
+                <th className="px-4 py-3 text-left font-medium">{tTags("title")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
                 <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
               </tr>
@@ -123,6 +189,15 @@ export default function CompaniesPage() {
             <tbody>
               {items.map((c) => (
                 <tr key={c.id} className="border-t hover:bg-muted/30">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label={tCommon("select")}
+                      className="h-4 w-4 rounded border-input"
+                      checked={selected.has(c.id)}
+                      onChange={() => toggleRow(c.id)}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <Link
                       href={`/${locale}/companies/${c.id}`}
@@ -134,6 +209,9 @@ export default function CompaniesPage() {
                   </td>
                   <td className="px-4 py-3">{c.industry ?? "—"}</td>
                   <td className="px-4 py-3">{c.country ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    <TagChipList tags={tagMap[c.id] ?? []} />
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(c.created_at).toLocaleDateString(locale)}
                   </td>

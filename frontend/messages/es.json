@@ -664,7 +664,9 @@
     "saved": "Guardado",
     "loadMore": "Cargar más",
     "exportCsv": "Exportar CSV",
-    "versionConflict": "Este registro se modificó desde que lo abriste. Recarga para ver la versión más reciente."
+    "versionConflict": "Este registro se modificó desde que lo abriste. Recarga para ver la versión más reciente.",
+    "selectAll": "Seleccionar todo",
+    "select": "Seleccionar"
   },
   "marketing": {
     "loginHeroTitle": "Cierra más negocios con un copiloto de IA a tu lado.",
@@ -1270,7 +1272,20 @@
     "memberNote": "Cualquiera puede crear etiquetas. Renombrar, cambiar el color y eliminar está reservado a administradores y gestores.",
     "addTag": "Añadir etiqueta",
     "remove": "Quitar",
-    "noneYet": "Aún no hay etiquetas — crea algunas en Ajustes."
+    "noneYet": "Aún no hay etiquetas — crea algunas en Ajustes.",
+    "selected": "{count} seleccionados",
+    "pickTag": "Selecciona una etiqueta",
+    "addToSelected": "Añadir",
+    "removeFromSelected": "Quitar",
+    "clearSelection": "Limpiar"
+  },
+  "segments": {
+    "title": "Vistas guardadas",
+    "save": "Guardar vista",
+    "savePrompt": "Nombra esta vista",
+    "empty": "Ninguna guardada.",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar la vista \"{name}\"?"
   },
   "duplicates": {
     "title": "Duplicados",

@@ -664,7 +664,9 @@
     "saved": "Salvato",
     "loadMore": "Carica altri",
     "exportCsv": "Esporta CSV",
-    "versionConflict": "Questo record è stato modificato da quando lo hai aperto. Ricarica per vedere la versione più recente."
+    "versionConflict": "Questo record è stato modificato da quando lo hai aperto. Ricarica per vedere la versione più recente.",
+    "selectAll": "Seleziona tutto",
+    "select": "Seleziona"
   },
   "marketing": {
     "loginHeroTitle": "Chiudi più trattative con un copilota IA al tuo fianco.",
@@ -1270,7 +1272,20 @@
     "memberNote": "Chiunque può creare etichette. Rinominarle, cambiarne il colore ed eliminarle è riservato ad amministratori e manager.",
     "addTag": "Aggiungi etichetta",
     "remove": "Rimuovi",
-    "noneYet": "Nessuna etichetta — creane qualcuna nelle Impostazioni."
+    "noneYet": "Nessuna etichetta — creane qualcuna nelle Impostazioni.",
+    "selected": "{count} selezionati",
+    "pickTag": "Seleziona un'etichetta",
+    "addToSelected": "Aggiungi",
+    "removeFromSelected": "Rimuovi",
+    "clearSelection": "Deseleziona"
+  },
+  "segments": {
+    "title": "Viste salvate",
+    "save": "Salva vista",
+    "savePrompt": "Assegna un nome a questa vista",
+    "empty": "Nessuna salvata.",
+    "delete": "Elimina",
+    "confirmDelete": "Eliminare la vista \"{name}\"?"
   },
   "duplicates": {
     "title": "Duplicati",

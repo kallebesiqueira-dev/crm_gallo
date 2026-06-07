@@ -664,7 +664,9 @@
     "saved": "Enregistré",
     "loadMore": "Charger plus",
     "exportCsv": "Exporter en CSV",
-    "versionConflict": "Cet enregistrement a été modifié depuis son ouverture. Rechargez pour voir la dernière version."
+    "versionConflict": "Cet enregistrement a été modifié depuis son ouverture. Rechargez pour voir la dernière version.",
+    "selectAll": "Tout sélectionner",
+    "select": "Sélectionner"
   },
   "marketing": {
     "loginHeroTitle": "Concluez plus d'affaires avec un copilote IA à vos côtés.",
@@ -1270,7 +1272,20 @@
     "memberNote": "Tout le monde peut créer des étiquettes. Le renommage, le changement de couleur et la suppression sont réservés aux administrateurs et gestionnaires.",
     "addTag": "Ajouter une étiquette",
     "remove": "Retirer",
-    "noneYet": "Aucune étiquette — créez-en dans les Paramètres."
+    "noneYet": "Aucune étiquette — créez-en dans les Paramètres.",
+    "selected": "{count} sélectionné(s)",
+    "pickTag": "Choisir une étiquette",
+    "addToSelected": "Ajouter",
+    "removeFromSelected": "Retirer",
+    "clearSelection": "Effacer"
+  },
+  "segments": {
+    "title": "Vues enregistrées",
+    "save": "Enregistrer la vue",
+    "savePrompt": "Nommer cette vue",
+    "empty": "Aucune enregistrée.",
+    "delete": "Supprimer",
+    "confirmDelete": "Supprimer la vue \"{name}\" ?"
   },
   "duplicates": {
     "title": "Doublons",

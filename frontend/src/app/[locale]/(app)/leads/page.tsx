@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type Lead, type LeadStage } from "@/lib/api";
+import { TagChipList } from "@/components/entity-tags";
+import { BulkTagBar } from "@/components/bulk-tag-bar";
+import { SegmentBar } from "@/components/segment-bar";
+import { api, type Lead, type LeadStage, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 const STAGE_VARIANT: Record<LeadStage, "default" | "secondary" | "success" | "warning" | "danger"> = {
@@ -26,14 +29,32 @@ export default function LeadsPage() {
   const t = useTranslations("leads");
   const tStages = useTranslations("leads.stages");
   const tCommon = useTranslations("common");
+  const tTags = useTranslations("tags");
   const locale = useLocale();
   const confirm = useConfirm();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [tagMap, setTagMap] = useState<Record<string, Tag[]>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function loadTags(ids: string[]) {
+    const token = getToken();
+    if (!token || ids.length === 0) return;
+    try {
+      const rows = await api.listTagAssignments(token, "lead", ids);
+      setTagMap((prev) => {
+        const next = { ...prev };
+        for (const row of rows) next[row.entity_id] = row.tags;
+        return next;
+      });
+    } catch {
+      /* chips are non-critical — ignore */
+    }
+  }
 
   useEffect(() => {
     const token = getToken();
@@ -45,6 +66,9 @@ export default function LeadsPage() {
           setLeads(page.items);
           setCursor(page.next_cursor);
           setHasMore(page.has_more);
+          setTagMap({});
+          setSelected(new Set());
+          loadTags(page.items.map((l) => l.id));
         })
         .catch(() => {
           setLeads([]);
@@ -53,6 +77,7 @@ export default function LeadsPage() {
         });
     }, 200);
     return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
   async function loadMore() {
@@ -64,11 +89,27 @@ export default function LeadsPage() {
       setLeads((prev) => [...prev, ...page.items]);
       setCursor(page.next_cursor);
       setHasMore(page.has_more);
+      loadTags(page.items.map((l) => l.id));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     } finally {
       setLoadingMore(false);
     }
+  }
+
+  function toggleRow(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((prev) =>
+      prev.size === leads.length ? new Set() : new Set(leads.map((l) => l.id)),
+    );
   }
 
   async function handleDelete(lead: Lead) {
@@ -119,6 +160,21 @@ export default function LeadsPage() {
         />
       </div>
 
+      <SegmentBar
+        entityType="lead"
+        currentFilters={{ q }}
+        onApply={(f) => setQ(typeof f.q === "string" ? f.q : "")}
+      />
+
+      {selected.size > 0 && (
+        <BulkTagBar
+          entityType="lead"
+          selectedIds={Array.from(selected)}
+          onApplied={() => loadTags(Array.from(selected))}
+          onClear={() => setSelected(new Set())}
+        />
+      )}
+
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
@@ -133,9 +189,19 @@ export default function LeadsPage() {
           <table className="w-full min-w-[40rem] text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
+                <th className="w-10 px-4 py-3 text-left font-medium">
+                  <input
+                    type="checkbox"
+                    aria-label={tCommon("selectAll")}
+                    className="h-4 w-4 rounded border-input"
+                    checked={leads.length > 0 && selected.size === leads.length}
+                    onChange={toggleAll}
+                  />
+                </th>
                 <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("company")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("stage")}</th>
+                <th className="px-4 py-3 text-left font-medium">{tTags("title")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("score")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
                 <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
@@ -144,6 +210,15 @@ export default function LeadsPage() {
             <tbody>
               {leads.map((lead) => (
                 <tr key={lead.id} className="border-t hover:bg-muted/30">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label={tCommon("select")}
+                      className="h-4 w-4 rounded border-input"
+                      checked={selected.has(lead.id)}
+                      onChange={() => toggleRow(lead.id)}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <Link
                       href={`/${locale}/leads/${lead.id}`}
@@ -158,6 +233,9 @@ export default function LeadsPage() {
                   <td className="px-4 py-3">{lead.company ?? "—"}</td>
                   <td className="px-4 py-3">
                     <Badge variant={STAGE_VARIANT[lead.stage]}>{tStages(lead.stage)}</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <TagChipList tags={tagMap[lead.id] ?? []} />
                   </td>
                   <td className="px-4 py-3">
                     {lead.ai_score != null ? (
