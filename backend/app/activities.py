@@ -64,6 +64,7 @@ class ActivityType(str, enum.Enum):
 ENTITY_LEAD = "lead"
 ENTITY_CUSTOMER = "customer"
 ENTITY_DEAL = "deal"
+ENTITY_COMPANY = "company"
 
 
 async def record_activity(

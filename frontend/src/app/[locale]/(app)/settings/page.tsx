@@ -13,6 +13,8 @@ import { TeamCard } from "@/components/team-card";
 import { PipelinesCard } from "@/components/pipelines-card";
 import { TeamsCard } from "@/components/teams-card";
 import { DocumentTemplatesCard } from "@/components/document-templates-card";
+import { CustomFieldsCard } from "@/components/custom-fields-card";
+import { TagsCard } from "@/components/tags-card";
 import { ApiKeysCard } from "@/components/api-keys-card";
 import { api, type User } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -248,6 +250,14 @@ export default function SettingsPage() {
       {/* Merge-field document templates — author reusable contract
           bodies with {{ token }} placeholders. Admin/manager gated. */}
       <DocumentTemplatesCard canManage={canManageTemplates} />
+
+      {/* Custom-field schema editor — declare per-entity custom fields
+          that then appear on every create/edit form. Admin/manager gated. */}
+      <CustomFieldsCard canManage={canManageTemplates} />
+
+      {/* Org-wide tag catalogue — any member can add tags; rename/recolour/
+          delete is admin/manager gated (they change the tag for everyone). */}
+      <TagsCard canManage={canManageTemplates} />
 
       {/* Public-API bearer keys — mint / revoke server-to-server
           credentials for /api/v1. Admin-only (creation requires admin);

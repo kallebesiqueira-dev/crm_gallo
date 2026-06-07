@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   BarChart3,
+  Building2,
   Calendar,
   CreditCard,
   FileSignature,
@@ -27,10 +28,11 @@ import {
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 
-const NAV = [
+export const NAV = [
   { href: "dashboard", label: "dashboard", icon: LayoutDashboard },
   { href: "leads", label: "leads", icon: Target },
   { href: "customers", label: "customers", icon: Users },
+  { href: "companies", label: "companies", icon: Building2 },
   { href: "pipeline", label: "pipeline", icon: Workflow },
   { href: "tasks", label: "tasks", icon: MessagesSquare },
   { href: "calendar", label: "calendar", icon: Calendar },

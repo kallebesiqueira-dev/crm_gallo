@@ -11,6 +11,7 @@
 // input is labelled; Enter sends; the message log is an aria-live region.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Bot, MessageCircle, RefreshCw, Send, User, X } from "lucide-react";
 import { publicChatbot, type ChatSource, type ChatTurn } from "@/lib/public-api";
@@ -132,6 +133,26 @@ export default function LandingChatbot() {
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
 
+      {/* Gallo mascot peeking above the launcher — pure decoration: sits behind
+          the button (z-40), never intercepts clicks (pointer-events-none), and
+          only while the panel is closed. The gentle bob invites a tap. */}
+      {!open && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed bottom-[4rem] right-6 z-40 animate-bob"
+        >
+          <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-full border-2 border-violet-600/40 bg-white shadow-md dark:bg-violet-950/50">
+            <Image
+              src="/roboat.png"
+              alt=""
+              width={48}
+              height={48}
+              className="h-full w-full object-cover object-top"
+            />
+          </span>
+        </div>
+      )}
+
       {open && (
         <div
           id="gallo-chatbot-panel"
@@ -145,8 +166,14 @@ export default function LandingChatbot() {
           )}
         >
           <header className="flex items-center gap-3 bg-violet-600 px-4 py-3 text-white">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/15">
-              <Bot className="h-5 w-5" aria-hidden="true" />
+            <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-white/15">
+              <Image
+                src="/roboat.png"
+                alt=""
+                width={36}
+                height={36}
+                className="h-full w-full object-cover object-top"
+              />
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{t("title")}</p>

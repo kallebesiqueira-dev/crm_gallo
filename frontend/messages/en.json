@@ -23,7 +23,8 @@
     "settings": "Settings",
     "team": "Team",
     "trash": "Trash",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "companies": "Companies"
   },
   "auth": {
     "login": "Sign in",
@@ -1195,5 +1196,63 @@
         }
       }
     }
+  },
+  "companies": {
+    "title": "Companies",
+    "new": "New company",
+    "search": "Search by name…",
+    "name": "Name",
+    "industry": "Industry",
+    "website": "Website",
+    "country": "Country",
+    "created": "Created",
+    "empty": "No companies yet. Create your first one.",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "size": "Employees",
+    "notes": "Notes",
+    "customers": "Customers",
+    "leads": "Leads",
+    "deals": "Deals",
+    "noContacts": "No linked contacts yet.",
+    "noDeals": "No linked deals yet."
+  },
+  "customFields": {
+    "sectionTitle": "Custom fields",
+    "title": "Custom fields",
+    "adminOnly": "Only admins and managers can edit custom fields.",
+    "intro": "Define extra fields per entity. They appear on every create and edit form, and on detail pages.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Customers",
+      "deal": "Deals",
+      "company": "Companies"
+    },
+    "key": "Key",
+    "keyPlaceholder": "e.g. account_tier",
+    "keyHint": "Lowercase letters, numbers and underscores. Cannot be changed later.",
+    "label": "Label",
+    "labelPlaceholder": "e.g. Account tier",
+    "type": "Type",
+    "kind": {
+      "text": "Text",
+      "textarea": "Long text",
+      "number": "Number",
+      "date": "Date",
+      "boolean": "Checkbox",
+      "select": "Dropdown",
+      "multiselect": "Multi-select",
+      "url": "URL",
+      "email": "Email"
+    },
+    "required": "Required",
+    "options": "Options",
+    "optionsPlaceholder": "Gold, Silver, Bronze",
+    "optionsHint": "Comma-separated list of choices.",
+    "add": "Add field",
+    "confirmDelete": "Delete custom field \"{label}\"?",
+    "delete": "Delete",
+    "empty": "No custom fields for this entity yet."
   }
 }

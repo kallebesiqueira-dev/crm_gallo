@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.activities import ENTITY_DEAL, ActivityType, record_activity
 from app.api._concurrency import check_if_match
 from app.audit import record_audit
+from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
@@ -101,6 +102,9 @@ async def create_deal(
 ) -> Deal:
     data = payload.model_dump()
     data["owner_id"] = data.get("owner_id") or user.id
+    data["custom_fields"] = await validate_custom_fields(
+        db, org_id, "deal", data.get("custom_fields"), partial=False
+    )
 
     # Sort index is org-scoped: a new deal lands at the bottom of its
     # column inside THIS org. Without the org filter we'd peek at every
@@ -180,6 +184,15 @@ async def update_deal(
     _check_if_match(deal, if_match)
     changes = payload.model_dump(exclude_unset=True)
     changes.pop("organization_id", None)
+    if "custom_fields" in changes:
+        changes["custom_fields"] = await validate_custom_fields(
+            db,
+            org_id,
+            "deal",
+            changes["custom_fields"],
+            existing=deal.custom_fields,
+            partial=True,
+        )
     for field, value in changes.items():
         setattr(deal, field, value)
     deal.version = deal.version + 1

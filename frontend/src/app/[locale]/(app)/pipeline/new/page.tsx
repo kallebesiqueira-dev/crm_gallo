@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomFieldsInput } from "@/components/custom-fields-input";
 import { api, type Currency, type Customer, type DealStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -30,6 +31,7 @@ export default function NewDealPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
   const [form, setForm] = useState({
     title: "",
     value: "",
@@ -67,6 +69,7 @@ export default function NewDealPage() {
         expected_close_date: form.expected_close_date || null,
         customer_id: form.customer_id || null,
         notes: form.notes || null,
+        custom_fields: customFields,
       };
       await api.createDeal(token, payload);
       router.push(`/${locale}/pipeline`);
@@ -180,6 +183,11 @@ export default function NewDealPage() {
               onChange={(e) => set("notes", e.target.value)}
             />
           </div>
+          <CustomFieldsInput
+            entityType="deal"
+            value={customFields}
+            onChange={setCustomFields}
+          />
           {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" disabled={busy}>

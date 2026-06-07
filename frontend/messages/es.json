@@ -23,7 +23,8 @@
     "settings": "Configuración",
     "team": "Equipo",
     "trash": "Papelera",
-    "audit": "Auditoría"
+    "audit": "Auditoría",
+    "companies": "Empresas"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -1195,5 +1196,63 @@
         }
       }
     }
+  },
+  "companies": {
+    "title": "Empresas",
+    "new": "Nueva empresa",
+    "search": "Buscar por nombre…",
+    "name": "Nombre",
+    "industry": "Sector",
+    "website": "Sitio web",
+    "country": "País",
+    "created": "Creado",
+    "empty": "Aún no hay empresas. Crea la primera.",
+    "phone": "Teléfono",
+    "email": "Correo",
+    "address": "Dirección",
+    "size": "Empleados",
+    "notes": "Notas",
+    "customers": "Clientes",
+    "leads": "Leads",
+    "deals": "Oportunidades",
+    "noContacts": "Aún no hay contactos vinculados.",
+    "noDeals": "Aún no hay oportunidades vinculadas."
+  },
+  "customFields": {
+    "sectionTitle": "Campos personalizados",
+    "title": "Campos personalizados",
+    "adminOnly": "Solo los administradores y gerentes pueden editar campos personalizados.",
+    "intro": "Define campos adicionales por entidad. Aparecerán en cada formulario de creación y edición, y en las páginas de detalle.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clientes",
+      "deal": "Oportunidades",
+      "company": "Empresas"
+    },
+    "key": "Clave",
+    "keyPlaceholder": "p. ej. account_tier",
+    "keyHint": "Minúsculas, números y guiones bajos. No se puede cambiar después.",
+    "label": "Etiqueta",
+    "labelPlaceholder": "p. ej. Nivel de cuenta",
+    "type": "Tipo",
+    "kind": {
+      "text": "Texto",
+      "textarea": "Texto largo",
+      "number": "Número",
+      "date": "Fecha",
+      "boolean": "Casilla",
+      "select": "Desplegable",
+      "multiselect": "Selección múltiple",
+      "url": "URL",
+      "email": "Correo"
+    },
+    "required": "Obligatorio",
+    "options": "Opciones",
+    "optionsPlaceholder": "Oro, Plata, Bronce",
+    "optionsHint": "Lista de opciones separadas por comas.",
+    "add": "Añadir campo",
+    "confirmDelete": "¿Eliminar el campo personalizado \"{label}\"?",
+    "delete": "Eliminar",
+    "empty": "Aún no hay campos personalizados para esta entidad."
   }
 }

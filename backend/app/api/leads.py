@@ -11,6 +11,7 @@ from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.api._errors import raise_for_duplicate_email
 from app.audit import record_audit
 from app.config import get_settings
+from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
@@ -85,6 +86,9 @@ async def create_lead(
     # logged-in user plant rows into any tenant. Pull from the server-
     # side dep.
     data["owner_id"] = data.get("owner_id") or user.id
+    data["custom_fields"] = await validate_custom_fields(
+        db, org_id, "lead", data.get("custom_fields"), partial=False
+    )
     lead = Lead(**data, organization_id=org_id)
     db.add(lead)
     try:
@@ -150,6 +154,15 @@ async def update_lead(
     # Even if a (buggy) caller smuggles organization_id into the patch
     # body, refuse to let it move tenants.
     changes.pop("organization_id", None)
+    if "custom_fields" in changes:
+        changes["custom_fields"] = await validate_custom_fields(
+            db,
+            org_id,
+            "lead",
+            changes["custom_fields"],
+            existing=lead.custom_fields,
+            partial=True,
+        )
     # Snapshot the old stage BEFORE setattr so a stage transition
     # gets recorded as a separate `stage_change` activity (with from/to
     # in metadata) — the timeline UI shows it as a distinct row from

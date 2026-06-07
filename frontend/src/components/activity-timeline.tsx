@@ -37,7 +37,7 @@ import { api, type ActivityEntry } from "@/lib/api";
  */
 
 interface Props {
-  entityType: "lead" | "customer" | "deal";
+  entityType: "lead" | "customer" | "deal" | "company";
   entityId: string;
 }
 

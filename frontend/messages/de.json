@@ -23,7 +23,8 @@
     "settings": "Einstellungen",
     "team": "Team",
     "trash": "Papierkorb",
-    "audit": "Audit-Log"
+    "audit": "Audit-Log",
+    "companies": "Unternehmen"
   },
   "auth": {
     "login": "Anmelden",
@@ -1195,5 +1196,63 @@
         }
       }
     }
+  },
+  "companies": {
+    "title": "Unternehmen",
+    "new": "Neues Unternehmen",
+    "search": "Nach Name suchen…",
+    "name": "Name",
+    "industry": "Branche",
+    "website": "Webseite",
+    "country": "Land",
+    "created": "Erstellt",
+    "empty": "Noch keine Unternehmen. Erstellen Sie Ihr erstes.",
+    "phone": "Telefon",
+    "email": "E-Mail",
+    "address": "Adresse",
+    "size": "Mitarbeiter",
+    "notes": "Notizen",
+    "customers": "Kunden",
+    "leads": "Leads",
+    "deals": "Deals",
+    "noContacts": "Noch keine verknüpften Kontakte.",
+    "noDeals": "Noch keine verknüpften Deals."
+  },
+  "customFields": {
+    "sectionTitle": "Benutzerdefinierte Felder",
+    "title": "Benutzerdefinierte Felder",
+    "adminOnly": "Nur Administratoren und Manager können benutzerdefinierte Felder bearbeiten.",
+    "intro": "Definiere zusätzliche Felder pro Entität. Sie erscheinen in jedem Erstellungs- und Bearbeitungsformular sowie auf Detailseiten.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Kunden",
+      "deal": "Deals",
+      "company": "Unternehmen"
+    },
+    "key": "Schlüssel",
+    "keyPlaceholder": "z. B. account_tier",
+    "keyHint": "Kleinbuchstaben, Zahlen und Unterstriche. Später nicht änderbar.",
+    "label": "Bezeichnung",
+    "labelPlaceholder": "z. B. Kontostufe",
+    "type": "Typ",
+    "kind": {
+      "text": "Text",
+      "textarea": "Langer Text",
+      "number": "Zahl",
+      "date": "Datum",
+      "boolean": "Kontrollkästchen",
+      "select": "Dropdown",
+      "multiselect": "Mehrfachauswahl",
+      "url": "URL",
+      "email": "E-Mail"
+    },
+    "required": "Pflichtfeld",
+    "options": "Optionen",
+    "optionsPlaceholder": "Gold, Silber, Bronze",
+    "optionsHint": "Kommagetrennte Liste von Auswahlmöglichkeiten.",
+    "add": "Feld hinzufügen",
+    "confirmDelete": "Benutzerdefiniertes Feld \"{label}\" löschen?",
+    "delete": "Löschen",
+    "empty": "Noch keine benutzerdefinierten Felder für diese Entität."
   }
 }

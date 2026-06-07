@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomFieldsInput } from "@/components/custom-fields-input";
 import { api, type LeadStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -30,6 +31,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -65,6 +67,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
           notes: l.notes ?? "",
           stage: l.stage,
         });
+        setCustomFields((l.custom_fields as Record<string, unknown>) ?? {});
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
@@ -94,6 +97,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
         source: form.source || null,
         notes: form.notes || null,
         stage: form.stage,
+        custom_fields: customFields,
       };
       await api.updateLead(token, id, payload);
       router.push(`/${locale}/leads/${id}`);
@@ -148,6 +152,11 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
               onChange={(e) => set("notes", e.target.value)}
             />
           </div>
+          <CustomFieldsInput
+            entityType="lead"
+            value={customFields}
+            onChange={setCustomFields}
+          />
           {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" disabled={busy}>{t("save")}</Button>

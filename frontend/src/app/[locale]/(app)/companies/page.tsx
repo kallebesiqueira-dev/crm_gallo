@@ -3,20 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Download, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type Customer } from "@/lib/api";
+import { api, type Company } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
-export default function CustomersPage() {
-  const t = useTranslations("customers");
+export default function CompaniesPage() {
+  const t = useTranslations("companies");
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const confirm = useConfirm();
-  const [items, setItems] = useState<Customer[]>([]);
+  const [items, setItems] = useState<Company[]>([]);
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -28,7 +28,7 @@ export default function CustomersPage() {
     if (!token) return;
     const handle = setTimeout(() => {
       api
-        .listCustomers(token, { q: q || undefined })
+        .listCompanies(token, { q: q || undefined })
         .then((page) => {
           setItems(page.items);
           setCursor(page.next_cursor);
@@ -48,7 +48,7 @@ export default function CustomersPage() {
     if (!token || !cursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const page = await api.listCustomers(token, { q: q || undefined, cursor });
+      const page = await api.listCompanies(token, { q: q || undefined, cursor });
       setItems((prev) => [...prev, ...page.items]);
       setCursor(page.next_cursor);
       setHasMore(page.has_more);
@@ -59,7 +59,7 @@ export default function CustomersPage() {
     }
   }
 
-  async function handleDelete(customer: Customer) {
+  async function handleDelete(company: Company) {
     const ok = await confirm({
       title: tCommon("confirmDelete"),
       tone: "danger",
@@ -70,8 +70,8 @@ export default function CustomersPage() {
     if (!token) return;
     setError(null);
     try {
-      await api.deleteCustomer(token, customer.id);
-      setItems((prev) => prev.filter((c) => c.id !== customer.id));
+      await api.deleteCompany(token, company.id);
+      setItems((prev) => prev.filter((c) => c.id !== company.id));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     }
@@ -81,20 +81,12 @@ export default function CustomersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
-            <a href={api.exportUrl("customer")}>
-              <Download className="h-4 w-4" />
-              {tCommon("exportCsv")}
-            </a>
-          </Button>
-          <Button asChild>
-            <Link href={`/${locale}/customers/new`}>
-              <Plus className="h-4 w-4" />
-              {t("new")}
-            </Link>
-          </Button>
-        </div>
+        <Button asChild>
+          <Link href={`/${locale}/companies/new`}>
+            <Plus className="h-4 w-4" />
+            {t("new")}
+          </Link>
+        </Button>
       </div>
 
       <div className="relative max-w-md">
@@ -122,7 +114,7 @@ export default function CustomersPage() {
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("company")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("industry")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("country")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
                 <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
@@ -133,14 +125,14 @@ export default function CustomersPage() {
                 <tr key={c.id} className="border-t hover:bg-muted/30">
                   <td className="px-4 py-3">
                     <Link
-                      href={`/${locale}/customers/${c.id}`}
+                      href={`/${locale}/companies/${c.id}`}
                       className="font-medium text-primary hover:underline"
                     >
-                      {c.first_name} {c.last_name}
+                      {c.name}
                     </Link>
-                    {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
+                    {c.website && <div className="text-xs text-muted-foreground">{c.website}</div>}
                   </td>
-                  <td className="px-4 py-3">{c.company ?? "—"}</td>
+                  <td className="px-4 py-3">{c.industry ?? "—"}</td>
                   <td className="px-4 py-3">{c.country ?? "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(c.created_at).toLocaleDateString(locale)}
@@ -148,7 +140,7 @@ export default function CustomersPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <Button asChild variant="ghost" size="icon" aria-label={tCommon("edit")}>
-                        <Link href={`/${locale}/customers/${c.id}/edit`}>
+                        <Link href={`/${locale}/companies/${c.id}/edit`}>
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>

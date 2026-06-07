@@ -58,6 +58,23 @@ class Currency(str, enum.Enum):
     GBP = "GBP"
 
 
+class CustomFieldType(str, enum.Enum):
+    """The shapes a per-org custom field can take. The value drives both
+    server-side coercion/validation (`app/custom_fields.py`) and the
+    widget the frontend renders. `select`/`multiselect` consult the
+    definition's `options` list; everything else ignores it."""
+
+    text = "text"
+    textarea = "textarea"
+    number = "number"
+    date = "date"
+    boolean = "boolean"
+    select = "select"
+    multiselect = "multiselect"
+    url = "url"
+    email = "email"
+
+
 class TaskStatus(str, enum.Enum):
     todo = "todo"
     in_progress = "in_progress"
@@ -510,6 +527,19 @@ class Lead(SoftDeleteMixin, Base):
     source: Mapped[str | None] = mapped_column(String(120))
     notes: Mapped[str | None] = mapped_column(Text)
 
+    # Optional B2B account link (the structured counterpart to the
+    # free-text `company` string above). SET NULL so deleting an account
+    # doesn't take its leads with it.
+    company_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("companies.id", ondelete="SET NULL"),
+        index=True,
+    )
+
+    # Per-org schema extension — values keyed by CustomFieldDefinition.key.
+    # See app/custom_fields.py for validation/coercion.
+    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+
     stage: Mapped[LeadStage] = mapped_column(Enum(LeadStage), default=LeadStage.new, nullable=False)
     # Optional team scope — when set, the lead shows up under that
     # team's filtered list view. `SET NULL` on team delete so the
@@ -556,6 +586,17 @@ class Customer(SoftDeleteMixin, Base):
     address: Mapped[str | None] = mapped_column(Text)
     website: Mapped[str | None] = mapped_column(String(255))
     notes: Mapped[str | None] = mapped_column(Text)
+
+    # Optional B2B account link (structured counterpart to free-text
+    # `company`). SET NULL on account delete.
+    company_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("companies.id", ondelete="SET NULL"),
+        index=True,
+    )
+
+    # Per-org schema extension — see app/custom_fields.py.
+    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
 
     ai_summary: Mapped[str | None] = mapped_column(Text)
     ai_summary_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -613,8 +654,194 @@ class Deal(SoftDeleteMixin, Base):
     )
     customer: Mapped[Customer | None] = relationship(back_populates="deals")
 
+    # Optional B2B account link. SET NULL on account delete.
+    company_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("companies.id", ondelete="SET NULL"),
+        index=True,
+    )
+
+    # Per-org schema extension — see app/custom_fields.py.
+    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     owner: Mapped[User | None] = relationship(back_populates="deals")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Company(SoftDeleteMixin, Base):
+    """A B2B account / organisation a contact belongs to.
+
+    Distinct from `Organization` (the CRM tenant): a Company is one of the
+    tenant's *customers'* companies — the "account" half of the classic
+    account/contact split. `Customer` stays the person; `Company` is the
+    firm they work for. Leads, Customers, and Deals carry a nullable
+    `company_id` so they can be rolled up under one account.
+    """
+
+    __tablename__ = "companies"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    industry: Mapped[str | None] = mapped_column(String(120))
+    website: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str | None] = mapped_column(String(50))
+    email: Mapped[str | None] = mapped_column(String(255))
+    country: Mapped[str | None] = mapped_column(String(2))
+    address: Mapped[str | None] = mapped_column(Text)
+    size: Mapped[int | None] = mapped_column(Integer)
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    # Per-org schema extension — see app/custom_fields.py.
+    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+
+    # Optimistic locking — see Deal.version. Bumped on every PATCH;
+    # clients echo it as `If-Match`.
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class CustomFieldDefinition(SoftDeleteMixin, Base):
+    """A per-org schema extension: one user-defined field on one entity
+    type (lead / customer / deal / company).
+
+    The actual values live in a JSONB `custom_fields` column on each
+    target entity, keyed by this row's `key`. Definitions are admin-
+    managed; `key` is an immutable slug (stable across label renames) so
+    stored values never orphan. `(organization_id, entity_type, key)` is
+    unique among live rows.
+    """
+
+    __tablename__ = "custom_field_definitions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # One of the ENTITY_* slugs in app/custom_fields.py
+    # (lead / customer / deal / company).
+    entity_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    # Immutable machine slug used as the JSONB key on the target entity.
+    key: Mapped[str] = mapped_column(String(60), nullable=False)
+    label: Mapped[str] = mapped_column(String(120), nullable=False)
+    field_type: Mapped[CustomFieldType] = mapped_column(
+        Enum(CustomFieldType), nullable=False
+    )
+    # Choices for select / multiselect; ignored for other types.
+    options: Mapped[list | None] = mapped_column(JSONB)
+    required: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Display order within the entity's form / detail panel.
+    position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Tag(SoftDeleteMixin, Base):
+    """An org-defined label that can be attached to any taggable entity.
+
+    Tags are flat (no hierarchy) and org-scoped; `(organization_id,
+    lower(name))` is unique among live rows. Attachments live in the
+    polymorphic `entity_tags` join — see `EntityTag`. Deleting a tag
+    soft-deletes the row and the API hard-removes its join rows so no
+    chip orphans linger on entities.
+    """
+
+    __tablename__ = "tags"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(60), nullable=False)
+    # Hex colour for the chip, e.g. "#64748b".
+    color: Mapped[str] = mapped_column(String(7), nullable=False, default="#64748b")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class EntityTag(Base):
+    """Polymorphic join attaching one `Tag` to one entity instance.
+
+    `entity_type` is one of the ENTITY_TYPES slugs in app/tags.py
+    (lead / customer / deal / company); `entity_id` is that row's UUID.
+    Hard-deleted on untag — there's no soft-delete here, an attachment
+    either exists or it doesn't. `(tag_id, entity_type, entity_id)` is
+    unique. `organization_id` is denormalised for RLS + fast lookups.
+    """
+
+    __tablename__ = "entity_tags"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tag_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tags.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    entity_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class SavedSegment(SoftDeleteMixin, Base):
+    """A named, stored filter over one entity type ("smart list").
+
+    `filters` is an opaque JSON blob the frontend writes + interprets
+    (field/operator/value clauses); the backend stores it verbatim. Per
+    org + entity_type; `created_by_id` records the author (SET NULL on
+    user delete so a segment outlives its creator).
+    """
+
+    __tablename__ = "saved_segments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    entity_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    filters: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

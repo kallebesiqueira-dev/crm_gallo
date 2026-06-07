@@ -11,6 +11,7 @@ from app.activities import ENTITY_CUSTOMER, ActivityType, record_activity
 from app.api._concurrency import check_if_match
 from app.api._errors import raise_for_duplicate_email
 from app.audit import record_audit
+from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.models import Customer, User
@@ -67,6 +68,9 @@ async def create_customer(
 ) -> Customer:
     data = payload.model_dump()
     data["owner_id"] = data.get("owner_id") or user.id
+    data["custom_fields"] = await validate_custom_fields(
+        db, org_id, "customer", data.get("custom_fields"), partial=False
+    )
     customer = Customer(**data, organization_id=org_id)
     db.add(customer)
     try:
@@ -124,6 +128,15 @@ async def update_customer(
     )
     changes = payload.model_dump(exclude_unset=True)
     changes.pop("organization_id", None)
+    if "custom_fields" in changes:
+        changes["custom_fields"] = await validate_custom_fields(
+            db,
+            org_id,
+            "customer",
+            changes["custom_fields"],
+            existing=customer.custom_fields,
+            partial=True,
+        )
     for field, value in changes.items():
         setattr(customer, field, value)
     customer.version = customer.version + 1

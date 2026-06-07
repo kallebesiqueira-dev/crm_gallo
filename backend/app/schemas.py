@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
@@ -10,6 +10,7 @@ from app.models import (
     BillingCycle,
     ContractStatus,
     Currency,
+    CustomFieldType,
     DealStage,
     DocumentType,
     ImportEntityType,
@@ -623,6 +624,8 @@ class LeadBase(BaseModel):
     source: str | None = None
     notes: str | None = None
     stage: LeadStage = LeadStage.new
+    company_id: uuid.UUID | None = None
+    custom_fields: dict[str, Any] = Field(default_factory=dict)
 
 
 class LeadCreate(LeadBase):
@@ -643,8 +646,10 @@ class LeadUpdate(BaseModel):
     source: str | None = None
     notes: str | None = None
     stage: LeadStage | None = None
+    company_id: uuid.UUID | None = None
     owner_id: uuid.UUID | None = None
     team_id: uuid.UUID | None = None
+    custom_fields: dict[str, Any] | None = None
 
 
 class LeadOut(LeadBase):
@@ -684,6 +689,8 @@ class CustomerBase(BaseModel):
     address: str | None = None
     website: str | None = None
     notes: str | None = None
+    company_id: uuid.UUID | None = None
+    custom_fields: dict[str, Any] = Field(default_factory=dict)
 
 
 class CustomerCreate(CustomerBase):
@@ -701,7 +708,9 @@ class CustomerUpdate(BaseModel):
     address: str | None = None
     website: str | None = None
     notes: str | None = None
+    company_id: uuid.UUID | None = None
     owner_id: uuid.UUID | None = None
+    custom_fields: dict[str, Any] | None = None
 
 
 class CustomerOut(CustomerBase):
@@ -712,6 +721,172 @@ class CustomerOut(CustomerBase):
     ai_summary_updated_at: datetime | None
     # Optimistic locking marker (TD-12) — echo back as `If-Match` on PATCH.
     version: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------- Companies (B2B accounts) ----------
+class CompanyBase(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=255)]
+    industry: str | None = None
+    website: str | None = None
+    phone: str | None = None
+    email: EmailStr | None = None
+    country: str | None = Field(default=None, max_length=2)
+    address: str | None = None
+    size: int | None = Field(default=None, ge=0)
+    notes: str | None = None
+    custom_fields: dict[str, Any] = Field(default_factory=dict)
+
+
+class CompanyCreate(CompanyBase):
+    owner_id: uuid.UUID | None = None
+
+
+class CompanyUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    industry: str | None = None
+    website: str | None = None
+    phone: str | None = None
+    email: EmailStr | None = None
+    country: str | None = None
+    address: str | None = None
+    size: int | None = Field(default=None, ge=0)
+    notes: str | None = None
+    owner_id: uuid.UUID | None = None
+    custom_fields: dict[str, Any] | None = None
+
+
+class CompanyOut(CompanyBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    owner_id: uuid.UUID | None
+    # Optimistic locking marker — echo back as `If-Match` on PATCH.
+    version: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------- Custom field definitions (per-org schema extension) ----------
+CustomFieldEntity = Literal["lead", "customer", "deal", "company"]
+
+# Slug: lowercase letters, digits, underscore; must start with a letter.
+_KEY_PATTERN = r"^[a-z][a-z0-9_]*$"
+
+
+class CustomFieldDefinitionBase(BaseModel):
+    entity_type: CustomFieldEntity
+    key: Annotated[str, Field(min_length=1, max_length=60, pattern=_KEY_PATTERN)]
+    label: Annotated[str, Field(min_length=1, max_length=120)]
+    field_type: CustomFieldType
+    options: list[str] | None = None
+    required: bool = False
+    position: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def _options_required_for_select(self) -> "CustomFieldDefinitionBase":
+        if self.field_type in (CustomFieldType.select, CustomFieldType.multiselect):
+            if not self.options:
+                raise ValueError("select / multiselect fields require a non-empty options list")
+        else:
+            # Options are meaningless for other types — drop to keep rows clean.
+            self.options = None
+        return self
+
+
+class CustomFieldDefinitionCreate(CustomFieldDefinitionBase):
+    pass
+
+
+class CustomFieldDefinitionUpdate(BaseModel):
+    # `entity_type` and `key` are immutable (stored values key off them);
+    # only presentation/validation attributes can change.
+    label: str | None = Field(default=None, min_length=1, max_length=120)
+    field_type: CustomFieldType | None = None
+    options: list[str] | None = None
+    required: bool | None = None
+    position: int | None = Field(default=None, ge=0)
+
+
+class CustomFieldDefinitionOut(CustomFieldDefinitionBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------- Tags & saved segments ----------
+# The set of entities that can be tagged / segmented mirrors the custom-
+# field entity set exactly.
+TaggableEntity = CustomFieldEntity
+
+# 6-digit hex colour, e.g. "#64748b".
+_HEX_COLOR = r"^#[0-9a-fA-F]{6}$"
+
+
+class TagBase(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=60)]
+    color: Annotated[str, Field(pattern=_HEX_COLOR)] = "#64748b"
+
+
+class TagCreate(TagBase):
+    pass
+
+
+class TagUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    color: str | None = Field(default=None, pattern=_HEX_COLOR)
+
+
+class TagOut(TagBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class TagAssign(BaseModel):
+    tag_id: uuid.UUID
+    entity_type: TaggableEntity
+    entity_id: uuid.UUID
+
+
+class TagBulk(BaseModel):
+    """Add/remove a set of tags across a set of entities of one type."""
+
+    tag_ids: Annotated[list[uuid.UUID], Field(min_length=1)]
+    entity_type: TaggableEntity
+    entity_ids: Annotated[list[uuid.UUID], Field(min_length=1)]
+    action: Literal["add", "remove"]
+
+
+class EntityTagsOut(BaseModel):
+    """The tags attached to one entity — used to render chips on list rows."""
+
+    entity_id: uuid.UUID
+    tags: list[TagOut]
+
+
+class SegmentBase(BaseModel):
+    entity_type: TaggableEntity
+    name: Annotated[str, Field(min_length=1, max_length=120)]
+    # Opaque filter blob written + interpreted by the frontend.
+    filters: dict[str, Any] = Field(default_factory=dict)
+
+
+class SegmentCreate(SegmentBase):
+    pass
+
+
+class SegmentUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    filters: dict[str, Any] | None = None
+
+
+class SegmentOut(SegmentBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    created_by_id: uuid.UUID | None
     created_at: datetime
     updated_at: datetime
 
@@ -727,6 +902,8 @@ class DealBase(BaseModel):
     expected_close_date: date | None = None
     notes: str | None = None
     customer_id: uuid.UUID | None = None
+    company_id: uuid.UUID | None = None
+    custom_fields: dict[str, Any] = Field(default_factory=dict)
 
 
 class DealCreate(DealBase):
@@ -743,9 +920,11 @@ class DealUpdate(BaseModel):
     expected_close_date: date | None = None
     notes: str | None = None
     customer_id: uuid.UUID | None = None
+    company_id: uuid.UUID | None = None
     owner_id: uuid.UUID | None = None
     team_id: uuid.UUID | None = None
     sort_index: int | None = None
+    custom_fields: dict[str, Any] | None = None
 
 
 class DealOut(DealBase):

@@ -52,6 +52,8 @@ export interface Lead {
   ai_risk_analysis: string | null;
   ai_scored_at: string | null;
   owner_id: string | null;
+  company_id: string | null;
+  custom_fields: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -71,9 +73,36 @@ export interface Customer {
   ai_summary: string | null;
   ai_summary_updated_at: string | null;
   owner_id: string | null;
+  company_id: string | null;
+  custom_fields: Record<string, unknown>;
   version: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  industry: string | null;
+  website: string | null;
+  phone: string | null;
+  email: string | null;
+  country: string | null;
+  address: string | null;
+  size: number | null;
+  notes: string | null;
+  owner_id: string | null;
+  custom_fields: Record<string, unknown>;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanyRollup {
+  company: Company;
+  customers: Customer[];
+  leads: Lead[];
+  deals: Deal[];
 }
 
 export interface Deal {
@@ -86,9 +115,62 @@ export interface Deal {
   expected_close_date: string | null;
   notes: string | null;
   customer_id: string | null;
+  company_id: string | null;
   owner_id: string | null;
   sort_index: number;
+  custom_fields: Record<string, unknown>;
   version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CustomFieldEntity = "lead" | "customer" | "deal" | "company";
+
+export type CustomFieldKind =
+  | "text"
+  | "textarea"
+  | "number"
+  | "date"
+  | "boolean"
+  | "select"
+  | "multiselect"
+  | "url"
+  | "email";
+
+export interface CustomFieldDefinition {
+  id: string;
+  entity_type: CustomFieldEntity;
+  key: string;
+  label: string;
+  field_type: CustomFieldKind;
+  options: string[] | null;
+  required: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TaggableEntity = CustomFieldEntity;
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntityTags {
+  entity_id: string;
+  tags: Tag[];
+}
+
+export interface SavedSegment {
+  id: string;
+  entity_type: TaggableEntity;
+  name: string;
+  filters: Record<string, unknown>;
+  created_by_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -1094,12 +1176,12 @@ export const api = {
     `${API_URL}/api/exports/${encodeURIComponent(entity_type)}?format=csv`,
 
   // ---- Notes (markdown notes per Lead/Customer/Deal) ----
-  listNotes: (entity_type: "lead" | "customer" | "deal", entity_id: string) => {
+  listNotes: (entity_type: "lead" | "customer" | "deal" | "company", entity_id: string) => {
     const params = new URLSearchParams({ entity_type, entity_id });
     return request<Note[]>(`/api/notes?${params.toString()}`);
   },
   createNote: (
-    entity_type: "lead" | "customer" | "deal",
+    entity_type: "lead" | "customer" | "deal" | "company",
     entity_id: string,
     body: string,
   ) =>
@@ -1117,7 +1199,7 @@ export const api = {
 
   // ---- Activities (timeline) ----
   listActivities: (
-    entity_type: "lead" | "customer" | "deal",
+    entity_type: "lead" | "customer" | "deal" | "company",
     entity_id: string,
     opts: { limit?: number; offset?: number } = {},
   ) => {
@@ -1202,6 +1284,148 @@ export const api = {
     request<Customer>(`/api/customers/${id}/summarize`, { method: "POST", token }),
   deleteCustomer: (token: string, id: string) =>
     request<void>(`/api/customers/${id}`, { method: "DELETE", token }),
+
+  // Companies (B2B accounts)
+  listCompanies: (token: string, opts?: { q?: string; cursor?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (opts?.q) params.set("q", opts.q);
+    if (opts?.cursor) params.set("cursor", opts.cursor);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    return request<Page<Company>>(`/api/companies${qs ? `?${qs}` : ""}`, { token });
+  },
+  listAllCompanies: async (token: string, opts?: { q?: string }): Promise<Company[]> => {
+    const all: Company[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await api.listCompanies(token, { ...opts, cursor, limit: 200 });
+      all.push(...page.items);
+      cursor = page.next_cursor ?? undefined;
+    } while (cursor);
+    return all;
+  },
+  createCompany: (token: string, payload: Partial<Company>) =>
+    request<Company>("/api/companies", { method: "POST", token, body: JSON.stringify(payload) }),
+  getCompany: (token: string, id: string) => request<Company>(`/api/companies/${id}`, { token }),
+  getCompanyRollup: (token: string, id: string) =>
+    request<CompanyRollup>(`/api/companies/${id}/rollup`, { token }),
+  updateCompany: (token: string, id: string, payload: Partial<Company>, version?: number) =>
+    request<Company>(`/api/companies/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
+    }),
+  deleteCompany: (token: string, id: string) =>
+    request<void>(`/api/companies/${id}`, { method: "DELETE", token }),
+
+  // Custom field definitions (per-org schema extension)
+  listCustomFields: (token: string, entityType?: CustomFieldEntity) => {
+    const qs = entityType ? `?entity_type=${entityType}` : "";
+    return request<CustomFieldDefinition[]>(`/api/custom-fields${qs}`, { token });
+  },
+  createCustomField: (token: string, payload: Partial<CustomFieldDefinition>) =>
+    request<CustomFieldDefinition>("/api/custom-fields", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  updateCustomField: (
+    token: string,
+    id: string,
+    payload: Partial<CustomFieldDefinition>,
+  ) =>
+    request<CustomFieldDefinition>(`/api/custom-fields/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteCustomField: (token: string, id: string) =>
+    request<void>(`/api/custom-fields/${id}`, { method: "DELETE", token }),
+
+  // Tags
+  listTags: (token: string) => request<Tag[]>("/api/tags", { token }),
+  createTag: (token: string, payload: { name: string; color?: string }) =>
+    request<Tag>("/api/tags", { method: "POST", token, body: JSON.stringify(payload) }),
+  updateTag: (
+    token: string,
+    id: string,
+    payload: { name?: string; color?: string },
+  ) =>
+    request<Tag>(`/api/tags/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteTag: (token: string, id: string) =>
+    request<void>(`/api/tags/${id}`, { method: "DELETE", token }),
+  listTagAssignments: (
+    token: string,
+    entityType: TaggableEntity,
+    entityIds: string[],
+  ) => {
+    const qs = `?entity_type=${entityType}&entity_ids=${entityIds.join(",")}`;
+    return request<EntityTags[]>(`/api/tags/assignments${qs}`, { token });
+  },
+  assignTag: (
+    token: string,
+    payload: { tag_id: string; entity_type: TaggableEntity; entity_id: string },
+  ) =>
+    request<Tag[]>("/api/tags/assign", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  unassignTag: (
+    token: string,
+    payload: { tag_id: string; entity_type: TaggableEntity; entity_id: string },
+  ) =>
+    request<void>("/api/tags/unassign", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  bulkTag: (
+    token: string,
+    payload: {
+      tag_ids: string[];
+      entity_type: TaggableEntity;
+      entity_ids: string[];
+      action: "add" | "remove";
+    },
+  ) =>
+    request<{ affected: number }>("/api/tags/bulk", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+
+  // Saved segments (stored list filters)
+  listSegments: (token: string, entityType?: TaggableEntity) => {
+    const qs = entityType ? `?entity_type=${entityType}` : "";
+    return request<SavedSegment[]>(`/api/segments${qs}`, { token });
+  },
+  createSegment: (
+    token: string,
+    payload: { entity_type: TaggableEntity; name: string; filters: Record<string, unknown> },
+  ) =>
+    request<SavedSegment>("/api/segments", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  updateSegment: (
+    token: string,
+    id: string,
+    payload: { name?: string; filters?: Record<string, unknown> },
+  ) =>
+    request<SavedSegment>(`/api/segments/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteSegment: (token: string, id: string) =>
+    request<void>(`/api/segments/${id}`, { method: "DELETE", token }),
 
   // Deals
   listDeals: (token: string) => request<Deal[]>("/api/deals", { token }),

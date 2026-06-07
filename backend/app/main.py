@@ -19,7 +19,9 @@ from app.api import (
     audit,
     auth,
     billing,
+    companies,
     contracts,
+    custom_fields,
     customers,
     dashboard,
     deals,
@@ -35,7 +37,9 @@ from app.api import (
     pipelines,
     public,
     quotes,
+    segments,
     signatures,
+    tags,
     tasks,
     teams,
     trash,
@@ -327,6 +331,10 @@ app.include_router(billing.router)
 app.include_router(public.router)
 app.include_router(leads.router)
 app.include_router(customers.router)
+app.include_router(companies.router)
+app.include_router(custom_fields.router)
+app.include_router(tags.router)
+app.include_router(segments.router)
 app.include_router(deals.router)
 app.include_router(quotes.router)
 app.include_router(contracts.router)

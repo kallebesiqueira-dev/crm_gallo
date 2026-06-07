@@ -129,7 +129,8 @@ export default function LeadsPage() {
         {leads.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[40rem] text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
@@ -191,6 +192,7 @@ export default function LeadsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
 

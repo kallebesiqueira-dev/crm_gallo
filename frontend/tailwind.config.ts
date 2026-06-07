@@ -75,6 +75,11 @@ const config: Config = {
           "0%, 100%": { transform: "translate(0, 0)", opacity: "0.2" },
           "50%": { transform: "translate(8px, -20px)", opacity: "0.6" },
         },
+        // Gentle vertical bob for the chatbot mascot peeking above the launcher.
+        bob: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
       },
       animation: {
         "marquee-left": "marquee-left 40s linear infinite",
@@ -82,6 +87,7 @@ const config: Config = {
         "pulse-slow": "pulse-slow 8s ease-in-out infinite",
         "pulse-slower": "pulse-slower 11s ease-in-out infinite",
         float: "float 14s ease-in-out infinite",
+        bob: "bob 2.8s ease-in-out infinite",
       },
     },
   },

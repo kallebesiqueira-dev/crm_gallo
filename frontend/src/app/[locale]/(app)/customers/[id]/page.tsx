@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ActivityTimeline } from "@/components/activity-timeline";
 import { AttachmentsPanel } from "@/components/attachments-panel";
+import { CustomFieldsDisplay } from "@/components/custom-fields-input";
+import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
 import { api, type Customer } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -18,6 +20,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const t = useTranslations("customers");
   const tCommon = useTranslations("common");
+  const tTags = useTranslations("tags");
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
@@ -116,6 +119,15 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                 <p className="mt-1 whitespace-pre-wrap text-sm">{customer.notes}</p>
               </div>
             )}
+            <div className="sm:col-span-2">
+              <CustomFieldsDisplay entityType="customer" value={customer.custom_fields} />
+            </div>
+            <div className="sm:col-span-2">
+              <div className="mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+                {tTags("title")}
+              </div>
+              <EntityTags entityType="customer" entityId={customer.id} />
+            </div>
           </CardContent>
         </Card>
 

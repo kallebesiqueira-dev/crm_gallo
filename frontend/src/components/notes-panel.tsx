@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
  *     a friendly 403 inline.
  */
 interface Props {
-  entityType: "lead" | "customer" | "deal";
+  entityType: "lead" | "customer" | "deal" | "company";
   entityId: string;
 }
 

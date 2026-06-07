@@ -23,7 +23,8 @@
     "settings": "Parameters",
     "team": "Team",
     "trash": "Cazetta",
-    "audit": "Protocol d'audit"
+    "audit": "Protocol d'audit",
+    "companies": "Interpresas"
   },
   "auth": {
     "login": "S'annunziar",
@@ -1195,5 +1196,63 @@
         }
       }
     }
+  },
+  "companies": {
+    "title": "Interpresas",
+    "new": "Nova interpresa",
+    "search": "Tschertgar tenor num…",
+    "name": "Num",
+    "industry": "Sectur",
+    "website": "Pagina web",
+    "country": "Pajais",
+    "created": "Creà",
+    "empty": "Anc naginas interpresas. Creai Vossa emprima.",
+    "phone": "Telefon",
+    "email": "E-mail",
+    "address": "Adressa",
+    "size": "Collavuraturs",
+    "notes": "Notizias",
+    "customers": "Clients",
+    "leads": "Leads",
+    "deals": "Fatschentas",
+    "noContacts": "Anc nagins contacts colliads.",
+    "noDeals": "Anc naginas fatschentas colliadas."
+  },
+  "customFields": {
+    "sectionTitle": "Champs persunalisads",
+    "title": "Champs persunalisads",
+    "adminOnly": "Mo administraturs e managers pon modifitgar champs persunalisads.",
+    "intro": "Definescha champs supplementars per entitad. Els cumparan en mintga formular da crear e modifitgar e sin las paginas da detagls.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clients",
+      "deal": "Fatschentas",
+      "company": "Interpresas"
+    },
+    "key": "Clav",
+    "keyPlaceholder": "p.ex. account_tier",
+    "keyHint": "Minusclas, cifras ed undertratgs. Na po betg vegnir midà pli tard.",
+    "label": "Etichetta",
+    "labelPlaceholder": "p.ex. Nivel da conto",
+    "type": "Tip",
+    "kind": {
+      "text": "Text",
+      "textarea": "Text lung",
+      "number": "Numer",
+      "date": "Data",
+      "boolean": "Chaschetta",
+      "select": "Glista cumblanaivla",
+      "multiselect": "Selecziun multipla",
+      "url": "URL",
+      "email": "E-mail"
+    },
+    "required": "Obligatoric",
+    "options": "Opziuns",
+    "optionsPlaceholder": "Aur, Argient, Bronz",
+    "optionsHint": "Glista da tschernas separadas cun commas.",
+    "add": "Agiuntar champ",
+    "confirmDelete": "Stizzar il champ persunalisà \"{label}\"?",
+    "delete": "Stizzar",
+    "empty": "Anc nagins champs persunalisads per questa entitad."
   }
 }

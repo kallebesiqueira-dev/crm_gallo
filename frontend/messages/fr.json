@@ -23,7 +23,8 @@
     "settings": "Paramètres",
     "team": "Équipe",
     "trash": "Corbeille",
-    "audit": "Journal d'audit"
+    "audit": "Journal d'audit",
+    "companies": "Entreprises"
   },
   "auth": {
     "login": "Se connecter",
@@ -1195,5 +1196,63 @@
         }
       }
     }
+  },
+  "companies": {
+    "title": "Entreprises",
+    "new": "Nouvelle entreprise",
+    "search": "Rechercher par nom…",
+    "name": "Nom",
+    "industry": "Secteur",
+    "website": "Site web",
+    "country": "Pays",
+    "created": "Créé",
+    "empty": "Aucune entreprise. Créez la première.",
+    "phone": "Téléphone",
+    "email": "E-mail",
+    "address": "Adresse",
+    "size": "Employés",
+    "notes": "Notes",
+    "customers": "Clients",
+    "leads": "Leads",
+    "deals": "Affaires",
+    "noContacts": "Aucun contact lié pour l'instant.",
+    "noDeals": "Aucune affaire liée pour l'instant."
+  },
+  "customFields": {
+    "sectionTitle": "Champs personnalisés",
+    "title": "Champs personnalisés",
+    "adminOnly": "Seuls les administrateurs et les managers peuvent modifier les champs personnalisés.",
+    "intro": "Définissez des champs supplémentaires par entité. Ils apparaissent dans chaque formulaire de création et de modification, ainsi que sur les pages de détail.",
+    "entity": {
+      "lead": "Prospects",
+      "customer": "Clients",
+      "deal": "Affaires",
+      "company": "Entreprises"
+    },
+    "key": "Clé",
+    "keyPlaceholder": "ex. account_tier",
+    "keyHint": "Minuscules, chiffres et tirets bas. Non modifiable par la suite.",
+    "label": "Libellé",
+    "labelPlaceholder": "ex. Niveau de compte",
+    "type": "Type",
+    "kind": {
+      "text": "Texte",
+      "textarea": "Texte long",
+      "number": "Nombre",
+      "date": "Date",
+      "boolean": "Case à cocher",
+      "select": "Liste déroulante",
+      "multiselect": "Sélection multiple",
+      "url": "URL",
+      "email": "E-mail"
+    },
+    "required": "Obligatoire",
+    "options": "Options",
+    "optionsPlaceholder": "Or, Argent, Bronze",
+    "optionsHint": "Liste de choix séparés par des virgules.",
+    "add": "Ajouter un champ",
+    "confirmDelete": "Supprimer le champ personnalisé « {label} » ?",
+    "delete": "Supprimer",
+    "empty": "Aucun champ personnalisé pour cette entité."
   }
 }

@@ -23,7 +23,8 @@
     "settings": "Configurações",
     "team": "Equipe",
     "trash": "Lixeira",
-    "audit": "Auditoria"
+    "audit": "Auditoria",
+    "companies": "Empresas"
   },
   "auth": {
     "login": "Entrar",
@@ -1195,5 +1196,63 @@
         }
       }
     }
+  },
+  "companies": {
+    "title": "Empresas",
+    "new": "Nova empresa",
+    "search": "Pesquisar por nome…",
+    "name": "Nome",
+    "industry": "Setor",
+    "website": "Site",
+    "country": "País",
+    "created": "Criado",
+    "empty": "Ainda não há empresas. Crie a primeira.",
+    "phone": "Telefone",
+    "email": "E-mail",
+    "address": "Endereço",
+    "size": "Funcionários",
+    "notes": "Notas",
+    "customers": "Clientes",
+    "leads": "Leads",
+    "deals": "Negócios",
+    "noContacts": "Ainda não há contactos associados.",
+    "noDeals": "Ainda não há negócios associados."
+  },
+  "customFields": {
+    "sectionTitle": "Campos personalizados",
+    "title": "Campos personalizados",
+    "adminOnly": "Apenas administradores e gestores podem editar campos personalizados.",
+    "intro": "Defina campos adicionais por entidade. Eles aparecem em cada formulário de criação e edição e nas páginas de detalhe.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clientes",
+      "deal": "Negócios",
+      "company": "Empresas"
+    },
+    "key": "Chave",
+    "keyPlaceholder": "ex.: account_tier",
+    "keyHint": "Letras minúsculas, números e sublinhados. Não pode ser alterada depois.",
+    "label": "Rótulo",
+    "labelPlaceholder": "ex.: Nível da conta",
+    "type": "Tipo",
+    "kind": {
+      "text": "Texto",
+      "textarea": "Texto longo",
+      "number": "Número",
+      "date": "Data",
+      "boolean": "Caixa de seleção",
+      "select": "Lista suspensa",
+      "multiselect": "Seleção múltipla",
+      "url": "URL",
+      "email": "E-mail"
+    },
+    "required": "Obrigatório",
+    "options": "Opções",
+    "optionsPlaceholder": "Ouro, Prata, Bronze",
+    "optionsHint": "Lista de opções separadas por vírgula.",
+    "add": "Adicionar campo",
+    "confirmDelete": "Excluir o campo personalizado \"{label}\"?",
+    "delete": "Excluir",
+    "empty": "Ainda não há campos personalizados para esta entidade."
   }
 }

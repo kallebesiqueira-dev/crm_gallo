@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
+import { MobileNav } from "@/components/mobile-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ConfirmProvider } from "@/components/confirm-dialog";
@@ -102,12 +103,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen bg-muted/30">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="relative z-50 flex flex-wrap items-center justify-between gap-3 border-b bg-background px-6 py-3">
-            <div className="flex items-center gap-3">
+          <header className="relative z-50 flex flex-wrap items-center justify-between gap-3 border-b bg-background px-4 py-3 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              {/* Hamburger drawer — only renders below md, where the sidebar hides. */}
+              <MobileNav />
               {/* Org switcher hides itself when the user has 0–1 memberships,
                   so single-tenant installs see the same chrome as before. */}
               <OrgSwitcher activeOrgId={user?.last_active_org_id ?? null} />
-              <div className="text-sm text-muted-foreground">{user?.email}</div>
+              <div className="hidden truncate text-sm text-muted-foreground sm:block">{user?.email}</div>
               {billing && <PlanBadge plan={billing.plan} />}
             </div>
             <div className="flex items-center gap-2">
@@ -125,7 +128,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           {banner}
 
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-3 sm:p-6">{children}</main>
         </div>
       </div>
     </ConfirmProvider>

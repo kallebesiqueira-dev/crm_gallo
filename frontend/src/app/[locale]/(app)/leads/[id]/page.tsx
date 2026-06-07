@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ActivityTimeline } from "@/components/activity-timeline";
 import { AttachmentsPanel } from "@/components/attachments-panel";
+import { CustomFieldsDisplay } from "@/components/custom-fields-input";
+import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
 import { api, type Lead, type LeadStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -30,6 +32,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const t = useTranslations("leads");
   const tStages = useTranslations("leads.stages");
   const tCommon = useTranslations("common");
+  const tTags = useTranslations("tags");
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
@@ -138,6 +141,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 <p className="mt-1 whitespace-pre-wrap text-sm">{lead.notes}</p>
               </div>
             )}
+            <div className="sm:col-span-2">
+              <CustomFieldsDisplay entityType="lead" value={lead.custom_fields} />
+            </div>
+            <div className="sm:col-span-2">
+              <div className="mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+                {tTags("title")}
+              </div>
+              <EntityTags entityType="lead" entityId={lead.id} />
+            </div>
           </CardContent>
         </Card>
 

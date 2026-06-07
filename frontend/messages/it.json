@@ -23,7 +23,8 @@
     "settings": "Impostazioni",
     "team": "Team",
     "trash": "Cestino",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "companies": "Aziende"
   },
   "auth": {
     "login": "Accedi",
@@ -1195,5 +1196,63 @@
         }
       }
     }
+  },
+  "companies": {
+    "title": "Aziende",
+    "new": "Nuova azienda",
+    "search": "Cerca per nome…",
+    "name": "Nome",
+    "industry": "Settore",
+    "website": "Sito web",
+    "country": "Paese",
+    "created": "Creato",
+    "empty": "Nessuna azienda. Crea la prima.",
+    "phone": "Telefono",
+    "email": "Email",
+    "address": "Indirizzo",
+    "size": "Dipendenti",
+    "notes": "Note",
+    "customers": "Clienti",
+    "leads": "Lead",
+    "deals": "Trattative",
+    "noContacts": "Nessun contatto collegato.",
+    "noDeals": "Nessuna trattativa collegata."
+  },
+  "customFields": {
+    "sectionTitle": "Campi personalizzati",
+    "title": "Campi personalizzati",
+    "adminOnly": "Solo amministratori e manager possono modificare i campi personalizzati.",
+    "intro": "Definisci campi aggiuntivi per ogni entità. Appariranno in ogni modulo di creazione e modifica e nelle pagine di dettaglio.",
+    "entity": {
+      "lead": "Lead",
+      "customer": "Clienti",
+      "deal": "Trattative",
+      "company": "Aziende"
+    },
+    "key": "Chiave",
+    "keyPlaceholder": "es. account_tier",
+    "keyHint": "Lettere minuscole, numeri e trattini bassi. Non modificabile in seguito.",
+    "label": "Etichetta",
+    "labelPlaceholder": "es. Livello account",
+    "type": "Tipo",
+    "kind": {
+      "text": "Testo",
+      "textarea": "Testo lungo",
+      "number": "Numero",
+      "date": "Data",
+      "boolean": "Casella di controllo",
+      "select": "Menu a tendina",
+      "multiselect": "Selezione multipla",
+      "url": "URL",
+      "email": "Email"
+    },
+    "required": "Obbligatorio",
+    "options": "Opzioni",
+    "optionsPlaceholder": "Oro, Argento, Bronzo",
+    "optionsHint": "Elenco di scelte separate da virgola.",
+    "add": "Aggiungi campo",
+    "confirmDelete": "Eliminare il campo personalizzato \"{label}\"?",
+    "delete": "Elimina",
+    "empty": "Nessun campo personalizzato per questa entità."
   }
 }
