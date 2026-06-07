@@ -891,6 +891,85 @@ class SegmentOut(SegmentBase):
     updated_at: datetime
 
 
+# ---------- Duplicate detection & merge ----------
+# Only the contact-shaped + account entities carry a natural identity
+# (email / phone / name) worth deduping. Deals/tasks have no such key.
+DuplicateEntity = Literal["lead", "customer", "company"]
+
+
+class DuplicateRecord(BaseModel):
+    """One candidate row in a duplicate group — a compact summary for the
+    merge picker (never the full entity)."""
+
+    id: uuid.UUID
+    label: str
+    email: str | None = None
+    phone: str | None = None
+    created_at: datetime
+
+
+class DuplicateGroup(BaseModel):
+    """A set of 2+ records that collide on one signal."""
+
+    match_type: Literal["email", "phone", "name"]
+    # The normalised value the members share (e.g. "john@x.com").
+    key: str
+    records: list[DuplicateRecord]
+
+
+class DuplicateGroupsOut(BaseModel):
+    entity_type: DuplicateEntity
+    groups: list[DuplicateGroup]
+
+
+class MergeRequest(BaseModel):
+    """Fold `loser_ids` into `survivor_id`: children re-parent to the
+    survivor, the losers are soft-deleted. Survivor's own fields are
+    left untouched (field-level merge is a UI concern, out of scope)."""
+
+    entity_type: DuplicateEntity
+    survivor_id: uuid.UUID
+    loser_ids: Annotated[list[uuid.UUID], Field(min_length=1)]
+
+
+class MergeResult(BaseModel):
+    survivor_id: uuid.UUID
+    merged_count: int
+    # Per-relation count of rows re-parented to the survivor.
+    reparented: dict[str, int]
+
+
+# ---------- Web-to-Lead public capture forms ----------
+class WebFormBase(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=120)]
+    # Stamped onto Leads this form creates (defaults to "Web Form" if unset).
+    default_source: Annotated[str | None, Field(default=None, max_length=120)]
+    # Browser redirect after a successful HTML-form post.
+    redirect_url: Annotated[str | None, Field(default=None, max_length=500)]
+    active: bool = True
+
+
+class WebFormCreate(WebFormBase):
+    pass
+
+
+class WebFormUpdate(BaseModel):
+    name: Annotated[str | None, Field(default=None, min_length=1, max_length=120)]
+    default_source: Annotated[str | None, Field(default=None, max_length=120)]
+    redirect_url: Annotated[str | None, Field(default=None, max_length=500)]
+    active: bool | None = None
+
+
+class WebFormOut(WebFormBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    # The public `crmf_…` identifier for the embed snippet. Not a secret.
+    token: str
+    submission_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
 # ---------- Deals ----------
 class DealBase(BaseModel):
     title: Annotated[str, Field(min_length=1, max_length=255)]

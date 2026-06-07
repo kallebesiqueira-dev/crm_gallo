@@ -24,7 +24,9 @@
     "team": "Team",
     "trash": "Trash",
     "audit": "Audit log",
-    "companies": "Companies"
+    "companies": "Companies",
+    "duplicates": "Duplicates",
+    "forms": "Forms"
   },
   "auth": {
     "login": "Sign in",
@@ -1269,5 +1271,50 @@
     "addTag": "Add tag",
     "remove": "Remove",
     "noneYet": "No tags yet — create some in Settings."
+  },
+  "duplicates": {
+    "title": "Duplicates",
+    "subtitle": "Find and merge duplicate records. The survivor keeps its data; the others are merged into it and removed.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Customers",
+      "company": "Companies"
+    },
+    "match": {
+      "email": "Email",
+      "phone": "Phone",
+      "name": "Name"
+    },
+    "empty": "No duplicates found.",
+    "recordCount": "{count} records",
+    "pickSurvivor": "Choose the record to keep:",
+    "keep": "Keep",
+    "survivor": "Survivor",
+    "merge": "Merge",
+    "merged": "Merged {count} record(s).",
+    "confirmTitle": "Merge duplicates?",
+    "confirmBody": "{count} record(s) will be merged into the survivor and removed. This cannot be undone."
+  },
+  "forms": {
+    "title": "Web Forms",
+    "subtitle": "Capture leads from your website. Embed a form; submissions create leads automatically.",
+    "name": "Name",
+    "namePlaceholder": "e.g. Contact Us",
+    "defaultSource": "Default source",
+    "defaultSourcePlaceholder": "e.g. Website",
+    "redirectUrl": "Redirect URL (optional)",
+    "create": "Create form",
+    "empty": "No forms yet. Create one to start capturing leads.",
+    "active": "Active",
+    "paused": "Paused",
+    "submissions": "{count} submissions",
+    "embed": "Embed",
+    "pause": "Pause",
+    "resume": "Resume",
+    "embedHelp": "Paste this HTML into your website where you want the form to appear.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "confirmDeleteTitle": "Delete form?",
+    "confirmDeleteBody": "“{name}” will be permanently deleted and its embed will stop working."
   }
 }

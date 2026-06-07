@@ -24,7 +24,9 @@
     "team": "Equipe",
     "trash": "Lixeira",
     "audit": "Auditoria",
-    "companies": "Empresas"
+    "companies": "Empresas",
+    "duplicates": "Duplicados",
+    "forms": "Formulários"
   },
   "auth": {
     "login": "Entrar",
@@ -1269,5 +1271,50 @@
     "addTag": "Adicionar etiqueta",
     "remove": "Remover",
     "noneYet": "Ainda não há etiquetas — crie algumas nas Definições."
+  },
+  "duplicates": {
+    "title": "Duplicados",
+    "subtitle": "Encontre e mescle registros duplicados. O registro principal mantém seus dados; os outros são mesclados nele e removidos.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clientes",
+      "company": "Empresas"
+    },
+    "match": {
+      "email": "E-mail",
+      "phone": "Telefone",
+      "name": "Nome"
+    },
+    "empty": "Nenhum duplicado encontrado.",
+    "recordCount": "{count} registros",
+    "pickSurvivor": "Escolha o registro a manter:",
+    "keep": "Manter",
+    "survivor": "Principal",
+    "merge": "Mesclar",
+    "merged": "{count} registro(s) mesclado(s).",
+    "confirmTitle": "Mesclar duplicados?",
+    "confirmBody": "{count} registro(s) serão mesclados no principal e removidos. Isso não pode ser desfeito."
+  },
+  "forms": {
+    "title": "Formulários web",
+    "subtitle": "Capture leads do seu site. Incorpore um formulário; os envios criam leads automaticamente.",
+    "name": "Nome",
+    "namePlaceholder": "ex. Fale conosco",
+    "defaultSource": "Origem padrão",
+    "defaultSourcePlaceholder": "ex. Site",
+    "redirectUrl": "URL de redirecionamento (opcional)",
+    "create": "Criar formulário",
+    "empty": "Nenhum formulário ainda. Crie um para começar a capturar leads.",
+    "active": "Ativo",
+    "paused": "Pausado",
+    "submissions": "{count} envios",
+    "embed": "Incorporar",
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "embedHelp": "Cole este HTML no seu site onde quiser que o formulário apareça.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "confirmDeleteTitle": "Excluir formulário?",
+    "confirmDeleteBody": "“{name}” será excluído permanentemente e a incorporação deixará de funcionar."
   }
 }

@@ -24,7 +24,9 @@
     "team": "Team",
     "trash": "Cazetta",
     "audit": "Protocol d'audit",
-    "companies": "Interpresas"
+    "companies": "Interpresas",
+    "duplicates": "Dubladuras",
+    "forms": "Formulars"
   },
   "auth": {
     "login": "S'annunziar",
@@ -1269,5 +1271,50 @@
     "addTag": "Agiuntar etichetta",
     "remove": "Allontanar",
     "noneYet": "Anc naginas etichettas — creeschan tschertas en ils parameters."
+  },
+  "duplicates": {
+    "title": "Dubladuras",
+    "subtitle": "Tschertgar e unir endataziuns dubladas. Lendataziun principala mantegna sias datas; las autras vegnan unidas ad ella e stizzadas.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clients",
+      "company": "Interpresas"
+    },
+    "match": {
+      "email": "E-mail",
+      "phone": "Telefon",
+      "name": "Num"
+    },
+    "empty": "Naginas dubladuras chattadas.",
+    "recordCount": "{count} endataziuns",
+    "pickSurvivor": "Tscherna lendataziun da mantegnair:",
+    "keep": "Mantegnair",
+    "survivor": "Principal",
+    "merge": "Unir",
+    "merged": "{count} endataziun(s) unida(s).",
+    "confirmTitle": "Unir las dubladuras?",
+    "confirmBody": "{count} endataziun(s) vegnan unidas en lendataziun principala e stizzadas. Quai na po betg vegnir revocà."
+  },
+  "forms": {
+    "title": "Formulars web",
+    "subtitle": "Chapta leads da tia pagina web. Integrescha in formular; ils inputs creeschan automaticamain leads.",
+    "name": "Num",
+    "namePlaceholder": "p.ex. Contactar",
+    "defaultSource": "Funtauna predefinida",
+    "defaultSourcePlaceholder": "p.ex. Pagina web",
+    "redirectUrl": "URL da renviament (opziunal)",
+    "create": "Crear formular",
+    "empty": "Anc nagins formulars. Creescha in per cumenzar a chaptar leads.",
+    "active": "Activ",
+    "paused": "En pausa",
+    "submissions": "{count} inputs",
+    "embed": "Integrar",
+    "pause": "Pausar",
+    "resume": "Cuntinuar",
+    "embedHelp": "Encolla quest HTML en tia pagina web nua che ti vuls mussar il formular.",
+    "copy": "Copiar",
+    "copied": "Copiað",
+    "confirmDeleteTitle": "Stizzar il formular?",
+    "confirmDeleteBody": "«{name}» vegn stizza definitivamain e sia integraziun na funcziunar betg pli."
   }
 }

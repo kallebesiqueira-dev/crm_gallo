@@ -1866,3 +1866,53 @@ class ApiKey(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class WebForm(Base):
+    """A public Web-to-Lead capture form.
+
+    An org admin mints a form; its `token` ships inside an embed snippet on
+    the customer's own website. A visitor's submission hits the public,
+    unauthenticated `POST /api/public/forms/{token}/submit`, which creates a
+    Lead in this form's org.
+
+    **Token (`crmf_{org_hex}_{secret}`)** is a PUBLIC identifier, not a
+    secret — it sits in the page HTML. The embedded org lets the public path
+    set the RLS GUC and look the form up under row-level security before any
+    session exists (see `app.web_forms`). Stored plaintext + unique so a
+    presented token resolves with one indexed seek.
+
+    Not soft-deletable: an `active` toggle pauses capture without deleting
+    the embed, and removal is a hard DELETE. Org-scoped + RLS like every
+    tenant table.
+    """
+
+    __tablename__ = "web_forms"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    # Public `crmf_…` identifier embedded in the snippet. Plaintext + unique.
+    token: Mapped[str] = mapped_column(String(120), nullable=False, unique=True, index=True)
+    # Stamped onto every Lead this form creates (e.g. "Website", "Ads").
+    default_source: Mapped[str | None] = mapped_column(String(120))
+    # Where to send the browser after a successful HTML-form post. When set,
+    # the public endpoint replies 303 → here; otherwise a default thank-you.
+    redirect_url: Mapped[str | None] = mapped_column(String(500))
+    # Paused forms reject submissions with 404 (indistinguishable from a
+    # bad token, so a paused form leaks nothing).
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Denormalised lifetime counter for the UI; bumped on each accepted post.
+    submission_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

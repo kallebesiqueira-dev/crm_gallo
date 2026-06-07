@@ -24,7 +24,9 @@
     "team": "Equipo",
     "trash": "Papelera",
     "audit": "Auditoría",
-    "companies": "Empresas"
+    "companies": "Empresas",
+    "duplicates": "Duplicados",
+    "forms": "Formularios"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -1269,5 +1271,50 @@
     "addTag": "Añadir etiqueta",
     "remove": "Quitar",
     "noneYet": "Aún no hay etiquetas — crea algunas en Ajustes."
+  },
+  "duplicates": {
+    "title": "Duplicados",
+    "subtitle": "Encuentra y combina registros duplicados. El registro principal conserva sus datos; los demás se combinan en él y se eliminan.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clientes",
+      "company": "Empresas"
+    },
+    "match": {
+      "email": "Correo",
+      "phone": "Teléfono",
+      "name": "Nombre"
+    },
+    "empty": "No se encontraron duplicados.",
+    "recordCount": "{count} registros",
+    "pickSurvivor": "Elige el registro que conservar:",
+    "keep": "Conservar",
+    "survivor": "Principal",
+    "merge": "Combinar",
+    "merged": "{count} registro(s) combinado(s).",
+    "confirmTitle": "¿Combinar duplicados?",
+    "confirmBody": "{count} registro(s) se combinarán en el principal y se eliminarán. Esto no se puede deshacer."
+  },
+  "forms": {
+    "title": "Formularios web",
+    "subtitle": "Capta clientes potenciales desde tu sitio web. Inserta un formulario; los envíos crean leads automáticamente.",
+    "name": "Nombre",
+    "namePlaceholder": "p. ej. Contáctanos",
+    "defaultSource": "Origen predeterminado",
+    "defaultSourcePlaceholder": "p. ej. Sitio web",
+    "redirectUrl": "URL de redirección (opcional)",
+    "create": "Crear formulario",
+    "empty": "Aún no hay formularios. Crea uno para empezar a captar leads.",
+    "active": "Activo",
+    "paused": "En pausa",
+    "submissions": "{count} envíos",
+    "embed": "Insertar",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "embedHelp": "Pega este HTML en tu sitio web donde quieras que aparezca el formulario.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "confirmDeleteTitle": "¿Eliminar formulario?",
+    "confirmDeleteBody": "“{name}” se eliminará permanentemente y su inserción dejará de funcionar."
   }
 }

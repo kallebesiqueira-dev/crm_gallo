@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     # for a real visitor conversation, low enough to blunt scraping/abuse of
     # the (cost-bearing) LLM from an anonymous endpoint.
     rate_limit_chatbot_per_minute: int = 20
+    # Public, unauthenticated Web-to-Lead form submit — keyed per-IP. Blunts
+    # automated lead-spam while staying generous for a legitimate visitor who
+    # fat-fingers and resubmits a couple of times.
+    rate_limit_form_submit_per_minute: int = 10
 
     # ---- S3-compatible object storage (FileAttachments) ----
     # Defaults match the MinIO sidecar in docker-compose; swap the

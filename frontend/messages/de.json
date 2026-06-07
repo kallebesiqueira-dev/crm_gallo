@@ -24,7 +24,9 @@
     "team": "Team",
     "trash": "Papierkorb",
     "audit": "Audit-Log",
-    "companies": "Unternehmen"
+    "companies": "Unternehmen",
+    "duplicates": "Duplikate",
+    "forms": "Formulare"
   },
   "auth": {
     "login": "Anmelden",
@@ -1269,5 +1271,50 @@
     "addTag": "Tag hinzufügen",
     "remove": "Entfernen",
     "noneYet": "Noch keine Tags – erstellen Sie welche in den Einstellungen."
+  },
+  "duplicates": {
+    "title": "Duplikate",
+    "subtitle": "Doppelte Datensätze finden und zusammenführen. Der Hauptdatensatz behält seine Daten; die anderen werden zusammengeführt und entfernt.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Kunden",
+      "company": "Firmen"
+    },
+    "match": {
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "name": "Name"
+    },
+    "empty": "Keine Duplikate gefunden.",
+    "recordCount": "{count} Datensätze",
+    "pickSurvivor": "Wählen Sie den zu behaltenden Datensatz:",
+    "keep": "Behalten",
+    "survivor": "Hauptdatensatz",
+    "merge": "Zusammenführen",
+    "merged": "{count} Datensätze zusammengeführt.",
+    "confirmTitle": "Duplikate zusammenführen?",
+    "confirmBody": "{count} Datensätze werden in den Hauptdatensatz zusammengeführt und entfernt. Dies kann nicht rückgängig gemacht werden."
+  },
+  "forms": {
+    "title": "Web-Formulare",
+    "subtitle": "Erfassen Sie Leads von Ihrer Website. Betten Sie ein Formular ein; Einsendungen erstellen automatisch Leads.",
+    "name": "Name",
+    "namePlaceholder": "z. B. Kontakt",
+    "defaultSource": "Standardquelle",
+    "defaultSourcePlaceholder": "z. B. Website",
+    "redirectUrl": "Weiterleitungs-URL (optional)",
+    "create": "Formular erstellen",
+    "empty": "Noch keine Formulare. Erstellen Sie eines, um Leads zu erfassen.",
+    "active": "Aktiv",
+    "paused": "Pausiert",
+    "submissions": "{count} Einsendungen",
+    "embed": "Einbetten",
+    "pause": "Pausieren",
+    "resume": "Fortsetzen",
+    "embedHelp": "Fügen Sie dieses HTML an der gewünschten Stelle in Ihre Website ein.",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "confirmDeleteTitle": "Formular löschen?",
+    "confirmDeleteBody": "„{name}“ wird dauerhaft gelöscht und die Einbettung funktioniert nicht mehr."
   }
 }

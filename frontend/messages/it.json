@@ -24,7 +24,9 @@
     "team": "Team",
     "trash": "Cestino",
     "audit": "Audit log",
-    "companies": "Aziende"
+    "companies": "Aziende",
+    "duplicates": "Duplicati",
+    "forms": "Moduli"
   },
   "auth": {
     "login": "Accedi",
@@ -1269,5 +1271,50 @@
     "addTag": "Aggiungi etichetta",
     "remove": "Rimuovi",
     "noneYet": "Nessuna etichetta — creane qualcuna nelle Impostazioni."
+  },
+  "duplicates": {
+    "title": "Duplicati",
+    "subtitle": "Trova e unisci i record duplicati. Il record principale conserva i suoi dati; gli altri vengono uniti e rimossi.",
+    "entity": {
+      "lead": "Lead",
+      "customer": "Clienti",
+      "company": "Aziende"
+    },
+    "match": {
+      "email": "Email",
+      "phone": "Telefono",
+      "name": "Nome"
+    },
+    "empty": "Nessun duplicato trovato.",
+    "recordCount": "{count} record",
+    "pickSurvivor": "Scegli il record da conservare:",
+    "keep": "Conserva",
+    "survivor": "Principale",
+    "merge": "Unisci",
+    "merged": "Uniti {count} record.",
+    "confirmTitle": "Unire i duplicati?",
+    "confirmBody": "{count} record verranno uniti nel principale e rimossi. Operazione irreversibile."
+  },
+  "forms": {
+    "title": "Moduli Web",
+    "subtitle": "Acquisisci lead dal tuo sito web. Incorpora un modulo; gli invii creano lead automaticamente.",
+    "name": "Nome",
+    "namePlaceholder": "es. Contattaci",
+    "defaultSource": "Origine predefinita",
+    "defaultSourcePlaceholder": "es. Sito web",
+    "redirectUrl": "URL di reindirizzamento (facoltativo)",
+    "create": "Crea modulo",
+    "empty": "Nessun modulo. Creane uno per iniziare ad acquisire lead.",
+    "active": "Attivo",
+    "paused": "In pausa",
+    "submissions": "{count} invii",
+    "embed": "Incorpora",
+    "pause": "Sospendi",
+    "resume": "Riprendi",
+    "embedHelp": "Incolla questo HTML nel tuo sito web dove vuoi che appaia il modulo.",
+    "copy": "Copia",
+    "copied": "Copiato",
+    "confirmDeleteTitle": "Eliminare il modulo?",
+    "confirmDeleteBody": "“{name}” verrà eliminato definitivamente e il suo incorporamento smetterà di funzionare."
   }
 }

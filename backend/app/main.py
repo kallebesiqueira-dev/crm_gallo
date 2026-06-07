@@ -27,7 +27,9 @@ from app.api import (
     dashboard,
     deals,
     document_templates,
+    duplicates,
     exports,
+    forms,
     imports,
     invites,
     leads,
@@ -339,6 +341,8 @@ app.include_router(companies.router)
 app.include_router(custom_fields.router)
 app.include_router(tags.router)
 app.include_router(segments.router)
+app.include_router(duplicates.router)
+app.include_router(forms.router)
 app.include_router(deals.router)
 app.include_router(quotes.router)
 app.include_router(contracts.router)

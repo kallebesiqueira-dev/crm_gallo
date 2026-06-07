@@ -24,7 +24,9 @@
     "team": "Équipe",
     "trash": "Corbeille",
     "audit": "Journal d'audit",
-    "companies": "Entreprises"
+    "companies": "Entreprises",
+    "duplicates": "Doublons",
+    "forms": "Formulaires"
   },
   "auth": {
     "login": "Se connecter",
@@ -1269,5 +1271,50 @@
     "addTag": "Ajouter une étiquette",
     "remove": "Retirer",
     "noneYet": "Aucune étiquette — créez-en dans les Paramètres."
+  },
+  "duplicates": {
+    "title": "Doublons",
+    "subtitle": "Recherchez et fusionnez les enregistrements en double. L enregistrement principal conserve ses données ; les autres y sont fusionnés et supprimés.",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clients",
+      "company": "Entreprises"
+    },
+    "match": {
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "name": "Nom"
+    },
+    "empty": "Aucun doublon trouvé.",
+    "recordCount": "{count} enregistrements",
+    "pickSurvivor": "Choisissez l enregistrement à conserver :",
+    "keep": "Conserver",
+    "survivor": "Principal",
+    "merge": "Fusionner",
+    "merged": "{count} enregistrement(s) fusionné(s).",
+    "confirmTitle": "Fusionner les doublons ?",
+    "confirmBody": "{count} enregistrement(s) seront fusionnés dans le principal et supprimés. Action irréversible."
+  },
+  "forms": {
+    "title": "Formulaires web",
+    "subtitle": "Captez des prospects depuis votre site web. Intégrez un formulaire ; les envois créent des leads automatiquement.",
+    "name": "Nom",
+    "namePlaceholder": "ex. Contactez-nous",
+    "defaultSource": "Source par défaut",
+    "defaultSourcePlaceholder": "ex. Site web",
+    "redirectUrl": "URL de redirection (facultatif)",
+    "create": "Créer le formulaire",
+    "empty": "Aucun formulaire. Créez-en un pour commencer à capter des leads.",
+    "active": "Actif",
+    "paused": "En pause",
+    "submissions": "{count} envois",
+    "embed": "Intégrer",
+    "pause": "Suspendre",
+    "resume": "Reprendre",
+    "embedHelp": "Collez ce HTML dans votre site web à l’endroit où le formulaire doit apparaître.",
+    "copy": "Copier",
+    "copied": "Copié",
+    "confirmDeleteTitle": "Supprimer le formulaire ?",
+    "confirmDeleteBody": "« {name} » sera définitivement supprimé et son intégration cessera de fonctionner."
   }
 }

@@ -1,6 +1,6 @@
 import { clearToken, readCookie } from "./auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -171,6 +171,45 @@ export interface SavedSegment {
   name: string;
   filters: Record<string, unknown>;
   created_by_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type DuplicateEntity = "lead" | "customer" | "company";
+
+export interface DuplicateRecord {
+  id: string;
+  label: string;
+  email: string | null;
+  phone: string | null;
+  created_at: string;
+}
+
+export interface DuplicateGroup {
+  match_type: "email" | "phone" | "name";
+  key: string;
+  records: DuplicateRecord[];
+}
+
+export interface DuplicateGroupsOut {
+  entity_type: DuplicateEntity;
+  groups: DuplicateGroup[];
+}
+
+export interface MergeResult {
+  survivor_id: string;
+  merged_count: number;
+  reparented: Record<string, number>;
+}
+
+export interface WebForm {
+  id: string;
+  name: string;
+  token: string;
+  default_source: string | null;
+  redirect_url: string | null;
+  active: boolean;
+  submission_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -1426,6 +1465,48 @@ export const api = {
     }),
   deleteSegment: (token: string, id: string) =>
     request<void>(`/api/segments/${id}`, { method: "DELETE", token }),
+
+  // Duplicate detection & merge
+  listDuplicates: (token: string, entityType: DuplicateEntity) =>
+    request<DuplicateGroupsOut>(`/api/duplicates?entity_type=${entityType}`, { token }),
+  mergeDuplicates: (
+    token: string,
+    payload: { entity_type: DuplicateEntity; survivor_id: string; loser_ids: string[] },
+  ) =>
+    request<MergeResult>("/api/duplicates/merge", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+
+  // Web-to-Lead capture forms
+  listForms: (token: string) => request<WebForm[]>("/api/forms", { token }),
+  createForm: (
+    token: string,
+    payload: {
+      name: string;
+      default_source?: string | null;
+      redirect_url?: string | null;
+      active?: boolean;
+    },
+  ) => request<WebForm>("/api/forms", { method: "POST", token, body: JSON.stringify(payload) }),
+  updateForm: (
+    token: string,
+    id: string,
+    payload: {
+      name?: string;
+      default_source?: string | null;
+      redirect_url?: string | null;
+      active?: boolean;
+    },
+  ) =>
+    request<WebForm>(`/api/forms/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteForm: (token: string, id: string) =>
+    request<void>(`/api/forms/${id}`, { method: "DELETE", token }),
 
   // Deals
   listDeals: (token: string) => request<Deal[]>("/api/deals", { token }),
