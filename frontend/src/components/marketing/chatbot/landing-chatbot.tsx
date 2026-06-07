@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { Bot, MessageCircle, RefreshCw, Send, User, X } from "lucide-react";
+import { Bot, RefreshCw, Send, User, X } from "lucide-react";
 import { publicChatbot, type ChatSource, type ChatTurn } from "@/lib/public-api";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,7 @@ export default function LandingChatbot() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [lastUserMsg, setLastUserMsg] = useState<string | null>(null);
+  const [hovered, setHovered] = useState(false);
 
   const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -116,42 +117,55 @@ export default function LandingChatbot() {
 
   return (
     <>
-      <button
-        ref={launcherRef}
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={open ? t("close") : t("launcherLabel")}
-        aria-expanded={open}
-        aria-controls="gallo-chatbot-panel"
-        className={cn(
-          "fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full",
-          "bg-violet-600 text-white shadow-lg shadow-violet-600/30 transition-colors",
-          "hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2",
-          "focus-visible:ring-violet-400 focus-visible:ring-offset-2",
-        )}
+      {/* Interactive robot launcher (replaces the old floating button):
+          hovering the robot reveals a clickable cloud above its head; clicking
+          the cloud — or the robot — opens the chat. The cloud fades out once
+          the chat is closed and the pointer leaves. */}
+      <div
+        className="fixed bottom-4 right-4 z-50"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-      </button>
-
-      {/* Gallo mascot peeking above the launcher — pure decoration: sits behind
-          the button (z-40), never intercepts clicks (pointer-events-none), and
-          only while the panel is closed. The gentle bob invites a tap. */}
-      {!open && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none fixed bottom-[4rem] right-6 z-40 animate-bob"
+        {/* Cloud / speech bubble — invisible until hover (or while the chat is open). */}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={t("launcherLabel")}
+          tabIndex={hovered || open ? 0 : -1}
+          className={cn(
+            "absolute bottom-full right-0 mb-3 max-w-[12rem] cursor-pointer rounded-2xl",
+            "bg-white px-3 py-1.5 text-center text-xs font-semibold leading-snug text-violet-700",
+            "shadow-lg ring-1 ring-violet-200 transition-all duration-300 ease-out",
+            "hover:-translate-y-1 hover:scale-105 dark:bg-slate-800 dark:text-violet-200 dark:ring-violet-500/40",
+            "after:absolute after:right-10 after:top-full after:border-x-[6px] after:border-t-[7px] after:border-x-transparent after:border-t-white dark:after:border-t-slate-800",
+            hovered || open
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-2 opacity-0",
+          )}
         >
-          <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-full border-2 border-violet-600/40 bg-white shadow-md dark:bg-violet-950/50">
-            <Image
-              src="/roboat.png"
-              alt=""
-              width={48}
-              height={48}
-              className="h-full w-full object-cover object-top"
-            />
-          </span>
-        </div>
-      )}
+          {t("launcherLabel")}
+        </button>
+
+        {/* Robot — bigger, frameless ("solto"), the launcher itself. */}
+        <button
+          ref={launcherRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={open ? t("close") : t("launcherLabel")}
+          aria-expanded={open}
+          aria-controls="gallo-chatbot-panel"
+          className="block cursor-pointer rounded-2xl transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
+        >
+          <Image
+            src="/roboat.png"
+            alt={t("launcherLabel")}
+            width={128}
+            height={128}
+            priority={false}
+            className="h-24 w-24 animate-bob object-contain drop-shadow-[0_8px_22px_rgba(76,29,149,0.5)]"
+          />
+        </button>
+      </div>
 
       {open && (
         <div
@@ -160,7 +174,7 @@ export default function LandingChatbot() {
           aria-modal="false"
           aria-label={t("title")}
           className={cn(
-            "fixed bottom-24 right-5 z-50 flex flex-col overflow-hidden rounded-2xl",
+            "fixed bottom-40 right-5 z-50 flex flex-col overflow-hidden rounded-2xl",
             "border border-border bg-background shadow-2xl",
             "h-[70vh] max-h-[600px] w-[calc(100vw-2.5rem)] sm:w-[380px]",
           )}
