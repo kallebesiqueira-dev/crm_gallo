@@ -11,7 +11,7 @@
 
 <p align="center">
   <img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg">
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-black?logo=next.js">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js">
   <img alt="React" src="https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16%20+%20pgvector-336791?logo=postgresql&logoColor=white">
@@ -29,17 +29,16 @@ GALLO CRM is a **production-grade, multi-tenant CRM platform** that takes a deal
 
 ## 📸 Screenshots
 
+> Full **light & dark** themes · a built-in **AI assistant** · AI lead scoring — across a 7-language UI.
+
 |  |  |
 | :---: | :---: |
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Pipeline](docs/screenshots/pipeline.png) |
-| **Dashboard** — live KPIs, 14-day trend & pipeline value | **Pipeline** — drag-and-drop kanban across stages |
-| ![Leads](docs/screenshots/leads.png) | ![Reports](docs/screenshots/reports.png) |
-| **Leads** — AI-scored, searchable, stage-tagged | **Reports** — conversion, funnels & charts |
-
-<p align="center">
-  <img src="docs/screenshots/dashboard-collapsed.png" alt="Collapsible sidebar" width="760"><br>
-  <em>Collapsible, icon-only sidebar for a focused, full-width workspace.</em>
-</p>
+| ![Dashboard — light](docs/screenshots/dashboard-light.png) | ![Dashboard — dark](docs/screenshots/dashboard-dark.png) |
+| **Dashboard — light** · live KPIs, 14-day trend, pipeline value & avg. AI score | **Dashboard — dark** · same view, themed |
+| ![Pipeline — light](docs/screenshots/pipeline-light.png) | ![Pipeline — dark](docs/screenshots/pipeline-dark.png) |
+| **Pipeline — light** · drag-and-drop kanban across stages | **Pipeline — dark** |
+| ![AI lead scoring](docs/screenshots/lead-detail-dark.png) | ![AI assistant](docs/screenshots/ai-chatbot.png) |
+| **AI lead scoring** · priority, conversion probability & next-best action | **AI assistant** · answers product questions in real time |
 
 ---
 
