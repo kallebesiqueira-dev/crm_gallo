@@ -1,6 +1,8 @@
 {
   "app": {
     "name": "GALLO CRM",
+    "collapseSidebar": "Réduire la barre latérale",
+    "expandSidebar": "Développer la barre latérale",
     "tagline": "CRM piloté par l'IA pour les entreprises modernes"
   },
   "nav": {
