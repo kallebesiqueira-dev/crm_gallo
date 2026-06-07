@@ -50,12 +50,17 @@ def _redis_settings_from_url() -> RedisSettings:
     is intentionally minimal — we only run against the redis://
     scheme in dev and rediss:// in prod, both supported here."""
     url = get_settings().redis_url
-    # `redis://[:password@]host[:port][/db]`
+    # `redis://[[username]:password@]host[:port][/db]`
     no_scheme = url.replace("rediss://", "").replace("redis://", "")
     ssl = url.startswith("rediss://")
     auth_host, _, db = no_scheme.partition("/")
+    password: str | None = None
     if "@" in auth_host:
-        _, _, host_port = auth_host.partition("@")
+        auth, _, host_port = auth_host.partition("@")
+        # Managed Redis (e.g. Railway) uses `default:<password>`; dev may use
+        # `:<password>` or no auth at all. Redis AUTH with the password alone
+        # authenticates the default user, so we only need the password here.
+        password = (auth.split(":", 1)[1] if ":" in auth else auth) or None
     else:
         host_port = auth_host
     host, _, port = host_port.partition(":")
@@ -63,6 +68,7 @@ def _redis_settings_from_url() -> RedisSettings:
         host=host or "redis",
         port=int(port or 6379),
         database=int(db or 0),
+        password=password,
         ssl=ssl,
     )
 
