@@ -60,9 +60,7 @@ def test_duplicate_key_per_entity_is_409(admin_client):
 
 def test_same_key_different_entity_type_ok(admin_client):
     _create_def(admin_client, key="shared", entity_type="lead")
-    r = admin_client.post(
-        "/api/custom-fields", json=_def_payload(key="shared", entity_type="deal")
-    )
+    r = admin_client.post("/api/custom-fields", json=_def_payload(key="shared", entity_type="deal"))
     assert r.status_code == 201
 
 
@@ -88,9 +86,7 @@ def test_select_requires_options(admin_client):
 
 
 def test_select_with_options_ok_and_strips_for_text(admin_client):
-    d = _create_def(
-        admin_client, key="tier", field_type="select", options=["gold", "silver"]
-    )
+    d = _create_def(admin_client, key="tier", field_type="select", options=["gold", "silver"])
     assert d["options"] == ["gold", "silver"]
     # A text field must not retain options even if sent.
     d2 = _create_def(admin_client, key="memo", field_type="text", options=["x"])
@@ -115,14 +111,13 @@ def test_soft_delete_then_key_reusable(admin_client):
     keys = [x["key"] for x in admin_client.get("/api/custom-fields").json()]
     assert "recyclable" not in keys
     # Partial unique index lets the key be recreated.
-    assert admin_client.post(
-        "/api/custom-fields", json=_def_payload(key="recyclable")
-    ).status_code == 201
+    assert (
+        admin_client.post("/api/custom-fields", json=_def_payload(key="recyclable")).status_code
+        == 201
+    )
 
 
-def test_cross_org_definitions_not_visible(
-    admin_client, db: Session, other_org: Organization
-):
+def test_cross_org_definitions_not_visible(admin_client, db: Session, other_org: Organization):
     db.add(
         CustomFieldDefinition(
             organization_id=other_org.id,
@@ -186,9 +181,7 @@ def test_number_type_mismatch_rejected(admin_client):
 
 
 def test_select_value_must_be_in_options(admin_client):
-    _create_def(
-        admin_client, key="tier", field_type="select", options=["gold", "silver"]
-    )
+    _create_def(admin_client, key="tier", field_type="select", options=["gold", "silver"])
     bad = admin_client.post(
         "/api/leads",
         json={"first_name": "A", "last_name": "B", "custom_fields": {"tier": "bronze"}},
@@ -233,9 +226,7 @@ def test_update_merges_custom_fields(admin_client):
         },
     ).json()
     # Patch only f1 — f2 must survive (merge, not replace).
-    r = admin_client.patch(
-        f"/api/leads/{lead['id']}", json={"custom_fields": {"f1": "changed"}}
-    )
+    r = admin_client.patch(f"/api/leads/{lead['id']}", json={"custom_fields": {"f1": "changed"}})
     assert r.status_code == 200, r.text
     cf = r.json()["custom_fields"]
     assert cf == {"f1": "changed", "f2": "two"}
@@ -247,8 +238,6 @@ def test_update_clears_value_with_empty_string(admin_client):
         "/api/leads",
         json={"first_name": "A", "last_name": "B", "custom_fields": {"f1": "one"}},
     ).json()
-    r = admin_client.patch(
-        f"/api/leads/{lead['id']}", json={"custom_fields": {"f1": ""}}
-    )
+    r = admin_client.patch(f"/api/leads/{lead['id']}", json={"custom_fields": {"f1": ""}})
     assert r.status_code == 200
     assert "f1" not in r.json()["custom_fields"]

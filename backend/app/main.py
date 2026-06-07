@@ -1,6 +1,7 @@
 import time
 import uuid
 from contextlib import asynccontextmanager
+from typing import ClassVar
 
 import structlog
 from fastapi import FastAPI, HTTPException, Request
@@ -278,14 +279,17 @@ class SecurityHeadersMiddleware:
     the Swagger UI that only exists outside production.
     """
 
-    _BASE = [
+    _BASE: ClassVar = [
         (b"x-content-type-options", b"nosniff"),
         (b"x-frame-options", b"DENY"),
         (b"referrer-policy", b"strict-origin-when-cross-origin"),
     ]
-    _PROD = [
+    _PROD: ClassVar = [
         (b"strict-transport-security", b"max-age=63072000; includeSubDomains; preload"),
-        (b"content-security-policy", b"default-src 'none'; frame-ancestors 'none'; base-uri 'none'"),
+        (
+            b"content-security-policy",
+            b"default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+        ),
     ]
 
     def __init__(self, app):

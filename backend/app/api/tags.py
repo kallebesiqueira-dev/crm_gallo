@@ -58,9 +58,7 @@ def _raise_for_duplicate_name(exc: IntegrityError) -> None:
 
 
 async def _get_tag_or_404(db: AsyncSession, tag_id: uuid.UUID, org_id: uuid.UUID) -> Tag:
-    result = await db.execute(
-        select(Tag).where(Tag.id == tag_id, Tag.organization_id == org_id)
-    )
+    result = await db.execute(select(Tag).where(Tag.id == tag_id, Tag.organization_id == org_id))
     tag = result.scalar_one_or_none()
     if not tag or tag.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Tag not found")
@@ -192,9 +190,7 @@ async def delete_tag(
     # Soft-delete the tag but hard-remove its attachments so no chips
     # linger on entities pointing at a dead tag.
     await db.execute(
-        delete(EntityTag).where(
-            EntityTag.tag_id == tag.id, EntityTag.organization_id == org_id
-        )
+        delete(EntityTag).where(EntityTag.tag_id == tag.id, EntityTag.organization_id == org_id)
     )
     tag.deleted_at = datetime.now(UTC)
     await record_audit(
@@ -240,9 +236,7 @@ async def assign_tag(
     db: AsyncSession = Depends(get_db),
 ) -> list[Tag]:
     await _get_tag_or_404(db, payload.tag_id, org_id)
-    existing = await _existing_entity_ids(
-        db, org_id, payload.entity_type, [payload.entity_id]
-    )
+    existing = await _existing_entity_ids(db, org_id, payload.entity_type, [payload.entity_id])
     if payload.entity_id not in existing:
         raise HTTPException(status_code=404, detail="Entity not found")
     # Idempotent: unique constraint means a re-assign is a no-op.

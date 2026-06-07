@@ -1254,5 +1254,20 @@
     "confirmDelete": "Supprimer le champ personnalisé « {label} » ?",
     "delete": "Supprimer",
     "empty": "Aucun champ personnalisé pour cette entité."
+  },
+  "tags": {
+    "title": "Étiquettes",
+    "intro": "Créez des étiquettes réutilisables et associez-les aux pistes, clients, affaires et entreprises.",
+    "color": "Couleur",
+    "name": "Nom",
+    "namePlaceholder": "p. ex. VIP",
+    "add": "Ajouter une étiquette",
+    "empty": "Aucune étiquette.",
+    "confirmDelete": "Supprimer l'étiquette \"{name}\" ? Elle sera retirée de tout ce à quoi elle est associée.",
+    "delete": "Supprimer",
+    "memberNote": "Tout le monde peut créer des étiquettes. Le renommage, le changement de couleur et la suppression sont réservés aux administrateurs et gestionnaires.",
+    "addTag": "Ajouter une étiquette",
+    "remove": "Retirer",
+    "noneYet": "Aucune étiquette — créez-en dans les Paramètres."
   }
 }

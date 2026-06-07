@@ -55,9 +55,7 @@ async def list_definitions(
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ) -> list[CustomFieldDefinition]:
-    stmt = select(CustomFieldDefinition).where(
-        CustomFieldDefinition.organization_id == org_id
-    )
+    stmt = select(CustomFieldDefinition).where(CustomFieldDefinition.organization_id == org_id)
     if entity_type is not None:
         if entity_type not in ENTITY_TYPES:
             raise HTTPException(status_code=422, detail="Unknown entity_type")
@@ -70,9 +68,7 @@ async def list_definitions(
     return list((await db.execute(stmt)).scalars().all())
 
 
-@router.post(
-    "", response_model=CustomFieldDefinitionOut, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=CustomFieldDefinitionOut, status_code=status.HTTP_201_CREATED)
 async def create_definition(
     payload: CustomFieldDefinitionCreate,
     user: User = Depends(manage),

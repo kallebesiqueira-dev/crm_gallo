@@ -1254,5 +1254,20 @@
     "confirmDelete": "Benutzerdefiniertes Feld \"{label}\" löschen?",
     "delete": "Löschen",
     "empty": "Noch keine benutzerdefinierten Felder für diese Entität."
+  },
+  "tags": {
+    "title": "Tags",
+    "intro": "Erstellen Sie wiederverwendbare Labels und weisen Sie sie Leads, Kunden, Deals und Unternehmen zu.",
+    "color": "Farbe",
+    "name": "Name",
+    "namePlaceholder": "z. B. VIP",
+    "add": "Tag hinzufügen",
+    "empty": "Noch keine Tags.",
+    "confirmDelete": "Tag \"{name}\" löschen? Es wird von allem entfernt, womit es verknüpft ist.",
+    "delete": "Löschen",
+    "memberNote": "Jeder kann Tags erstellen. Umbenennen, Umfärben und Löschen sind Administratoren und Managern vorbehalten.",
+    "addTag": "Tag hinzufügen",
+    "remove": "Entfernen",
+    "noneYet": "Noch keine Tags – erstellen Sie welche in den Einstellungen."
   }
 }

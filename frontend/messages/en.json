@@ -1254,5 +1254,20 @@
     "confirmDelete": "Delete custom field \"{label}\"?",
     "delete": "Delete",
     "empty": "No custom fields for this entity yet."
+  },
+  "tags": {
+    "title": "Tags",
+    "intro": "Create reusable labels and attach them to leads, customers, deals and companies.",
+    "color": "Colour",
+    "name": "Name",
+    "namePlaceholder": "e.g. VIP",
+    "add": "Add tag",
+    "empty": "No tags yet.",
+    "confirmDelete": "Delete tag \"{name}\"? It will be removed from everything it is attached to.",
+    "delete": "Delete",
+    "memberNote": "Anyone can create tags. Renaming, recolouring and deleting are limited to admins and managers.",
+    "addTag": "Add tag",
+    "remove": "Remove",
+    "noneYet": "No tags yet — create some in Settings."
   }
 }

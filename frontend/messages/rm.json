@@ -1254,5 +1254,20 @@
     "confirmDelete": "Stizzar il champ persunalisà \"{label}\"?",
     "delete": "Stizzar",
     "empty": "Anc nagins champs persunalisads per questa entitad."
+  },
+  "tags": {
+    "title": "Etichettas",
+    "intro": "Creescha etichettas reutilisablas ed attatga las a leads, clients, fatschas ed interpresas.",
+    "color": "Colur",
+    "name": "Num",
+    "namePlaceholder": "p.ex. VIP",
+    "add": "Agiuntar etichetta",
+    "empty": "Anc naginas etichettas.",
+    "confirmDelete": "Stizzar l'etichetta \"{name}\"? Ella vegn allontanada da tut quai ch'ella è collegada.",
+    "delete": "Stizzar",
+    "memberNote": "Mintgin po crear etichettas. Renumnar, midar la colur e stizzar è resalvà ad administraturs e managers.",
+    "addTag": "Agiuntar etichetta",
+    "remove": "Allontanar",
+    "noneYet": "Anc naginas etichettas — creeschan tschertas en ils parameters."
   }
 }

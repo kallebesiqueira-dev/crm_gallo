@@ -108,6 +108,12 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             <div className="sm:col-span-2">
               <CustomFieldsDisplay entityType="company" value={company.custom_fields} />
             </div>
+            <div className="sm:col-span-2">
+              <div className="mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+                {tTags("title")}
+              </div>
+              <EntityTags entityType="company" entityId={company.id} />
+            </div>
           </CardContent>
         </Card>
 

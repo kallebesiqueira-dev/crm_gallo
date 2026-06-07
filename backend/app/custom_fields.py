@@ -75,7 +75,7 @@ def _coerce_one(defn: CustomFieldDefinition, value: object) -> object:
 
     if t == CustomFieldType.number:
         # Reject bool (a subclass of int) — a checkbox is not a number.
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if isinstance(value, bool) or not isinstance(value, int | float):
             raise _bad(f"'{label}' must be a number")
         return value
 

@@ -20,9 +20,7 @@ def _validate_entity_type(entity_type: str) -> None:
         raise HTTPException(status_code=422, detail="Unknown entity_type")
 
 
-async def _get_or_404(
-    db: AsyncSession, segment_id: uuid.UUID, org_id: uuid.UUID
-) -> SavedSegment:
+async def _get_or_404(db: AsyncSession, segment_id: uuid.UUID, org_id: uuid.UUID) -> SavedSegment:
     result = await db.execute(
         select(SavedSegment).where(
             SavedSegment.id == segment_id,

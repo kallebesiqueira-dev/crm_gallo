@@ -139,26 +139,38 @@ async def get_company_rollup(
 ) -> CompanyRollup:
     company = await _get_company_or_404(db, company_id, org_id)
     customers = (
-        await db.execute(
-            select(Customer)
-            .where(Customer.organization_id == org_id, Customer.company_id == company_id)
-            .order_by(Customer.created_at.desc())
+        (
+            await db.execute(
+                select(Customer)
+                .where(Customer.organization_id == org_id, Customer.company_id == company_id)
+                .order_by(Customer.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     leads = (
-        await db.execute(
-            select(Lead)
-            .where(Lead.organization_id == org_id, Lead.company_id == company_id)
-            .order_by(Lead.created_at.desc())
+        (
+            await db.execute(
+                select(Lead)
+                .where(Lead.organization_id == org_id, Lead.company_id == company_id)
+                .order_by(Lead.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     deals = (
-        await db.execute(
-            select(Deal)
-            .where(Deal.organization_id == org_id, Deal.company_id == company_id)
-            .order_by(Deal.created_at.desc())
+        (
+            await db.execute(
+                select(Deal)
+                .where(Deal.organization_id == org_id, Deal.company_id == company_id)
+                .order_by(Deal.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return CompanyRollup(
         company=CompanyOut.model_validate(company),
         customers=[CustomerOut.model_validate(c) for c in customers],

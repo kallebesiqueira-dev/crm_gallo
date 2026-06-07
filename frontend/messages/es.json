@@ -1254,5 +1254,20 @@
     "confirmDelete": "¿Eliminar el campo personalizado \"{label}\"?",
     "delete": "Eliminar",
     "empty": "Aún no hay campos personalizados para esta entidad."
+  },
+  "tags": {
+    "title": "Etiquetas",
+    "intro": "Crea etiquetas reutilizables y aplícalas a leads, clientes, oportunidades y empresas.",
+    "color": "Color",
+    "name": "Nombre",
+    "namePlaceholder": "p. ej. VIP",
+    "add": "Añadir etiqueta",
+    "empty": "Aún no hay etiquetas.",
+    "confirmDelete": "¿Eliminar la etiqueta \"{name}\"? Se quitará de todo aquello a lo que esté asociada.",
+    "delete": "Eliminar",
+    "memberNote": "Cualquiera puede crear etiquetas. Renombrar, cambiar el color y eliminar está reservado a administradores y gestores.",
+    "addTag": "Añadir etiqueta",
+    "remove": "Quitar",
+    "noneYet": "Aún no hay etiquetas — crea algunas en Ajustes."
   }
 }

@@ -71,17 +71,13 @@ def test_member_can_create_and_list(other_client):
 
 def test_non_admin_cannot_update_or_delete(other_client):
     t = _create_tag(other_client, name="Locked")
-    assert other_client.patch(
-        f"/api/tags/{t['id']}", json={"name": "x"}
-    ).status_code == 403
+    assert other_client.patch(f"/api/tags/{t['id']}", json={"name": "x"}).status_code == 403
     assert other_client.delete(f"/api/tags/{t['id']}").status_code == 403
 
 
 def test_update_tag(admin_client):
     t = _create_tag(admin_client)
-    r = admin_client.patch(
-        f"/api/tags/{t['id']}", json={"name": "Renamed", "color": "#00ff00"}
-    )
+    r = admin_client.patch(f"/api/tags/{t['id']}", json={"name": "Renamed", "color": "#00ff00"})
     assert r.status_code == 200, r.text
     assert r.json()["name"] == "Renamed"
     assert r.json()["color"] == "#00ff00"
@@ -100,9 +96,7 @@ def test_soft_delete_then_name_reusable(admin_client):
     names = [x["name"] for x in admin_client.get("/api/tags").json()]
     assert "Recyclable" not in names
     # Partial unique index lets the name be recreated.
-    assert admin_client.post(
-        "/api/tags", json={"name": "Recyclable"}
-    ).status_code == 201
+    assert admin_client.post("/api/tags", json={"name": "Recyclable"}).status_code == 201
 
 
 def test_delete_removes_assignments(admin_client):
@@ -274,9 +268,7 @@ def test_cross_org_tags_not_visible(admin_client, db: Session, other_org: Organi
     assert "ForeignTag" not in names
 
 
-def test_cannot_assign_cross_org_tag(
-    admin_client, db: Session, other_org: Organization
-):
+def test_cannot_assign_cross_org_tag(admin_client, db: Session, other_org: Organization):
     foreign = Tag(organization_id=other_org.id, name="Foreign", color="#123456")
     db.add(foreign)
     db.commit()
@@ -337,9 +329,9 @@ def test_update_segment(admin_client):
 def test_member_can_manage_segments(other_client):
     # Segments are personal/team scratch — any member CRUDs them.
     s = _create_segment(other_client, name="Mine")
-    assert other_client.patch(
-        f"/api/segments/{s['id']}", json={"name": "Updated"}
-    ).status_code == 200
+    assert (
+        other_client.patch(f"/api/segments/{s['id']}", json={"name": "Updated"}).status_code == 200
+    )
     assert other_client.delete(f"/api/segments/{s['id']}").status_code == 204
 
 
@@ -357,9 +349,7 @@ def test_unknown_entity_type_segment_422(admin_client):
     assert r.status_code == 422
 
 
-def test_cross_org_segments_not_visible(
-    admin_client, db: Session, other_org: Organization
-):
+def test_cross_org_segments_not_visible(admin_client, db: Session, other_org: Organization):
     from app.models import SavedSegment
 
     db.add(

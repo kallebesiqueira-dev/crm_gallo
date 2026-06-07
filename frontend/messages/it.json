@@ -1254,5 +1254,20 @@
     "confirmDelete": "Eliminare il campo personalizzato \"{label}\"?",
     "delete": "Elimina",
     "empty": "Nessun campo personalizzato per questa entità."
+  },
+  "tags": {
+    "title": "Etichette",
+    "intro": "Crea etichette riutilizzabili e applicale a lead, clienti, trattative e aziende.",
+    "color": "Colore",
+    "name": "Nome",
+    "namePlaceholder": "es. VIP",
+    "add": "Aggiungi etichetta",
+    "empty": "Nessuna etichetta.",
+    "confirmDelete": "Eliminare l'etichetta \"{name}\"? Verrà rimossa da tutto ciò a cui è associata.",
+    "delete": "Elimina",
+    "memberNote": "Chiunque può creare etichette. Rinominarle, cambiarne il colore ed eliminarle è riservato ad amministratori e manager.",
+    "addTag": "Aggiungi etichetta",
+    "remove": "Rimuovi",
+    "noneYet": "Nessuna etichetta — creane qualcuna nelle Impostazioni."
   }
 }

@@ -538,7 +538,9 @@ class Lead(SoftDeleteMixin, Base):
 
     # Per-org schema extension — values keyed by CustomFieldDefinition.key.
     # See app/custom_fields.py for validation/coercion.
-    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+    custom_fields: Mapped[dict] = mapped_column(
+        JSONB, default=dict, server_default="{}", nullable=False
+    )
 
     stage: Mapped[LeadStage] = mapped_column(Enum(LeadStage), default=LeadStage.new, nullable=False)
     # Optional team scope — when set, the lead shows up under that
@@ -596,7 +598,9 @@ class Customer(SoftDeleteMixin, Base):
     )
 
     # Per-org schema extension — see app/custom_fields.py.
-    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+    custom_fields: Mapped[dict] = mapped_column(
+        JSONB, default=dict, server_default="{}", nullable=False
+    )
 
     ai_summary: Mapped[str | None] = mapped_column(Text)
     ai_summary_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -662,7 +666,9 @@ class Deal(SoftDeleteMixin, Base):
     )
 
     # Per-org schema extension — see app/custom_fields.py.
-    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+    custom_fields: Mapped[dict] = mapped_column(
+        JSONB, default=dict, server_default="{}", nullable=False
+    )
 
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     owner: Mapped[User | None] = relationship(back_populates="deals")
@@ -703,7 +709,9 @@ class Company(SoftDeleteMixin, Base):
     notes: Mapped[str | None] = mapped_column(Text)
 
     # Per-org schema extension — see app/custom_fields.py.
-    custom_fields: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}", nullable=False)
+    custom_fields: Mapped[dict] = mapped_column(
+        JSONB, default=dict, server_default="{}", nullable=False
+    )
 
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
 
@@ -743,9 +751,7 @@ class CustomFieldDefinition(SoftDeleteMixin, Base):
     # Immutable machine slug used as the JSONB key on the target entity.
     key: Mapped[str] = mapped_column(String(60), nullable=False)
     label: Mapped[str] = mapped_column(String(120), nullable=False)
-    field_type: Mapped[CustomFieldType] = mapped_column(
-        Enum(CustomFieldType), nullable=False
-    )
+    field_type: Mapped[CustomFieldType] = mapped_column(Enum(CustomFieldType), nullable=False)
     # Choices for select / multiselect; ignored for other types.
     options: Mapped[list | None] = mapped_column(JSONB)
     required: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
