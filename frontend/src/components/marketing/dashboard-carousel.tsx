@@ -4,28 +4,34 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowRight,
   BarChart3,
+  Bell,
   Calendar,
   CheckCircle2,
-  FileText,
+  Code2,
+  FormInput,
   LayoutDashboard,
+  Mail,
   MessagesSquare,
   Pause,
   Play,
+  Send,
   Sparkles,
   Target,
   TrendingUp,
   Users,
   Workflow,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Auto-rotating product showcase — five distinct screens of GALLO CRM
+ * Auto-rotating product showcase — seven distinct screens of GALLO CRM
  * alternating between dark and light themes. The whole thing is wrapped
  * in a single browser chrome so the swap feels like a real demo, not a
- * collage. Default cadence is 5s/slide; hovering pauses, the user can
- * also step manually via the dots underneath.
+ * collage. Default cadence is ~6.5s/slide (a ~45-second full tour);
+ * hovering pauses, the user can also step manually via the dots underneath.
  *
  * Each scene is self-contained — same browser frame, different inner
  * payload. They share `themeClass()` so any future theme-aware tweak
@@ -33,7 +39,7 @@ import { cn } from "@/lib/utils";
  */
 
 type Theme = "dark" | "light";
-const SLIDE_DURATION_MS = 5000;
+const SLIDE_DURATION_MS = 6500;
 
 interface Scene {
   id: string;
@@ -44,11 +50,13 @@ interface Scene {
 }
 
 const SCENES: Scene[] = [
-  { id: "dashboard", theme: "dark",  url: "app.crm-gallo.com/dashboard", title: "Dashboard",     render: () => <DashboardScene theme="dark" /> },
-  { id: "leads",     theme: "light", url: "app.crm-gallo.com/leads",     title: "Leads",         render: () => <LeadsScene theme="light" /> },
-  { id: "pipeline",  theme: "dark",  url: "app.crm-gallo.com/pipeline",  title: "Pipeline",      render: () => <PipelineScene theme="dark" /> },
-  { id: "reports",   theme: "light", url: "app.crm-gallo.com/reports",   title: "Reports",       render: () => <ReportsScene theme="light" /> },
-  { id: "assistant", theme: "dark",  url: "app.crm-gallo.com/assistant", title: "AI Assistant",  render: () => <AssistantScene theme="dark" /> },
+  { id: "dashboard",   theme: "dark",  url: "app.gallo-crm.com/dashboard",   title: "Dashboard",   render: () => <DashboardScene theme="dark" /> },
+  { id: "leads",       theme: "light", url: "app.gallo-crm.com/leads",       title: "Leads",       render: () => <LeadsScene theme="light" /> },
+  { id: "pipeline",    theme: "dark",  url: "app.gallo-crm.com/pipeline",    title: "Pipeline",    render: () => <PipelineScene theme="dark" /> },
+  { id: "automations", theme: "light", url: "app.gallo-crm.com/automations", title: "Automations", render: () => <AutomationsScene theme="light" /> },
+  { id: "forms",       theme: "dark",  url: "app.gallo-crm.com/forms",       title: "Web Forms",   render: () => <FormsScene theme="dark" /> },
+  { id: "reports",     theme: "light", url: "app.gallo-crm.com/reports",     title: "Reports",     render: () => <ReportsScene theme="light" /> },
+  { id: "assistant",   theme: "dark",  url: "app.gallo-crm.com/assistant",   title: "AI Assistant", render: () => <AssistantScene theme="dark" /> },
 ];
 
 export function DashboardCarousel({ className }: { className?: string }) {
@@ -200,9 +208,10 @@ const NAV = [
   { icon: Target,          label: "Leads", badge: 12 },
   { icon: Users,           label: "Customers" },
   { icon: Workflow,        label: "Pipeline" },
+  { icon: Zap,             label: "Automations" },
+  { icon: FormInput,       label: "Web Forms" },
   { icon: MessagesSquare,  label: "Tasks" },
   { icon: Calendar,        label: "Calendar" },
-  { icon: FileText,        label: "Documents" },
   { icon: Sparkles,        label: "AI Assistant" },
   { icon: BarChart3,       label: "Reports" },
 ];
@@ -654,7 +663,11 @@ function AssistantScene({ theme }: { theme: Theme }) {
               ))}
             </ul>
           </Bubble>
-          <Bubble side="left">Draft the email for Sofia in Italian.</Bubble>
+          <Bubble side="left">Draft a follow-up email for Sofia Martins.</Bubble>
+          <Bubble side="right" ai>
+            Done — a warm, concise follow-up. Sofia&rsquo;s preferred language is
+            Italian, so I localised it automatically. Want me to send it?
+          </Bubble>
           <Bubble side="right" ai typing />
         </div>
 
@@ -742,5 +755,130 @@ function Ctx({ label, value, tone }: { label: string; value: string; tone?: "eme
         {value}
       </span>
     </div>
+  );
+}
+
+/* Scene — Automations (light) — no-code "when this → do that" rules */
+function AutomationsScene({ theme }: { theme: Theme }) {
+  const RULES = [
+    { trigger: "Lead AI score > 80",     icon: TrendingUp,   actions: ["Assign to senior rep", "Notify the team"],         runs: 312, tone: "emerald" },
+    { trigger: "Deal moved to “Won”",     icon: CheckCircle2, actions: ["Send thank-you email", "Create onboarding tasks"], runs: 86,  tone: "blue" },
+    { trigger: "Web form submitted",      icon: FormInput,    actions: ["Create lead", "Auto-reply in their language"],     runs: 540, tone: "violet" },
+    { trigger: "No activity for 7 days",  icon: Bell,         actions: ["Flag deal at risk", "Draft re-engagement email"],  runs: 128, tone: "amber" },
+  ];
+  const TONE: Record<string, string> = {
+    emerald: "bg-emerald-100 text-emerald-600",
+    blue: "bg-blue-100 text-blue-600",
+    violet: "bg-violet-100 text-violet-600",
+    amber: "bg-amber-100 text-amber-600",
+  };
+  return (
+    <SceneShell theme={theme}>
+      <PageHeader theme={theme} greeting="8 active · 1,204 runs this month" title="Automations" rightTag="Premium" />
+      <div className="space-y-3 p-5">
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-500">
+            <Zap className="h-3 w-3 text-amber-500" />
+            When this happens… do that — no code required.
+          </div>
+          <div className="rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm">+ New rule</div>
+        </div>
+        <div className="space-y-2">
+          {RULES.map((r) => (
+            <div key={r.trigger} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+              <div className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", TONE[r.tone])}>
+                <r.icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-900">
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-500">WHEN</span>
+                  {r.trigger}
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  {r.actions.map((a) => (
+                    <span key={a} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-[9px] text-slate-600">
+                      <ArrowRight className="h-2.5 w-2.5 text-slate-400" /> {a}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <div className="flex h-4 w-7 items-center rounded-full bg-emerald-500 px-0.5" aria-label="enabled">
+                  <div className="ml-auto h-3 w-3 rounded-full bg-white" />
+                </div>
+                <div className="text-[9px] text-slate-400">{r.runs} runs</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SceneShell>
+  );
+}
+
+/* Scene — Web Forms (dark) — embeddable lead capture → pipeline */
+function FormsScene({ theme }: { theme: Theme }) {
+  const FLOW = [
+    { icon: FormInput, text: "Submission captured",          color: "text-blue-400" },
+    { icon: Target,    text: "Lead created + AI-scored",     color: "text-violet-400" },
+    { icon: Mail,      text: "Auto-reply in their language", color: "text-emerald-400" },
+    { icon: Workflow,  text: "Routed into your pipeline",    color: "text-amber-400" },
+  ];
+  return (
+    <SceneShell theme={theme}>
+      <PageHeader theme={theme} greeting="540 submissions · 98% spam-free" title="Web Forms" rightTag="Premium" />
+      <div className="grid gap-3 p-5 lg:grid-cols-2">
+        {/* Live form preview */}
+        <div className="rounded-lg border border-white/5 bg-slate-900/40 p-4">
+          <div className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <FormInput className="h-3 w-3 text-blue-400" /> Contact form · live preview
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: "Full name", value: "Sofia Martins" },
+              { label: "Work email", value: "sofia@northwind.com" },
+              { label: "Company", value: "Northwind GmbH" },
+            ].map((f) => (
+              <div key={f.label}>
+                <div className="mb-1 text-[9px] text-slate-500">{f.label}</div>
+                <div className="rounded-md border border-white/10 bg-slate-950/60 px-2 py-1.5 text-[10px] text-slate-300">
+                  {f.value}
+                </div>
+              </div>
+            ))}
+            <div className="rounded-md bg-gradient-to-r from-blue-600 to-violet-600 py-1.5 text-center text-[11px] font-semibold text-white">
+              <Send className="mr-1 inline h-3 w-3" /> Request a demo
+            </div>
+            <div className="flex items-center justify-center gap-1 text-[9px] text-slate-500">
+              <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" /> Protected by Turnstile · honeypot · rate limit
+            </div>
+          </div>
+        </div>
+        {/* Embed + what-happens-next */}
+        <div className="space-y-3">
+          <div className="rounded-lg border border-white/5 bg-slate-900/40 p-3">
+            <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <Code2 className="h-3 w-3 text-violet-400" /> Embed anywhere
+            </div>
+            <pre className="overflow-x-auto rounded-md bg-slate-950/80 p-2 text-[9px] leading-relaxed text-slate-300">
+              {`<script src="app.gallo-crm.com/embed.js"
+  data-form="lead-capture"></script>`}
+            </pre>
+          </div>
+          <div className="rounded-lg border border-white/5 bg-slate-900/40 p-3">
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">What happens next</div>
+            <div className="space-y-1.5">
+              {FLOW.map((s, i) => (
+                <div key={s.text} className="flex items-center gap-2 rounded-md bg-slate-950/50 px-2 py-1.5 text-[10px] text-slate-300">
+                  <s.icon className={cn("h-3 w-3", s.color)} />
+                  {s.text}
+                  {i < FLOW.length - 1 && <ArrowRight className="ml-auto h-2.5 w-2.5 text-slate-600" />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </SceneShell>
   );
 }
