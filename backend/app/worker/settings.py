@@ -39,6 +39,7 @@ from app.worker.jobs import (
     generate_deal_pdf,
     generate_quote_pdf,
     process_import,
+    scan_stale_leads,
     score_lead,
     send_email,
 )
@@ -106,6 +107,7 @@ class WorkerSettings:
         generate_quote_pdf,
         generate_contract_pdf,
         process_import,
+        scan_stale_leads,
     ]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1
@@ -122,6 +124,19 @@ class WorkerSettings:
             run_at_startup=True,
             unique=True,  # never two overlapping drains on the same node
             max_tries=1,  # the drain itself handles per-row retries
+        ),
+        # Time-based automations (lead_stale). Hourly is plenty — staleness
+        # is a days-scale threshold and the per-(lead,day) idempotency key
+        # makes a re-run within the day a cheap no-op. unique so two nodes
+        # don't double-scan; max_tries=1 because the scan isolates per-rule
+        # errors itself (see app.automations._run_rule).
+        cron(
+            scan_stale_leads,
+            name="scan_stale_leads",
+            minute={0},
+            run_at_startup=False,
+            unique=True,
+            max_tries=1,
         ),
     ]
     redis_settings = _redis_settings_from_url()

@@ -26,7 +26,9 @@
     "audit": "Audit log",
     "companies": "Aziende",
     "duplicates": "Duplicati",
-    "forms": "Moduli"
+    "forms": "Moduli",
+    "performance": "Performance",
+    "automations": "Automazioni"
   },
   "auth": {
     "login": "Accedi",
@@ -1331,5 +1333,81 @@
     "copied": "Copiato",
     "confirmDeleteTitle": "Eliminare il modulo?",
     "confirmDeleteBody": "“{name}” verrà eliminato definitivamente e il suo incorporamento smetterà di funzionare."
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Obiettivi di vendita, classifica, conversione e tempo di chiusura.",
+    "period": {
+      "month": "Mese",
+      "quarter": "Trimestre",
+      "year": "Anno"
+    },
+    "wonValue": "Valore vinto",
+    "wonCount": "Affari vinti",
+    "winRate": "Tasso di vincita",
+    "lostCount": "Affari persi",
+    "avgDays": "Giorni medi alla chiusura",
+    "medianDays": "Giorni mediani alla chiusura",
+    "leadConversion": "Conversione lead",
+    "leadsLost": "Lead persi",
+    "daysValue": "{days} g",
+    "leaderboard": "Classifica venditori",
+    "dealsWon": "{count} vinti",
+    "funnel": "Imbuto lead",
+    "goals": "Obiettivi di vendita",
+    "metric": "Metrica",
+    "metricRevenue": "Fatturato (EUR)",
+    "metricDealCount": "Affari vinti",
+    "goalPeriod": "Periodo",
+    "periodStart": "Inizio periodo",
+    "target": "Obiettivo",
+    "addGoal": "Aggiungi obiettivo",
+    "noGoals": "Nessun obiettivo. Imposta un target sopra.",
+    "confirmDeleteTitle": "Eliminare l'obiettivo?",
+    "confirmDeleteBody": "Questo obiettivo di vendita verrà eliminato definitivamente.",
+    "noData": "Nessun dato"
+  },
+  "automations": {
+    "title": "Automazioni",
+    "subtitle": "Quando succede qualcosa, fai qualcosa automaticamente — senza codice.",
+    "newRule": "Nuova regola",
+    "name": "Nome della regola",
+    "trigger": "Quando (attivatore)",
+    "action": "Allora (azione)",
+    "addRule": "Aggiungi regola",
+    "triggers": {
+      "lead_created": "Lead creato",
+      "deal_created": "Trattativa creata",
+      "deal_won": "Trattativa vinta",
+      "deal_lost": "Trattativa persa",
+      "deal_stage_changed": "Fase della trattativa cambiata",
+      "lead_stale": "Lead inattivo"
+    },
+    "actions": {
+      "create_task": "Crea un'attività",
+      "send_notification": "Invia una notifica",
+      "change_stage": "Cambia fase della trattativa"
+    },
+    "staleDays": "Giorni di inattività",
+    "cfgTitle": "Titolo",
+    "cfgTitlePlaceholder": "Predefinito: il nome della regola",
+    "dueInDays": "Scadenza tra (giorni)",
+    "cfgBody": "Messaggio",
+    "toStage": "Sposta alla fase",
+    "rules": "Regole",
+    "noRules": "Nessuna regola di automazione. Creane una sopra.",
+    "disabled": "Disattivata",
+    "disable": "Disattiva",
+    "enable": "Attiva",
+    "ranTimes": "Eseguita {count, plural, one {# volta} other {# volte}}",
+    "runLog": "Esecuzioni recenti",
+    "noRuns": "Nessuna esecuzione.",
+    "status": {
+      "success": "Successo",
+      "failed": "Fallita",
+      "skipped": "Saltata"
+    },
+    "confirmDeleteTitle": "Eliminare la regola?",
+    "confirmDeleteBody": "«{name}» verrà eliminata definitivamente e smetterà di attivarsi."
   }
 }

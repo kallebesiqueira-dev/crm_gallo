@@ -58,6 +58,52 @@ class Currency(str, enum.Enum):
     GBP = "GBP"
 
 
+class GoalPeriod(str, enum.Enum):
+    month = "month"
+    quarter = "quarter"
+    year = "year"
+
+
+class GoalMetric(str, enum.Enum):
+    # What the target counts: closed-won revenue (EUR) or number of won deals.
+    revenue = "revenue"
+    deal_count = "deal_count"
+
+
+class AutomationTrigger(str, enum.Enum):
+    """What fires an automation rule.
+
+    The event-family members map 1:1 to `app.events.EventType` slugs —
+    the wildcard outbox subscriber (`app.automations.run_event_automations`)
+    matches a fired event's type to rules carrying the same trigger. The
+    `lead_stale` member is the lone TIME-based trigger: it has no outbox
+    event, it's evaluated by the `scan_stale_leads` cron instead.
+    """
+
+    lead_created = "lead_created"
+    deal_created = "deal_created"
+    deal_won = "deal_won"
+    deal_lost = "deal_lost"
+    deal_stage_changed = "deal_stage_changed"
+    # Time-based: a lead with no update for N days (config `stale_days`).
+    lead_stale = "lead_stale"
+
+
+class AutomationAction(str, enum.Enum):
+    """What an automation rule does when it fires.
+
+    All three are fully internal (no external/paid dependency): spawn a
+    follow-up Task, drop an in-app Notification on the owner's bell, or
+    auto-advance a deal's stage. Email dispatch is a deliberate later
+    slice — it needs the templated-email surface and recipient
+    resolution, so it's kept out of v1 rather than half-built.
+    """
+
+    create_task = "create_task"
+    send_notification = "send_notification"
+    change_stage = "change_stage"
+
+
 class CustomFieldType(str, enum.Enum):
     """The shapes a per-org custom field can take. The value drives both
     server-side coercion/validation (`app/custom_fields.py`) and the
@@ -1916,3 +1962,131 @@ class WebForm(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class SalesGoal(Base):
+    """A sales target for a period, scoped to a rep, a team, or the whole org.
+
+    Scope is determined by which FK is set: `owner_id` → a single rep's
+    target; `team_id` → a team's target; both null → an org-wide target.
+    Attainment is computed at read time by the performance endpoint against
+    closed-won deals (EUR-normalised), never stored.
+
+    Org-scoped + RLS like every tenant table. Not soft-deletable — a stale
+    goal is hard-DELETEd.
+    """
+
+    __tablename__ = "sales_goals"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # Null owner_id + null team_id = org-wide goal; owner_id set = per-rep;
+    # team_id set = per-team. The endpoint treats owner_id as the more
+    # specific scope when both are present.
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    team_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL")
+    )
+    period: Mapped[GoalPeriod] = mapped_column(Enum(GoalPeriod), nullable=False)
+    # First day of the goal window (e.g. 2026-06-01 for June, Q3, or 2026).
+    period_start: Mapped[date] = mapped_column(Date, nullable=False)
+    metric: Mapped[GoalMetric] = mapped_column(Enum(GoalMetric), nullable=False)
+    # Target in EUR (revenue) or whole deals (deal_count). Numeric for both.
+    target: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class AutomationRule(Base):
+    """A no-/low-code "when X, do Y" rule, per-org (ADR-007 built on the
+    outbox event bus).
+
+    `trigger` selects the firing condition (`AutomationTrigger`); `action`
+    selects the effect (`AutomationAction`). `action_config` is a JSON blob
+    whose shape depends on the action — kept as text (not Postgres JSON) so
+    the schema stays portable, mirroring `WebhookEndpoint.enabled_events`:
+      * create_task: {title, description?, due_in_days?, priority?,
+                      assignee: "owner"|"none"}
+      * send_notification: {title, body?}
+      * change_stage: {to_stage}  (deal triggers only)
+
+    For the time-based `lead_stale` trigger, `stale_days` lives in
+    `action_config` too (the threshold the cron compares `Lead.updated_at`
+    against). `enabled` gates evaluation. `run_count` / `last_run_at` are
+    denormalised health counters surfaced in the admin UI.
+
+    Org-scoped + RLS like every tenant table. Config object, not a record —
+    hard-DELETEd, no soft-delete (same call as WebhookEndpoint).
+    """
+
+    __tablename__ = "automation_rules"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    trigger: Mapped[AutomationTrigger] = mapped_column(Enum(AutomationTrigger), nullable=False)
+    action: Mapped[AutomationAction] = mapped_column(Enum(AutomationAction), nullable=False)
+    # JSON-encoded action parameters. Text not JSON for sqlite-test parity.
+    action_config: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    run_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class AutomationRun(Base):
+    """One execution attempt of one rule against one entity — the audit
+    trail + the idempotency ledger.
+
+    `idempotency_key` is the dedupe primitive: an event-driven run keys on
+    `{rule_id}:{event_id}` (so an outbox row retried by the drain doesn't
+    double-fire the action); a stale-scan run keys on
+    `{rule_id}:{lead_id}:{YYYY-MM-DD}` (so the cron fires at most once per
+    lead per day). A row is inserted in the SAME transaction as the action;
+    a UNIQUE violation on the key means "already ran" → skip. `status` is
+    success / failed / skipped; `detail` carries the human summary or the
+    error string for triage.
+
+    NOT RLS'd — same reasoning as `webhook_deliveries` / `outbox_events`:
+    the worker writes these cross-org and the admin endpoint filters by the
+    parent rule's `organization_id`. We still store `organization_id`
+    denormalised for that filter + cheap analytics.
+    """
+
+    __tablename__ = "automation_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    rule_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("automation_rules.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    organization_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    entity_type: Mapped[str | None] = mapped_column(String(40))
+    entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    detail: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

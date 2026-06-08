@@ -26,7 +26,9 @@
     "audit": "Auditoria",
     "companies": "Empresas",
     "duplicates": "Duplicados",
-    "forms": "Formulários"
+    "forms": "Formulários",
+    "performance": "Desempenho",
+    "automations": "Automações"
   },
   "auth": {
     "login": "Entrar",
@@ -1331,5 +1333,81 @@
     "copied": "Copiado",
     "confirmDeleteTitle": "Excluir formulário?",
     "confirmDeleteBody": "“{name}” será excluído permanentemente e a incorporação deixará de funcionar."
+  },
+  "performance": {
+    "title": "Desempenho",
+    "subtitle": "Metas de vendas, ranking, conversão e tempo de fechamento.",
+    "period": {
+      "month": "Mês",
+      "quarter": "Trimestre",
+      "year": "Ano"
+    },
+    "wonValue": "Valor ganho",
+    "wonCount": "Negócios ganhos",
+    "winRate": "Taxa de vitória",
+    "lostCount": "Negócios perdidos",
+    "avgDays": "Dias médios para fechar",
+    "medianDays": "Dias medianos para fechar",
+    "leadConversion": "Conversão de leads",
+    "leadsLost": "Leads perdidos",
+    "daysValue": "{days} d",
+    "leaderboard": "Ranking de vendedores",
+    "dealsWon": "{count} ganhos",
+    "funnel": "Funil de leads",
+    "goals": "Metas de vendas",
+    "metric": "Métrica",
+    "metricRevenue": "Receita (EUR)",
+    "metricDealCount": "Negócios ganhos",
+    "goalPeriod": "Período",
+    "periodStart": "Início do período",
+    "target": "Meta",
+    "addGoal": "Adicionar meta",
+    "noGoals": "Sem metas. Defina um alvo acima.",
+    "confirmDeleteTitle": "Excluir meta?",
+    "confirmDeleteBody": "Esta meta de vendas será excluída permanentemente.",
+    "noData": "Sem dados"
+  },
+  "automations": {
+    "title": "Automações",
+    "subtitle": "Quando algo acontece, faça algo automaticamente — sem código.",
+    "newRule": "Nova regra",
+    "name": "Nome da regra",
+    "trigger": "Quando (gatilho)",
+    "action": "Então (ação)",
+    "addRule": "Adicionar regra",
+    "triggers": {
+      "lead_created": "Lead criado",
+      "deal_created": "Negócio criado",
+      "deal_won": "Negócio ganho",
+      "deal_lost": "Negócio perdido",
+      "deal_stage_changed": "Etapa do negócio alterada",
+      "lead_stale": "Lead inativo"
+    },
+    "actions": {
+      "create_task": "Criar uma tarefa",
+      "send_notification": "Enviar uma notificação",
+      "change_stage": "Alterar etapa do negócio"
+    },
+    "staleDays": "Dias inativo",
+    "cfgTitle": "Título",
+    "cfgTitlePlaceholder": "Padrão: o nome da regra",
+    "dueInDays": "Vence em (dias)",
+    "cfgBody": "Mensagem",
+    "toStage": "Mover para etapa",
+    "rules": "Regras",
+    "noRules": "Ainda não há regras de automação. Crie uma acima.",
+    "disabled": "Desativada",
+    "disable": "Desativar",
+    "enable": "Ativar",
+    "ranTimes": "Executada {count, plural, one {# vez} other {# vezes}}",
+    "runLog": "Execuções recentes",
+    "noRuns": "Ainda não há execuções.",
+    "status": {
+      "success": "Sucesso",
+      "failed": "Falhou",
+      "skipped": "Ignorada"
+    },
+    "confirmDeleteTitle": "Excluir regra?",
+    "confirmDeleteBody": "“{name}” será excluída permanentemente e deixará de ser executada."
   }
 }

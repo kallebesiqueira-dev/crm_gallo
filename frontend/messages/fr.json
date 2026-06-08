@@ -26,7 +26,9 @@
     "audit": "Journal d'audit",
     "companies": "Entreprises",
     "duplicates": "Doublons",
-    "forms": "Formulaires"
+    "forms": "Formulaires",
+    "performance": "Performance",
+    "automations": "Automatisations"
   },
   "auth": {
     "login": "Se connecter",
@@ -1331,5 +1333,81 @@
     "copied": "Copié",
     "confirmDeleteTitle": "Supprimer le formulaire ?",
     "confirmDeleteBody": "« {name} » sera définitivement supprimé et son intégration cessera de fonctionner."
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Objectifs de vente, classement, conversion et délai de conclusion.",
+    "period": {
+      "month": "Mois",
+      "quarter": "Trimestre",
+      "year": "Année"
+    },
+    "wonValue": "Valeur gagnée",
+    "wonCount": "Affaires gagnées",
+    "winRate": "Taux de réussite",
+    "lostCount": "Affaires perdues",
+    "avgDays": "Jours moyens pour conclure",
+    "medianDays": "Jours médians pour conclure",
+    "leadConversion": "Conversion des leads",
+    "leadsLost": "Leads perdus",
+    "daysValue": "{days} j",
+    "leaderboard": "Classement des commerciaux",
+    "dealsWon": "{count} gagnées",
+    "funnel": "Entonnoir de leads",
+    "goals": "Objectifs de vente",
+    "metric": "Métrique",
+    "metricRevenue": "Revenu (EUR)",
+    "metricDealCount": "Affaires gagnées",
+    "goalPeriod": "Période",
+    "periodStart": "Début de période",
+    "target": "Objectif",
+    "addGoal": "Ajouter un objectif",
+    "noGoals": "Aucun objectif. Définissez une cible ci-dessus.",
+    "confirmDeleteTitle": "Supprimer l'objectif ?",
+    "confirmDeleteBody": "Cet objectif de vente sera définitivement supprimé.",
+    "noData": "Aucune donnée"
+  },
+  "automations": {
+    "title": "Automatisations",
+    "subtitle": "Quand un événement se produit, faites quelque chose automatiquement — sans code.",
+    "newRule": "Nouvelle règle",
+    "name": "Nom de la règle",
+    "trigger": "Quand (déclencheur)",
+    "action": "Alors (action)",
+    "addRule": "Ajouter une règle",
+    "triggers": {
+      "lead_created": "Lead créé",
+      "deal_created": "Affaire créée",
+      "deal_won": "Affaire gagnée",
+      "deal_lost": "Affaire perdue",
+      "deal_stage_changed": "Étape de l'affaire modifiée",
+      "lead_stale": "Lead inactif"
+    },
+    "actions": {
+      "create_task": "Créer une tâche",
+      "send_notification": "Envoyer une notification",
+      "change_stage": "Changer l'étape de l'affaire"
+    },
+    "staleDays": "Jours d'inactivité",
+    "cfgTitle": "Titre",
+    "cfgTitlePlaceholder": "Par défaut, le nom de la règle",
+    "dueInDays": "Échéance dans (jours)",
+    "cfgBody": "Message",
+    "toStage": "Déplacer vers l'étape",
+    "rules": "Règles",
+    "noRules": "Aucune règle d'automatisation. Créez-en une ci-dessus.",
+    "disabled": "Désactivée",
+    "disable": "Désactiver",
+    "enable": "Activer",
+    "ranTimes": "Exécutée {count, plural, one {# fois} other {# fois}}",
+    "runLog": "Exécutions récentes",
+    "noRuns": "Aucune exécution pour le moment.",
+    "status": {
+      "success": "Succès",
+      "failed": "Échouée",
+      "skipped": "Ignorée"
+    },
+    "confirmDeleteTitle": "Supprimer la règle ?",
+    "confirmDeleteBody": "« {name} » sera définitivement supprimée et cessera de se déclencher."
   }
 }

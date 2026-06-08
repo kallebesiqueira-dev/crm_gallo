@@ -13,6 +13,7 @@ import {
   CreditCard,
   FileSignature,
   FileText,
+  Gauge,
   Inbox,
   LayoutDashboard,
   MessagesSquare,
@@ -26,6 +27,7 @@ import {
   Upload,
   Users,
   Workflow,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
@@ -45,6 +47,8 @@ export const NAV = [
   { href: "assistant", label: "assistant", icon: Sparkles },
   { href: "imports", label: "imports", icon: Upload },
   { href: "reports", label: "reports", icon: BarChart3 },
+  { href: "performance", label: "performance", icon: Gauge },
+  { href: "automations", label: "automations", icon: Zap },
   { href: "billing", label: "billing", icon: CreditCard },
   // `audit` is admin/manager-only on the backend (403 for sales_agent).
   // We don't role-gate the sidebar link in v1 — a sales_agent landing

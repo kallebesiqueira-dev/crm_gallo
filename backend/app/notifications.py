@@ -33,6 +33,7 @@ class NotificationType(str, enum.Enum):
     deal_lost = "deal_lost"
     note_mention = "note_mention"  # reserved for @-mention v2
     file_attached = "file_attached"
+    automation = "automation"  # raised by an automation rule (app.automations)
 
 
 async def notify(

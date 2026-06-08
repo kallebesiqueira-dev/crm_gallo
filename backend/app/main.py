@@ -19,6 +19,7 @@ from app.api import (
     attachments,
     audit,
     auth,
+    automations,
     billing,
     companies,
     contracts,
@@ -37,6 +38,7 @@ from app.api import (
     notifications,
     orgs,
     outbox,
+    performance,
     pipelines,
     public,
     quotes,
@@ -350,6 +352,8 @@ app.include_router(document_templates.router)
 app.include_router(signatures.router)
 app.include_router(tasks.router)
 app.include_router(dashboard.router)
+app.include_router(performance.router)
+app.include_router(automations.router)
 app.include_router(assistant.router)
 app.include_router(trash.router)
 app.include_router(audit.router)

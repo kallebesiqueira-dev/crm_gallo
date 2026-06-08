@@ -26,7 +26,9 @@
     "audit": "Audit-Log",
     "companies": "Unternehmen",
     "duplicates": "Duplikate",
-    "forms": "Formulare"
+    "forms": "Formulare",
+    "performance": "Leistung",
+    "automations": "Automatisierungen"
   },
   "auth": {
     "login": "Anmelden",
@@ -1331,5 +1333,81 @@
     "copied": "Kopiert",
     "confirmDeleteTitle": "Formular löschen?",
     "confirmDeleteBody": "„{name}“ wird dauerhaft gelöscht und die Einbettung funktioniert nicht mehr."
+  },
+  "performance": {
+    "title": "Leistung",
+    "subtitle": "Verkaufsziele, Bestenliste, Konversion und Abschlusszeit.",
+    "period": {
+      "month": "Monat",
+      "quarter": "Quartal",
+      "year": "Jahr"
+    },
+    "wonValue": "Gewonnener Wert",
+    "wonCount": "Gewonnene Deals",
+    "winRate": "Gewinnrate",
+    "lostCount": "Verlorene Deals",
+    "avgDays": "Ø Tage bis Abschluss",
+    "medianDays": "Median Tage bis Abschluss",
+    "leadConversion": "Lead-Konversion",
+    "leadsLost": "Verlorene Leads",
+    "daysValue": "{days} T",
+    "leaderboard": "Vertriebs-Bestenliste",
+    "dealsWon": "{count} gewonnen",
+    "funnel": "Lead-Trichter",
+    "goals": "Verkaufsziele",
+    "metric": "Metrik",
+    "metricRevenue": "Umsatz (EUR)",
+    "metricDealCount": "Gewonnene Deals",
+    "goalPeriod": "Zeitraum",
+    "periodStart": "Beginn",
+    "target": "Ziel",
+    "addGoal": "Ziel hinzufügen",
+    "noGoals": "Noch keine Ziele. Lege oben ein Ziel fest.",
+    "confirmDeleteTitle": "Ziel löschen?",
+    "confirmDeleteBody": "Dieses Verkaufsziel wird dauerhaft gelöscht.",
+    "noData": "Keine Daten"
+  },
+  "automations": {
+    "title": "Automatisierungen",
+    "subtitle": "Wenn etwas passiert, automatisch etwas tun — ohne Code.",
+    "newRule": "Neue Regel",
+    "name": "Regelname",
+    "trigger": "Wenn (Auslöser)",
+    "action": "Dann (Aktion)",
+    "addRule": "Regel hinzufügen",
+    "triggers": {
+      "lead_created": "Lead erstellt",
+      "deal_created": "Deal erstellt",
+      "deal_won": "Deal gewonnen",
+      "deal_lost": "Deal verloren",
+      "deal_stage_changed": "Deal-Phase geändert",
+      "lead_stale": "Lead wird inaktiv"
+    },
+    "actions": {
+      "create_task": "Aufgabe erstellen",
+      "send_notification": "Benachrichtigung senden",
+      "change_stage": "Deal-Phase ändern"
+    },
+    "staleDays": "Inaktive Tage",
+    "cfgTitle": "Titel",
+    "cfgTitlePlaceholder": "Standard ist der Regelname",
+    "dueInDays": "Fällig in (Tagen)",
+    "cfgBody": "Nachricht",
+    "toStage": "Verschieben nach Phase",
+    "rules": "Regeln",
+    "noRules": "Noch keine Automatisierungsregeln. Erstellen Sie oben eine.",
+    "disabled": "Deaktiviert",
+    "disable": "Deaktivieren",
+    "enable": "Aktivieren",
+    "ranTimes": "{count, plural, one {# Mal} other {# Mal}} ausgeführt",
+    "runLog": "Letzte Ausführungen",
+    "noRuns": "Noch keine Ausführungen.",
+    "status": {
+      "success": "Erfolg",
+      "failed": "Fehlgeschlagen",
+      "skipped": "Übersprungen"
+    },
+    "confirmDeleteTitle": "Regel löschen?",
+    "confirmDeleteBody": "„{name}“ wird dauerhaft gelöscht und nicht mehr ausgelöst."
   }
 }

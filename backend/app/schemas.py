@@ -7,12 +7,16 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.models import (
     ApiKeyScope,
+    AutomationAction,
+    AutomationTrigger,
     BillingCycle,
     ContractStatus,
     Currency,
     CustomFieldType,
     DealStage,
     DocumentType,
+    GoalMetric,
+    GoalPeriod,
     ImportEntityType,
     ImportMode,
     ImportStatus,
@@ -1457,3 +1461,150 @@ class DashboardStats(BaseModel):
     total_deals: int = 0
     pipeline_value_eur: float = 0.0
     open_tasks: int = 0
+
+
+# ---------- Performance / KPI ----------
+class SalesGoalBase(BaseModel):
+    # Exactly one scope is implied: owner_id set = per-rep, team_id set =
+    # per-team, both null = org-wide. The API does not forbid both being
+    # set, but treats owner_id as the more specific scope.
+    owner_id: uuid.UUID | None = None
+    team_id: uuid.UUID | None = None
+    period: GoalPeriod = GoalPeriod.month
+    period_start: date
+    metric: GoalMetric = GoalMetric.revenue
+    # EUR for revenue, whole deals for deal_count. Decimal in.
+    target: Decimal = Field(ge=0)
+
+
+class SalesGoalCreate(SalesGoalBase):
+    pass
+
+
+class SalesGoalUpdate(BaseModel):
+    owner_id: uuid.UUID | None = None
+    team_id: uuid.UUID | None = None
+    period: GoalPeriod | None = None
+    period_start: date | None = None
+    metric: GoalMetric | None = None
+    target: Decimal | None = Field(default=None, ge=0)
+
+
+class SalesGoalOut(SalesGoalBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    # Float as JSON transport of the exact Numeric target.
+    target: float = 0.0
+    # Computed at read time against closed-won deals in the goal window.
+    attainment: float = 0.0  # EUR or deal count achieved so far
+    attainment_pct: float = 0.0  # achieved / target, 0..(>1), 0 if no target
+    created_at: datetime
+    updated_at: datetime
+
+
+class LeaderboardRow(BaseModel):
+    owner_id: uuid.UUID | None
+    owner_name: str
+    won_value_eur: float
+    won_count: int
+
+
+class FunnelStage(BaseModel):
+    stage: str
+    count: int
+
+
+class PerformanceSummary(BaseModel):
+    period: GoalPeriod
+    period_start: date
+    period_end: date
+    # Closed-won revenue (EUR) and count in the window.
+    won_value_eur: float
+    won_count: int
+    lost_count: int
+    # won / (won + lost) over deals closed in the window, 0..1.
+    win_rate: float
+    # Lead funnel: lead counts by stage (all-time, org-wide).
+    lead_funnel: list[FunnelStage]
+    # Leads won / total leads, 0..1.
+    lead_conversion_rate: float
+    leads_lost: int
+    # Days from deal creation to close (won), over the window.
+    avg_days_to_close: float | None
+    median_days_to_close: float | None
+    leaderboard: list[LeaderboardRow]
+
+
+# ---------- Automations ----------
+class AutomationRuleBase(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=500)
+    enabled: bool = True
+    trigger: AutomationTrigger
+    action: AutomationAction
+    # Free-form per-action parameters (see AutomationRule.action_config).
+    # Stored as JSON text on the model; exchanged as an object on the wire.
+    action_config: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _check_action_config(self) -> "AutomationRuleBase":
+        cfg = self.action_config or {}
+        if self.action == AutomationAction.change_stage:
+            stage = cfg.get("to_stage")
+            valid = {s.value for s in DealStage}
+            if stage not in valid:
+                raise ValueError("change_stage requires action_config.to_stage to be a deal stage")
+            # change_stage only makes sense for a deal-bearing trigger.
+            deal_triggers = {
+                AutomationTrigger.deal_created,
+                AutomationTrigger.deal_won,
+                AutomationTrigger.deal_lost,
+                AutomationTrigger.deal_stage_changed,
+            }
+            if self.trigger not in deal_triggers:
+                raise ValueError("change_stage requires a deal trigger")
+        if self.action == AutomationAction.send_notification and not (cfg.get("title")):
+            # Fall back to the rule name at execution time, but require *some*
+            # title source so the bell is never blank.
+            if not self.name:
+                raise ValueError("send_notification needs a title")
+        return self
+
+
+class AutomationRuleCreate(AutomationRuleBase):
+    pass
+
+
+class AutomationRuleUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=500)
+    enabled: bool | None = None
+    trigger: AutomationTrigger | None = None
+    action: AutomationAction | None = None
+    action_config: dict[str, Any] | None = None
+
+
+class AutomationRuleOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str | None
+    enabled: bool
+    trigger: AutomationTrigger
+    action: AutomationAction
+    action_config: dict[str, Any]
+    run_count: int
+    last_run_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AutomationRunOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    rule_id: uuid.UUID
+    status: str
+    entity_type: str | None
+    entity_id: uuid.UUID | None
+    detail: str | None
+    created_at: datetime

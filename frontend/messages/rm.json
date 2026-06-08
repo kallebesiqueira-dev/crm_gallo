@@ -26,7 +26,9 @@
     "audit": "Protocol d'audit",
     "companies": "Interpresas",
     "duplicates": "Dubladuras",
-    "forms": "Formulars"
+    "forms": "Formulars",
+    "performance": "Performanza",
+    "automations": "Automatisaziuns"
   },
   "auth": {
     "login": "S'annunziar",
@@ -1331,5 +1333,81 @@
     "copied": "Copiað",
     "confirmDeleteTitle": "Stizzar il formular?",
     "confirmDeleteBody": "«{name}» vegn stizza definitivamain e sia integraziun na funcziunar betg pli."
+  },
+  "performance": {
+    "title": "Performanza",
+    "subtitle": "Finamiras da vendita, classificaziun, conversiun e temp da serrar.",
+    "period": {
+      "month": "Mais",
+      "quarter": "Trimester",
+      "year": "Onn"
+    },
+    "wonValue": "Valur gudagnà",
+    "wonCount": "Fatschentas gudagnadas",
+    "winRate": "Quota da gudogn",
+    "lostCount": "Fatschentas pers",
+    "avgDays": "Dis en media per serrar",
+    "medianDays": "Dis median per serrar",
+    "leadConversion": "Conversiun da leads",
+    "leadsLost": "Leads pers",
+    "daysValue": "{days} d",
+    "leaderboard": "Classificaziun dals vendiders",
+    "dealsWon": "{count} gudagnadas",
+    "funnel": "Embut da leads",
+    "goals": "Finamiras da vendita",
+    "metric": "Metrica",
+    "metricRevenue": "Entradas (EUR)",
+    "metricDealCount": "Fatschentas gudagnadas",
+    "goalPeriod": "Perioda",
+    "periodStart": "Entschatta da la perioda",
+    "target": "Finamira",
+    "addGoal": "Agiuntar finamira",
+    "noGoals": "Naginas finamiras. Definescha ina finamira survart.",
+    "confirmDeleteTitle": "Stizzar la finamira?",
+    "confirmDeleteBody": "Questa finamira da vendita vegn stizzada permanentamain.",
+    "noData": "Naginas datas"
+  },
+  "automations": {
+    "title": "Automatisaziuns",
+    "subtitle": "Cura ch'insatge capita, fai automaticamain insatge — senza code.",
+    "newRule": "Nova regla",
+    "name": "Num da la regla",
+    "trigger": "Cura (decletgader)",
+    "action": "Lura (acziun)",
+    "addRule": "Agiuntar regla",
+    "triggers": {
+      "lead_created": "Lead creà",
+      "deal_created": "Affar creà",
+      "deal_won": "Affar gudagnà",
+      "deal_lost": "Affar pers",
+      "deal_stage_changed": "Stadi da l'affar midà",
+      "lead_stale": "Lead inactiv"
+    },
+    "actions": {
+      "create_task": "Crear in'incumbensa",
+      "send_notification": "Trametter ina communicaziun",
+      "change_stage": "Midar il stadi da l'affar"
+    },
+    "staleDays": "Dis inactivs",
+    "cfgTitle": "Titel",
+    "cfgTitlePlaceholder": "Standard: il num da la regla",
+    "dueInDays": "Scadenza en (dis)",
+    "cfgBody": "Messadi",
+    "toStage": "Spustar al stadi",
+    "rules": "Reglas",
+    "noRules": "Anc naginas reglas d'automatisaziun. Creai ina survart.",
+    "disabled": "Deactivà",
+    "disable": "Deactivar",
+    "enable": "Activar",
+    "ranTimes": "Exequì {count, plural, one {# giada} other {# giadas}}",
+    "runLog": "Execuziuns recentas",
+    "noRuns": "Anc naginas execuziuns.",
+    "status": {
+      "success": "Success",
+      "failed": "Fallì",
+      "skipped": "Sursiglià"
+    },
+    "confirmDeleteTitle": "Stizzar la regla?",
+    "confirmDeleteBody": "«{name}» vegn stizzada permanentamain e na vegn betg pli exequida."
   }
 }

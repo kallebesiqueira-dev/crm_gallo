@@ -254,3 +254,16 @@ async def _fanout_to_webhooks(ctx: EventContext) -> None:
 
 for _et in EventType:
     subscribe(_et)(_fanout_to_webhooks)
+
+
+# -- Automation engine fanout ---------------------------------
+# Registered only against the event types that map to an automation
+# trigger (see app.automations.EVENT_TRIGGERS). Imported at module load —
+# this module is pulled in by the worker, so the in-process subscriber
+# registry is populated before the first drain. The automation handler
+# swallows its own per-rule errors, so registering it here can't make a
+# failing rule wedge the dispatch of this event row.
+from app.automations import EVENT_TRIGGERS, run_event_automations  # noqa: E402
+
+for _et in EVENT_TRIGGERS:
+    subscribe(_et)(run_event_automations)

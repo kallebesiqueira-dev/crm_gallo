@@ -26,7 +26,9 @@
     "audit": "Audit log",
     "companies": "Companies",
     "duplicates": "Duplicates",
-    "forms": "Forms"
+    "forms": "Forms",
+    "performance": "Performance",
+    "automations": "Automations"
   },
   "auth": {
     "login": "Sign in",
@@ -1331,5 +1333,81 @@
     "copied": "Copied",
     "confirmDeleteTitle": "Delete form?",
     "confirmDeleteBody": "“{name}” will be permanently deleted and its embed will stop working."
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Sales targets, leaderboard, conversion and time-to-close.",
+    "period": {
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year"
+    },
+    "wonValue": "Won value",
+    "wonCount": "Deals won",
+    "winRate": "Win rate",
+    "lostCount": "Deals lost",
+    "avgDays": "Avg. days to close",
+    "medianDays": "Median days to close",
+    "leadConversion": "Lead conversion",
+    "leadsLost": "Leads lost",
+    "daysValue": "{days} d",
+    "leaderboard": "Rep leaderboard",
+    "dealsWon": "{count} won",
+    "funnel": "Lead funnel",
+    "goals": "Sales goals",
+    "metric": "Metric",
+    "metricRevenue": "Revenue (EUR)",
+    "metricDealCount": "Deals won",
+    "goalPeriod": "Period",
+    "periodStart": "Period start",
+    "target": "Target",
+    "addGoal": "Add goal",
+    "noGoals": "No goals yet. Set a target above.",
+    "confirmDeleteTitle": "Delete goal?",
+    "confirmDeleteBody": "This sales goal will be permanently deleted.",
+    "noData": "No data yet"
+  },
+  "automations": {
+    "title": "Automations",
+    "subtitle": "When something happens, automatically do something — no code.",
+    "newRule": "New rule",
+    "name": "Rule name",
+    "trigger": "When (trigger)",
+    "action": "Then (action)",
+    "addRule": "Add rule",
+    "triggers": {
+      "lead_created": "Lead created",
+      "deal_created": "Deal created",
+      "deal_won": "Deal won",
+      "deal_lost": "Deal lost",
+      "deal_stage_changed": "Deal stage changed",
+      "lead_stale": "Lead goes stale"
+    },
+    "actions": {
+      "create_task": "Create a task",
+      "send_notification": "Send a notification",
+      "change_stage": "Change deal stage"
+    },
+    "staleDays": "Idle days",
+    "cfgTitle": "Title",
+    "cfgTitlePlaceholder": "Defaults to the rule name",
+    "dueInDays": "Due in (days)",
+    "cfgBody": "Message",
+    "toStage": "Move to stage",
+    "rules": "Rules",
+    "noRules": "No automation rules yet. Create one above.",
+    "disabled": "Disabled",
+    "disable": "Disable",
+    "enable": "Enable",
+    "ranTimes": "Ran {count, plural, one {# time} other {# times}}",
+    "runLog": "Recent runs",
+    "noRuns": "No runs yet.",
+    "status": {
+      "success": "Success",
+      "failed": "Failed",
+      "skipped": "Skipped"
+    },
+    "confirmDeleteTitle": "Delete rule?",
+    "confirmDeleteBody": "“{name}” will be permanently deleted and stop firing."
   }
 }

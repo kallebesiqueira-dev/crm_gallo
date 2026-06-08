@@ -869,6 +869,44 @@ async def generate_contract_pdf(ctx: dict, contract_id: str, organization_id: st
     return {"status": "generated", "attachment_id": att_id, "size_bytes": att_size}
 
 
+async def scan_stale_leads(ctx: dict) -> dict:
+    """Periodic evaluation of time-based `lead_stale` automation rules.
+
+    Event-driven rules ride the outbox; the stale trigger has no event,
+    so this cron sweeps for leads idle past each rule's `stale_days` and
+    fires the rule's action (one run per lead per day, deduped by the
+    `automation_runs.idempotency_key`).
+
+    `automation_rules` and `leads` are RLS'd, so the scan must run per-org
+    with the tenant GUC set. `organizations` is NOT RLS'd, so we enumerate
+    org ids first (no GUC), then open a fresh per-org session with the GUC
+    applied. Orgs without a stale rule short-circuit cheaply.
+
+    Idempotent + self-isolating: `app.automations._run_rule` swallows and
+    logs per-rule errors, so a single bad rule can't fail the whole sweep.
+    """
+    from app.automations import scan_org_stale_leads
+
+    SessionLocal = ctx["SessionLocal"]
+
+    async with SessionLocal() as db:
+        org_ids = (await db.execute(select(Organization.id))).scalars().all()
+
+    scanned_orgs = 0
+    attempted = 0
+    for org_id in org_ids:
+        set_current_org_id(org_id)
+        async with SessionLocal() as db:
+            n = await scan_org_stale_leads(db, org_id)
+        if n:
+            scanned_orgs += 1
+            attempted += n
+
+    if attempted:
+        log.info("automation.stale_scan", orgs=scanned_orgs, attempted=attempted)
+    return {"orgs": scanned_orgs, "attempted": attempted}
+
+
 def _dedupe_keys(clean: dict) -> tuple[str | None, str | None]:
     """The two match keys for one validated row: `lower(email)` and the
     digits-normalised phone. Either may be None (the column was blank)."""

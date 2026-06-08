@@ -483,6 +483,84 @@ export interface DashboardStats {
   open_tasks: number;
 }
 
+export type GoalPeriod = "month" | "quarter" | "year";
+export type GoalMetric = "revenue" | "deal_count";
+
+export interface LeaderboardRow {
+  owner_id: string | null;
+  owner_name: string;
+  won_value_eur: number;
+  won_count: number;
+}
+
+export interface FunnelStage {
+  stage: string;
+  count: number;
+}
+
+export interface PerformanceSummary {
+  period: GoalPeriod;
+  period_start: string;
+  period_end: string;
+  won_value_eur: number;
+  won_count: number;
+  lost_count: number;
+  win_rate: number;
+  lead_funnel: FunnelStage[];
+  lead_conversion_rate: number;
+  leads_lost: number;
+  avg_days_to_close: number | null;
+  median_days_to_close: number | null;
+  leaderboard: LeaderboardRow[];
+}
+
+export interface SalesGoal {
+  id: string;
+  owner_id: string | null;
+  team_id: string | null;
+  period: GoalPeriod;
+  period_start: string;
+  metric: GoalMetric;
+  target: number;
+  attainment: number;
+  attainment_pct: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AutomationTrigger =
+  | "lead_created"
+  | "deal_created"
+  | "deal_won"
+  | "deal_lost"
+  | "deal_stage_changed"
+  | "lead_stale";
+export type AutomationAction = "create_task" | "send_notification" | "change_stage";
+
+export interface AutomationRule {
+  id: string;
+  name: string;
+  description: string | null;
+  enabled: boolean;
+  trigger: AutomationTrigger;
+  action: AutomationAction;
+  action_config: Record<string, unknown>;
+  run_count: number;
+  last_run_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutomationRun {
+  id: string;
+  rule_id: string;
+  status: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  detail: string | null;
+  created_at: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -1737,6 +1815,83 @@ export const api = {
 
   // Dashboard
   stats: (token: string) => request<DashboardStats>("/api/dashboard/stats", { token }),
+
+  // Performance / KPI
+  performanceSummary: (token: string, period: GoalPeriod = "month") =>
+    request<PerformanceSummary>(`/api/performance/summary?period=${period}`, { token }),
+  listGoals: (token: string) => request<SalesGoal[]>("/api/performance/goals", { token }),
+  createGoal: (
+    token: string,
+    payload: {
+      period: GoalPeriod;
+      period_start: string;
+      metric: GoalMetric;
+      target: number;
+      owner_id?: string | null;
+      team_id?: string | null;
+    },
+  ) =>
+    request<SalesGoal>("/api/performance/goals", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  updateGoal: (
+    token: string,
+    id: string,
+    payload: { period?: GoalPeriod; period_start?: string; metric?: GoalMetric; target?: number },
+  ) =>
+    request<SalesGoal>(`/api/performance/goals/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteGoal: (token: string, id: string) =>
+    request<void>(`/api/performance/goals/${id}`, { method: "DELETE", token }),
+
+  // Automations
+  listAutomations: (token: string) =>
+    request<AutomationRule[]>("/api/automations", { token }),
+  createAutomation: (
+    token: string,
+    payload: {
+      name: string;
+      description?: string | null;
+      enabled?: boolean;
+      trigger: AutomationTrigger;
+      action: AutomationAction;
+      action_config?: Record<string, unknown>;
+    },
+  ) =>
+    request<AutomationRule>("/api/automations", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  updateAutomation: (
+    token: string,
+    id: string,
+    payload: {
+      name?: string;
+      description?: string | null;
+      enabled?: boolean;
+      trigger?: AutomationTrigger;
+      action?: AutomationAction;
+      action_config?: Record<string, unknown>;
+    },
+  ) =>
+    request<AutomationRule>(`/api/automations/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteAutomation: (token: string, id: string) =>
+    request<void>(`/api/automations/${id}`, { method: "DELETE", token }),
+  listAutomationRuns: (token: string, ruleId?: string) =>
+    request<AutomationRun[]>(
+      `/api/automations/runs${ruleId ? `?rule_id=${ruleId}` : ""}`,
+      { token },
+    ),
 
   // Trash
   listTrash: (token: string) =>
