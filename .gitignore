@@ -58,3 +58,6 @@ cookies_smoke.txt
 *_created.json
 openapi_tmp.json
 outbox_*.json
+
+# Local session handoff / scratch notes — contain credentials + infra details, never publish
+HANDOFF.md

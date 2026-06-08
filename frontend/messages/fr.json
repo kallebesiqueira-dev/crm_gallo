@@ -1049,19 +1049,54 @@
     "plans": {
       "free": {
         "name": "Free",
-        "shortPrice": "€0"
+        "shortPrice": "€0",
+        "tagline": "Démarrez et validez avec votre équipe.",
+        "features": [
+          "Jusqu'à 2 utilisateurs",
+          "Prospects, clients, affaires, pipeline",
+          "Scoring IA (modèle léger)",
+          "Support e-mail"
+        ]
       },
       "standard": {
         "name": "Standard",
-        "shortPrice": "€19/mois"
+        "shortPrice": "€19/mois",
+        "tagline": "Pour les équipes commerciales en croissance.",
+        "features": [
+          "Utilisateurs illimités",
+          "Tout de Free",
+          "Scoring IA avancé (Claude Sonnet)",
+          "Assistant IA illimité",
+          "Devis et propositions PDF",
+          "Rapports et graphiques",
+          "Support prioritaire"
+        ]
       },
       "business": {
         "name": "Business",
-        "shortPrice": "€39/mois"
+        "shortPrice": "€39/mois",
+        "tagline": "Pour les équipes qui closent de bout en bout.",
+        "features": [
+          "Tout de Standard",
+          "Contrats & signature électronique (eIDAS)",
+          "Imports et exports en masse",
+          "Équipes & pipelines personnalisés",
+          "Journal d'audit complet",
+          "Webhooks sortants"
+        ]
       },
       "premium": {
         "name": "Premium",
-        "shortPrice": "€59/mois"
+        "shortPrice": "€59/mois",
+        "tagline": "Pour les équipes qui scalent avec l'automatisation.",
+        "features": [
+          "Tout de Business",
+          "Automatisations de workflow",
+          "Intégrations e-mail et calendrier",
+          "RAG : assistant avec base de connaissances",
+          "API publique + clés API",
+          "Gestionnaire de compte dédié"
+        ]
       }
     }
   },
