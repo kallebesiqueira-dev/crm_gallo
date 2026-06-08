@@ -171,10 +171,10 @@ export default function TermsPage() {
         <p>
           Questions about these Terms? Email{" "}
           <a
-            href="mailto:legal@crmgallo.com"
+            href="mailto:gallo-crm@hotmail.com"
             className="text-primary underline-offset-4 hover:underline"
           >
-            legal@crmgallo.com
+            gallo-crm@hotmail.com
           </a>
           .
         </p>
