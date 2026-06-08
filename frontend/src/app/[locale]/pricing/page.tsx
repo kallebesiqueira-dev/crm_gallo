@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { DashboardVideo } from "@/components/marketing/dashboard-video";
+import { DashboardCarousel } from "@/components/marketing/dashboard-carousel";
 import { LogosBand } from "@/components/marketing/logos-band";
 import { StatsCounter } from "@/components/marketing/stats-counter";
 import { FeatureSections } from "@/components/marketing/feature-section";
@@ -453,7 +453,7 @@ export default function PricingPage() {
           className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[36rem] w-[64rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-blue-500/15 via-violet-500/10 to-fuchsia-500/15 blur-3xl animate-pulse-slow"
         />
         <Reveal standalone variant="scaleIn" className="relative mx-auto max-w-6xl px-6">
-          <DashboardVideo />
+          <DashboardCarousel />
         </Reveal>
       </section>
 
