@@ -138,7 +138,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 function billingBanner(
   billing: BillingMe | null,
   locale: string,
-  t: (k: string) => string,
+  t: (key: string, values?: Record<string, string | number>) => string,
 ): React.ReactNode {
   if (!billing) return null;
 
@@ -151,7 +151,7 @@ function billingBanner(
     return (
       <Banner tone="info" href={`/${locale}/billing`} cta={t("manageBilling")}>
         <TrendingUp className="h-4 w-4" />
-        {t("trialEndingSoon").replace("{days}", String(trialDaysLeft))}
+        {t("trialEndingSoon", { days: trialDaysLeft })}
       </Banner>
     );
   }

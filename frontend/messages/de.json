@@ -1049,19 +1049,54 @@
     "plans": {
       "free": {
         "name": "Free",
-        "shortPrice": "€0"
+        "shortPrice": "€0",
+        "tagline": "Starten und mit dem Team validieren.",
+        "features": [
+          "Bis zu 2 Nutzer",
+          "Leads, Kunden, Deals, Pipeline",
+          "KI-Scoring (leichtes Modell)",
+          "E-Mail-Support"
+        ]
       },
       "standard": {
         "name": "Standard",
-        "shortPrice": "€19/Mo"
+        "shortPrice": "€19/Mo",
+        "tagline": "Für wachsende Vertriebsteams.",
+        "features": [
+          "Unbegrenzte Nutzer",
+          "Alles aus Free",
+          "Erweitertes KI-Scoring (Claude Sonnet)",
+          "Unbegrenzter KI-Assistent",
+          "Angebote & PDF-Vorschläge",
+          "Berichte und Charts",
+          "Priority-Support"
+        ]
       },
       "business": {
         "name": "Business",
-        "shortPrice": "€39/Mo"
+        "shortPrice": "€39/Mo",
+        "tagline": "Für Teams, die Deals end-to-end abschließen.",
+        "features": [
+          "Alles aus Standard",
+          "Verträge & E-Signatur (eIDAS)",
+          "Massen-Import & -Export",
+          "Teams & eigene Pipelines",
+          "Vollständiges Audit-Log",
+          "Ausgehende Webhooks"
+        ]
       },
       "premium": {
         "name": "Premium",
-        "shortPrice": "€59/Mo"
+        "shortPrice": "€59/Mo",
+        "tagline": "Für Teams, die mit Automatisierung skalieren.",
+        "features": [
+          "Alles aus Business",
+          "Workflow-Automatisierungen",
+          "E-Mail- und Kalenderintegrationen",
+          "RAG: Assistent mit Wissensdatenbank",
+          "Öffentliche API + API-Schlüssel",
+          "Dedizierter Account-Manager"
+        ]
       }
     }
   },

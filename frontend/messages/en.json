@@ -1049,19 +1049,54 @@
     "plans": {
       "free": {
         "name": "Free",
-        "shortPrice": "€0"
+        "shortPrice": "€0",
+        "tagline": "Get started and validate with your team.",
+        "features": [
+          "Up to 2 users",
+          "Leads, customers, deals and pipeline",
+          "AI scoring (lightweight model)",
+          "Email support"
+        ]
       },
       "standard": {
         "name": "Standard",
-        "shortPrice": "€19/mo"
+        "shortPrice": "€19/mo",
+        "tagline": "For growing sales teams.",
+        "features": [
+          "Unlimited users",
+          "Everything in Free",
+          "Advanced AI scoring (Claude Sonnet)",
+          "Unlimited AI assistant",
+          "Quotes & PDF proposals",
+          "Reports and visual charts",
+          "Priority support"
+        ]
       },
       "business": {
         "name": "Business",
-        "shortPrice": "€39/mo"
+        "shortPrice": "€39/mo",
+        "tagline": "For teams closing deals end-to-end.",
+        "features": [
+          "Everything in Standard",
+          "Contracts & e-signature (eIDAS)",
+          "Bulk imports & exports",
+          "Teams & custom pipelines",
+          "Full audit log",
+          "Outgoing webhooks"
+        ]
       },
       "premium": {
         "name": "Premium",
-        "shortPrice": "€59/mo"
+        "shortPrice": "€59/mo",
+        "tagline": "For teams that scale with automation.",
+        "features": [
+          "Everything in Business",
+          "Workflow automations",
+          "Email and calendar integrations",
+          "RAG: assistant with knowledge base",
+          "Public API + API keys",
+          "Dedicated account manager"
+        ]
       }
     }
   },

@@ -84,12 +84,14 @@ const FALLBACK_PLANS: PlanOut[] = [
     yearly_total_eur: 182.4,
     seat_limit: null,
     features: [
+      // Keep in sync with backend/app/billing/catalog.py (the source of truth
+      // the /plans API serves) so this offline fallback matches production.
       "Unlimited users",
       "Everything in Free",
       "Advanced AI scoring (Claude Sonnet)",
       "Unlimited AI assistant",
+      "Quotes & PDF proposals",
       "Reports and visual charts",
-      "Trash with restore",
       "Priority support",
     ],
     highlighted: true,
@@ -229,7 +231,7 @@ export default function PricingPage() {
         the viewport at z-0 and provides the actual base colour; every other
         page surface stacks above via `relative z-10` so it can't get hidden
         behind the mesh. */}
-    <div className="dark relative min-h-screen text-foreground">
+    <div className="dark relative min-h-screen overflow-x-clip text-foreground">
       <Suspense fallback={null}>
         <SearchParamWatcher name="stripe" onValue={setStripeFlag} />
       </Suspense>
@@ -579,7 +581,11 @@ export default function PricingPage() {
               variant="card"
               className="mt-8 overflow-hidden rounded-2xl border bg-background shadow-sm"
             >
-              <table className="w-full text-sm">
+              {/* Mobile: the matrix scrolls sideways INSIDE this box so the
+                  page itself never gets a horizontal scrollbar. min-width keeps
+                  every column readable; on lg the table fits and scroll vanishes. */}
+              <div className="overflow-x-auto overscroll-x-contain">
+                <table className="w-full min-w-[640px] text-sm">
                 <thead className="border-b bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-6 py-4 text-left font-medium">{t("feature")}</th>
@@ -620,7 +626,8 @@ export default function PricingPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </Reveal>
           </RevealGroup>
         </section>
@@ -738,6 +745,14 @@ function PlanCard({
   const price = cycle === "yearly" ? plan.yearly_eur_per_user : plan.monthly_eur;
   const isFree = plan.id === "free";
 
+  // Plan tagline/features are localized in messages (pricing.plans.<id>); the
+  // /plans API only returns English. Use the translation, falling back to the
+  // API value if a key is ever missing (e.g. a new plan id not yet translated).
+  const taglineKey = `plans.${plan.id}.tagline`;
+  const featuresKey = `plans.${plan.id}.features`;
+  const tagline = t.has(taglineKey) ? t(taglineKey) : plan.tagline;
+  const features = (t.has(featuresKey) ? t.raw(featuresKey) : plan.features) as string[];
+
   return (
     <div
       className={cn(
@@ -763,7 +778,7 @@ function PlanCard({
 
       <div className="relative flex flex-1 flex-col">
         <div className="text-sm font-semibold text-foreground">{plan.name}</div>
-        <p className="mt-1 text-sm text-muted-foreground">{plan.tagline}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{tagline}</p>
 
         <div className="mt-6 flex items-baseline gap-1">
           <span className="text-5xl font-semibold tracking-tight">
@@ -800,7 +815,7 @@ function PlanCard({
         </Button>
 
         <ul className="mt-7 space-y-2.5 text-sm">
-          {plan.features.map((f) => (
+          {features.map((f) => (
             <li key={f} className="flex items-start gap-2">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
               <span>{f}</span>
@@ -829,12 +844,18 @@ function PlanSkeleton({ count }: { count: number }) {
 type Cell = boolean | string;
 type Row = { label: string; cells: Cell[] };
 
-function buildMatrix(plans: PlanOut[], t: (k: string) => string): Row[] {
+function buildMatrix(
+  plans: PlanOut[],
+  t: (key: string, values?: Record<string, string | number>) => string,
+): Row[] {
   return [
     {
       label: t("matrix.users"),
       cells: plans.map((p) =>
-        p.seat_limit ? t("matrix.upTo").replace("{n}", String(p.seat_limit)) : t("matrix.unlimited"),
+        // next-intl validates ICU vars eagerly, so the `{n}` placeholder must
+        // be passed through `t`'s values arg — a post-hoc `.replace()` throws a
+        // FORMATTING_ERROR and leaves the raw "{n}" in the cell.
+        p.seat_limit ? t("matrix.upTo", { n: p.seat_limit }) : t("matrix.unlimited"),
       ),
     },
     { label: t("matrix.coreCrm"), cells: plans.map(() => true) },

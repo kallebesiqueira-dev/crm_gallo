@@ -1049,19 +1049,54 @@
     "plans": {
       "free": {
         "name": "Free",
-        "shortPrice": "€0"
+        "shortPrice": "€0",
+        "tagline": "Cumenza e valida cun tia squadra.",
+        "features": [
+          "Fin a 2 utilisaders",
+          "Leads, clients, affars, pipeline",
+          "Scoring IA (model lev)",
+          "Sustegn per e-mail"
+        ]
       },
       "standard": {
         "name": "Standard",
-        "shortPrice": "€19/mais"
+        "shortPrice": "€19/mais",
+        "tagline": "Per squadras da vendita en crescita.",
+        "features": [
+          "Utilisaders illimitads",
+          "Tut da Free",
+          "Scoring IA avanzà (Claude Sonnet)",
+          "Assistent IA illimità",
+          "Offertas e propostas PDF",
+          "Rapports e grafics",
+          "Sustegn prioritar"
+        ]
       },
       "business": {
         "name": "Business",
-        "shortPrice": "€39/mais"
+        "shortPrice": "€39/mais",
+        "tagline": "Per squadras che concludan affars dal cumenzament a la fin.",
+        "features": [
+          "Tut da Standard",
+          "Contracts e signatura electronica (eIDAS)",
+          "Importaziuns ed exportaziuns en massa",
+          "Squadras e pipelines persunalisadas",
+          "Protocol da revisiun cumplet",
+          "Webhooks che sortan"
+        ]
       },
       "premium": {
         "name": "Premium",
-        "shortPrice": "€59/mais"
+        "shortPrice": "€59/mais",
+        "tagline": "Per squadras che scalan cun l'automatisaziun.",
+        "features": [
+          "Tut da Business",
+          "Automatisaziuns da workflow",
+          "Integraziuns e-mail e chalender",
+          "RAG: assistent cun base da savair",
+          "API publica + clavs API",
+          "Manager da conto dedicà"
+        ]
       }
     }
   },

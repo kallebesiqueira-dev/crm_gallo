@@ -1049,19 +1049,54 @@
     "plans": {
       "free": {
         "name": "Free",
-        "shortPrice": "€0"
+        "shortPrice": "€0",
+        "tagline": "Inizia e valida le idee con il tuo team.",
+        "features": [
+          "Fino a 2 utenti",
+          "Lead, clienti, trattative, pipeline",
+          "AI scoring (modello leggero)",
+          "Supporto e-mail"
+        ]
       },
       "standard": {
         "name": "Standard",
-        "shortPrice": "€19/mese"
+        "shortPrice": "€19/mese",
+        "tagline": "Per team commerciali in crescita.",
+        "features": [
+          "Utenti illimitati",
+          "Tutto del Free",
+          "AI scoring avanzato (Claude Sonnet)",
+          "Assistente IA illimitato",
+          "Preventivi e proposte PDF",
+          "Report e grafici",
+          "Supporto prioritario"
+        ]
       },
       "business": {
         "name": "Business",
-        "shortPrice": "€39/mese"
+        "shortPrice": "€39/mese",
+        "tagline": "Per team che chiudono trattative end-to-end.",
+        "features": [
+          "Tutto dello Standard",
+          "Contratti e firma elettronica (eIDAS)",
+          "Importazioni ed esportazioni in blocco",
+          "Team e pipeline personalizzate",
+          "Registro di audit completo",
+          "Webhook in uscita"
+        ]
       },
       "premium": {
         "name": "Premium",
-        "shortPrice": "€59/mese"
+        "shortPrice": "€59/mese",
+        "tagline": "Per team che scalano con l'automazione.",
+        "features": [
+          "Tutto del Business",
+          "Automazioni workflow",
+          "Integrazioni e-mail e calendario",
+          "RAG: assistente con knowledge base",
+          "API pubblica + chiavi API",
+          "Account manager dedicato"
+        ]
       }
     }
   },
