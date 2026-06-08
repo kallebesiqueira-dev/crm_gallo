@@ -189,8 +189,8 @@ export function Footer() {
             <ul className="mt-4 space-y-2.5 text-sm">
               <li><Link href={`/${locale}/terms`} className="text-muted-foreground transition-colors hover:text-foreground">{tMarketing("footerTerms")}</Link></li>
               <li><Link href={`/${locale}/cookies`} className="text-muted-foreground transition-colors hover:text-foreground">{tMarketing("footerCookies")}</Link></li>
-              <li><span className="text-muted-foreground/50" title="Coming soon">{tMarketing("footerPrivacy")}</span></li>
-              <li><span className="text-muted-foreground/50" title="Coming soon">{tMarketing("footerSecurity")}</span></li>
+              <li><Link href={`/${locale}/privacy`} className="text-muted-foreground transition-colors hover:text-foreground">{tMarketing("footerPrivacy")}</Link></li>
+              <li><Link href={`/${locale}/security`} className="text-muted-foreground transition-colors hover:text-foreground">{tMarketing("footerSecurity")}</Link></li>
             </ul>
           </div>
 
