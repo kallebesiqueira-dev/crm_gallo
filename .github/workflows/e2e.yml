@@ -8,6 +8,7 @@ on:
       - "backend/**"
       - "docker-compose.yml"
       - "docker-compose.ci.yml"
+      - ".env.example"
       - ".github/workflows/e2e.yml"
   pull_request:
     paths:
@@ -15,6 +16,7 @@ on:
       - "backend/**"
       - "docker-compose.yml"
       - "docker-compose.ci.yml"
+      - ".env.example"
       - ".github/workflows/e2e.yml"
 
 concurrency:
