@@ -1,3 +1,4 @@
+import re
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -200,33 +201,23 @@ async def register(
     await db.execute(select(func.pg_advisory_xact_lock(0xC0FFEE)))
     count = (await db.execute(select(func.count()).select_from(User))).scalar_one()
     is_first_user = count == 0
-    role = UserRole.admin if is_first_user else UserRole.sales_agent
+    # Self-signup is multi-tenant: every signup creates and OWNS a brand-new
+    # organization (its own isolated workspace), so the signer is always its
+    # admin. Additional members join an EXISTING org through the invite flow
+    # (as sales_agent) — a separate code path. Previously every self-signup
+    # shared one "default-workspace", whose Free 2-seat cap turned into a hard
+    # wall: the 3rd signup got a 402 and onboarding was impossible.
+    role = UserRole.admin
 
-    # Resolve (or bootstrap) the org this user lands in BEFORE the seat
-    # check — seat enforcement is now per-org, so we need the org id.
-    # Multi-tenant via signup-without-invite: every new user joins the
-    # install's default-workspace. Fresh installs (count==0) create it
-    # on the fly. Phase 4 invites and Phase 5 "create new org" flow are
-    # how additional tenants come into existence.
-    org_result = await db.execute(
-        select(Organization).where(Organization.slug == "default-workspace")
-    )
-    org = org_result.scalar_one_or_none()
-    if org is None:
-        if count != 0:
-            # Should be impossible — backfill migration always creates it
-            # for existing installs, and count==0 below creates it. If we
-            # get here something is very wrong with the DB state.
-            raise HTTPException(
-                status_code=500,
-                detail="default-workspace missing; run migrations",
-            )
-        org = Organization(name="CRM Gallo Workspace", slug="default-workspace")
-        db.add(org)
-        await db.flush()
+    owner_name = (payload.full_name or payload.email.split("@")[0] or "My").strip()
+    org_name = f"{owner_name}'s workspace"[:255]
+    slug_base = re.sub(r"[^a-z0-9]+", "-", owner_name.lower()).strip("-")[:40] or "workspace"
+    org = Organization(name=org_name, slug=f"{slug_base}-{uuid.uuid4().hex[:8]}")
+    db.add(org)
+    await db.flush()
 
-    # Per-org seat enforcement: Free plan caps the new org at 2 members.
-    # Standard/Premium are uncapped today (seat-based pricing later).
+    # Defensive: a brand-new org always has room, but keep the seat check so
+    # the path stays correct if signup is ever pointed at a pre-existing org.
     ok, reason = await can_accept_new_user(db, org.id)
     if not ok:
         raise HTTPException(
