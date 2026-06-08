@@ -12,11 +12,15 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/marketing/auth-shell";
 import { SearchParamWatcher } from "@/components/search-param-watcher";
+import { Turnstile } from "@/components/turnstile";
 import { api, type PlanId } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const PLAN_OPTIONS: PlanId[] = ["free", "standard", "business", "premium"];
+
+// CAPTCHA is enforced on the client only when a Turnstile site key is baked in.
+const CAPTCHA_ON = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export default function RegisterPage() {
   const tAuth = useTranslations("auth");
@@ -33,6 +37,7 @@ export default function RegisterPage() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   // When the backend requires email confirmation we swap the form for a
   // "check your inbox" screen instead of logging the user in.
   const [verificationSent, setVerificationSent] = useState(false);
@@ -56,7 +61,13 @@ export default function RegisterPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await api.register({ email, password, full_name: fullName, locale });
+      const res = await api.register({
+        email,
+        password,
+        full_name: fullName,
+        locale,
+        turnstile_token: turnstileToken ?? undefined,
+      });
       // Common path: self-signup must confirm their email first. No token
       // is issued — show the "check your inbox" screen instead of logging
       // in. (The first user / install founder is auto-verified and comes
@@ -275,7 +286,17 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <Button type="submit" className="group w-full" disabled={busy} size="lg">
+          <Turnstile
+            onVerify={setTurnstileToken}
+            onExpire={() => setTurnstileToken(null)}
+          />
+
+          <Button
+            type="submit"
+            className="group w-full"
+            disabled={busy || (CAPTCHA_ON && !turnstileToken)}
+            size="lg"
+          >
             {busy ? tAuth("creatingAccount") : tAuth("createAccount")}
             {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
           </Button>

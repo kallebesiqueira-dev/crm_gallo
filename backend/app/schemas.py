@@ -52,6 +52,8 @@ class RegisterRequest(BaseModel):
     password: Annotated[str, Field(min_length=8, max_length=128)]
     full_name: Annotated[str, Field(min_length=1, max_length=255)]
     locale: str = "en"
+    # Cloudflare Turnstile token — required only when CAPTCHA is enabled server-side.
+    turnstile_token: str | None = None
 
 
 # ---------- Users ----------

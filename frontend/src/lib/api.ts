@@ -1034,7 +1034,13 @@ export const api = {
     }
     return res.json();
   },
-  register: (payload: { email: string; password: string; full_name: string; locale: string }) =>
+  register: (payload: {
+    email: string;
+    password: string;
+    full_name: string;
+    locale: string;
+    turnstile_token?: string;
+  }) =>
     request<RegisterResponse>("/api/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
