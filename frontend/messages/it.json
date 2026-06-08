@@ -27,8 +27,52 @@
     "companies": "Aziende",
     "duplicates": "Duplicati",
     "forms": "Moduli",
+    "inbox": "WhatsApp",
     "performance": "Performance",
     "automations": "Automazioni"
+  },
+  "inbox": {
+    "title": "Posta WhatsApp",
+    "subtitle": "Chatta con i tuoi contatti su WhatsApp in tempo reale.",
+    "loading": "Caricamento…",
+    "conversations": "Conversazioni",
+    "noConversations": "Ancora nessuna conversazione.",
+    "noMessagesYet": "Ancora nessun messaggio.",
+    "selectConversation": "Seleziona una conversazione",
+    "selectConversationBody": "Scegli una conversazione a sinistra per leggere e rispondere.",
+    "messagePlaceholder": "Scrivi un messaggio…",
+    "send": "Invia",
+    "mediaPlaceholder": "[{type}]",
+    "noAccounts": "Collega il tuo numero WhatsApp",
+    "noAccountsBody": "Collega un numero WhatsApp Business per iniziare a ricevere e inviare messaggi qui.",
+    "adminOnly": "Solo un amministratore può collegare un numero WhatsApp.",
+    "phoneNumberId": "ID numero di telefono",
+    "accessToken": "Token di accesso",
+    "accessTokenHint": "Memorizzato in modo cifrato. Lo trovi in Meta › WhatsApp › Configurazione API.",
+    "displayPhone": "Telefono visualizzato (facoltativo)",
+    "displayName": "Nome visualizzato (facoltativo)",
+    "displayNamePlaceholder": "Acme S.r.l.",
+    "connect": "Collega",
+    "connecting": "Collegamento…",
+    "status": {
+      "received": "Ricevuto",
+      "pending": "Invio…",
+      "sent": "Inviato",
+      "delivered": "Consegnato",
+      "read": "Letto",
+      "failed": "Non riuscito"
+    },
+    "type": {
+      "text": "Testo",
+      "image": "Foto",
+      "document": "Documento",
+      "audio": "Audio",
+      "video": "Video",
+      "sticker": "Adesivo",
+      "location": "Posizione",
+      "contacts": "Contatto",
+      "unsupported": "Non supportato"
+    }
   },
   "auth": {
     "login": "Accedi",
@@ -989,7 +1033,7 @@
       "aiAssistant": "Assistente IA illimitato",
       "reports": "Report e grafici",
       "automations": "Automazioni workflow",
-      "integrations": "Integrazioni e-mail + calendario",
+      "integrations": "Integrazioni e-mail, calendario + WhatsApp",
       "rag": "Knowledge base RAG",
       "api": "API + Webhooks",
       "support": "Supporto",
@@ -1031,7 +1075,7 @@
       },
       "8": {
         "q": "Quali integrazioni sono disponibili?",
-        "a": "Stripe per fatturazione, IMAP/SMTP per e-mail, Google/Outlook Calendar per agenda, Slack per notifiche. API REST + webhooks per costruire integrazioni custom. Roadmap pubblica include HubSpot, Pipedrive, Notion, Zapier."
+        "a": "Stripe per fatturazione, IMAP/SMTP per e-mail, Google/Outlook Calendar per agenda, WhatsApp Business per messaggi, Slack per notifiche. API REST + webhooks per costruire integrazioni custom. Roadmap pubblica include Instagram, Messenger, HubSpot, Pipedrive, Notion, Zapier."
       },
       "9": {
         "q": "Gallo CRM è conforme al GDPR?",
@@ -1092,7 +1136,7 @@
         "features": [
           "Tutto del Business",
           "Automazioni workflow",
-          "Integrazioni e-mail e calendario",
+          "Integrazioni e-mail, calendario e WhatsApp",
           "RAG: assistente con knowledge base",
           "API pubblica + chiavi API",
           "Account manager dedicato"
