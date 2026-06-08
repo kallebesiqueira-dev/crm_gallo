@@ -25,15 +25,18 @@ After this migration the operator must:
   1. Update `.env` to add `APP_DATABASE_URL=postgresql+asyncpg://crm_app:...@db:5432/crm`
   2. Restart backend so the connection pool reconnects as `crm_app`
 
-Password is `crm_app_dev_2026` — fine for docker dev, MUST be rotated
-for any deployment outside the developer machine.
+The `crm_app` password is sourced from the environment
+(APP_DATABASE_URL / CRM_APP_DB_PASSWORD) — never hard-coded. See
+`_crm_app_password()` below; migration 0862af48f9ca rotates existing DBs.
 
 Revision ID: f5fde59e0dc8
 Revises: ca1013e5bde6
 Create Date: 2026-05-30 19:54:31.682491+00:00
 
 """
+import os
 from typing import Sequence, Union
+from urllib.parse import unquote, urlparse
 
 from alembic import op
 
@@ -52,6 +55,29 @@ RUNTIME_TABLES = (
     "leads", "customers", "deals", "tasks",
     "audit_logs", "stripe_events",
 )
+
+
+def _crm_app_password() -> str:
+    """Runtime ``crm_app`` password, read from the environment — never hard-coded.
+
+    Parsed from ``APP_DATABASE_URL`` (``postgresql+asyncpg://crm_app:<pw>@host/db``)
+    or ``CRM_APP_DB_PASSWORD``. Raising on absence is deliberate: we never fall
+    back to a baked-in default secret.
+    """
+    url = os.environ.get("APP_DATABASE_URL") or ""
+    pw = None
+    if "://" in url:
+        scheme, rest = url.split("://", 1)
+        scheme = scheme.split("+", 1)[0]  # drop the +asyncpg driver suffix
+        parsed = urlparse(f"{scheme}://{rest}")
+        pw = unquote(parsed.password) if parsed.password else None
+    pw = pw or os.environ.get("CRM_APP_DB_PASSWORD")
+    if not pw:
+        raise RuntimeError(
+            "crm_app role password unavailable: set APP_DATABASE_URL "
+            "(postgresql+asyncpg://crm_app:<password>@host/db) or CRM_APP_DB_PASSWORD."
+        )
+    return pw
 
 
 def upgrade() -> None:
@@ -77,17 +103,18 @@ def upgrade() -> None:
         """
     )
 
-    # Create crm_app role idempotently. Password is fine for local dev;
-    # the docker-compose network isolates Postgres from the host
-    # network anyway.
+    # Create crm_app role idempotently. The password is sourced from the
+    # environment (never hard-coded) and single-quote-escaped for the SQL
+    # literal; the value is operator-supplied via env, not user input.
+    _pw = _crm_app_password().replace("'", "''")
     op.execute(
-        """
+        f"""
         DO $$
         BEGIN
           IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'crm_app') THEN
             CREATE ROLE crm_app
               WITH LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE
-              PASSWORD 'crm_app_dev_2026';
+              PASSWORD '{_pw}';
           END IF;
         END
         $$;

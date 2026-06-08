@@ -58,7 +58,9 @@ jobs:
       # Localhost works because GHA exposes service ports on the host.
       DATABASE_URL: postgresql+asyncpg://crm:crm@localhost:5432/crm
       SYNC_DATABASE_URL: postgresql://crm:crm@localhost:5432/crm
-      APP_DATABASE_URL: postgresql+asyncpg://crm_app:crm_app_dev_2026@localhost:5432/crm
+      # crm_app password is ephemeral per CI run — the migration reads it from
+      # this URL to create the role; it is never a real or shared secret.
+      APP_DATABASE_URL: postgresql+asyncpg://crm_app:ci-${{ github.run_id }}-ephemeral@localhost:5432/crm
       REDIS_URL: redis://localhost:6379/0
       # 64-byte hex — meets the JWT_SECRET length guard in
       # config.validate_for_runtime so the app can boot in CI.
