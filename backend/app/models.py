@@ -2083,7 +2083,9 @@ class AutomationRun(Base):
         nullable=False,
         index=True,
     )
-    organization_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     entity_type: Mapped[str | None] = mapped_column(String(40))

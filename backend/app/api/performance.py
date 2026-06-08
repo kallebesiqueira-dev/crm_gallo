@@ -1,6 +1,6 @@
 import calendar
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -61,7 +61,7 @@ def _period_end(period: GoalPeriod, start: date) -> date:
 
 
 def _as_dt(d: date) -> datetime:
-    return datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
+    return datetime(d.year, d.month, d.day, tzinfo=UTC)
 
 
 def _median(xs: list[float]) -> float | None:
@@ -85,7 +85,7 @@ async def summary(
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ) -> PerformanceSummary:
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     start = _period_start_for_today(period, today)
     end = _period_end(period, start)
     start_dt, end_dt = _as_dt(start), _as_dt(end)
@@ -95,7 +95,9 @@ async def summary(
     # stage transition is the last write in the overwhelming majority of cases.
     won_rows = (
         await db.execute(
-            select(Deal.value, Deal.currency, Deal.owner_id, Deal.created_at, Deal.updated_at).where(
+            select(
+                Deal.value, Deal.currency, Deal.owner_id, Deal.created_at, Deal.updated_at
+            ).where(
                 Deal.organization_id == org_id,
                 Deal.stage == DealStage.won,
                 Deal.updated_at >= start_dt,
@@ -160,7 +162,9 @@ async def summary(
     total_leads = 0
     for stage, count in (
         await db.execute(
-            select(Lead.stage, func.count()).where(Lead.organization_id == org_id).group_by(Lead.stage)
+            select(Lead.stage, func.count())
+            .where(Lead.organization_id == org_id)
+            .group_by(Lead.stage)
         )
     ).all():
         funnel_counts[stage.value] = count
@@ -249,12 +253,16 @@ async def list_goals(
     db: AsyncSession = Depends(get_db),
 ) -> list[SalesGoalOut]:
     goals = (
-        await db.execute(
-            select(SalesGoal)
-            .where(SalesGoal.organization_id == org_id)
-            .order_by(SalesGoal.period_start.desc(), SalesGoal.created_at.desc())
+        (
+            await db.execute(
+                select(SalesGoal)
+                .where(SalesGoal.organization_id == org_id)
+                .order_by(SalesGoal.period_start.desc(), SalesGoal.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [await _goal_out(db, org_id, g) for g in goals]
 
 

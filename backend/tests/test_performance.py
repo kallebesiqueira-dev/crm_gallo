@@ -8,8 +8,7 @@ RLS-scoped and RBAC-gated (admin/manager). Direct seeding uses the owner-role
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -22,17 +21,18 @@ from app.models import (
     GoalPeriod,
     Lead,
     LeadStage,
-    Organization,
     SalesGoal,
 )
 
 
 def _today_first() -> str:
-    t = datetime.now(timezone.utc).date()
+    t = datetime.now(UTC).date()
     return t.replace(day=1).isoformat()
 
 
-def _seed_deal(db, org_id, *, stage, value="1000", currency=Currency.EUR, owner_id=None, updated_at=None):
+def _seed_deal(
+    db, org_id, *, stage, value="1000", currency=Currency.EUR, owner_id=None, updated_at=None
+):
     deal = Deal(
         organization_id=org_id,
         title="Deal",
@@ -54,7 +54,11 @@ def test_summary_aggregates(db: Session, admin_client, test_org, admin_user):
     # Two won deals (EUR + USD) + one lost + one open, all in the current month.
     _seed_deal(db, test_org.id, stage=DealStage.won, value="1000", owner_id=admin_user.id)
     _seed_deal(
-        db, test_org.id, stage=DealStage.won, value="1000", currency=Currency.USD,
+        db,
+        test_org.id,
+        stage=DealStage.won,
+        value="1000",
+        currency=Currency.USD,
         owner_id=admin_user.id,
     )
     _seed_deal(db, test_org.id, stage=DealStage.lost, value="500", owner_id=admin_user.id)
@@ -82,8 +86,10 @@ def test_summary_aggregates(db: Session, admin_client, test_org, admin_user):
 
 def test_summary_excludes_other_periods(db: Session, admin_client, test_org, admin_user):
     # A deal closed a year ago must not count toward this month.
-    old = datetime(2025, 1, 15, tzinfo=timezone.utc)
-    _seed_deal(db, test_org.id, stage=DealStage.won, value="5000", owner_id=admin_user.id, updated_at=old)
+    old = datetime(2025, 1, 15, tzinfo=UTC)
+    _seed_deal(
+        db, test_org.id, stage=DealStage.won, value="5000", owner_id=admin_user.id, updated_at=old
+    )
     db.commit()
     r = admin_client.get("/api/performance/summary?period=month")
     assert r.status_code == 200, r.text
@@ -173,7 +179,7 @@ def test_goals_org_scoped(db: Session, admin_client, test_org, other_org):
     foreign = SalesGoal(
         organization_id=other_org.id,
         period=GoalPeriod.month,
-        period_start=datetime.now(timezone.utc).date().replace(day=1),
+        period_start=datetime.now(UTC).date().replace(day=1),
         metric=GoalMetric.revenue,
         target=Decimal("99999"),
     )

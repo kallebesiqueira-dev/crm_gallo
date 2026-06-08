@@ -236,7 +236,7 @@ async def _run_rule(
         rule.last_run_at = datetime.now(UTC)
         await db.commit()
         return "success"
-    except Exception as exc:  # noqa: BLE001 — isolate one rule's failure
+    except Exception as exc:
         await db.rollback()
         log.warning(
             "automation.rule_failed",
@@ -353,20 +353,17 @@ async def scan_org_stale_leads(db: AsyncSession, org_id: uuid.UUID) -> int:
             stale_days = _DEFAULT_STALE_DAYS
         cutoff = datetime.now(UTC) - timedelta(days=stale_days)
         stale = (
-            (
-                await db.execute(
-                    select(Lead.id, Lead.owner_id)
-                    .where(
-                        Lead.organization_id == org_id,
-                        Lead.stage.notin_([LeadStage.won, LeadStage.lost]),
-                        Lead.updated_at < cutoff,
-                    )
-                    .order_by(Lead.updated_at)
-                    .limit(_STALE_SCAN_LIMIT)
+            await db.execute(
+                select(Lead.id, Lead.owner_id)
+                .where(
+                    Lead.organization_id == org_id,
+                    Lead.stage.notin_([LeadStage.won, LeadStage.lost]),
+                    Lead.updated_at < cutoff,
                 )
+                .order_by(Lead.updated_at)
+                .limit(_STALE_SCAN_LIMIT)
             )
-            .all()
-        )
+        ).all()
         for lead_id, owner_id in stale:
             attempted += 1
             await _run_rule(
