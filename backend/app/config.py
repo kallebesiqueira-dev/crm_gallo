@@ -64,6 +64,13 @@ class Settings(BaseSettings):
     # fat-fingers and resubmits a couple of times.
     rate_limit_form_submit_per_minute: int = 10
 
+    # ---- CAPTCHA (Cloudflare Turnstile) ----
+    # Anti-bot on registration + public form submits. Empty = disabled (the
+    # honeypot + per-IP rate limits still apply). Set the secret to enforce it;
+    # the matching site key is served to the browser as
+    # NEXT_PUBLIC_TURNSTILE_SITE_KEY.
+    turnstile_secret_key: str = ""
+
     # ---- S3-compatible object storage (FileAttachments) ----
     # Defaults match the MinIO sidecar in docker-compose; swap the
     # endpoint + creds to point at real AWS S3 / R2 / etc. without
