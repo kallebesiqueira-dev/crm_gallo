@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import email as email_service
 from app.api.billing import can_accept_new_user
 from app.audit import record_audit
+from app.captcha import verify_turnstile
 from app.config import get_settings
 from app.cookies import (
     REFRESH_TOKEN_COOKIE,
@@ -192,6 +193,11 @@ async def register(
     payload: RegisterRequest,
     db: AsyncSession = Depends(get_db),
 ) -> RegisterResponse:
+    # Anti-bot: verify the Turnstile token before any work. No-op when CAPTCHA
+    # is disabled (no TURNSTILE_SECRET_KEY configured).
+    if not await verify_turnstile(payload.turnstile_token):
+        raise HTTPException(status_code=400, detail="CAPTCHA verification failed.")
+
     existing = await db.execute(select(User).where(User.email == payload.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
