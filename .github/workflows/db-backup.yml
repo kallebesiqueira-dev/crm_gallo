@@ -1,0 +1,69 @@
+name: db-backup
+
+# Scheduled logical backup of the production Postgres (Railway).
+#
+# Security model:
+#   * Connects as the least-privilege role `backup_ro` (pg_read_all_data,
+#     NOSUPERUSER, write-blocked) — NOT the superuser. A leak of this
+#     credential cannot mutate prod.
+#   * The connection string lives ONLY in the encrypted secret
+#     BACKUP_DATABASE_URL and is passed to pg_dump via env, never on the
+#     command line (argv is visible in process listings) and never echoed.
+#   * NO pull_request / push trigger — secrets are never exposed to fork
+#     PRs or to ordinary commits. Runs on schedule + manual dispatch only.
+#   * Dump artifact is private to the repo and auto-expires (retention).
+on:
+  schedule:
+    # 03:17 UTC daily — odd minute to avoid the top-of-hour stampede.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Install postgresql-client-18 (PGDG)
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+          pg_dump --version
+
+      - name: Dump (custom format, compressed)
+        env:
+          # Passed via env so the credential never appears in argv/logs.
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BACKUP_DATABASE_URL:-}" ]; then
+            echo "::error::BACKUP_DATABASE_URL secret is not set"; exit 1
+          fi
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          out="prod-${stamp}.dump"
+          # -Fc = custom format (compressed, selective pg_restore).
+          /usr/lib/postgresql/18/bin/pg_dump -Fc --no-owner --no-privileges \
+            -f "$out" "$BACKUP_DATABASE_URL"
+          ls -lh "$out"
+          echo "DUMP_FILE=$out" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DUMP_FILE }}
+          path: ${{ env.DUMP_FILE }}
+          retention-days: 14
+          if-no-files-found: error
