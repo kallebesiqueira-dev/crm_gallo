@@ -19,9 +19,7 @@ router = APIRouter(prefix="/api/forms", tags=["forms"])
 manage = require_roles(UserRole.admin, UserRole.manager)
 
 
-async def _get_form_or_404(
-    db: AsyncSession, form_id: uuid.UUID, org_id: uuid.UUID
-) -> WebForm:
+async def _get_form_or_404(db: AsyncSession, form_id: uuid.UUID, org_id: uuid.UUID) -> WebForm:
     result = await db.execute(
         select(WebForm).where(WebForm.id == form_id, WebForm.organization_id == org_id)
     )
@@ -38,9 +36,7 @@ async def list_forms(
     db: AsyncSession = Depends(get_db),
 ) -> list[WebForm]:
     rows = await db.execute(
-        select(WebForm)
-        .where(WebForm.organization_id == org_id)
-        .order_by(WebForm.created_at.desc())
+        select(WebForm).where(WebForm.organization_id == org_id).order_by(WebForm.created_at.desc())
     )
     return list(rows.scalars().all())
 

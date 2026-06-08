@@ -29,9 +29,7 @@ def _create_form(client: CsrfAwareClient, **overrides) -> dict:
 
 def _leads_in(db: Session, org_id: uuid.UUID) -> list[Lead]:
     db.expire_all()
-    return list(
-        db.execute(select(Lead).where(Lead.organization_id == org_id)).scalars().all()
-    )
+    return list(db.execute(select(Lead).where(Lead.organization_id == org_id)).scalars().all())
 
 
 # ---------- Admin CRUD ----------
@@ -56,9 +54,7 @@ def test_list_forms(admin_client):
 
 def test_update_form(admin_client):
     form = _create_form(admin_client, name="Old")
-    r = admin_client.patch(
-        f"/api/forms/{form['id']}", json={"name": "New", "active": False}
-    )
+    r = admin_client.patch(f"/api/forms/{form['id']}", json={"name": "New", "active": False})
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["name"] == "New"
