@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Lead, Organization, WebForm
 from app.web_forms import mint_token
-from tests.conftest import PYTEST_PREFIX, CsrfAwareClient
+from tests.conftest import CsrfAwareClient
 
 
 def _create_form(client: CsrfAwareClient, **overrides) -> dict:
