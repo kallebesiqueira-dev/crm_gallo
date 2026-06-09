@@ -20,6 +20,7 @@ from app.api import (
     audit,
     auth,
     automations,
+    avatars,
     billing,
     companies,
     contracts,
@@ -367,6 +368,7 @@ app.include_router(whatsapp.router)
 app.include_router(activities.router)
 app.include_router(notes.router)
 app.include_router(attachments.router)
+app.include_router(avatars.router)
 app.include_router(imports.router)
 app.include_router(exports.router)
 app.include_router(api_keys.router)

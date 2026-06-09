@@ -1288,6 +1288,32 @@ export const api = {
     ),
   listOrgMembers: () => request<TeamMember[]>("/api/orgs/current/members"),
 
+  // Avatars (profile photos) — cookie + CSRF, multipart upload
+  getAvatar: (entityType: "customer" | "company" | "user", entityId: string) =>
+    request<{ url: string | null }>(
+      `/api/avatars/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}`,
+    ),
+  uploadAvatar: async (
+    entityType: "customer" | "company" | "user",
+    entityId: string,
+    file: File,
+  ): Promise<{ url: string | null }> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const csrf = readCookie("csrf_token");
+    const res = await fetch(
+      `${API_URL}/api/avatars/${encodeURIComponent(entityType)}/${encodeURIComponent(entityId)}`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: csrf ? { "X-CSRF-Token": csrf } : {},
+        body: fd,
+      },
+    );
+    if (!res.ok) throw new ApiError(res.status, "Avatar upload failed");
+    return res.json();
+  },
+
   // ---- File attachments (S3-backed) ----
   listAttachments: (
     entity_type: "lead" | "customer" | "deal" | "quote" | "contract",
