@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
@@ -7,9 +8,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.deps import get_current_org_id, get_current_user
-from app.models import Customer, Deal, DealStage, Lead, LeadStage, Task, TaskStatus, User
+from app.models import (
+    Customer,
+    Deal,
+    DealStage,
+    Lead,
+    LeadStage,
+    Quote,
+    QuoteStatus,
+    Task,
+    TaskStatus,
+    User,
+)
 from app.money import ZERO, q2
-from app.schemas import DashboardStats, FunnelStageStat
+from app.schemas import DashboardStats, FunnelStageStat, MonthValue, QuotesSummary
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -119,6 +131,69 @@ async def stats(
         for s in FUNNEL_STAGES
     ]
 
+    # Monthly revenue — won deals by month (last 12 months) + total.
+    won_rows = (
+        await db.execute(
+            select(Deal.value, Deal.currency, Deal.updated_at).where(
+                Deal.organization_id == org_id, Deal.stage == DealStage.won
+            )
+        )
+    ).all()
+    now = datetime.now(UTC)
+    month_keys: list[str] = []
+    yy, mm = now.year, now.month
+    for _ in range(12):
+        month_keys.append(f"{yy:04d}-{mm:02d}")
+        mm -= 1
+        if mm == 0:
+            mm = 12
+            yy -= 1
+    month_keys.reverse()
+    rev_by_month: dict[str, Decimal] = {k: ZERO for k in month_keys}
+    revenue_total = ZERO
+    for value, currency, updated in won_rows:
+        eur_val = (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+        revenue_total += eur_val
+        key = f"{updated.year:04d}-{updated.month:02d}"
+        if key in rev_by_month:
+            rev_by_month[key] += eur_val
+    monthly_revenue = [
+        MonthValue(month=k, value_eur=float(q2(rev_by_month[k]))) for k in month_keys
+    ]
+
+    # Quotes summary — value by status + open/overdue (sent, by valid_until).
+    quote_rows = (
+        await db.execute(
+            select(Quote.status, Quote.total, Quote.currency, Quote.valid_until).where(
+                Quote.organization_id == org_id
+            )
+        )
+    ).all()
+    today = now.date()
+    q_total = q_out = q_acc = q_rej = q_open = q_overdue = ZERO
+    for status, total, currency, valid_until in quote_rows:
+        eur_val = (total or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+        q_total += eur_val
+        if status in (QuoteStatus.draft, QuoteStatus.sent):
+            q_out += eur_val
+        elif status == QuoteStatus.accepted:
+            q_acc += eur_val
+        elif status in (QuoteStatus.declined, QuoteStatus.expired):
+            q_rej += eur_val
+        if status == QuoteStatus.sent:
+            if valid_until is not None and valid_until < today:
+                q_overdue += eur_val
+            else:
+                q_open += eur_val
+    quotes_summary = QuotesSummary(
+        total_eur=float(q2(q_total)),
+        outstanding_eur=float(q2(q_out)),
+        accepted_eur=float(q2(q_acc)),
+        rejected_eur=float(q2(q_rej)),
+        open_eur=float(q2(q_open)),
+        overdue_eur=float(q2(q_overdue)),
+    )
+
     return DashboardStats(
         total_leads=total_leads,
         leads_by_stage=by_stage,
@@ -131,4 +206,7 @@ async def stats(
         pipeline_value_eur=float(q2(pipeline_value)),
         open_tasks=open_tasks,
         pipeline_funnel=pipeline_funnel,
+        monthly_revenue=monthly_revenue,
+        revenue_total_eur=float(q2(revenue_total)),
+        quotes=quotes_summary,
     )
