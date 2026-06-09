@@ -29,7 +29,8 @@
     "forms": "Formulaires",
     "inbox": "WhatsApp",
     "performance": "Performance",
-    "automations": "Automatisations"
+    "automations": "Automatisations",
+    "products": "Produits"
   },
   "inbox": {
     "title": "Boîte WhatsApp",
@@ -1496,5 +1497,24 @@
     },
     "confirmDeleteTitle": "Supprimer la règle ?",
     "confirmDeleteBody": "« {name} » sera définitivement supprimée et cessera de se déclencher."
+  },
+  "products": {
+    "title": "Produits",
+    "new": "Nouveau produit",
+    "edit": "Modifier le produit",
+    "search": "Rechercher des produits…",
+    "empty": "Aucun produit pour le moment.",
+    "name": "Nom",
+    "sku": "SKU",
+    "type": "Type",
+    "typeProduct": "Produit",
+    "typeService": "Service",
+    "price": "Prix",
+    "currency": "Devise",
+    "unit": "Unité",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "status": "Statut",
+    "description": "Description"
   }
 }

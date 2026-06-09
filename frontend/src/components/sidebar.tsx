@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   MessageCircle,
   MessagesSquare,
+  Package,
   PanelLeftClose,
   PanelLeftOpen,
   ScrollText,
@@ -53,6 +54,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "pipeline", label: "pipeline", icon: Workflow },
       { href: "quotes", label: "quotes", icon: FileText },
       { href: "contracts", label: "contracts", icon: FileSignature },
+      { href: "products", label: "products", icon: Package },
     ],
   },
   {
