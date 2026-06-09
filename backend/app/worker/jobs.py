@@ -1034,6 +1034,7 @@ async def send_whatsapp_message(
                 media_id=media.get("media_id"),
                 caption=media.get("caption"),
                 filename=media.get("filename"),
+                context_message_id=context_wamid,
             )
         elif interactive is not None:
             wamid = await send_interactive(
@@ -1047,6 +1048,7 @@ async def send_whatsapp_message(
                 sections=interactive.get("sections"),
                 header_text=interactive.get("header_text"),
                 footer_text=interactive.get("footer_text"),
+                context_message_id=context_wamid,
             )
         elif reaction is not None:
             wamid = await send_reaction(

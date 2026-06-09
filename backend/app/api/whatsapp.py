@@ -665,6 +665,36 @@ async def _require_active_account(
     return account
 
 
+async def _resolve_reply_context(
+    db: AsyncSession,
+    conversation_id: uuid.UUID,
+    org_id: uuid.UUID,
+    reply_to_message_id: uuid.UUID | None,
+) -> str | None:
+    """Resolve a `reply_to_message_id` (one of our Message UUIDs) into the target
+    message's wamid, to send the new message as a quoted reply. None when no
+    reply is requested. 404 if the target isn't in this conversation/org; 409 if
+    it exists but has no wamid yet (an outbound row still pending its send)."""
+    if reply_to_message_id is None:
+        return None
+    target = (
+        await db.execute(
+            select(Message).where(
+                Message.id == reply_to_message_id,
+                Message.conversation_id == conversation_id,
+                Message.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if target is None:
+        raise HTTPException(status_code=404, detail="Quoted message not found")
+    if not target.wa_message_id:
+        raise HTTPException(
+            status_code=409, detail="Cannot quote a message that has no WhatsApp id yet"
+        )
+    return target.wa_message_id
+
+
 @router.post(
     "/conversations/{conversation_id}/messages",
     response_model=MessageOut,
@@ -684,25 +714,9 @@ async def send_message(
     the same conversation (409 if that target has no `wamid` yet)."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
-
-    context_wamid: str | None = None
-    if payload.reply_to_message_id is not None:
-        target = (
-            await db.execute(
-                select(Message).where(
-                    Message.id == payload.reply_to_message_id,
-                    Message.conversation_id == conversation_id,
-                    Message.organization_id == org_id,
-                )
-            )
-        ).scalar_one_or_none()
-        if target is None:
-            raise HTTPException(status_code=404, detail="Quoted message not found")
-        if not target.wa_message_id:
-            raise HTTPException(
-                status_code=409, detail="Cannot quote a message that has no WhatsApp id yet"
-            )
-        context_wamid = target.wa_message_id
+    context_wamid = await _resolve_reply_context(
+        db, conversation_id, org_id, payload.reply_to_message_id
+    )
 
     msg = Message(
         organization_id=org_id,
@@ -844,6 +858,9 @@ async def send_media_message(
     active."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
+    context_wamid = await _resolve_reply_context(
+        db, conversation_id, org_id, payload.reply_to_message_id
+    )
 
     preview = (payload.caption or f"[{payload.media_type}]")[:255]
     msg = Message(
@@ -854,6 +871,7 @@ async def send_media_message(
         body=payload.caption,
         media_id=payload.media_id,
         media_url=payload.link,
+        context_wa_message_id=context_wamid,
         status=MessageStatus.pending,
         sender_user_id=user.id,
     )
@@ -922,6 +940,9 @@ async def send_interactive_message(
     24h window open (Meta rejects otherwise → the row is stamped failed)."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
+    context_wamid = await _resolve_reply_context(
+        db, conversation_id, org_id, payload.reply_to_message_id
+    )
 
     preview = _interactive_preview(payload)
     msg = Message(
@@ -930,6 +951,7 @@ async def send_interactive_message(
         direction=MessageDirection.outbound,
         type=MessageType.interactive,
         body=preview,
+        context_wa_message_id=context_wamid,
         status=MessageStatus.pending,
         sender_user_id=user.id,
     )

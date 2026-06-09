@@ -1823,6 +1823,7 @@ class SendMediaRequest(BaseModel):
     media_id: Annotated[str | None, Field(default=None, max_length=128)] = None
     caption: Annotated[str | None, Field(default=None, max_length=1024)] = None
     filename: Annotated[str | None, Field(default=None, max_length=255)] = None
+    reply_to_message_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _exactly_one_source(self) -> "SendMediaRequest":
@@ -1881,6 +1882,7 @@ class SendInteractiveRequest(BaseModel):
     buttons: Annotated[list[InteractiveButton] | None, Field(default=None, max_length=3)] = None
     button_text: Annotated[str | None, Field(default=None, max_length=20)] = None
     sections: Annotated[list[InteractiveSection] | None, Field(default=None, max_length=10)] = None
+    reply_to_message_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _shape(self) -> "SendInteractiveRequest":

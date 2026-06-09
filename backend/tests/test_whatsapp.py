@@ -1240,6 +1240,94 @@ def test_send_media_persists_pending_and_enqueues(
     assert kwargs["dedupe_key"] == f"wa_send:{body['id']}"
 
 
+def test_send_media_with_context_quotes(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.media.quote.1")
+    import asyncio
+
+    asyncio.run(
+        send_media(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            media_type="image",
+            link="https://cdn.example/cat.jpg",
+            context_message_id="wamid.orig.1",
+        )
+    )
+    assert captured["json"]["context"] == {"message_id": "wamid.orig.1"}
+
+
+def test_send_media_reply_to_persists_context(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.media.quote.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="manda a foto",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={
+            "media_type": "image",
+            "link": "https://cdn.example/cat.jpg",
+            "reply_to_message_id": str(target.id),
+        },
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["context_wa_message_id"] == "wamid.media.quote.target.1"
+
+
+def test_send_interactive_reply_to_persists_context(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.int.quote.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="quais opções?",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "Escolha:",
+            "buttons": [{"id": "a", "title": "A"}],
+            "reply_to_message_id": str(target.id),
+        },
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["context_wa_message_id"] == "wamid.int.quote.target.1"
+
+
 def test_send_media_no_caption_uses_bracket_preview(
     admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
 ):

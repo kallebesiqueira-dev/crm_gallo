@@ -379,11 +379,14 @@ async def send_media(
     media_id: str | None = None,
     caption: str | None = None,
     filename: str | None = None,
+    context_message_id: str | None = None,
 ) -> str:
     """Send an image/document/video/audio message via the Graph API; return
     `wamid`. Source by `link` (a public URL Meta fetches) OR `media_id` (an
     already-uploaded handle) — the caller guarantees exactly one. `caption` is
     attached only for image/video/document; `filename` only for document.
+
+    Pass `context_message_id` to send this as a quoted reply to that wamid.
     """
     obj: dict = {}
     if link:
@@ -401,6 +404,8 @@ async def send_media(
         "type": media_type,
         media_type: obj,
     }
+    if context_message_id:
+        payload["context"] = {"message_id": context_message_id}
     return await _post_message(phone_number_id, access_token, payload)
 
 
@@ -416,6 +421,7 @@ async def send_interactive(
     sections: list[dict] | None = None,
     header_text: str | None = None,
     footer_text: str | None = None,
+    context_message_id: str | None = None,
 ) -> str:
     """Send an interactive message — reply buttons (`interactive_type="button"`)
     or a list menu (`"list"`) — via the Graph API; return `wamid`.
@@ -425,7 +431,8 @@ async def send_interactive(
     `WhatsAppSendError`). The caller (worker) guarantees the shape matches the
     type: `buttons` (1-3 `{"id","title"}`) for button, or `button_text` +
     `sections` (`[{"title"?, "rows":[{"id","title","description"?}]}]`) for list.
-    Header/footer text are optional on either kind.
+    Header/footer text are optional on either kind. Pass `context_message_id` to
+    send it as a quoted reply to that wamid.
     """
     interactive: dict = {"type": interactive_type, "body": {"text": body_text}}
     if header_text:
@@ -464,6 +471,8 @@ async def send_interactive(
         "type": "interactive",
         "interactive": interactive,
     }
+    if context_message_id:
+        payload["context"] = {"message_id": context_message_id}
     return await _post_message(phone_number_id, access_token, payload)
 
 
