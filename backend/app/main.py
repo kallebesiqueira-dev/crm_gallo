@@ -40,6 +40,7 @@ from app.api import (
     outbox,
     performance,
     pipelines,
+    products,
     public,
     quotes,
     segments,
@@ -341,6 +342,7 @@ app.include_router(public.router)
 app.include_router(leads.router)
 app.include_router(customers.router)
 app.include_router(companies.router)
+app.include_router(products.router)
 app.include_router(custom_fields.router)
 app.include_router(tags.router)
 app.include_router(segments.router)

@@ -1,7 +1,7 @@
 # Engineering Backlog & Project Status
 
 > **Living document.** Update when work changes state. Read this first when resuming work.
-> **Last reviewed:** 2026-06-04 (reconciled "Next milestone" — ADR-016 Documents stack fully shipped + pushed)
+> **Last reviewed:** 2026-06-09 (WhatsApp omnichannel + premium dashboard live; Products catalog backend built + verified)
 
 ---
 
@@ -18,6 +18,12 @@ For the user-facing story, see [README.md](README.md). This document is the engi
 ---
 
 ## 2. Current state
+
+### ✅ Done (2026-06-09 — WhatsApp omnichannel + premium dashboard + Products catalog)
+- **WhatsApp omnichannel (PR #25, live):** `whatsapp_accounts` (non-RLS routing root — resolves the tenant from the unauthenticated inbound webhook) + `conversations` + `messages` (org-scoped, RLS ENABLE+FORCE+GUC policy) via migration `c5d6e7f8a9b0`; send/receive API, inbound webhook, worker jobs, inbox UI, i18n in all 7 locales. 29 tests green.
+- **Premium dashboard redesign (PR #22–#25, live):** purple brand theme, glassmorphism widgets, **6-group sidebar** (Vendite / Clienti / Lavoro / Crescita / Gestione / Sistema; `inbox` under Lavoro), clean topbar (search · mail→inbox · bell · help), clickable card controls. tsc + eslint clean.
+- **Products / Services catalog — BACKEND done & verified:** `products` org-scoped tenant table (RLS ENABLE+FORCE+GUC policy) + `producttype` enum via migration `d7e8f9a0b1c2`; `Product` model, `ProductCreate/Update/Out` schemas, full CRUD `/api/products` (mirrors `companies.py`). ruff clean, migration applies locally, RLS confirmed. **Frontend (list/new/edit + sidebar entry + i18n) is the next slice; not yet deployed.**
+- **Insight that re-scoped the roadmap:** most "missing" nav features already have BACKENDS — `deals`=Opportunità, `exports`=Esportazioni, `notifications`=Notifiche, `teams`=Team, `attachments`/`document_templates`=Documenti. They need FRONTEND pages, not new entities. Only the catalog needed a new table.
 
 ### ✅ Done (2026-06-01 security hot-patch)
 - `python-jose` 3.3.0 → 3.5.0 (closes PYSEC-2024-232/233 + PYSEC-2025-185 — JWT lib)

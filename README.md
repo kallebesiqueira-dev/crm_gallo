@@ -49,6 +49,8 @@ GALLO CRM is a **production-grade, multi-tenant CRM platform** that takes a deal
 - **Configurable pipelines** with a **drag-and-drop kanban** (drop on column or card).
 - **Versioned Quotes & Contracts** — line items, server-side totals, PDF generation (WeasyPrint), **merge-field templates**, and **e-signature** on both (token + HMAC webhook).
 - **Bulk Imports / Exports** — 3-phase idempotent CSV/XLSX import worker + streaming CSV export.
+- **Omnichannel inbox** — WhatsApp Cloud API (accounts · conversations · messages) with inbound webhooks and outbound sends, org-scoped under RLS.
+- **Product / Service catalog** — priced catalog items the tenant sells, ready to attach to quotes & contracts.
 
 ### AI
 - **Lead scoring** + next-best-action and **customer summaries** via **Anthropic Claude**, **Ollama** (local), or any OpenAI-compatible provider — with a heuristic fallback when no LLM is configured.
