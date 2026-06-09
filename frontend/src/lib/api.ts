@@ -1288,6 +1288,41 @@ export const api = {
     ),
   listOrgMembers: () => request<TeamMember[]>("/api/orgs/current/members"),
 
+  // Support — report an issue (multipart, cookie + CSRF) → emails the support inbox
+  reportIssue: async (data: {
+    category: string;
+    title: string;
+    description: string;
+    page_url: string;
+    user_agent: string;
+    screenshot?: File | null;
+  }): Promise<void> => {
+    const fd = new FormData();
+    fd.append("category", data.category);
+    fd.append("title", data.title);
+    fd.append("description", data.description);
+    fd.append("page_url", data.page_url);
+    fd.append("user_agent", data.user_agent);
+    if (data.screenshot) fd.append("screenshot", data.screenshot);
+    const csrf = readCookie("csrf_token");
+    const res = await fetch(`${API_URL}/api/support`, {
+      method: "POST",
+      credentials: "include",
+      headers: csrf ? { "X-CSRF-Token": csrf } : {},
+      body: fd,
+    });
+    if (!res.ok) {
+      let msg = "Failed to send report";
+      try {
+        const j = (await res.json()) as { detail?: string };
+        if (j.detail) msg = j.detail;
+      } catch {
+        /* keep default */
+      }
+      throw new ApiError(res.status, msg);
+    }
+  },
+
   // Avatars (profile photos) — cookie + CSRF, multipart upload
   getAvatar: (entityType: "customer" | "company" | "user", entityId: string) =>
     request<{ url: string | null }>(

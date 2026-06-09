@@ -1568,5 +1568,23 @@
       "company": "Companies",
       "product": "Products"
     }
+  },
+  "support": {
+    "title": "Report an issue",
+    "category": "Category",
+    "titleField": "Title",
+    "description": "Description",
+    "attach": "Attach screenshot — click to upload",
+    "autoInfo": "Page URL and browser info are included automatically.",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "sent": "Thanks! Your report was sent.",
+    "categories": {
+      "technical": "Technical issue",
+      "bug": "Bug",
+      "feature": "Feature request",
+      "question": "Question",
+      "other": "Other"
+    }
   }
 }
