@@ -208,7 +208,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav — pinned home, then the six groups */}
-      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="space-y-1">{renderItem(DASHBOARD_ITEM)}</div>
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="space-y-1">

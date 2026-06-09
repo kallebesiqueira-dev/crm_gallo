@@ -184,7 +184,13 @@
     "leadsByStage": "Leads per stadi",
     "trend14Days": "Leads — ultims 14 dis",
     "leadsCreated": "Leads creads",
-    "noData": "Naginas datas"
+    "noData": "Naginas datas",
+    "pipeline": "Pipeline",
+    "myTasks": "My tasks",
+    "recentCompanies": "Recent clients",
+    "goToPipeline": "Go to pipeline",
+    "viewAll": "View all",
+    "noTasks": "No tasks for now"
   },
   "leads": {
     "title": "Leads",
