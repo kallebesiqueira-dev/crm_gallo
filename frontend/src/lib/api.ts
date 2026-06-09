@@ -1286,6 +1286,7 @@ export const api = {
       `/api/teams/${encodeURIComponent(team_id)}/members/${encodeURIComponent(user_id)}`,
       { method: "DELETE" },
     ),
+  listOrgMembers: () => request<TeamMember[]>("/api/orgs/current/members"),
 
   // ---- File attachments (S3-backed) ----
   listAttachments: (

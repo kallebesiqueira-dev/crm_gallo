@@ -40,7 +40,8 @@
       "gestione": "Gestão",
       "sistema": "Sistema"
     },
-    "exports": "Exportações"
+    "exports": "Exportações",
+    "teams": "Equipes"
   },
   "inbox": {
     "title": "Caixa de entrada WhatsApp",
@@ -431,7 +432,11 @@
     "delete": "Excluir equipe",
     "removeMember": "Remover da equipe",
     "confirmDelete": "Excluir a equipe \"{name}\"? Membros e registros serão desvinculados.",
-    "confirmUnassign": "Remover este membro da equipe?"
+    "confirmUnassign": "Remover este membro da equipe?",
+    "subtitle": "Agrupe usuários em equipes",
+    "newTeamName": "Nome da nova equipe",
+    "addMember": "Adicionar membro…",
+    "noTeams": "Nenhuma equipe ainda."
   },
   "team": {
     "title": "Equipe e convites",
