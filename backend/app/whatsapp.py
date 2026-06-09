@@ -41,6 +41,7 @@ _TYPE_MAP: dict[str, MessageType] = {
     "sticker": MessageType.sticker,
     "location": MessageType.location,
     "contacts": MessageType.contacts,
+    "interactive": MessageType.interactive,
 }
 
 # Meta status `status` string → our MessageStatus enum.
@@ -159,6 +160,14 @@ def _extract_body_and_media(msg: dict, mtype: MessageType) -> tuple[str | None, 
             if (c.get("name") or {}).get("formatted_name")
         ]
         return (", ".join(names) or None), None
+    if mtype is MessageType.interactive:
+        # The contact tapped a quick-reply button or picked a list row. Meta
+        # nests the answer under `interactive.{button_reply|list_reply}`; we
+        # store the visible title (falling back to the id) so the thread reads
+        # naturally without a special renderer.
+        interactive = msg.get("interactive") or {}
+        reply = interactive.get(interactive.get("type") or "") or {}
+        return (reply.get("title") or reply.get("id")), None
     # unsupported — keep the type string as the body so the agent sees *what*
     # arrived even though we don't render it richly.
     return f"[unsupported message type: {msg.get('type')}]", None
@@ -364,6 +373,69 @@ async def send_media(
         "to": to,
         "type": media_type,
         media_type: obj,
+    }
+    return await _post_message(phone_number_id, access_token, payload)
+
+
+async def send_interactive(
+    *,
+    phone_number_id: str,
+    access_token: str,
+    to: str,
+    interactive_type: str,
+    body_text: str,
+    buttons: list[dict] | None = None,
+    button_text: str | None = None,
+    sections: list[dict] | None = None,
+    header_text: str | None = None,
+    footer_text: str | None = None,
+) -> str:
+    """Send an interactive message — reply buttons (`interactive_type="button"`)
+    or a list menu (`"list"`) — via the Graph API; return `wamid`.
+
+    Like free-form text, interactive messages are only valid INSIDE the 24h
+    customer-service window; Meta rejects them outside it (surfacing as a
+    `WhatsAppSendError`). The caller (worker) guarantees the shape matches the
+    type: `buttons` (1-3 `{"id","title"}`) for button, or `button_text` +
+    `sections` (`[{"title"?, "rows":[{"id","title","description"?}]}]`) for list.
+    Header/footer text are optional on either kind.
+    """
+    interactive: dict = {"type": interactive_type, "body": {"text": body_text}}
+    if header_text:
+        interactive["header"] = {"type": "text", "text": header_text}
+    if footer_text:
+        interactive["footer"] = {"text": footer_text}
+    if interactive_type == "button":
+        interactive["action"] = {
+            "buttons": [
+                {"type": "reply", "reply": {"id": b["id"], "title": b["title"]}}
+                for b in (buttons or [])
+            ]
+        }
+    else:
+        interactive["action"] = {
+            "button": button_text,
+            "sections": [
+                {
+                    **({"title": s["title"]} if s.get("title") else {}),
+                    "rows": [
+                        {
+                            "id": r["id"],
+                            "title": r["title"],
+                            **({"description": r["description"]} if r.get("description") else {}),
+                        }
+                        for r in s.get("rows") or []
+                    ],
+                }
+                for s in (sections or [])
+            ],
+        }
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to,
+        "type": "interactive",
+        "interactive": interactive,
     }
     return await _post_message(phone_number_id, access_token, payload)
 

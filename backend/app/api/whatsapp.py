@@ -60,6 +60,7 @@ from app.schemas import (
     ConversationStatusUpdate,
     MediaDownloadOut,
     MessageOut,
+    SendInteractiveRequest,
     SendMediaRequest,
     SendMessageRequest,
     SendTemplateRequest,
@@ -863,6 +864,85 @@ async def send_media_message(
             "media_id": payload.media_id,
             "caption": payload.caption,
             "filename": payload.filename,
+        },
+        dedupe_key=f"wa_send:{msg.id}",
+        dedupe_ttl_seconds=300,
+    )
+    return msg
+
+
+def _interactive_preview(payload: SendInteractiveRequest) -> str:
+    """A human-readable stand-in for the message list — show the prompt plus the
+    tappable options so the agent sees what the contact was offered."""
+    if payload.interactive_type == "button":
+        options = " · ".join(b.title for b in payload.buttons or [])
+    else:
+        options = payload.button_text or ""
+    return f"{payload.body_text} [{options}]"[:255]
+
+
+@router.post(
+    "/conversations/{conversation_id}/interactive",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def send_interactive_message(
+    conversation_id: uuid.UUID,
+    payload: SendInteractiveRequest,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Message:
+    """Queue an interactive outbound message — reply buttons or a list menu.
+    Persists a `pending` Message (type=interactive, body = a preview of the
+    prompt + options) and hands the Graph API send to the worker. Like text,
+    these are session messages, so the connected account must be active and the
+    24h window open (Meta rejects otherwise → the row is stamped failed)."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    await _require_active_account(db, conv, org_id)
+
+    preview = _interactive_preview(payload)
+    msg = Message(
+        organization_id=org_id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.interactive,
+        body=preview,
+        status=MessageStatus.pending,
+        sender_user_id=user.id,
+    )
+    db.add(msg)
+    conv.last_message_at = msg.timestamp
+    conv.last_message_preview = preview
+    await db.flush()
+    await record_audit(
+        db,
+        actor=user,
+        action="whatsapp.message.send_interactive",
+        entity_type="conversation",
+        entity_id=conv.id,
+        organization_id=org_id,
+        metadata={"message_id": str(msg.id), "interactive_type": payload.interactive_type},
+    )
+    await db.commit()
+    await db.refresh(msg)
+
+    from app.worker.queue import enqueue
+
+    await enqueue(
+        "send_whatsapp_message",
+        str(msg.id),
+        str(org_id),
+        None,
+        None,
+        {
+            "interactive_type": payload.interactive_type,
+            "body_text": payload.body_text,
+            "header_text": payload.header_text,
+            "footer_text": payload.footer_text,
+            "buttons": [b.model_dump() for b in payload.buttons] if payload.buttons else None,
+            "button_text": payload.button_text,
+            "sections": [s.model_dump() for s in payload.sections] if payload.sections else None,
         },
         dedupe_key=f"wa_send:{msg.id}",
         dedupe_ttl_seconds=300,

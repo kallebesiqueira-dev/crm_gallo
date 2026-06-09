@@ -46,6 +46,7 @@ from app.whatsapp import (
     WhatsAppSendError,
     fetch_media,
     parse_webhook,
+    send_interactive,
     send_media,
     send_template,
     verify_challenge,
@@ -1374,3 +1375,247 @@ def test_download_message_media_not_mirrored_404(
 
     r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}/messages/{msg.id}/media")
     assert r.status_code == 404
+
+
+# ====================== interactive messages ======================
+
+
+def _inbound_interactive_payload(
+    pnid: str = _PNID,
+    *,
+    sender: str = "5511988887777",
+    wamid: str = "wamid.int.in.1",
+    reply_kind: str = "button_reply",
+    reply_id: str = "OPT_YES",
+    reply_title: str = "Sim",
+) -> dict:
+    return {
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "metadata": {"phone_number_id": pnid},
+                            "contacts": [{"wa_id": sender, "profile": {"name": "Alice"}}],
+                            "messages": [
+                                {
+                                    "id": wamid,
+                                    "from": sender,
+                                    "type": "interactive",
+                                    "timestamp": "1700000000",
+                                    "interactive": {
+                                        "type": reply_kind,
+                                        reply_kind: {"id": reply_id, "title": reply_title},
+                                    },
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def test_send_interactive_buttons_builds_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.int.1")
+    import asyncio
+
+    wamid = asyncio.run(
+        send_interactive(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            interactive_type="button",
+            body_text="Confirma?",
+            buttons=[{"id": "yes", "title": "Sim"}, {"id": "no", "title": "Não"}],
+            footer_text="Equipe Gallo",
+        )
+    )
+    assert wamid == "wamid.int.1"
+    p = captured["json"]
+    assert p["type"] == "interactive"
+    assert p["interactive"]["type"] == "button"
+    assert p["interactive"]["body"] == {"text": "Confirma?"}
+    assert p["interactive"]["footer"] == {"text": "Equipe Gallo"}
+    assert p["interactive"]["action"]["buttons"] == [
+        {"type": "reply", "reply": {"id": "yes", "title": "Sim"}},
+        {"type": "reply", "reply": {"id": "no", "title": "Não"}},
+    ]
+
+
+def test_send_interactive_list_builds_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_interactive(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            interactive_type="list",
+            body_text="Escolha um plano",
+            button_text="Ver planos",
+            sections=[
+                {
+                    "title": "Mensais",
+                    "rows": [
+                        {"id": "std", "title": "Standard", "description": "9€/mês"},
+                        {"id": "prm", "title": "Premium"},
+                    ],
+                }
+            ],
+        )
+    )
+    interactive = captured["json"]["interactive"]
+    assert interactive["type"] == "list"
+    assert interactive["action"]["button"] == "Ver planos"
+    section = interactive["action"]["sections"][0]
+    assert section["title"] == "Mensais"
+    assert section["rows"] == [
+        {"id": "std", "title": "Standard", "description": "9€/mês"},
+        {"id": "prm", "title": "Premium"},
+    ]
+
+
+def test_send_interactive_buttons_persists_pending_and_enqueues(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "Confirma o horário?",
+            "buttons": [
+                {"id": "yes", "title": "Sim"},
+                {"id": "no", "title": "Não"},
+            ],
+        },
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["direction"] == "outbound"
+    assert body["status"] == "pending"
+    assert body["type"] == "interactive"
+    assert body["body"] == "Confirma o horário? [Sim · Não]"
+
+    db.refresh(conv)
+    assert conv.last_message_preview == "Confirma o horário? [Sim · Não]"
+
+    # Job queued with template + media slots None and the interactive spec 6th.
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "send_whatsapp_message"
+    assert args[1] == body["id"]
+    assert args[3] is None
+    assert args[4] is None
+    assert args[5] == {
+        "interactive_type": "button",
+        "body_text": "Confirma o horário?",
+        "header_text": None,
+        "footer_text": None,
+        "buttons": [{"id": "yes", "title": "Sim"}, {"id": "no", "title": "Não"}],
+        "button_text": None,
+        "sections": None,
+    }
+    assert kwargs["dedupe_key"] == f"wa_send:{body['id']}"
+
+
+def test_send_interactive_button_missing_buttons_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={"interactive_type": "button", "body_text": "oi"},
+    )
+    assert r.status_code == 422
+
+
+def test_send_interactive_list_missing_sections_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={"interactive_type": "list", "body_text": "oi", "button_text": "Ver"},
+    )
+    assert r.status_code == 422
+
+
+def test_send_interactive_duplicate_ids_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "oi",
+            "buttons": [{"id": "x", "title": "A"}, {"id": "x", "title": "B"}],
+        },
+    )
+    assert r.status_code == 422
+
+
+def test_send_interactive_inactive_account_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org, status=WhatsAppAccountStatus.disabled)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "oi",
+            "buttons": [{"id": "y", "title": "Sim"}],
+        },
+    )
+    assert r.status_code == 409
+
+
+def test_inbound_interactive_button_reply_parsed():
+    parsed = parse_webhook(_inbound_interactive_payload(reply_title="Sim", reply_id="OPT_YES"))
+    assert len(parsed.messages) == 1
+    m = parsed.messages[0]
+    assert m.type is MessageType.interactive
+    assert m.body == "Sim"  # the tapped title threads as the message body
+
+
+def test_inbound_interactive_list_reply_parsed():
+    parsed = parse_webhook(
+        _inbound_interactive_payload(
+            reply_kind="list_reply", reply_id="std", reply_title="Standard"
+        )
+    )
+    assert parsed.messages[0].type is MessageType.interactive
+    assert parsed.messages[0].body == "Standard"
+
+
+def test_inbound_interactive_persists_via_webhook(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    _make_account(db, test_org)
+    r = _post_webhook(client, _inbound_interactive_payload(wamid="wamid.int.in.9"))
+    assert r.status_code == 200
+    msg = db.execute(select(Message).where(Message.wa_message_id == "wamid.int.in.9")).scalar_one()
+    assert msg.type is MessageType.interactive
+    assert msg.body == "Sim"
+    assert msg.direction is MessageDirection.inbound

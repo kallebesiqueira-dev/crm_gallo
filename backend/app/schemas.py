@@ -1834,3 +1834,67 @@ class MediaDownloadOut(BaseModel):
 
     url: str
     expires_in: int
+
+
+class InteractiveButton(BaseModel):
+    """One reply button. `id` comes back verbatim in the inbound button_reply,
+    so it's the stable handle automations key off; `title` is the visible label
+    (Meta caps it at 20 chars)."""
+
+    id: Annotated[str, Field(min_length=1, max_length=256)]
+    title: Annotated[str, Field(min_length=1, max_length=20)]
+
+
+class InteractiveRow(BaseModel):
+    """One selectable row in a list section."""
+
+    id: Annotated[str, Field(min_length=1, max_length=200)]
+    title: Annotated[str, Field(min_length=1, max_length=24)]
+    description: Annotated[str | None, Field(default=None, max_length=72)] = None
+
+
+class InteractiveSection(BaseModel):
+    """A titled group of list rows."""
+
+    title: Annotated[str | None, Field(default=None, max_length=24)] = None
+    rows: Annotated[list[InteractiveRow], Field(min_length=1, max_length=10)]
+
+
+class SendInteractiveRequest(BaseModel):
+    """Send an interactive message: reply buttons (`interactive_type="button"`,
+    1-3 buttons) or a list menu (`"list"`, up to 10 rows total across sections).
+
+    Both are session messages — only deliverable INSIDE the 24h window, same as
+    free-form text. The Meta size caps live on the nested models; this validator
+    enforces that the fields present match the chosen type and that the reply
+    ids are unique (a duplicate id makes the inbound reply ambiguous)."""
+
+    interactive_type: Literal["button", "list"]
+    body_text: Annotated[str, Field(min_length=1, max_length=1024)]
+    header_text: Annotated[str | None, Field(default=None, max_length=60)] = None
+    footer_text: Annotated[str | None, Field(default=None, max_length=60)] = None
+    buttons: Annotated[list[InteractiveButton] | None, Field(default=None, max_length=3)] = None
+    button_text: Annotated[str | None, Field(default=None, max_length=20)] = None
+    sections: Annotated[list[InteractiveSection] | None, Field(default=None, max_length=10)] = None
+
+    @model_validator(mode="after")
+    def _shape(self) -> "SendInteractiveRequest":
+        if self.interactive_type == "button":
+            if not self.buttons:
+                raise ValueError("`buttons` is required for interactive_type=button (1-3)")
+            if self.sections or self.button_text:
+                raise ValueError("`sections`/`button_text` are list-only fields")
+            ids = [b.id for b in self.buttons]
+        else:
+            if not self.sections:
+                raise ValueError("`sections` is required for interactive_type=list")
+            if not self.button_text:
+                raise ValueError("`button_text` is required for interactive_type=list")
+            if self.buttons:
+                raise ValueError("`buttons` is a button-only field")
+            if sum(len(s.rows) for s in self.sections) > 10:
+                raise ValueError("a list may carry at most 10 rows total")
+            ids = [r.id for s in self.sections for r in s.rows]
+        if len(ids) != len(set(ids)):
+            raise ValueError("interactive reply ids must be unique")
+        return self

@@ -2180,12 +2180,15 @@ class MessageType(str, enum.Enum):
     sticker = "sticker"
     location = "location"
     contacts = "contacts"
+    # Both directions: the quick-reply buttons / list menus we send, and the
+    # button_reply/list_reply the contact taps back (stored with the tapped
+    # title as the body so the thread stays readable).
+    interactive = "interactive"
     # Outbound only: a pre-approved WhatsApp message template (business-initiated
     # send outside the 24h window). Inbound never carries this type.
     template = "template"
-    # Anything we don't model yet (interactive replies, reactions, system
-    # notifications) lands here so an unexpected payload is persisted, not
-    # dropped or crashed on.
+    # Anything we don't model yet (reactions, system notifications) lands here so
+    # an unexpected payload is persisted, not dropped or crashed on.
     unsupported = "unsupported"
 
 

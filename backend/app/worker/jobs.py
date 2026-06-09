@@ -918,21 +918,26 @@ async def send_whatsapp_message(
     organization_id: str,
     template: dict | None = None,
     media: dict | None = None,
+    interactive: dict | None = None,
 ) -> dict:
     """Deliver one outbound WhatsApp message via the Graph API.
 
     Enqueued by `POST /api/whatsapp/conversations/{id}/messages` (free-form
-    text), `.../template` (a pre-approved template), or `.../media` (image/
-    document/video/audio). All have already persisted a `pending` outbound
-    Message. This job loads that row + its conversation + the connected
-    (non-RLS) `whatsapp_accounts` token, calls the matching transport function,
-    and stamps the returned `wamid` while advancing the status to `sent`. A
-    delivery/read status later rides the inbound webhook (`apply_status`).
+    text), `.../template` (a pre-approved template), `.../media` (image/
+    document/video/audio), or `.../interactive` (reply buttons / list menu). All
+    have already persisted a `pending` outbound Message. This job loads that row
+    + its conversation + the connected (non-RLS) `whatsapp_accounts` token, calls
+    the matching transport function, and stamps the returned `wamid` while
+    advancing the status to `sent`. A delivery/read status later rides the
+    inbound webhook (`apply_status`).
 
     `template`, when present, is ``{"name", "language", "params"}`` and routes
     the send through `send_template`. `media`, when present, is
     ``{"media_type", "link", "media_id", "caption", "filename"}`` and routes
-    through `send_media`. At most one is set; otherwise plain `send_text` runs.
+    through `send_media`. `interactive`, when present, is ``{"interactive_type",
+    "body_text", "buttons"|"button_text"+"sections", "header_text",
+    "footer_text"}`` and routes through `send_interactive`. At most one is set;
+    otherwise plain `send_text` runs.
     The persisted `Message.body` is then a human-readable preview, not the wire
     payload.
 
@@ -952,7 +957,13 @@ async def send_whatsapp_message(
     On retry, the guard `status is not pending` short-circuits a row we already
     sent, so Meta never receives the same text twice from one click.
     """
-    from app.whatsapp import WhatsAppSendError, send_media, send_template, send_text
+    from app.whatsapp import (
+        WhatsAppSendError,
+        send_interactive,
+        send_media,
+        send_template,
+        send_text,
+    )
 
     SessionLocal = ctx["SessionLocal"]
     msg_uuid = uuid.UUID(message_id)
@@ -1019,6 +1030,19 @@ async def send_whatsapp_message(
                 media_id=media.get("media_id"),
                 caption=media.get("caption"),
                 filename=media.get("filename"),
+            )
+        elif interactive is not None:
+            wamid = await send_interactive(
+                phone_number_id=phone_number_id,
+                access_token=access_token,
+                to=to,
+                interactive_type=interactive["interactive_type"],
+                body_text=interactive["body_text"],
+                buttons=interactive.get("buttons"),
+                button_text=interactive.get("button_text"),
+                sections=interactive.get("sections"),
+                header_text=interactive.get("header_text"),
+                footer_text=interactive.get("footer_text"),
             )
         else:
             wamid = await send_text(
