@@ -30,7 +30,8 @@
     "inbox": "WhatsApp",
     "performance": "Performanza",
     "automations": "Automatisaziuns",
-    "products": "Products"
+    "products": "Products",
+    "notifications": "Notifications"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -475,7 +476,9 @@
     "title": "Notificaziuns",
     "empty": "Tut è en urden.",
     "markAllRead": "Marcar tut sco legì",
-    "dismiss": "Allontanar"
+    "dismiss": "Allontanar",
+    "all": "All",
+    "unread": "Unread"
   },
   "notes": {
     "title": "Notas",

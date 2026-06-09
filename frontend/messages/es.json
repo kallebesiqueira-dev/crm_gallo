@@ -30,7 +30,8 @@
     "inbox": "WhatsApp",
     "performance": "Rendimiento",
     "automations": "Automatizaciones",
-    "products": "Productos"
+    "products": "Productos",
+    "notifications": "Notificaciones"
   },
   "inbox": {
     "title": "Bandeja de WhatsApp",
@@ -475,7 +476,9 @@
     "title": "Notificaciones",
     "empty": "Estás al día.",
     "markAllRead": "Marcar todo como leído",
-    "dismiss": "Descartar"
+    "dismiss": "Descartar",
+    "all": "Todas",
+    "unread": "No leídas"
   },
   "notes": {
     "title": "Notas",

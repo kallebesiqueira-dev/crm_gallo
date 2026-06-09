@@ -30,7 +30,8 @@
     "inbox": "WhatsApp",
     "performance": "Performance",
     "automations": "Automatisations",
-    "products": "Produits"
+    "products": "Produits",
+    "notifications": "Notifications"
   },
   "inbox": {
     "title": "Boîte WhatsApp",
@@ -475,7 +476,9 @@
     "title": "Notifications",
     "empty": "Vous êtes à jour.",
     "markAllRead": "Tout marquer comme lu",
-    "dismiss": "Ignorer"
+    "dismiss": "Ignorer",
+    "all": "Tout",
+    "unread": "Non lues"
   },
   "notes": {
     "title": "Notes",
