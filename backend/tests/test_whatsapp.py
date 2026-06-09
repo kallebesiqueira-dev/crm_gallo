@@ -48,6 +48,7 @@ from app.whatsapp import (
     parse_webhook,
     send_interactive,
     send_media,
+    send_reaction,
     send_template,
     verify_challenge,
     verify_signature,
@@ -1618,4 +1619,230 @@ def test_inbound_interactive_persists_via_webhook(
     msg = db.execute(select(Message).where(Message.wa_message_id == "wamid.int.in.9")).scalar_one()
     assert msg.type is MessageType.interactive
     assert msg.body == "Sim"
+    assert msg.direction is MessageDirection.inbound
+
+
+# ====================== reactions ======================
+
+
+def _inbound_reaction_payload(
+    pnid: str = _PNID,
+    *,
+    sender: str = "5511988887777",
+    wamid: str = "wamid.react.in.1",
+    target_wamid: str = "wamid.target.1",
+    emoji: str = "👍",
+) -> dict:
+    reaction: dict = {"message_id": target_wamid}
+    if emoji:
+        reaction["emoji"] = emoji
+    return {
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "metadata": {"phone_number_id": pnid},
+                            "contacts": [{"wa_id": sender, "profile": {"name": "Alice"}}],
+                            "messages": [
+                                {
+                                    "id": wamid,
+                                    "from": sender,
+                                    "type": "reaction",
+                                    "timestamp": "1700000000",
+                                    "reaction": reaction,
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def test_send_reaction_builds_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.react.1")
+    import asyncio
+
+    wamid = asyncio.run(
+        send_reaction(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            message_id="wamid.target.1",
+            emoji="👍",
+        )
+    )
+    assert wamid == "wamid.react.1"
+    p = captured["json"]
+    assert p["type"] == "reaction"
+    assert p["reaction"] == {"message_id": "wamid.target.1", "emoji": "👍"}
+
+
+def test_send_reaction_empty_emoji_removes(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_reaction(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            message_id="wamid.target.1",
+            emoji="",
+        )
+    )
+    assert captured["json"]["reaction"] == {"message_id": "wamid.target.1", "emoji": ""}
+
+
+def test_react_endpoint_persists_pending_and_enqueues(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.target.endpoint.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="olá",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{target.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["direction"] == "outbound"
+    assert body["status"] == "pending"
+    assert body["type"] == "reaction"
+    assert body["body"] == "👍"
+    assert body["context_wa_message_id"] == "wamid.target.endpoint.1"
+
+    db.refresh(conv)
+    assert conv.last_message_preview == "👍"
+
+    # template+media+interactive slots None; reaction spec 7th.
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "send_whatsapp_message"
+    assert args[1] == body["id"]
+    assert args[3] is None
+    assert args[4] is None
+    assert args[5] is None
+    assert args[6] == {"message_id": "wamid.target.endpoint.1", "emoji": "👍"}
+    assert kwargs["dedupe_key"] == f"wa_send:{body['id']}"
+
+
+def test_react_to_message_without_wamid_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    pending = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.text,
+        body="still pending",
+        status=MessageStatus.pending,
+    )
+    db.add(pending)
+    db.commit()
+    db.refresh(pending)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{pending.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 409
+
+
+def test_react_to_nonexistent_message_404(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{uuid.uuid4()}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 404
+
+
+def test_react_inactive_account_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org, status=WhatsAppAccountStatus.disabled)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.target.inactive.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="oi",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{target.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 409
+
+
+def test_inbound_reaction_parsed():
+    parsed = parse_webhook(_inbound_reaction_payload(emoji="❤️", target_wamid="wamid.orig.7"))
+    assert len(parsed.messages) == 1
+    m = parsed.messages[0]
+    assert m.type is MessageType.reaction
+    assert m.body == "❤️"
+    assert m.context_wa_message_id == "wamid.orig.7"
+
+
+def test_inbound_reaction_removed_has_empty_body():
+    parsed = parse_webhook(_inbound_reaction_payload(emoji="", target_wamid="wamid.orig.8"))
+    m = parsed.messages[0]
+    assert m.type is MessageType.reaction
+    assert not m.body
+    assert m.context_wa_message_id == "wamid.orig.8"
+
+
+def test_inbound_reaction_persists_via_webhook(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    _make_account(db, test_org)
+    r = _post_webhook(
+        client,
+        _inbound_reaction_payload(
+            wamid="wamid.react.in.9", target_wamid="wamid.orig.9", emoji="🔥"
+        ),
+    )
+    assert r.status_code == 200
+    msg = db.execute(
+        select(Message).where(Message.wa_message_id == "wamid.react.in.9")
+    ).scalar_one()
+    assert msg.type is MessageType.reaction
+    assert msg.body == "🔥"
+    assert msg.context_wa_message_id == "wamid.orig.9"
     assert msg.direction is MessageDirection.inbound

@@ -106,6 +106,7 @@ async def ingest_inbound(db: AsyncSession, account: WhatsAppAccount, msg: Inboun
         type=msg.type,
         body=msg.body,
         media_id=msg.media_id,
+        context_wa_message_id=msg.context_wa_message_id,
         status=MessageStatus.received,
         timestamp=msg.timestamp,
     )

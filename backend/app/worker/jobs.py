@@ -919,6 +919,7 @@ async def send_whatsapp_message(
     template: dict | None = None,
     media: dict | None = None,
     interactive: dict | None = None,
+    reaction: dict | None = None,
 ) -> dict:
     """Deliver one outbound WhatsApp message via the Graph API.
 
@@ -936,8 +937,9 @@ async def send_whatsapp_message(
     ``{"media_type", "link", "media_id", "caption", "filename"}`` and routes
     through `send_media`. `interactive`, when present, is ``{"interactive_type",
     "body_text", "buttons"|"button_text"+"sections", "header_text",
-    "footer_text"}`` and routes through `send_interactive`. At most one is set;
-    otherwise plain `send_text` runs.
+    "footer_text"}`` and routes through `send_interactive`. `reaction`, when
+    present, is ``{"message_id", "emoji"}`` (empty emoji = remove) and routes
+    through `send_reaction`. At most one is set; otherwise plain `send_text` runs.
     The persisted `Message.body` is then a human-readable preview, not the wire
     payload.
 
@@ -961,6 +963,7 @@ async def send_whatsapp_message(
         WhatsAppSendError,
         send_interactive,
         send_media,
+        send_reaction,
         send_template,
         send_text,
     )
@@ -1043,6 +1046,14 @@ async def send_whatsapp_message(
                 sections=interactive.get("sections"),
                 header_text=interactive.get("header_text"),
                 footer_text=interactive.get("footer_text"),
+            )
+        elif reaction is not None:
+            wamid = await send_reaction(
+                phone_number_id=phone_number_id,
+                access_token=access_token,
+                to=to,
+                message_id=reaction["message_id"],
+                emoji=reaction.get("emoji") or "",
             )
         else:
             wamid = await send_text(

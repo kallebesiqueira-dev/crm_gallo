@@ -1774,6 +1774,7 @@ class MessageOut(BaseModel):
     body: str | None
     media_id: str | None
     media_url: str | None
+    context_wa_message_id: str | None
     status: MessageStatus
     error: str | None
     sender_user_id: uuid.UUID | None
@@ -1898,3 +1899,13 @@ class SendInteractiveRequest(BaseModel):
         if len(ids) != len(set(ids)):
             raise ValueError("interactive reply ids must be unique")
         return self
+
+
+class SendReactionRequest(BaseModel):
+    """React to a message with a single emoji. The target message is named by
+    the URL (`/messages/{message_id}/reaction`), so only the emoji is in the
+    body. An empty string removes a previously sent reaction (Meta's
+    convention); any non-empty value must be a single emoji grapheme — we don't
+    validate the unicode here, Meta rejects a non-emoji with a send error."""
+
+    emoji: Annotated[str, Field(default="", max_length=8)] = ""

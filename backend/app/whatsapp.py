@@ -42,6 +42,7 @@ _TYPE_MAP: dict[str, MessageType] = {
     "location": MessageType.location,
     "contacts": MessageType.contacts,
     "interactive": MessageType.interactive,
+    "reaction": MessageType.reaction,
 }
 
 # Meta status `status` string → our MessageStatus enum.
@@ -77,6 +78,9 @@ class InboundMessage:
     body: str | None
     media_id: str | None
     timestamp: datetime
+    # wamid of the message this one reacts to / quotes (a `reaction.message_id`
+    # or a quoted-reply `context.id`). None for a standalone message.
+    context_wa_message_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -168,6 +172,11 @@ def _extract_body_and_media(msg: dict, mtype: MessageType) -> tuple[str | None, 
         interactive = msg.get("interactive") or {}
         reply = interactive.get(interactive.get("type") or "") or {}
         return (reply.get("title") or reply.get("id")), None
+    if mtype is MessageType.reaction:
+        # An emoji reaction to an earlier message. The emoji IS the body; an
+        # empty emoji means the contact removed their reaction. The target
+        # wamid is pulled out separately in parse_webhook.
+        return (msg.get("reaction") or {}).get("emoji"), None
     # unsupported — keep the type string as the body so the agent sees *what*
     # arrived even though we don't render it richly.
     return f"[unsupported message type: {msg.get('type')}]", None
@@ -208,6 +217,11 @@ def parse_webhook(payload: dict) -> ParsedWebhook:
                     continue
                 mtype = _TYPE_MAP.get(msg.get("type", ""), MessageType.unsupported)
                 body, media_id = _extract_body_and_media(msg, mtype)
+                # A reaction names its target under `reaction.message_id`; any
+                # other quoted reply carries it under `context.id`.
+                context_wamid = (msg.get("reaction") or {}).get("message_id") or (
+                    msg.get("context") or {}
+                ).get("id")
                 result.messages.append(
                     InboundMessage(
                         phone_number_id=phone_number_id,
@@ -218,6 +232,7 @@ def parse_webhook(payload: dict) -> ParsedWebhook:
                         body=body,
                         media_id=media_id,
                         timestamp=_epoch_to_dt(msg.get("timestamp")),
+                        context_wa_message_id=context_wamid,
                     )
                 )
 
@@ -436,6 +451,30 @@ async def send_interactive(
         "to": to,
         "type": "interactive",
         "interactive": interactive,
+    }
+    return await _post_message(phone_number_id, access_token, payload)
+
+
+async def send_reaction(
+    *,
+    phone_number_id: str,
+    access_token: str,
+    to: str,
+    message_id: str,
+    emoji: str,
+) -> str:
+    """React to an earlier message with an emoji; return the reaction's `wamid`.
+
+    `message_id` is the wamid of the message being reacted to. Passing an empty
+    `emoji` removes a previously sent reaction (Meta's documented convention).
+    Reactions are valid only inside the 24h window like other free-form sends.
+    """
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to,
+        "type": "reaction",
+        "reaction": {"message_id": message_id, "emoji": emoji},
     }
     return await _post_message(phone_number_id, access_token, payload)
 

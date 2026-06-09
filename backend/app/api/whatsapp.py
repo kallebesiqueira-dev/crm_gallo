@@ -63,6 +63,7 @@ from app.schemas import (
     SendInteractiveRequest,
     SendMediaRequest,
     SendMessageRequest,
+    SendReactionRequest,
     SendTemplateRequest,
     WhatsAppAccountConnect,
     WhatsAppAccountOut,
@@ -944,6 +945,88 @@ async def send_interactive_message(
             "button_text": payload.button_text,
             "sections": [s.model_dump() for s in payload.sections] if payload.sections else None,
         },
+        dedupe_key=f"wa_send:{msg.id}",
+        dedupe_ttl_seconds=300,
+    )
+    return msg
+
+
+@router.post(
+    "/conversations/{conversation_id}/messages/{message_id}/reaction",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def send_message_reaction(
+    conversation_id: uuid.UUID,
+    message_id: uuid.UUID,
+    payload: SendReactionRequest,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Message:
+    """React to a message in this conversation with an emoji (empty = remove).
+
+    The target must already have a `wa_message_id` (Meta needs the wamid to
+    attach a reaction) — 409 if it's an outbound row still pending its id. Like
+    text, a reaction is a session message: the account must be active and the
+    24h window open. Persists a `pending` outbound Message (type=reaction, body =
+    the emoji, `context_wa_message_id` = the target's wamid) and queues the send."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    await _require_active_account(db, conv, org_id)
+
+    target = (
+        await db.execute(
+            select(Message).where(
+                Message.id == message_id,
+                Message.conversation_id == conversation_id,
+                Message.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if target is None:
+        raise HTTPException(status_code=404, detail="Message not found")
+    if not target.wa_message_id:
+        raise HTTPException(
+            status_code=409, detail="Cannot react to a message that has no WhatsApp id yet"
+        )
+
+    preview = payload.emoji or "[reaction removed]"
+    msg = Message(
+        organization_id=org_id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.reaction,
+        body=payload.emoji or None,
+        context_wa_message_id=target.wa_message_id,
+        status=MessageStatus.pending,
+        sender_user_id=user.id,
+    )
+    db.add(msg)
+    conv.last_message_at = msg.timestamp
+    conv.last_message_preview = preview[:255]
+    await db.flush()
+    await record_audit(
+        db,
+        actor=user,
+        action="whatsapp.message.send_reaction",
+        entity_type="conversation",
+        entity_id=conv.id,
+        organization_id=org_id,
+        metadata={"message_id": str(msg.id), "target_message_id": str(target.id)},
+    )
+    await db.commit()
+    await db.refresh(msg)
+
+    from app.worker.queue import enqueue
+
+    await enqueue(
+        "send_whatsapp_message",
+        str(msg.id),
+        str(org_id),
+        None,
+        None,
+        None,
+        {"message_id": target.wa_message_id, "emoji": payload.emoji},
         dedupe_key=f"wa_send:{msg.id}",
         dedupe_ttl_seconds=300,
     )

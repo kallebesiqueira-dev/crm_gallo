@@ -2184,6 +2184,10 @@ class MessageType(str, enum.Enum):
     # button_reply/list_reply the contact taps back (stored with the tapped
     # title as the body so the thread stays readable).
     interactive = "interactive"
+    # Both directions: an emoji reaction to another message. The emoji is the
+    # body; `context_wa_message_id` points at the message reacted to. An empty
+    # body means the reaction was removed.
+    reaction = "reaction"
     # Outbound only: a pre-approved WhatsApp message template (business-initiated
     # send outside the 24h window). Inbound never carries this type.
     template = "template"
@@ -2365,6 +2369,10 @@ class Message(Base):
     # lived CDN into our own bucket. Null until the `mirror_whatsapp_media`
     # worker job lands; served to the agent via a presigned download URL.
     media_storage_key: Mapped[str | None] = mapped_column(String(512))
+    # The wamid of the message this one reacts to / quotes (Meta's
+    # reaction.message_id or context.id). Indexed so the UI can attach a
+    # reaction to its target bubble.
+    context_wa_message_id: Mapped[str | None] = mapped_column(String(128), index=True)
     status: Mapped[MessageStatus] = mapped_column(Enum(MessageStatus), nullable=False)
     # Failure reason for an outbound send (Graph API error).
     error: Mapped[str | None] = mapped_column(Text)
