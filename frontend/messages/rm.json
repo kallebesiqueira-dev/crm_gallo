@@ -1568,5 +1568,23 @@
       "company": "Companies",
       "product": "Products"
     }
+  },
+  "support": {
+    "title": "Annunziar in problem",
+    "category": "Categoria",
+    "titleField": "Titel",
+    "description": "Descripziun",
+    "attach": "Agiunscher in screenshot — clicca per chargiar",
+    "autoInfo": "L'URL da la pagina e las infurmaziuns dal browser vegnan agiuntadas automaticamain.",
+    "cancel": "Annullar",
+    "submit": "Trametter",
+    "sent": "Grazia! Tia annunzia è vegnida tramessa.",
+    "categories": {
+      "technical": "Problem tecnic",
+      "bug": "Sbagl",
+      "feature": "Dumonda da funcziunalitad",
+      "question": "Dumonda",
+      "other": "Auter"
+    }
   }
 }

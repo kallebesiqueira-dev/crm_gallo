@@ -46,6 +46,7 @@ from app.api import (
     quotes,
     segments,
     signatures,
+    support,
     tags,
     tasks,
     teams,
@@ -369,6 +370,7 @@ app.include_router(activities.router)
 app.include_router(notes.router)
 app.include_router(attachments.router)
 app.include_router(avatars.router)
+app.include_router(support.router)
 app.include_router(imports.router)
 app.include_router(exports.router)
 app.include_router(api_keys.router)

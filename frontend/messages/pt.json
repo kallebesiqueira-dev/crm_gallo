@@ -1568,5 +1568,23 @@
       "company": "Empresas",
       "product": "Produtos"
     }
+  },
+  "support": {
+    "title": "Relatar um problema",
+    "category": "Categoria",
+    "titleField": "Título",
+    "description": "Descrição",
+    "attach": "Anexar captura — clique para enviar",
+    "autoInfo": "A URL da página e as informações do navegador são incluídas automaticamente.",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "sent": "Obrigado! Seu relato foi enviado.",
+    "categories": {
+      "technical": "Problema técnico",
+      "bug": "Bug",
+      "feature": "Pedido de recurso",
+      "question": "Pergunta",
+      "other": "Outro"
+    }
   }
 }
