@@ -137,8 +137,13 @@ def _extract_body_and_media(msg: dict, mtype: MessageType) -> tuple[str | None, 
     """Pull the human body + a media id out of one Meta message object."""
     if mtype is MessageType.text:
         return (msg.get("text") or {}).get("body"), None
-    if mtype in (MessageType.image, MessageType.document, MessageType.video, MessageType.audio,
-                 MessageType.sticker):
+    if mtype in (
+        MessageType.image,
+        MessageType.document,
+        MessageType.video,
+        MessageType.audio,
+        MessageType.sticker,
+    ):
         media = msg.get(mtype.value) or {}
         return media.get("caption"), media.get("id")
     if mtype is MessageType.location:
@@ -229,29 +234,18 @@ def parse_webhook(payload: dict) -> ParsedWebhook:
     return result
 
 
-async def send_text(
-    *, phone_number_id: str, access_token: str, to: str, body: str
-) -> str:
-    """Send a text message via the Graph API; return Meta's `wamid`.
+async def _post_message(phone_number_id: str, access_token: str, payload: dict) -> str:
+    """POST one `/messages` body to the Graph API and return Meta's `wamid`.
 
-    Raises `WhatsAppSendError` on any non-2xx so the worker records the
-    failure and arq's retry backoff kicks in. Note: outside the 24h customer
-    service window, free-form text is rejected by Meta and only approved
-    message TEMPLATES send — that surfaces here as a WhatsAppSendError the
-    agent sees on the message row (template sends are a follow-up).
-    """
+    Shared by every send shape (text, template, …). Raises `WhatsAppSendError`
+    on any non-2xx — carrying the HTTP status so the worker can tell a terminal
+    4xx (Meta rejected the message) from a transient 5xx/transport error worth
+    retrying."""
     settings = get_settings()
     url = (
         f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
         f"/{phone_number_id}/messages"
     )
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": to,
-        "type": "text",
-        "text": {"preview_url": False, "body": body},
-    }
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
@@ -277,3 +271,135 @@ async def send_text(
     if not messages or not messages[0].get("id"):
         raise WhatsAppSendError("send succeeded but no message id returned")
     return messages[0]["id"]
+
+
+async def send_text(*, phone_number_id: str, access_token: str, to: str, body: str) -> str:
+    """Send a free-form text message via the Graph API; return Meta's `wamid`.
+
+    Only valid INSIDE the 24h customer-service window — outside it Meta rejects
+    free-form text (surfacing as a `WhatsAppSendError` on the row) and only an
+    approved template sends (see `send_template`).
+    """
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to,
+        "type": "text",
+        "text": {"preview_url": False, "body": body},
+    }
+    return await _post_message(phone_number_id, access_token, payload)
+
+
+async def send_template(
+    *,
+    phone_number_id: str,
+    access_token: str,
+    to: str,
+    template_name: str,
+    language_code: str,
+    body_params: list[str] | None = None,
+) -> str:
+    """Send a pre-approved message template via the Graph API; return `wamid`.
+
+    Templates are the only message type Meta accepts outside the 24h window
+    (business-initiated conversations). `body_params` fills the template's
+    positional `{{1}}`, `{{2}}` … body variables in order; omit/empty for a
+    template with no variables. We don't validate the name or placeholder count
+    against Meta's catalog — a mismatch comes back as a `WhatsAppSendError`.
+    """
+    template: dict = {
+        "name": template_name,
+        "language": {"code": language_code},
+    }
+    if body_params:
+        template["components"] = [
+            {
+                "type": "body",
+                "parameters": [{"type": "text", "text": p} for p in body_params],
+            }
+        ]
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to,
+        "type": "template",
+        "template": template,
+    }
+    return await _post_message(phone_number_id, access_token, payload)
+
+
+# Caption is valid on these media kinds only (audio carries none); filename is
+# document-only. Meta rejects the field on the wrong kind, so we gate here.
+_CAPTIONABLE = {"image", "video", "document"}
+
+
+async def send_media(
+    *,
+    phone_number_id: str,
+    access_token: str,
+    to: str,
+    media_type: str,
+    link: str | None = None,
+    media_id: str | None = None,
+    caption: str | None = None,
+    filename: str | None = None,
+) -> str:
+    """Send an image/document/video/audio message via the Graph API; return
+    `wamid`. Source by `link` (a public URL Meta fetches) OR `media_id` (an
+    already-uploaded handle) — the caller guarantees exactly one. `caption` is
+    attached only for image/video/document; `filename` only for document.
+    """
+    obj: dict = {}
+    if link:
+        obj["link"] = link
+    if media_id:
+        obj["id"] = media_id
+    if caption and media_type in _CAPTIONABLE:
+        obj["caption"] = caption
+    if filename and media_type == "document":
+        obj["filename"] = filename
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to,
+        "type": media_type,
+        media_type: obj,
+    }
+    return await _post_message(phone_number_id, access_token, payload)
+
+
+async def fetch_media(media_id: str, access_token: str) -> tuple[bytes, str]:
+    """Download one inbound media object from Meta. Returns ``(bytes, mime)``.
+
+    Two hops, both bearer-authenticated: resolve the media id to a short-lived
+    CDN url (`GET /{media_id}`), then GET that url for the bytes. Raises
+    `WhatsAppSendError` carrying the HTTP status on any non-2xx, so the worker
+    can tell a terminal 4xx (the media handle expired / was deleted) from a
+    transient error worth retrying.
+    """
+    settings = get_settings()
+    base = f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    try:
+        async with httpx.AsyncClient(timeout=_SEND_TIMEOUT_S) as client:
+            meta = await client.get(f"{base}/{media_id}", headers=headers)
+            if meta.status_code >= 300:
+                raise WhatsAppSendError(
+                    f"HTTP {meta.status_code}: media lookup failed",
+                    status_code=meta.status_code,
+                )
+            info = meta.json() or {}
+            url = info.get("url")
+            mime = info.get("mime_type") or "application/octet-stream"
+            if not url:
+                raise WhatsAppSendError("media lookup returned no url")
+            # Meta's CDN url ALSO requires the bearer token (it 401s anonymously).
+            blob = await client.get(url, headers=headers)
+            if blob.status_code >= 300:
+                raise WhatsAppSendError(
+                    f"HTTP {blob.status_code}: media download failed",
+                    status_code=blob.status_code,
+                )
+            return blob.content, mime
+    except httpx.HTTPError as e:
+        raise WhatsAppSendError(f"transport error: {type(e).__name__}: {e}") from e

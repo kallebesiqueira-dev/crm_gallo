@@ -38,6 +38,7 @@ from app.worker.jobs import (
     generate_contract_pdf,
     generate_deal_pdf,
     generate_quote_pdf,
+    mirror_whatsapp_media,
     process_import,
     scan_stale_leads,
     score_lead,
@@ -110,6 +111,7 @@ class WorkerSettings:
         process_import,
         scan_stale_leads,
         send_whatsapp_message,
+        mirror_whatsapp_media,
     ]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1

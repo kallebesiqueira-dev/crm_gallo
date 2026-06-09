@@ -1785,3 +1785,52 @@ class SendMessageRequest(BaseModel):
     """Agent-composed outbound text. Capped at WhatsApp's ~4096-char body."""
 
     body: Annotated[str, Field(min_length=1, max_length=4096)]
+
+
+class SendTemplateRequest(BaseModel):
+    """Send a pre-approved WhatsApp message template — the ONLY way to message a
+    contact outside the 24h customer-service window (a free-form text there is
+    rejected by Meta).
+
+    ``template_name`` + ``language_code`` identify an approved template in the
+    WABA. ``body_params`` fills the template's positional ``{{1}}``, ``{{2}}`` …
+    body placeholders in order; leave it empty for a template with no variables.
+    We don't fetch the template catalog, so an unknown name / wrong placeholder
+    count surfaces as a Meta send error on the message row."""
+
+    template_name: Annotated[str, Field(min_length=1, max_length=512)]
+    language_code: Annotated[str, Field(default="en_US", min_length=2, max_length=15)] = "en_US"
+    body_params: Annotated[list[str], Field(default_factory=list, max_length=30)] = []
+
+
+class SendMediaRequest(BaseModel):
+    """Send an outbound media message (image / document / video / audio).
+
+    Source the media EITHER by ``link`` (a public https URL Meta fetches) OR by
+    ``media_id`` (a handle from an earlier upload to Meta) — exactly one. We do
+    NOT proxy bytes through our backend; the link route is the common case (e.g.
+    a hosted/presigned file URL). ``caption`` is honoured for image/video/
+    document only; ``filename`` for document only (both ignored otherwise so a
+    stray field is forgiving, not a 422)."""
+
+    media_type: Literal["image", "document", "video", "audio"]
+    link: Annotated[str | None, Field(default=None, max_length=2048)] = None
+    media_id: Annotated[str | None, Field(default=None, max_length=128)] = None
+    caption: Annotated[str | None, Field(default=None, max_length=1024)] = None
+    filename: Annotated[str | None, Field(default=None, max_length=255)] = None
+
+    @model_validator(mode="after")
+    def _exactly_one_source(self) -> "SendMediaRequest":
+        if bool(self.link) == bool(self.media_id):
+            raise ValueError("provide exactly one of `link` or `media_id`")
+        if self.link and not self.link.startswith(("https://", "http://")):
+            raise ValueError("`link` must be an http(s) URL")
+        return self
+
+
+class MediaDownloadOut(BaseModel):
+    """Short-lived presigned URL for an inbound message's mirrored media —
+    the SPA redirects the browser there to stream it straight from S3."""
+
+    url: str
+    expires_in: int

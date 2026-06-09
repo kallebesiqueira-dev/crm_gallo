@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import (
     Conversation,
     ConversationChannel,
+    ConversationStatus,
     Message,
     MessageDirection,
     MessageStatus,
@@ -42,12 +43,14 @@ async def resolve_accounts(
     if not phone_number_ids:
         return {}
     rows = (
-        await db.execute(
-            select(WhatsAppAccount).where(
-                WhatsAppAccount.phone_number_id.in_(phone_number_ids)
+        (
+            await db.execute(
+                select(WhatsAppAccount).where(WhatsAppAccount.phone_number_id.in_(phone_number_ids))
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {a.phone_number_id: a for a in rows}
 
 
@@ -88,9 +91,7 @@ async def ingest_inbound(db: AsyncSession, account: WhatsAppAccount, msg: Inboun
     `account.organization_id`.
     """
     existing = (
-        await db.execute(
-            select(Message.id).where(Message.wa_message_id == msg.wa_message_id)
-        )
+        await db.execute(select(Message.id).where(Message.wa_message_id == msg.wa_message_id))
     ).scalar_one_or_none()
     if existing is not None:
         return False
@@ -113,6 +114,10 @@ async def ingest_inbound(db: AsyncSession, account: WhatsAppAccount, msg: Inboun
     conv.last_message_at = msg.timestamp
     conv.last_message_preview = (msg.body or f"[{msg.type.value}]")[:_PREVIEW_MAX]
     conv.unread_count += 1
+    # A reply on a resolved thread pulls it back into the inbox. An `archived`
+    # thread was filed away deliberately, so it stays hidden until reopened.
+    if conv.status is ConversationStatus.closed:
+        conv.status = ConversationStatus.open
     await db.flush()
     return True
 
@@ -124,9 +129,7 @@ async def apply_status(db: AsyncSession, account: WhatsAppAccount, st: StatusUpd
     'read' back to 'delivered'. A 'failed' always wins. Caller must have set
     the tenant GUC for `account.organization_id`."""
     msg = (
-        await db.execute(
-            select(Message).where(Message.wa_message_id == st.wa_message_id)
-        )
+        await db.execute(select(Message).where(Message.wa_message_id == st.wa_message_id))
     ).scalar_one_or_none()
     if msg is None:
         # Status for a message we didn't originate (or haven't stored yet).
