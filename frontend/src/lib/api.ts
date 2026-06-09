@@ -98,6 +98,22 @@ export interface Company {
   updated_at: string;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  sku: string | null;
+  type: "product" | "service";
+  description: string | null;
+  price: string | null;
+  currency: string;
+  unit: string | null;
+  active: boolean;
+  owner_id: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CompanyRollup {
   company: Company;
   customers: Customer[];
@@ -1508,6 +1524,28 @@ export const api = {
     }),
   deleteCompany: (token: string, id: string) =>
     request<void>(`/api/companies/${id}`, { method: "DELETE", token }),
+
+  // Products / Services (catalog)
+  listProducts: (token: string, opts?: { q?: string; cursor?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (opts?.q) params.set("q", opts.q);
+    if (opts?.cursor) params.set("cursor", opts.cursor);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    const qs = params.toString();
+    return request<Page<Product>>(`/api/products${qs ? `?${qs}` : ""}`, { token });
+  },
+  createProduct: (token: string, payload: Partial<Product>) =>
+    request<Product>("/api/products", { method: "POST", token, body: JSON.stringify(payload) }),
+  getProduct: (token: string, id: string) => request<Product>(`/api/products/${id}`, { token }),
+  updateProduct: (token: string, id: string, payload: Partial<Product>, version?: number) =>
+    request<Product>(`/api/products/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
+    }),
+  deleteProduct: (token: string, id: string) =>
+    request<void>(`/api/products/${id}`, { method: "DELETE", token }),
 
   // Custom field definitions (per-org schema extension)
   listCustomFields: (token: string, entityType?: CustomFieldEntity) => {

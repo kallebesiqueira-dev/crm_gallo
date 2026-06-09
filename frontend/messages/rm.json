@@ -29,7 +29,8 @@
     "forms": "Formulars",
     "inbox": "WhatsApp",
     "performance": "Performanza",
-    "automations": "Automatisaziuns"
+    "automations": "Automatisaziuns",
+    "products": "Products"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -1496,5 +1497,24 @@
     },
     "confirmDeleteTitle": "Stizzar la regla?",
     "confirmDeleteBody": "«{name}» vegn stizzada permanentamain e na vegn betg pli exequida."
+  },
+  "products": {
+    "title": "Products",
+    "new": "New product",
+    "edit": "Edit product",
+    "search": "Search products…",
+    "empty": "No products yet.",
+    "name": "Name",
+    "sku": "SKU",
+    "type": "Type",
+    "typeProduct": "Product",
+    "typeService": "Service",
+    "price": "Price",
+    "currency": "Currency",
+    "unit": "Unit",
+    "active": "Active",
+    "inactive": "Inactive",
+    "status": "Status",
+    "description": "Description"
   }
 }
