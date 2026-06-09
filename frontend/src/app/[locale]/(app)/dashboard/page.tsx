@@ -432,7 +432,7 @@ function Funnel({
   if (!funnel.length) {
     return <div className="my-6 grid flex-1 place-items-center text-xs text-muted-foreground">{empty}</div>;
   }
-  const w = [100, 80, 62, 46, 32, 22];
+  const w = [100, 88, 76, 64, 52, 40];
   return (
     <div className="my-4 mb-5 flex items-stretch gap-4">
       <div className="flex w-[46%] shrink-0 flex-col">
