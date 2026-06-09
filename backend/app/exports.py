@@ -34,7 +34,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Customer, Lead
+from app.models import Company, Customer, Lead, Product
 
 # A leading char in this set turns a CSV cell into a live formula in
 # Excel / LibreOffice / Google Sheets. Tab and CR are included because
@@ -109,9 +109,37 @@ _CUSTOMER_EXPORT_COLUMNS = [
     ExportColumn("created_at", "created_at"),
 ]
 
+_COMPANY_EXPORT_COLUMNS = [
+    ExportColumn("id", "id"),
+    ExportColumn("name", "name"),
+    ExportColumn("industry", "industry"),
+    ExportColumn("website", "website"),
+    ExportColumn("phone", "phone"),
+    ExportColumn("email", "email"),
+    ExportColumn("country", "country"),
+    ExportColumn("address", "address"),
+    ExportColumn("size", "size"),
+    ExportColumn("notes", "notes"),
+    ExportColumn("created_at", "created_at"),
+]
+
+_PRODUCT_EXPORT_COLUMNS = [
+    ExportColumn("id", "id"),
+    ExportColumn("name", "name"),
+    ExportColumn("sku", "sku"),
+    ExportColumn("type", "type"),
+    ExportColumn("price", "price"),
+    ExportColumn("currency", "currency"),
+    ExportColumn("unit", "unit"),
+    ExportColumn("active", "active"),
+    ExportColumn("created_at", "created_at"),
+]
+
 _EXPORT_CONFIG = {
     "lead": (Lead, _LEAD_EXPORT_COLUMNS),
     "customer": (Customer, _CUSTOMER_EXPORT_COLUMNS),
+    "company": (Company, _COMPANY_EXPORT_COLUMNS),
+    "product": (Product, _PRODUCT_EXPORT_COLUMNS),
 }
 
 EXPORT_ENTITY_TYPES = tuple(_EXPORT_CONFIG.keys())

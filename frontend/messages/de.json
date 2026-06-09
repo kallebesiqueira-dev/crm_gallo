@@ -39,7 +39,8 @@
       "crescita": "Wachstum",
       "gestione": "Verwaltung",
       "sistema": "System"
-    }
+    },
+    "exports": "Exporte"
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -1550,5 +1551,17 @@
     "inactive": "Inaktiv",
     "status": "Status",
     "description": "Beschreibung"
+  },
+  "exports": {
+    "title": "Exporte",
+    "subtitle": "Lade deine Daten als CSV herunter",
+    "csvFormat": "CSV-Datei",
+    "download": "Herunterladen",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Kunden",
+      "company": "Unternehmen",
+      "product": "Produkte"
+    }
   }
 }
