@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowUpRight,
-  Award,
   Building2,
   CalendarDays,
   CheckCircle2,
@@ -22,12 +21,11 @@ import { api, type Company, type DashboardStats, type Lead, type Task } from "@/
 import { getToken } from "@/lib/auth";
 
 /**
- * GALLO CRM — premium dashboard, wired to REAL data.
- *
- * Light: white cards on a soft tinted background. Dark: landing-style
- * purple/black gradient + glassmorphism. Every widget reads live data
- * (stats / leads / tasks / companies); all copy is i18n. Widgets whose
- * back-end isn't connected yet show a clean empty state — never demo data.
+ * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
+ * soft tinted bg. Dark: landing-style purple/black gradient + glassmorphism.
+ * KPIs, funnel, financial overview, quotes summary, recent activity, my tasks
+ * and recent clients all read live data from `api.stats` / leads / tasks /
+ * companies. Never demo numbers — empty widgets show a clean empty state.
  */
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
@@ -55,31 +53,21 @@ export default function DashboardPage() {
     () => new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }),
     [locale],
   );
+  const eur2 = useMemo(
+    () => new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", minimumFractionDigits: 2 }),
+    [locale],
+  );
   const int = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
-  const trend = useMemo(() => {
-    const days: { label: string; count: number }[] = [];
-    const today = new Date();
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      days.push({
-        label: `${d.getDate()}/${d.getMonth() + 1}`,
-        count: leads.filter((l) => l.created_at.slice(0, 10) === key).length,
-      });
-    }
-    return days;
-  }, [leads]);
-
   const recentLeads = useMemo(
-    () =>
-      [...leads]
-        .sort((a, b) => b.created_at.localeCompare(a.created_at))
-        .slice(0, 4),
+    () => [...leads].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4),
     [leads],
   );
   const openTasks = useMemo(() => tasks.filter((task) => task.status !== "done").slice(0, 6), [tasks]);
+
+  const q = stats?.quotes;
+  const openTotal = (q?.open_eur ?? 0) + (q?.overdue_eur ?? 0);
+  const openPct = openTotal > 0 ? Math.round(((q?.open_eur ?? 0) / openTotal) * 100) : 0;
 
   const kpis = [
     { label: t("totalLeads"), value: stats ? int.format(stats.total_leads) : "—", icon: Users },
@@ -94,7 +82,6 @@ export default function DashboardPage() {
 
   return (
     <div className="relative space-y-5">
-      {/* Dark-mode ambient — light mode keeps the soft bg */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 -z-10 hidden bg-[radial-gradient(120%_120%_at_15%_0%,#1a1033_0%,#0d0a18_55%,#080611_100%)] dark:block"
@@ -144,6 +131,44 @@ export default function DashboardPage() {
             <div className="mt-3 text-3xl font-bold tracking-tight">{k.value}</div>
           </Panel>
         ))}
+      </div>
+
+      {/* Financial overview + quotes */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel className="p-5 lg:col-span-2">
+          <SectionTitle icon={TrendingUp}>{t("financialOverview")}</SectionTitle>
+          <div className="mt-4 grid gap-6 md:grid-cols-[1.5fr_1fr]">
+            <div>
+              <div className="text-xs text-muted-foreground">{t("payments")}</div>
+              <div className="text-sm font-semibold">
+                {t("total")} {eur2.format(stats?.revenue_total_eur ?? 0)}
+              </div>
+              <PaymentsBars data={stats?.monthly_revenue ?? []} locale={locale} />
+            </div>
+            <div className="md:border-l md:border-border md:pl-5">
+              <div className="text-xs text-muted-foreground">{t("openAmounts")}</div>
+              <DonutOpen pct={openPct} />
+              <div className="mt-3 space-y-1.5 text-xs">
+                <LegendRow color="bg-violet-500" label={t("openLabel")} value={eur2.format(q?.open_eur ?? 0)} />
+                <LegendRow color="bg-rose-500" label={t("overdue")} value={eur2.format(q?.overdue_eur ?? 0)} />
+              </div>
+            </div>
+          </div>
+        </Panel>
+
+        <Panel className="p-5">
+          <SectionTitle icon={FileText}>{t("quotesTitle")}</SectionTitle>
+          <div className="mt-2 text-xs text-muted-foreground">{t("totalOffered")}</div>
+          <div className="text-lg font-bold">{eur2.format(q?.total_eur ?? 0)}</div>
+          <div className="mt-2 flex items-center gap-4">
+            <CitazioniRings q={q} />
+            <div className="flex-1 space-y-2 text-xs">
+              <LegendRow color="bg-violet-500" label={t("outstanding")} value={eur2.format(q?.outstanding_eur ?? 0)} />
+              <LegendRow color="bg-fuchsia-500" label={t("accepted")} value={eur2.format(q?.accepted_eur ?? 0)} />
+              <LegendRow color="bg-rose-400" label={t("rejected")} value={eur2.format(q?.rejected_eur ?? 0)} />
+            </div>
+          </div>
+        </Panel>
       </div>
 
       {/* Recent activity + pipeline funnel + my tasks */}
@@ -205,33 +230,6 @@ export default function DashboardPage() {
             </div>
           )}
           <CardLink href={`/${locale}/tasks`}>{t("viewCalendar")}</CardLink>
-        </Panel>
-      </div>
-
-      {/* Trend + sales summary */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Panel className="p-5 lg:col-span-2">
-          <SectionTitle icon={TrendingUp}>{t("trend14Days")}</SectionTitle>
-          {leads.length === 0 ? (
-            <div className="grid h-44 place-items-center text-xs text-muted-foreground">{t("noData")}</div>
-          ) : (
-            <TrendBars data={trend} />
-          )}
-        </Panel>
-
-        <Panel className="p-5">
-          <SectionTitle icon={Award}>{t("summary")}</SectionTitle>
-          <div className="mt-4 space-y-3">
-            <SummaryRow label={t("wonDeals")} value={stats ? int.format(stats.won_count) : "—"} accent="text-emerald-500" />
-            <SummaryRow label={t("lostDeals")} value={stats ? int.format(stats.lost_count) : "—"} accent="text-rose-500" />
-            <SummaryRow label={t("openTasks")} value={stats ? int.format(stats.open_tasks) : "—"} accent="text-amber-500" />
-            <SummaryRow
-              label={t("avgAiScore")}
-              value={stats?.avg_ai_score != null ? stats.avg_ai_score.toFixed(1) : "—"}
-              accent="text-violet-500"
-            />
-            <SummaryRow label={t("totalCustomers")} value={stats ? int.format(stats.total_customers) : "—"} accent="text-sky-500" />
-          </div>
         </Panel>
       </div>
 
@@ -303,11 +301,14 @@ function SectionTitle({ icon: Icon, children }: { icon: typeof Target; children:
   );
 }
 
-function SummaryRow({ label, value, accent }: { label: string; value: string; accent: string }) {
+function LegendRow({ color, label, value }: { color: string; label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-2 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn("font-bold tabular-nums", accent)}>{value}</span>
+    <div className="flex items-center justify-between gap-2">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        <span className={cn("h-2.5 w-2.5 rounded-full", color)} />
+        {label}
+      </span>
+      <span className="font-semibold text-foreground">{value}</span>
     </div>
   );
 }
@@ -333,26 +334,90 @@ function CardLinkInline({ href, children }: { href: string; children: React.Reac
 
 /* ───────────────────────── charts ───────────────────────── */
 
-function TrendBars({ data }: { data: { label: string; count: number }[] }) {
-  const max = Math.max(1, ...data.map((d) => d.count));
+function PaymentsBars({ data, locale }: { data: { month: string; value_eur: number }[]; locale: string }) {
+  const max = Math.max(1, ...data.map((d) => d.value_eur));
+  const fmt = (m: string) => {
+    const d = new Date(`${m}-01T00:00:00`);
+    return Number.isNaN(d.getTime()) ? m.slice(5) : d.toLocaleDateString(locale, { month: "short" });
+  };
   return (
-    <div className="mt-4 flex h-44 items-end gap-1.5">
-      {data.map((d, i) => (
-        <div key={i} className="flex flex-1 flex-col items-center gap-1">
+    <div className="mt-3 flex h-36 items-end gap-1.5">
+      {data.map((d) => (
+        <div key={d.month} className="flex flex-1 flex-col items-center gap-1">
           <div
             className="w-full rounded-t-md bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-all hover:opacity-80"
-            style={{ height: `${Math.max(2, (d.count / max) * 100)}%` }}
-            title={`${d.label}: ${d.count}`}
+            style={{ height: `${Math.max(2, (d.value_eur / max) * 100)}%` }}
+            title={`${d.month}: ${d.value_eur}`}
           />
-          <span className="text-[8px] text-muted-foreground">{d.label}</span>
+          <span className="text-[9px] text-muted-foreground">{fmt(d.month)}</span>
         </div>
       ))}
     </div>
   );
 }
 
-// Trapezoidal funnel cone (left) + per-stage data (right), with breathing room
-// before the CTA so the two never touch.
+function DonutOpen({ pct }: { pct: number }) {
+  const r = 42;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative mx-auto mt-3 grid h-32 w-32 place-items-center">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="currentColor" strokeWidth="12" className="text-primary/10" />
+        <circle
+          cx="50"
+          cy="50"
+          r={r}
+          fill="none"
+          stroke="url(#donutOpen)"
+          strokeWidth="12"
+          strokeLinecap="round"
+          strokeDasharray={`${(pct / 100) * c} ${c}`}
+        />
+        <defs>
+          <linearGradient id="donutOpen" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#8b5cf6" />
+            <stop offset="100%" stopColor="#d946ef" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="text-2xl font-bold text-primary">{pct}%</div>
+    </div>
+  );
+}
+
+function CitazioniRings({ q }: { q?: DashboardStats["quotes"] }) {
+  const total = q?.total_eur ?? 0;
+  const frac = (v: number) => (total > 0 ? v / total : 0);
+  const rings = [
+    { r: 40, color: "#8b5cf6", f: frac(q?.outstanding_eur ?? 0) },
+    { r: 31, color: "#d946ef", f: frac(q?.accepted_eur ?? 0) },
+    { r: 22, color: "#fb7185", f: frac(q?.rejected_eur ?? 0) },
+  ];
+  return (
+    <svg viewBox="0 0 100 100" className="h-28 w-28 -rotate-90">
+      {rings.map((ring) => {
+        const c = 2 * Math.PI * ring.r;
+        return (
+          <g key={ring.r}>
+            <circle cx="50" cy="50" r={ring.r} fill="none" stroke="currentColor" strokeWidth="7" className="text-primary/10" />
+            <circle
+              cx="50"
+              cy="50"
+              r={ring.r}
+              fill="none"
+              stroke={ring.color}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={`${ring.f * c} ${c}`}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// Trapezoid funnel cone (bands connect into one smooth cone) + aligned data.
 function Funnel({
   funnel,
   tStages,
@@ -367,12 +432,9 @@ function Funnel({
   if (!funnel.length) {
     return <div className="my-6 grid flex-1 place-items-center text-xs text-muted-foreground">{empty}</div>;
   }
-  // Half-width at each boundary: band i goes from w[i] (top) to w[i+1] (bottom),
-  // so consecutive trapezoids share an edge and form ONE smooth cone.
   const w = [100, 80, 62, 46, 32, 22];
   return (
     <div className="my-4 mb-5 flex items-stretch gap-4">
-      {/* funnel cone */}
       <div className="flex w-[46%] shrink-0 flex-col">
         {funnel.map((s, i) => {
           const top = w[i] ?? 30;
@@ -389,7 +451,6 @@ function Funnel({
           );
         })}
       </div>
-      {/* per-stage data, aligned row-by-row with the cone */}
       <div className="flex flex-1 flex-col">
         {funnel.map((s) => (
           <div key={s.stage} className="flex h-10 items-center justify-between gap-2 text-xs">

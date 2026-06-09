@@ -204,7 +204,18 @@
     "viewCalendar": "Voir le calendrier",
     "summary": "Résumé",
     "recentDocuments": "Documents récents",
-    "noDocuments": "Aucun document."
+    "noDocuments": "Aucun document.",
+    "financialOverview": "Aperçu financier",
+    "payments": "Paiements",
+    "total": "Total",
+    "openAmounts": "Montants ouverts",
+    "openLabel": "Ouvert",
+    "overdue": "En retard",
+    "quotesTitle": "Devis",
+    "totalOffered": "Total proposé",
+    "outstanding": "En attente",
+    "accepted": "Accepté",
+    "rejected": "Refusé"
   },
   "leads": {
     "title": "Prospects",

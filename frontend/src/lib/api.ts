@@ -498,6 +498,16 @@ export interface DashboardStats {
   pipeline_value_eur: number;
   open_tasks: number;
   pipeline_funnel?: { stage: string; count: number; value_eur: number }[];
+  monthly_revenue?: { month: string; value_eur: number }[];
+  revenue_total_eur?: number;
+  quotes?: {
+    total_eur: number;
+    outstanding_eur: number;
+    accepted_eur: number;
+    rejected_eur: number;
+    open_eur: number;
+    overdue_eur: number;
+  };
 }
 
 export type GoalPeriod = "month" | "quarter" | "year";

@@ -204,7 +204,18 @@
     "viewCalendar": "Vedi calendario",
     "summary": "Riepilogo",
     "recentDocuments": "Ultimi documenti",
-    "noDocuments": "Nessun documento."
+    "noDocuments": "Nessun documento.",
+    "financialOverview": "Panoramica finanziaria",
+    "payments": "Pagamenti",
+    "total": "Totale",
+    "openAmounts": "Importi aperti",
+    "openLabel": "Aperto",
+    "overdue": "In ritardo",
+    "quotesTitle": "Preventivi",
+    "totalOffered": "Totale offerto",
+    "outstanding": "In sospeso",
+    "accepted": "Accettato",
+    "rejected": "Rifiutato"
   },
   "leads": {
     "title": "Lead",
