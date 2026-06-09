@@ -31,7 +31,15 @@
     "performance": "Performanza",
     "automations": "Automatisaziuns",
     "products": "Products",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "groups": {
+      "vendite": "Sales",
+      "clienti": "Clients",
+      "lavoro": "Work",
+      "crescita": "Growth",
+      "gestione": "Management",
+      "sistema": "System"
+    }
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -190,7 +198,13 @@
     "recentCompanies": "Recent clients",
     "goToPipeline": "Go to pipeline",
     "viewAll": "View all",
-    "noTasks": "No tasks for now"
+    "noTasks": "No tasks for now",
+    "customize": "Customize",
+    "recentActivities": "Recent activity",
+    "viewCalendar": "View calendar",
+    "summary": "Summary",
+    "recentDocuments": "Recent documents",
+    "noDocuments": "No documents yet."
   },
   "leads": {
     "title": "Leads",

@@ -31,7 +31,15 @@
     "performance": "Desempenho",
     "automations": "Automações",
     "products": "Produtos",
-    "notifications": "Notificações"
+    "notifications": "Notificações",
+    "groups": {
+      "vendite": "Vendas",
+      "clienti": "Clientes",
+      "lavoro": "Trabalho",
+      "crescita": "Crescimento",
+      "gestione": "Gestão",
+      "sistema": "Sistema"
+    }
   },
   "inbox": {
     "title": "Caixa de entrada WhatsApp",
@@ -190,7 +198,13 @@
     "recentCompanies": "Clientes recentes",
     "goToPipeline": "Ir para o pipeline",
     "viewAll": "Ver todos",
-    "noTasks": "Nenhuma tarefa"
+    "noTasks": "Nenhuma tarefa",
+    "customize": "Personalizar",
+    "recentActivities": "Atividades recentes",
+    "viewCalendar": "Ver calendário",
+    "summary": "Resumo",
+    "recentDocuments": "Documentos recentes",
+    "noDocuments": "Nenhum documento ainda."
   },
   "leads": {
     "title": "Leads",

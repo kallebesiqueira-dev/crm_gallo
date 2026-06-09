@@ -31,7 +31,15 @@
     "performance": "Leistung",
     "automations": "Automatisierungen",
     "products": "Produkte",
-    "notifications": "Benachrichtigungen"
+    "notifications": "Benachrichtigungen",
+    "groups": {
+      "vendite": "Vertrieb",
+      "clienti": "Kunden",
+      "lavoro": "Arbeit",
+      "crescita": "Wachstum",
+      "gestione": "Verwaltung",
+      "sistema": "System"
+    }
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -190,7 +198,13 @@
     "recentCompanies": "Neueste Kunden",
     "goToPipeline": "Zur Pipeline",
     "viewAll": "Alle ansehen",
-    "noTasks": "Keine Aufgaben"
+    "noTasks": "Keine Aufgaben",
+    "customize": "Anpassen",
+    "recentActivities": "Letzte Aktivität",
+    "viewCalendar": "Kalender öffnen",
+    "summary": "Übersicht",
+    "recentDocuments": "Letzte Dokumente",
+    "noDocuments": "Noch keine Dokumente."
   },
   "leads": {
     "title": "Leads",

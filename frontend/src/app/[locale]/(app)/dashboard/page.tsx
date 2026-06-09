@@ -6,9 +6,13 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowUpRight,
+  Award,
   Building2,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  FileText,
+  Settings2,
   Target,
   TrendingUp,
   Users,
@@ -20,12 +24,10 @@ import { getToken } from "@/lib/auth";
 /**
  * GALLO CRM — premium dashboard, wired to REAL data.
  *
- * Light: white cards on a soft tinted background, purple accents.
- * Dark: landing-style purple/black gradient + glassmorphism cards.
- *
- * Every widget reads live data: KPIs + funnel from `api.stats`, the 14-day
- * trend from leads, "my tasks" from `api.listTasks({mine})`, recent clients
- * from `api.listCompanies`. All copy is i18n (`dashboard` + `leads.stages`).
+ * Light: white cards on a soft tinted background. Dark: landing-style
+ * purple/black gradient + glassmorphism. Every widget reads live data
+ * (stats / leads / tasks / companies); all copy is i18n. Widgets whose
+ * back-end isn't connected yet show a clean empty state — never demo data.
  */
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
@@ -70,6 +72,13 @@ export default function DashboardPage() {
     return days;
   }, [leads]);
 
+  const recentLeads = useMemo(
+    () =>
+      [...leads]
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .slice(0, 4),
+    [leads],
+  );
   const openTasks = useMemo(() => tasks.filter((task) => task.status !== "done").slice(0, 6), [tasks]);
 
   const kpis = [
@@ -85,7 +94,7 @@ export default function DashboardPage() {
 
   return (
     <div className="relative space-y-5">
-      {/* Dark-mode ambient (landing-style) — light mode keeps the soft bg */}
+      {/* Dark-mode ambient — light mode keeps the soft bg */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 -z-10 hidden bg-[radial-gradient(120%_120%_at_15%_0%,#1a1033_0%,#0d0a18_55%,#080611_100%)] dark:block"
@@ -94,21 +103,32 @@ export default function DashboardPage() {
         <div className="absolute -right-[12%] bottom-[0%] h-[40rem] w-[40rem] rounded-full bg-[radial-gradient(closest-side,rgba(217,70,239,0.16),transparent_70%)] blur-3xl" />
       </div>
 
-      {/* Brand header */}
-      <div className="flex items-center gap-3">
-        <Image
-          src="/icon.png"
-          alt=""
-          width={44}
-          height={44}
-          className="h-11 w-11 shrink-0 rounded-xl object-contain shadow-sm"
-        />
-        <div className="min-w-0">
-          <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-xl font-bold tracking-tight text-transparent dark:from-white dark:to-violet-200">
-            {tApp("name")}
+      {/* Brand header + toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/gallo-logo.png"
+            alt={tApp("name")}
+            width={52}
+            height={52}
+            className="h-12 w-12 shrink-0 rounded-xl object-contain shadow-sm"
+            priority
+          />
+          <div className="min-w-0">
+            <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-xl font-bold tracking-tight text-transparent dark:from-white dark:to-violet-200">
+              {tApp("name")}
+            </div>
+            <div className="truncate text-xs text-muted-foreground">{t("welcome")}</div>
           </div>
-          <div className="truncate text-xs text-muted-foreground">{t("welcome")}</div>
         </div>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm transition hover:border-primary/40"
+        >
+          <Settings2 className="h-4 w-4 text-primary" />
+          {t("customize")}
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        </button>
       </div>
 
       {/* KPI row */}
@@ -126,15 +146,37 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Trend + pipeline funnel */}
+      {/* Recent activity + pipeline funnel + my tasks */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel className="p-5 lg:col-span-2">
-          <SectionTitle icon={TrendingUp}>{t("trend14Days")}</SectionTitle>
-          {leads.length === 0 ? (
-            <div className="grid h-44 place-items-center text-xs text-muted-foreground">{t("noData")}</div>
+        <Panel className="flex flex-col p-5">
+          <SectionTitle icon={CheckCircle2}>{t("recentActivities")}</SectionTitle>
+          {recentLeads.length === 0 ? (
+            <div className="grid flex-1 place-items-center py-8 text-xs text-muted-foreground">{t("noData")}</div>
           ) : (
-            <TrendBars data={trend} />
+            <div className="mt-3 space-y-1">
+              {recentLeads.map((l) => (
+                <Link
+                  key={l.id}
+                  href={`/${locale}/leads/${l.id}`}
+                  className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-accent"
+                >
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <Users className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">
+                      {l.first_name} {l.last_name}
+                    </div>
+                    <div className="truncate text-xs text-muted-foreground">{tStages(l.stage)}</div>
+                  </div>
+                  <div className="shrink-0 text-[11px] text-muted-foreground">
+                    {new Date(l.created_at).toLocaleDateString(locale)}
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
+          <CardLink href={`/${locale}/leads`}>{t("viewAll")}</CardLink>
         </Panel>
 
         <Panel className="flex flex-col p-5">
@@ -142,10 +184,7 @@ export default function DashboardPage() {
           <Funnel funnel={stats?.pipeline_funnel ?? []} tStages={tStages} eur={eur} empty={t("noData")} />
           <CardLink href={`/${locale}/pipeline`}>{t("goToPipeline")}</CardLink>
         </Panel>
-      </div>
 
-      {/* My tasks + recent clients */}
-      <div className="grid gap-4 lg:grid-cols-2">
         <Panel className="flex flex-col p-5">
           <SectionTitle icon={CalendarDays}>{t("myTasks")}</SectionTitle>
           {openTasks.length === 0 ? (
@@ -165,10 +204,40 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-          <CardLink href={`/${locale}/tasks`}>{t("viewAll")}</CardLink>
+          <CardLink href={`/${locale}/tasks`}>{t("viewCalendar")}</CardLink>
+        </Panel>
+      </div>
+
+      {/* Trend + sales summary */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel className="p-5 lg:col-span-2">
+          <SectionTitle icon={TrendingUp}>{t("trend14Days")}</SectionTitle>
+          {leads.length === 0 ? (
+            <div className="grid h-44 place-items-center text-xs text-muted-foreground">{t("noData")}</div>
+          ) : (
+            <TrendBars data={trend} />
+          )}
         </Panel>
 
         <Panel className="p-5">
+          <SectionTitle icon={Award}>{t("summary")}</SectionTitle>
+          <div className="mt-4 space-y-3">
+            <SummaryRow label={t("wonDeals")} value={stats ? int.format(stats.won_count) : "—"} accent="text-emerald-500" />
+            <SummaryRow label={t("lostDeals")} value={stats ? int.format(stats.lost_count) : "—"} accent="text-rose-500" />
+            <SummaryRow label={t("openTasks")} value={stats ? int.format(stats.open_tasks) : "—"} accent="text-amber-500" />
+            <SummaryRow
+              label={t("avgAiScore")}
+              value={stats?.avg_ai_score != null ? stats.avg_ai_score.toFixed(1) : "—"}
+              accent="text-violet-500"
+            />
+            <SummaryRow label={t("totalCustomers")} value={stats ? int.format(stats.total_customers) : "—"} accent="text-sky-500" />
+          </div>
+        </Panel>
+      </div>
+
+      {/* Recent clients + documents */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
             <SectionTitle icon={Building2}>{t("recentCompanies")}</SectionTitle>
             <CardLinkInline href={`/${locale}/companies`}>{t("viewAll")}</CardLinkInline>
@@ -176,8 +245,8 @@ export default function DashboardPage() {
           {companies.length === 0 ? (
             <div className="grid place-items-center py-8 text-xs text-muted-foreground">{t("noData")}</div>
           ) : (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {companies.slice(0, 6).map((c) => (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {companies.slice(0, 4).map((c) => (
                 <Link
                   key={c.id}
                   href={`/${locale}/companies/${c.id}`}
@@ -192,6 +261,16 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
+        </Panel>
+
+        <Panel className="p-5">
+          <div className="flex items-center justify-between">
+            <SectionTitle icon={FileText}>{t("recentDocuments")}</SectionTitle>
+            <CardLinkInline href={`/${locale}/quotes`}>{t("viewAll")}</CardLinkInline>
+          </div>
+          <div className="grid place-items-center py-10 text-center text-xs text-muted-foreground">
+            {t("noDocuments")}
+          </div>
         </Panel>
       </div>
     </div>
@@ -220,6 +299,15 @@ function SectionTitle({ icon: Icon, children }: { icon: typeof Target; children:
     <div className="flex items-center gap-2 text-sm font-semibold">
       <Icon className="h-4 w-4 text-primary" />
       {children}
+    </div>
+  );
+}
+
+function SummaryRow({ label, value, accent }: { label: string; value: string; accent: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn("font-bold tabular-nums", accent)}>{value}</span>
     </div>
   );
 }
@@ -263,6 +351,8 @@ function TrendBars({ data }: { data: { label: string; count: number }[] }) {
   );
 }
 
+// Trapezoidal funnel cone (left) + per-stage data (right), with breathing room
+// before the CTA so the two never touch.
 function Funnel({
   funnel,
   tStages,
@@ -275,29 +365,41 @@ function Funnel({
   empty: string;
 }) {
   if (!funnel.length) {
-    return <div className="grid flex-1 place-items-center py-8 text-xs text-muted-foreground">{empty}</div>;
+    return <div className="my-6 grid flex-1 place-items-center text-xs text-muted-foreground">{empty}</div>;
   }
+  const widths = [100, 84, 68, 54, 42];
   return (
-    <div className="mt-4 space-y-1.5">
-      {funnel.map((s, i) => (
-        <div key={s.stage} className="flex items-center gap-3">
-          <div className="flex flex-1 justify-center">
+    <div className="my-4 mb-5 flex items-stretch gap-3">
+      {/* cone */}
+      <div className="flex w-1/2 shrink-0 flex-col items-center gap-1">
+        {funnel.map((s, i) => (
+          <div
+            key={s.stage}
+            className="flex h-9 w-full items-center justify-center"
+            style={{ width: `${widths[i] ?? 40}%` }}
+          >
             <div
-              className="truncate rounded-md px-2 py-1.5 text-center text-[11px] font-semibold text-white shadow-sm"
+              className="h-full w-full rounded-md shadow-sm"
               style={{
-                width: `${100 - i * 14}%`,
+                clipPath: "polygon(0 0, 100% 0, 90% 100%, 10% 100%)",
                 background: `linear-gradient(90deg, hsl(262 83% ${64 - i * 6}%), hsl(290 80% ${66 - i * 6}%))`,
               }}
-            >
-              {tStages(s.stage)}
-            </div>
+            />
           </div>
-          <div className="w-10 shrink-0 text-right text-xs font-semibold tabular-nums">{s.count}</div>
-          <div className="w-20 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
-            {eur.format(s.value_eur)}
+        ))}
+      </div>
+      {/* data */}
+      <div className="flex flex-1 flex-col gap-1">
+        {funnel.map((s) => (
+          <div key={s.stage} className="flex h-9 items-center justify-between gap-2 text-xs">
+            <span className="truncate font-medium">{tStages(s.stage)}</span>
+            <span className="shrink-0 font-semibold tabular-nums">{s.count}</span>
+            <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
+              {eur.format(s.value_eur)}
+            </span>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
