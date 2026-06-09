@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link2, MessageCircle, Send, Target, Users } from "lucide-react";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -381,7 +382,7 @@ function ConnectEmptyState({
       <Card className="mx-auto max-w-xl">
         <CardHeader className="items-center text-center">
           <span className="mb-2 grid h-12 w-12 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-            <MessageCircle className="h-6 w-6" />
+            <WhatsAppIcon className="h-6 w-6" />
           </span>
           <CardTitle>{t("noAccounts")}</CardTitle>
           <p className="text-sm text-muted-foreground">{t("noAccountsBody")}</p>

@@ -217,7 +217,8 @@
     "totalOffered": "Total ofertado",
     "outstanding": "Pendientes",
     "accepted": "Aceptado",
-    "rejected": "Rechazado"
+    "rejected": "Rechazado",
+    "customizeHint": "Secciones visibles"
   },
   "leads": {
     "title": "Leads",
