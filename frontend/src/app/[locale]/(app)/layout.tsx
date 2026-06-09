@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, HelpCircle, Mail, Plus, Search, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
@@ -25,11 +25,9 @@ import { clearToken, getToken, isExpired, onTokenChange } from "@/lib/auth";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const locale = useLocale();
   const tAuth = useTranslations("auth");
   const tBilling = useTranslations("billing");
-  const tNav = useTranslations("nav");
   const [user, setUser] = useState<User | null>(null);
   const [billing, setBilling] = useState<BillingMe | null>(null);
   const [ready, setReady] = useState(false);
@@ -100,11 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Trial / seat-limit / canceled banners.
   const banner = billingBanner(billing, locale, tBilling);
 
-  // Topbar: current section title (from the route) + user identity bits.
-  const section = pathname?.split("/")[2] || "dashboard";
-  const sectionTitle = tNav.has(section)
-    ? tNav(section)
-    : section.charAt(0).toUpperCase() + section.slice(1);
+  // Topbar: identity bits for the avatar.
   const fullName = user?.full_name || user?.email || "";
   const initials =
     fullName
@@ -126,7 +120,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Left — hamburger (mobile) + current section + org switcher */}
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <MobileNav />
-              <h1 className="truncate text-lg font-semibold tracking-tight">{sectionTitle}</h1>
               <OrgSwitcher activeOrgId={user?.last_active_org_id ?? null} />
             </div>
 
