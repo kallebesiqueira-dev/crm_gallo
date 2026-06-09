@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { api, ApiError } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -101,9 +102,17 @@ export default function EditCompanyPage({ params }: { params: Promise<{ id: stri
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle>
-          {tCommon("edit")} — {form.name}
-        </CardTitle>
+        <div className="flex items-center gap-4">
+          <AvatarUpload
+            entityType="company"
+            entityId={id}
+            fallback={form.name.slice(0, 2).toUpperCase() || "?"}
+            size={64}
+          />
+          <CardTitle>
+            {tCommon("edit")} — {form.name}
+          </CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
