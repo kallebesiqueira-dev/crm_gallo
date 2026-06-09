@@ -30,7 +30,8 @@
     "inbox": "WhatsApp",
     "performance": "Performance",
     "automations": "Automations",
-    "products": "Products"
+    "products": "Products",
+    "notifications": "Notifications"
   },
   "inbox": {
     "title": "WhatsApp Inbox",
@@ -475,7 +476,9 @@
     "title": "Notifications",
     "empty": "You're all caught up.",
     "markAllRead": "Mark all read",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "all": "All",
+    "unread": "Unread"
   },
   "notes": {
     "title": "Notes",

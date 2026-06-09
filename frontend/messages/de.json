@@ -30,7 +30,8 @@
     "inbox": "WhatsApp",
     "performance": "Leistung",
     "automations": "Automatisierungen",
-    "products": "Produkte"
+    "products": "Produkte",
+    "notifications": "Benachrichtigungen"
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -475,7 +476,9 @@
     "title": "Benachrichtigungen",
     "empty": "Alles erledigt.",
     "markAllRead": "Alle als gelesen markieren",
-    "dismiss": "Verwerfen"
+    "dismiss": "Verwerfen",
+    "all": "Alle",
+    "unread": "Ungelesen"
   },
   "notes": {
     "title": "Notizen",
