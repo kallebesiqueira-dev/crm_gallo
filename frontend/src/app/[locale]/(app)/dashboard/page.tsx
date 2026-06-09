@@ -432,36 +432,30 @@ function Funnel({
   if (!funnel.length) {
     return <div className="my-6 grid flex-1 place-items-center text-xs text-muted-foreground">{empty}</div>;
   }
-  const w = [100, 88, 76, 64, 52, 40];
+  // Funnel: the stage NAME sits inside each band; bands go dark (Nuovo) → light
+  // (Vinto) as deals advance; count + value align in fixed columns on the right.
+  const widths = [100, 85, 70, 56, 44];
   return (
-    <div className="my-4 mb-5 flex items-stretch gap-4">
-      <div className="flex w-[46%] shrink-0 flex-col" style={{ aspectRatio: "0.85" }}>
-        {funnel.map((s, i) => {
-          const top = w[i] ?? 30;
-          const bot = w[i + 1] ?? 22;
-          return (
+    <div className="my-4 mb-4 flex flex-col gap-1">
+      {funnel.map((s, i) => (
+        <div key={s.stage} className="flex items-center gap-2">
+          <div className="flex flex-1 justify-center">
             <div
-              key={s.stage}
-              className="min-h-0 flex-1"
+              className="flex h-8 items-center justify-center truncate rounded px-2 text-center text-[11px] font-semibold text-white shadow-sm"
               style={{
-                clipPath: `polygon(${(100 - top) / 2}% 0, ${(100 + top) / 2}% 0, ${(100 + bot) / 2}% 100%, ${(100 - bot) / 2}% 100%)`,
-                background: `linear-gradient(135deg, hsl(262 83% ${66 - i * 6}%), hsl(290 80% ${68 - i * 6}%))`,
+                width: `${widths[i] ?? 44}%`,
+                background: `linear-gradient(135deg, hsl(264 72% ${42 + i * 7}%), hsl(288 70% ${46 + i * 7}%))`,
               }}
-            />
-          );
-        })}
-      </div>
-      <div className="flex flex-1 flex-col">
-        {funnel.map((s) => (
-          <div key={s.stage} className="flex min-h-0 flex-1 items-center justify-between gap-2 text-xs">
-            <span className="truncate font-medium">{tStages(s.stage)}</span>
-            <span className="shrink-0 font-semibold tabular-nums">{s.count}</span>
-            <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
-              {eur.format(s.value_eur)}
-            </span>
+            >
+              {tStages(s.stage)}
+            </div>
           </div>
-        ))}
-      </div>
+          <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums">{s.count}</span>
+          <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
+            {eur.format(s.value_eur)}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
