@@ -490,6 +490,8 @@ class User(Base):
     )
     locale: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Profile photo — S3 object key; served to clients via a fresh presigned URL.
+    avatar_key: Mapped[str | None] = mapped_column(String(512))
     # Email verification (anti-abuse on the Free tier). Self-signups land
     # with `email_verified=False` and must click the link in their
     # verification email before they can log in. The very first user (the
@@ -634,6 +636,7 @@ class Customer(SoftDeleteMixin, Base):
     address: Mapped[str | None] = mapped_column(Text)
     website: Mapped[str | None] = mapped_column(String(255))
     notes: Mapped[str | None] = mapped_column(Text)
+    avatar_key: Mapped[str | None] = mapped_column(String(512))
 
     # Optional B2B account link (structured counterpart to free-text
     # `company`). SET NULL on account delete.
@@ -753,6 +756,7 @@ class Company(SoftDeleteMixin, Base):
     address: Mapped[str | None] = mapped_column(Text)
     size: Mapped[int | None] = mapped_column(Integer)
     notes: Mapped[str | None] = mapped_column(Text)
+    avatar_key: Mapped[str | None] = mapped_column(String(512))
 
     # Per-org schema extension — see app/custom_fields.py.
     custom_fields: Mapped[dict] = mapped_column(
@@ -2157,6 +2161,9 @@ class ConversationChannel(str, enum.Enum):
 class ConversationStatus(str, enum.Enum):
     open = "open"
     closed = "closed"
+    # Filed away by an agent — hidden from the default inbox and, unlike a
+    # `closed` thread, NOT auto-reopened when the contact messages again.
+    archived = "archived"
 
 
 class MessageDirection(str, enum.Enum):
@@ -2173,6 +2180,9 @@ class MessageType(str, enum.Enum):
     sticker = "sticker"
     location = "location"
     contacts = "contacts"
+    # Outbound only: a pre-approved WhatsApp message template (business-initiated
+    # send outside the 24h window). Inbound never carries this type.
+    template = "template"
     # Anything we don't model yet (interactive replies, reactions, system
     # notifications) lands here so an unexpected payload is persisted, not
     # dropped or crashed on.
@@ -2344,9 +2354,14 @@ class Message(Base):
     )
     # Text body or media caption. Null for a bare media/location message.
     body: Mapped[str | None] = mapped_column(Text)
-    # Meta media id (download via Graph later) + the S3 url once mirrored.
+    # Meta media id (download via Graph later) + an external/public url (e.g. an
+    # outbound send-by-link source).
     media_id: Mapped[str | None] = mapped_column(String(128))
     media_url: Mapped[str | None] = mapped_column(String(1024))
+    # S3 object key once an INBOUND media message is mirrored off Meta's short-
+    # lived CDN into our own bucket. Null until the `mirror_whatsapp_media`
+    # worker job lands; served to the agent via a presigned download URL.
+    media_storage_key: Mapped[str | None] = mapped_column(String(512))
     status: Mapped[MessageStatus] = mapped_column(Enum(MessageStatus), nullable=False)
     # Failure reason for an outbound send (Graph API error).
     error: Mapped[str | None] = mapped_column(Text)

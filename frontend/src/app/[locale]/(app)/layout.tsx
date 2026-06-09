@@ -13,6 +13,7 @@ import { ConfirmProvider } from "@/components/confirm-dialog";
 import { PlanBadge } from "@/components/plan-badge";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { Button } from "@/components/ui/button";
 import {
   api,
@@ -162,9 +163,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <LanguageSwitcher />
               {billing && <PlanBadge plan={billing.plan} />}
               <div className="ml-1 flex items-center gap-2 border-l border-border pl-2">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
-                  {initials}
-                </span>
+                {user ? (
+                  <AvatarUpload entityType="user" entityId={user.id} fallback={initials} size={36} />
+                ) : (
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
+                    {initials}
+                  </span>
+                )}
                 <div className="hidden leading-tight xl:block">
                   <div className="max-w-[9rem] truncate text-sm font-semibold">{fullName}</div>
                   <div className="text-[11px] text-muted-foreground">{roleLabel}</div>
