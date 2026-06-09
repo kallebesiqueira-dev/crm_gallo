@@ -204,7 +204,18 @@
     "viewCalendar": "Kalender öffnen",
     "summary": "Übersicht",
     "recentDocuments": "Letzte Dokumente",
-    "noDocuments": "Noch keine Dokumente."
+    "noDocuments": "Noch keine Dokumente.",
+    "financialOverview": "Finanzübersicht",
+    "payments": "Zahlungen",
+    "total": "Gesamt",
+    "openAmounts": "Offene Beträge",
+    "openLabel": "Offen",
+    "overdue": "Überfällig",
+    "quotesTitle": "Angebote",
+    "totalOffered": "Gesamt angeboten",
+    "outstanding": "Ausstehend",
+    "accepted": "Akzeptiert",
+    "rejected": "Abgelehnt"
   },
   "leads": {
     "title": "Leads",

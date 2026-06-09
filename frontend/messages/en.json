@@ -204,7 +204,18 @@
     "viewCalendar": "View calendar",
     "summary": "Summary",
     "recentDocuments": "Recent documents",
-    "noDocuments": "No documents yet."
+    "noDocuments": "No documents yet.",
+    "financialOverview": "Financial overview",
+    "payments": "Payments",
+    "total": "Total",
+    "openAmounts": "Open amounts",
+    "openLabel": "Open",
+    "overdue": "Overdue",
+    "quotesTitle": "Quotes",
+    "totalOffered": "Total offered",
+    "outstanding": "Outstanding",
+    "accepted": "Accepted",
+    "rejected": "Rejected"
   },
   "leads": {
     "title": "Leads",

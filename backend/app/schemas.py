@@ -1502,6 +1502,20 @@ class FunnelStageStat(BaseModel):
     value_eur: float = 0.0
 
 
+class MonthValue(BaseModel):
+    month: str  # "YYYY-MM"
+    value_eur: float = 0.0
+
+
+class QuotesSummary(BaseModel):
+    total_eur: float = 0.0
+    outstanding_eur: float = 0.0  # draft + sent
+    accepted_eur: float = 0.0
+    rejected_eur: float = 0.0  # declined + expired
+    open_eur: float = 0.0  # sent, not past valid_until
+    overdue_eur: float = 0.0  # sent, past valid_until
+
+
 class DashboardStats(BaseModel):
     total_leads: int
     leads_by_stage: dict[str, int]
@@ -1514,6 +1528,9 @@ class DashboardStats(BaseModel):
     pipeline_value_eur: float = 0.0
     open_tasks: int = 0
     pipeline_funnel: list[FunnelStageStat] = Field(default_factory=list)
+    monthly_revenue: list[MonthValue] = Field(default_factory=list)
+    revenue_total_eur: float = 0.0
+    quotes: QuotesSummary = Field(default_factory=QuotesSummary)
 
 
 # ---------- Performance / KPI ----------
@@ -1723,6 +1740,14 @@ class ConversationLink(BaseModel):
 
     lead_id: uuid.UUID | None = None
     customer_id: uuid.UUID | None = None
+
+
+class ConversationStatusUpdate(BaseModel):
+    """Move a thread through its lifecycle: ``open`` ⇄ ``closed`` ⇄ ``archived``.
+    A ``closed`` thread auto-reopens on the next inbound message; ``archived``
+    stays put until reopened by hand."""
+
+    status: ConversationStatus
 
 
 class ConversationConvert(BaseModel):
