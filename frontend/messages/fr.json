@@ -39,7 +39,8 @@
       "crescita": "Croissance",
       "gestione": "Gestion",
       "sistema": "Système"
-    }
+    },
+    "exports": "Exports"
   },
   "inbox": {
     "title": "Boîte WhatsApp",
@@ -1550,5 +1551,17 @@
     "inactive": "Inactif",
     "status": "Statut",
     "description": "Description"
+  },
+  "exports": {
+    "title": "Exports",
+    "subtitle": "Téléchargez vos données en CSV",
+    "csvFormat": "Fichier CSV",
+    "download": "Télécharger",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Clients",
+      "company": "Entreprises",
+      "product": "Produits"
+    }
   }
 }

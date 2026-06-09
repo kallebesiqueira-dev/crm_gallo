@@ -1558,6 +1558,16 @@ export const api = {
   deleteProduct: (token: string, id: string) =>
     request<void>(`/api/products/${id}`, { method: "DELETE", token }),
 
+  // Exports — streamed CSV download (cookie auth, so a direct fetch + blob)
+  exportEntity: async (entityType: string): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/api/exports/${entityType}?format=csv`, {
+      credentials: "include",
+      cache: "no-store",
+    });
+    if (!res.ok) throw new ApiError(res.status, "Export failed");
+    return res.blob();
+  },
+
   // Custom field definitions (per-org schema extension)
   listCustomFields: (token: string, entityType?: CustomFieldEntity) => {
     const qs = entityType ? `?entity_type=${entityType}` : "";

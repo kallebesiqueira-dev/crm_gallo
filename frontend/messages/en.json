@@ -39,7 +39,8 @@
       "crescita": "Growth",
       "gestione": "Management",
       "sistema": "System"
-    }
+    },
+    "exports": "Exports"
   },
   "inbox": {
     "title": "WhatsApp Inbox",
@@ -1550,5 +1551,17 @@
     "inactive": "Inactive",
     "status": "Status",
     "description": "Description"
+  },
+  "exports": {
+    "title": "Exports",
+    "subtitle": "Download your data as CSV",
+    "csvFormat": "CSV file",
+    "download": "Download",
+    "entity": {
+      "lead": "Leads",
+      "customer": "Customers",
+      "company": "Companies",
+      "product": "Products"
+    }
   }
 }

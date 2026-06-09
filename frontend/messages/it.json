@@ -39,7 +39,8 @@
       "crescita": "Crescita",
       "gestione": "Gestione",
       "sistema": "Sistema"
-    }
+    },
+    "exports": "Esportazioni"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -1550,5 +1551,17 @@
     "inactive": "Inattivo",
     "status": "Stato",
     "description": "Descrizione"
+  },
+  "exports": {
+    "title": "Esportazioni",
+    "subtitle": "Scarica i tuoi dati in CSV",
+    "csvFormat": "File CSV",
+    "download": "Scarica",
+    "entity": {
+      "lead": "Lead",
+      "customer": "Clienti",
+      "company": "Aziende",
+      "product": "Prodotti"
+    }
   }
 }
