@@ -40,7 +40,8 @@
       "gestione": "Management",
       "sistema": "System"
     },
-    "exports": "Exports"
+    "exports": "Exports",
+    "teams": "Teams"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -431,7 +432,11 @@
     "delete": "Stizzar team",
     "removeMember": "Allontanar dal team",
     "confirmDelete": "Stizzar il team \"{name}\"? Commembers e raids vegnan deconnectads.",
-    "confirmUnassign": "Allontanar quest commember dal team?"
+    "confirmUnassign": "Allontanar quest commember dal team?",
+    "subtitle": "Group users into teams",
+    "newTeamName": "New team name",
+    "addMember": "Add member…",
+    "noTeams": "No teams yet."
   },
   "team": {
     "title": "Team ed invits",

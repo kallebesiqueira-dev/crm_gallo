@@ -40,7 +40,8 @@
       "gestione": "Management",
       "sistema": "System"
     },
-    "exports": "Exports"
+    "exports": "Exports",
+    "teams": "Teams"
   },
   "inbox": {
     "title": "WhatsApp Inbox",
@@ -431,7 +432,11 @@
     "delete": "Delete team",
     "removeMember": "Remove from team",
     "confirmDelete": "Delete team \"{name}\"? Members and records will be unassigned.",
-    "confirmUnassign": "Remove this member from the team?"
+    "confirmUnassign": "Remove this member from the team?",
+    "subtitle": "Group users into teams",
+    "newTeamName": "New team name",
+    "addMember": "Add member…",
+    "noTeams": "No teams yet."
   },
   "team": {
     "title": "Team & invites",

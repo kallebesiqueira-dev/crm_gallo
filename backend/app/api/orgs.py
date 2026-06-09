@@ -14,6 +14,7 @@ into an existing org.
 """
 
 import re
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -21,9 +22,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import record_audit
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_org_id, get_current_user
 from app.models import Organization, OrgMembership, User, UserRole
-from app.schemas import MembershipOut, OrgCreate, OrgOut, SwitchOrgRequest, UserOut
+from app.schemas import (
+    MembershipOut,
+    OrgCreate,
+    OrgOut,
+    SwitchOrgRequest,
+    TeamMemberOut,
+    UserOut,
+)
 
 router = APIRouter(prefix="/api/orgs", tags=["orgs"])
 
@@ -116,6 +124,28 @@ async def switch_org(
     await db.commit()
     await db.refresh(user)
     return user
+
+
+@router.get("/current/members", response_model=list[TeamMemberOut])
+async def list_org_members(
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> list[TeamMemberOut]:
+    """Every user in the current org — feeds team-member pickers. Any member
+    can read; team mutation stays on the teams router."""
+    rows = (
+        await db.execute(
+            select(User, OrgMembership.role)
+            .join(OrgMembership, OrgMembership.user_id == User.id)
+            .where(OrgMembership.organization_id == org_id)
+            .order_by(User.full_name)
+        )
+    ).all()
+    return [
+        TeamMemberOut(user_id=u.id, full_name=u.full_name, email=u.email, role=role)
+        for u, role in rows
+    ]
 
 
 @router.post("", response_model=OrgOut, status_code=status.HTTP_201_CREATED)

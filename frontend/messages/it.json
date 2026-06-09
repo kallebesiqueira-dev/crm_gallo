@@ -40,7 +40,8 @@
       "gestione": "Gestione",
       "sistema": "Sistema"
     },
-    "exports": "Esportazioni"
+    "exports": "Esportazioni",
+    "teams": "Team"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -431,7 +432,11 @@
     "delete": "Elimina team",
     "removeMember": "Rimuovi dal team",
     "confirmDelete": "Eliminare il team \"{name}\"? I membri e i record verranno scollegati.",
-    "confirmUnassign": "Rimuovere questo membro dal team?"
+    "confirmUnassign": "Rimuovere questo membro dal team?",
+    "subtitle": "Raggruppa gli utenti in team",
+    "newTeamName": "Nome del nuovo team",
+    "addMember": "Aggiungi membro…",
+    "noTeams": "Nessun team."
   },
   "team": {
     "title": "Team e inviti",

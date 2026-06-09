@@ -40,7 +40,8 @@
       "gestione": "Verwaltung",
       "sistema": "System"
     },
-    "exports": "Exporte"
+    "exports": "Exporte",
+    "teams": "Teams"
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -431,7 +432,11 @@
     "delete": "Team löschen",
     "removeMember": "Aus Team entfernen",
     "confirmDelete": "Team „{name}\" löschen? Mitglieder und Datensätze werden gelöst.",
-    "confirmUnassign": "Dieses Mitglied aus dem Team entfernen?"
+    "confirmUnassign": "Dieses Mitglied aus dem Team entfernen?",
+    "subtitle": "Benutzer in Teams gruppieren",
+    "newTeamName": "Name des neuen Teams",
+    "addMember": "Mitglied hinzufügen…",
+    "noTeams": "Noch keine Teams."
   },
   "team": {
     "title": "Team und Einladungen",

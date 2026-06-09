@@ -29,6 +29,7 @@ import {
   Trash2,
   Upload,
   Users,
+  Users2,
   Workflow,
   Zap,
   type LucideIcon,
@@ -106,6 +107,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Sistema",
     items: [
+      { href: "teams", label: "teams", icon: Users2 },
       { href: "settings", label: "settings", icon: Settings },
       { href: "trash", label: "trash", icon: Trash2 },
     ],

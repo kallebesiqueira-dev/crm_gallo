@@ -40,7 +40,8 @@
       "gestione": "Gestion",
       "sistema": "Système"
     },
-    "exports": "Exports"
+    "exports": "Exports",
+    "teams": "Équipes"
   },
   "inbox": {
     "title": "Boîte WhatsApp",
@@ -431,7 +432,11 @@
     "delete": "Supprimer l'équipe",
     "removeMember": "Retirer de l'équipe",
     "confirmDelete": "Supprimer l'équipe « {name} » ? Les membres et enregistrements seront détachés.",
-    "confirmUnassign": "Retirer ce membre de l'équipe ?"
+    "confirmUnassign": "Retirer ce membre de l'équipe ?",
+    "subtitle": "Regroupez les utilisateurs en équipes",
+    "newTeamName": "Nom de la nouvelle équipe",
+    "addMember": "Ajouter un membre…",
+    "noTeams": "Aucune équipe."
   },
   "team": {
     "title": "Équipe et invitations",
