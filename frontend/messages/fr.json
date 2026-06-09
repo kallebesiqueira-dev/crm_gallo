@@ -31,7 +31,15 @@
     "performance": "Performance",
     "automations": "Automatisations",
     "products": "Produits",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "groups": {
+      "vendite": "Ventes",
+      "clienti": "Clients",
+      "lavoro": "Travail",
+      "crescita": "Croissance",
+      "gestione": "Gestion",
+      "sistema": "Système"
+    }
   },
   "inbox": {
     "title": "Boîte WhatsApp",
@@ -190,7 +198,13 @@
     "recentCompanies": "Clients récents",
     "goToPipeline": "Voir le pipeline",
     "viewAll": "Voir tout",
-    "noTasks": "Aucune tâche"
+    "noTasks": "Aucune tâche",
+    "customize": "Personnaliser",
+    "recentActivities": "Activité récente",
+    "viewCalendar": "Voir le calendrier",
+    "summary": "Résumé",
+    "recentDocuments": "Documents récents",
+    "noDocuments": "Aucun document."
   },
   "leads": {
     "title": "Prospects",
