@@ -27,8 +27,60 @@
     "companies": "Interpresas",
     "duplicates": "Dubladuras",
     "forms": "Formulars",
+    "inbox": "WhatsApp",
     "performance": "Performanza",
     "automations": "Automatisaziuns"
+  },
+  "inbox": {
+    "title": "Posta WhatsApp",
+    "subtitle": "Discurra cun tes contacts via WhatsApp en temp real.",
+    "loading": "Chargiar…",
+    "conversations": "Conversaziuns",
+    "noConversations": "Anc naginas conversaziuns.",
+    "noMessagesYet": "Anc naginas messadras.",
+    "selectConversation": "Tscherner ina conversaziun",
+    "selectConversationBody": "Tscherna ina conversaziun a sanestra per leger e respunder.",
+    "messagePlaceholder": "Scriver ina messadra…",
+    "send": "Trametter",
+    "mediaPlaceholder": "[{type}]",
+    "noAccounts": "Collia tes numer WhatsApp",
+    "noAccountsBody": "Colliescha in numer WhatsApp Business per cumenzar a retschaiver e trametter messadras qua.",
+    "adminOnly": "Mo in administratur po colliar in numer WhatsApp.",
+    "phoneNumberId": "ID dal numer da telefon",
+    "accessToken": "Token d'access",
+    "accessTokenHint": "Memorisà criptà. Chattabel en Meta › WhatsApp › Configuraziun da l'API.",
+    "displayPhone": "Telefon mussà (opziunal)",
+    "displayName": "Num mussà (opziunal)",
+    "displayNamePlaceholder": "Acme SA",
+    "connect": "Colliar",
+    "connecting": "Colliar…",
+    "linkedTo": "Collià cun",
+    "linkNotLinked": "Betg collià",
+    "link": "Colliar",
+    "linkChange": "Midar",
+    "tabLead": "Lead",
+    "tabCustomer": "Client",
+    "linkSearch": "Tschertgar tras num…",
+    "linkNoResults": "Nagins resultats",
+    "status": {
+      "received": "Retschavì",
+      "pending": "Trametter…",
+      "sent": "Tramess",
+      "delivered": "Furnì",
+      "read": "Legì",
+      "failed": "Betg reussì"
+    },
+    "type": {
+      "text": "Text",
+      "image": "Foto",
+      "document": "Document",
+      "audio": "Audio",
+      "video": "Video",
+      "sticker": "Autoadesiv",
+      "location": "Posiziun",
+      "contacts": "Contact",
+      "unsupported": "Betg sustegnì"
+    }
   },
   "auth": {
     "login": "S'annunziar",
@@ -989,7 +1041,7 @@
       "aiAssistant": "Assistent IA illimità",
       "reports": "Rapports e grafics",
       "automations": "Automatisaziuns da workflow",
-      "integrations": "Integraziuns e-mail + chalender",
+      "integrations": "Integraziuns e-mail, chalender + WhatsApp",
       "rag": "Base da savair RAG",
       "api": "API + Webhooks",
       "support": "Sustegn",
@@ -1031,7 +1083,7 @@
       },
       "8": {
         "q": "Tge integraziuns èn disponiblas?",
-        "a": "Stripe per fatturaziun, IMAP/SMTP per e-mail, Google/Outlook Calendar per chalender, Slack per notificaziuns. API REST + webhooks per integraziuns custom. Roadmap publica includa HubSpot, Pipedrive, Notion, Zapier."
+        "a": "Stripe per fatturaziun, IMAP/SMTP per e-mail, Google/Outlook Calendar per chalender, WhatsApp Business per messadis, Slack per notificaziuns. API REST + webhooks per integraziuns custom. Roadmap publica includa Instagram, Messenger, HubSpot, Pipedrive, Notion, Zapier."
       },
       "9": {
         "q": "È Gallo CRM conforma al GDPR?",
@@ -1092,7 +1144,7 @@
         "features": [
           "Tut da Business",
           "Automatisaziuns da workflow",
-          "Integraziuns e-mail e chalender",
+          "Integraziuns e-mail, chalender e WhatsApp",
           "RAG: assistent cun base da savair",
           "API publica + clavs API",
           "Manager da conto dedicà"

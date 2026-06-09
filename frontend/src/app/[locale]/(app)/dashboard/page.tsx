@@ -115,9 +115,13 @@ export default function DashboardPage() {
             <SectionTitle icon={TrendingUp}>Panoramica finanziaria</SectionTitle>
             <div className="flex items-center gap-2 text-xs font-medium">
               <span className="text-primary">Ricavi</span>
-              <span className="relative h-5 w-9 rounded-full bg-primary/30">
+              <button
+                type="button"
+                aria-label="Ricavi / Spese"
+                className="relative h-5 w-9 rounded-full bg-primary/30 transition hover:bg-primary/40"
+              >
                 <span className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-primary" />
-              </span>
+              </button>
               <span className="text-muted-foreground">Spese</span>
             </div>
           </div>
@@ -180,7 +184,9 @@ export default function DashboardPage() {
         <Panel className="flex flex-col p-5">
           <div className="flex items-center justify-between">
             <SectionTitle icon={Target}>Pipeline</SectionTitle>
-            <span className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">Tutte le pipeline</span>
+            <button type="button" className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition hover:border-primary/40 hover:text-foreground">
+              Tutte le pipeline <ChevronDown className="h-3 w-3" />
+            </button>
           </div>
           <Funnel stats={stats} eur={eur} />
           <CardLink href={`/${locale}/pipeline`}>Vai alla pipeline</CardLink>
@@ -189,7 +195,9 @@ export default function DashboardPage() {
         <Panel className="flex flex-col p-5">
           <div className="flex items-center justify-between">
             <SectionTitle icon={CalendarDays}>Le mie attività</SectionTitle>
-            <span className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">Oggi</span>
+            <button type="button" className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition hover:border-primary/40 hover:text-foreground">
+              Oggi <ChevronDown className="h-3 w-3" />
+            </button>
           </div>
           <div className="mt-3 space-y-1">
             {MY_TASKS.map((m) => (

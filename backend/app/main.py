@@ -50,6 +50,7 @@ from app.api import (
     trash,
     v1,
     webhooks,
+    whatsapp,
 )
 from app.config import get_settings
 from app.cookies import (
@@ -359,6 +360,8 @@ app.include_router(trash.router)
 app.include_router(audit.router)
 app.include_router(outbox.router)
 app.include_router(webhooks.router)
+app.include_router(whatsapp.webhook_router)
+app.include_router(whatsapp.router)
 app.include_router(activities.router)
 app.include_router(notes.router)
 app.include_router(attachments.router)

@@ -143,13 +143,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className="hidden sm:inline">Nuova attività</span>
                 </Link>
               </Button>
-              <button
-                type="button"
+              <Link
+                href={`/${locale}/inbox`}
                 aria-label="Messaggi"
                 className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground sm:grid"
               >
                 <Mail className="h-5 w-5" />
-              </button>
+              </Link>
               <NotificationsBell />
               <button
                 type="button"

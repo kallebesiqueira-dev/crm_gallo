@@ -249,6 +249,28 @@ class Settings(BaseSettings):
     # rather than accepting unverified state changes.
     signing_webhook_secret: str = ""
 
+    # ---- WhatsApp Business Cloud API (omnichannel inbox, phase 1) ----
+    # One Meta app fronts the whole SaaS (Tech-Provider model): the
+    # app-level secret + verify-token are GLOBAL here, while each tenant
+    # connects its OWN WhatsApp number (phone_number_id + access_token)
+    # stored per-org in `whatsapp_accounts`. Inbound messages route to a
+    # tenant by the `phone_number_id` in Meta's payload.
+    #
+    # `whatsapp_verify_token` — the string Meta echoes during the one-time
+    # GET webhook verification handshake (you set the same value in the
+    # Meta app dashboard). Empty → the GET challenge always 403s, so the
+    # webhook can't be (mis)configured against an unconfigured deploy.
+    whatsapp_verify_token: str = ""
+    # `whatsapp_app_secret` — the Meta App Secret. Every inbound POST is
+    # signed by Meta with `X-Hub-Signature-256 = HMAC-SHA256(app_secret,
+    # raw_body)`; empty → inbound POSTs are rejected 503 (we refuse to
+    # accept unverified messages rather than trust the network).
+    whatsapp_app_secret: str = ""
+    # Graph API version + host. Pinned so a Meta-side default bump can't
+    # silently change request/response shapes under us.
+    whatsapp_api_version: str = "v21.0"
+    whatsapp_graph_url: str = "https://graph.facebook.com"
+
     @property
     def runtime_database_url(self) -> str:
         """URL the FastAPI process should connect with. Defaults to the
