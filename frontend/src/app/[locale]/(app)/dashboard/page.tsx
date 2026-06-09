@@ -367,31 +367,32 @@ function Funnel({
   if (!funnel.length) {
     return <div className="my-6 grid flex-1 place-items-center text-xs text-muted-foreground">{empty}</div>;
   }
-  const widths = [100, 84, 68, 54, 42];
+  // Half-width at each boundary: band i goes from w[i] (top) to w[i+1] (bottom),
+  // so consecutive trapezoids share an edge and form ONE smooth cone.
+  const w = [100, 80, 62, 46, 32, 22];
   return (
-    <div className="my-4 mb-5 flex items-stretch gap-3">
-      {/* cone */}
-      <div className="flex w-1/2 shrink-0 flex-col items-center gap-1">
-        {funnel.map((s, i) => (
-          <div
-            key={s.stage}
-            className="flex h-9 w-full items-center justify-center"
-            style={{ width: `${widths[i] ?? 40}%` }}
-          >
+    <div className="my-4 mb-5 flex items-stretch gap-4">
+      {/* funnel cone */}
+      <div className="flex w-[46%] shrink-0 flex-col">
+        {funnel.map((s, i) => {
+          const top = w[i] ?? 30;
+          const bot = w[i + 1] ?? 22;
+          return (
             <div
-              className="h-full w-full rounded-md shadow-sm"
+              key={s.stage}
+              className="h-10"
               style={{
-                clipPath: "polygon(0 0, 100% 0, 90% 100%, 10% 100%)",
-                background: `linear-gradient(90deg, hsl(262 83% ${64 - i * 6}%), hsl(290 80% ${66 - i * 6}%))`,
+                clipPath: `polygon(${(100 - top) / 2}% 0, ${(100 + top) / 2}% 0, ${(100 + bot) / 2}% 100%, ${(100 - bot) / 2}% 100%)`,
+                background: `linear-gradient(135deg, hsl(262 83% ${66 - i * 6}%), hsl(290 80% ${68 - i * 6}%))`,
               }}
             />
-          </div>
-        ))}
+          );
+        })}
       </div>
-      {/* data */}
-      <div className="flex flex-1 flex-col gap-1">
+      {/* per-stage data, aligned row-by-row with the cone */}
+      <div className="flex flex-1 flex-col">
         {funnel.map((s) => (
-          <div key={s.stage} className="flex h-9 items-center justify-between gap-2 text-xs">
+          <div key={s.stage} className="flex h-10 items-center justify-between gap-2 text-xs">
             <span className="truncate font-medium">{tStages(s.stage)}</span>
             <span className="shrink-0 font-semibold tabular-nums">{s.count}</span>
             <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
