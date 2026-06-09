@@ -179,11 +179,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 <HelpCircle className="h-5 w-5" />
               </button>
-              <div className="hidden items-center gap-1 sm:flex sm:gap-1.5">
-                <ThemeToggle />
-                <LanguageSwitcher />
-                {billing && <PlanBadge plan={billing.plan} />}
-              </div>
+              <ThemeToggle />
+              <LanguageSwitcher />
+              {billing && (
+                <span className="hidden sm:inline-flex">
+                  <PlanBadge plan={billing.plan} />
+                </span>
+              )}
               <div className="ml-1 flex items-center gap-2 border-l border-border pl-2">
                 {user ? (
                   <AvatarUpload entityType="user" entityId={user.id} fallback={initials} size={36} />
