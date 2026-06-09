@@ -12,6 +12,7 @@ import {
   Calendar,
   CopyCheck,
   CreditCard,
+  Download,
   FileSignature,
   FileText,
   Gauge,
@@ -88,6 +89,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "forms", label: "forms", icon: Inbox },
       { href: "imports", label: "imports", icon: Upload },
+      { href: "exports", label: "exports", icon: Download },
       { href: "automations", label: "automations", icon: Zap },
       { href: "assistant", label: "assistant", icon: Sparkles },
     ],
