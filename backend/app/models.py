@@ -771,6 +771,50 @@ class Company(SoftDeleteMixin, Base):
     )
 
 
+class ProductType(str, enum.Enum):
+    product = "product"
+    service = "service"
+
+
+class Product(SoftDeleteMixin, Base):
+    """A catalog item — a product or service the tenant sells. Referenced by
+    quotes/contracts later (line items are a follow-up). Org-scoped tenant
+    table: RLS ENABLE + FORCE + the standard GUC policy (see the migration)."""
+
+    __tablename__ = "products"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    sku: Mapped[str | None] = mapped_column(String(64), index=True)
+    type: Mapped[ProductType] = mapped_column(
+        Enum(ProductType, name="producttype"),
+        nullable=False,
+        default=ProductType.product,
+    )
+    description: Mapped[str | None] = mapped_column(Text)
+    price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, default="EUR", server_default="EUR"
+    )
+    unit: Mapped[str | None] = mapped_column(String(32))
+    active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class CustomFieldDefinition(SoftDeleteMixin, Base):
     """A per-org schema extension: one user-defined field on one entity
     type (lead / customer / deal / company).
