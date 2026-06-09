@@ -140,7 +140,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <OrgSwitcher activeOrgId={user?.last_active_org_id ?? null} />
             </div>
 
-            {/* Center — search (visual for now; ⌘K palette is a follow-up) */}
+            {/* Center — global search; opens the ⌘K command palette */}
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
