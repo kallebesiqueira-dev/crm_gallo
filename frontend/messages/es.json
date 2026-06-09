@@ -40,7 +40,8 @@
       "gestione": "Gestión",
       "sistema": "Sistema"
     },
-    "exports": "Exportaciones"
+    "exports": "Exportaciones",
+    "teams": "Equipos"
   },
   "inbox": {
     "title": "Bandeja de WhatsApp",
@@ -431,7 +432,11 @@
     "delete": "Eliminar equipo",
     "removeMember": "Quitar del equipo",
     "confirmDelete": "¿Eliminar el equipo \"{name}\"? Los miembros y registros se desvincularán.",
-    "confirmUnassign": "¿Quitar este miembro del equipo?"
+    "confirmUnassign": "¿Quitar este miembro del equipo?",
+    "subtitle": "Agrupa usuarios en equipos",
+    "newTeamName": "Nombre del nuevo equipo",
+    "addMember": "Añadir miembro…",
+    "noTeams": "Aún no hay equipos."
   },
   "team": {
     "title": "Equipo e invitaciones",
