@@ -297,12 +297,22 @@ async def _post_message(phone_number_id: str, access_token: str, payload: dict) 
     return messages[0]["id"]
 
 
-async def send_text(*, phone_number_id: str, access_token: str, to: str, body: str) -> str:
+async def send_text(
+    *,
+    phone_number_id: str,
+    access_token: str,
+    to: str,
+    body: str,
+    context_message_id: str | None = None,
+) -> str:
     """Send a free-form text message via the Graph API; return Meta's `wamid`.
 
     Only valid INSIDE the 24h customer-service window — outside it Meta rejects
     free-form text (surfacing as a `WhatsAppSendError` on the row) and only an
     approved template sends (see `send_template`).
+
+    Pass `context_message_id` (the wamid of an earlier message) to send this as a
+    quoted reply — WhatsApp renders it threaded under the cited bubble.
     """
     payload = {
         "messaging_product": "whatsapp",
@@ -311,6 +321,8 @@ async def send_text(*, phone_number_id: str, access_token: str, to: str, body: s
         "type": "text",
         "text": {"preview_url": False, "body": body},
     }
+    if context_message_id:
+        payload["context"] = {"message_id": context_message_id}
     return await _post_message(phone_number_id, access_token, payload)
 
 

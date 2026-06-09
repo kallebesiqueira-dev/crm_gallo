@@ -50,6 +50,7 @@ from app.whatsapp import (
     send_media,
     send_reaction,
     send_template,
+    send_text,
     verify_challenge,
     verify_signature,
 )
@@ -826,6 +827,99 @@ def test_send_message_inactive_account_409(
     r = admin_client.post(
         f"/api/whatsapp/conversations/{conv.id}/messages",
         json={"body": "should fail"},
+    )
+    assert r.status_code == 409
+
+
+def test_send_text_with_context_quotes(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.quote.1")
+    import asyncio
+
+    wamid = asyncio.run(
+        send_text(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            body="claro!",
+            context_message_id="wamid.orig.1",
+        )
+    )
+    assert wamid == "wamid.quote.1"
+    assert captured["json"]["context"] == {"message_id": "wamid.orig.1"}
+
+
+def test_send_text_without_context_omits_it(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_text(phone_number_id="PNID", access_token="tok", to="5511988887777", body="oi")
+    )
+    assert "context" not in captured["json"]
+
+
+def test_send_message_reply_to_persists_context(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.quote.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="pergunta do cliente",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "resposta citada", "reply_to_message_id": str(target.id)},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["context_wa_message_id"] == "wamid.quote.target.1"
+
+
+def test_send_message_reply_to_nonexistent_404(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "oi", "reply_to_message_id": str(uuid.uuid4())},
+    )
+    assert r.status_code == 404
+
+
+def test_send_message_reply_to_message_without_wamid_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    pending = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.text,
+        body="ainda pendente",
+        status=MessageStatus.pending,
+    )
+    db.add(pending)
+    db.commit()
+    db.refresh(pending)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "oi", "reply_to_message_id": str(pending.id)},
     )
     assert r.status_code == 409
 

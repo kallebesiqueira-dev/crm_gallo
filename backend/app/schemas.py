@@ -1783,9 +1783,13 @@ class MessageOut(BaseModel):
 
 
 class SendMessageRequest(BaseModel):
-    """Agent-composed outbound text. Capped at WhatsApp's ~4096-char body."""
+    """Agent-composed outbound text. Capped at WhatsApp's ~4096-char body.
+
+    `reply_to_message_id` (one of our Message UUIDs in the same conversation)
+    sends this as a quoted reply threaded under that message."""
 
     body: Annotated[str, Field(min_length=1, max_length=4096)]
+    reply_to_message_id: uuid.UUID | None = None
 
 
 class SendTemplateRequest(BaseModel):

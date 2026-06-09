@@ -1010,6 +1010,7 @@ async def send_whatsapp_message(
         access_token = account.access_token  # EncryptedSecret → decrypted here
         to = conv.contact_wa_id
         body = msg.body or ""
+        context_wamid = msg.context_wa_message_id  # set for a quoted reply
 
     # Network send OUTSIDE the session — don't pin a pooled connection across
     # the Graph API round-trip.
@@ -1061,6 +1062,7 @@ async def send_whatsapp_message(
                 access_token=access_token,
                 to=to,
                 body=body,
+                context_message_id=context_wamid,
             )
     except WhatsAppSendError as exc:
         # 4xx = Meta rejected it (terminal); anything else = transient → retry.

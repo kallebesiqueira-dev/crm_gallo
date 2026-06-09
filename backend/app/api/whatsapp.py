@@ -680,9 +680,29 @@ async def send_message(
     """Queue an outbound text. Persists a `pending` Message immediately (so the
     UI shows it optimistically) and hands the actual Graph API send to the
     worker, which stamps the `wamid` + advances the status. The connected
-    account must be active."""
+    account must be active. `reply_to_message_id` quotes an earlier message in
+    the same conversation (409 if that target has no `wamid` yet)."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
+
+    context_wamid: str | None = None
+    if payload.reply_to_message_id is not None:
+        target = (
+            await db.execute(
+                select(Message).where(
+                    Message.id == payload.reply_to_message_id,
+                    Message.conversation_id == conversation_id,
+                    Message.organization_id == org_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if target is None:
+            raise HTTPException(status_code=404, detail="Quoted message not found")
+        if not target.wa_message_id:
+            raise HTTPException(
+                status_code=409, detail="Cannot quote a message that has no WhatsApp id yet"
+            )
+        context_wamid = target.wa_message_id
 
     msg = Message(
         organization_id=org_id,
@@ -690,6 +710,7 @@ async def send_message(
         direction=MessageDirection.outbound,
         type=MessageType.text,
         body=payload.body,
+        context_wa_message_id=context_wamid,
         status=MessageStatus.pending,
         sender_user_id=user.id,
     )
