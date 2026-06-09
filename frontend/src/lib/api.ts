@@ -497,6 +497,7 @@ export interface DashboardStats {
   total_deals: number;
   pipeline_value_eur: number;
   open_tasks: number;
+  pipeline_funnel?: { stage: string; count: number; value_eur: number }[];
 }
 
 export type GoalPeriod = "month" | "quarter" | "year";

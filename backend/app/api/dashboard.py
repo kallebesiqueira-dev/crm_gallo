@@ -9,7 +9,7 @@ from app.database import get_db
 from app.deps import get_current_org_id, get_current_user
 from app.models import Customer, Deal, DealStage, Lead, LeadStage, Task, TaskStatus, User
 from app.money import ZERO, q2
-from app.schemas import DashboardStats
+from app.schemas import DashboardStats, FunnelStageStat
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -24,6 +24,15 @@ FX_TO_EUR = {
 }
 
 CLOSED_DEAL_STAGES = {DealStage.won, DealStage.lost}
+
+# Funnel stages shown on the dashboard (ordered; lost excluded).
+FUNNEL_STAGES = [
+    DealStage.new,
+    DealStage.qualified,
+    DealStage.proposal_sent,
+    DealStage.negotiation,
+    DealStage.won,
+]
 
 
 @router.get("/stats", response_model=DashboardStats)
@@ -91,6 +100,25 @@ async def stats(
     for value, currency in open_deals:
         pipeline_value += (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
 
+    # Pipeline funnel — count + EUR value per stage (lost excluded).
+    funnel_rows = (
+        await db.execute(
+            select(Deal.stage, Deal.value, Deal.currency).where(
+                Deal.organization_id == org_id,
+                Deal.stage.in_(FUNNEL_STAGES),
+            )
+        )
+    ).all()
+    funnel_count: dict[DealStage, int] = {s: 0 for s in FUNNEL_STAGES}
+    funnel_value: dict[DealStage, Decimal] = {s: ZERO for s in FUNNEL_STAGES}
+    for stage, value, currency in funnel_rows:
+        funnel_count[stage] += 1
+        funnel_value[stage] += (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+    pipeline_funnel = [
+        FunnelStageStat(stage=s.value, count=funnel_count[s], value_eur=float(q2(funnel_value[s])))
+        for s in FUNNEL_STAGES
+    ]
+
     return DashboardStats(
         total_leads=total_leads,
         leads_by_stage=by_stage,
@@ -102,4 +130,5 @@ async def stats(
         total_deals=total_deals,
         pipeline_value_eur=float(q2(pipeline_value)),
         open_tasks=open_tasks,
+        pipeline_funnel=pipeline_funnel,
     )
