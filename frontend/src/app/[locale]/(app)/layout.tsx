@@ -15,6 +15,7 @@ import { OrgSwitcher } from "@/components/org-switcher";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { SupportDialog } from "@/components/support-dialog";
+import { GlobalSearch } from "@/components/global-search";
 import { Button } from "@/components/ui/button";
 import {
   api,
@@ -30,10 +31,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
   const tAuth = useTranslations("auth");
   const tBilling = useTranslations("billing");
+  const tSearch = useTranslations("search");
   const [user, setUser] = useState<User | null>(null);
   const [billing, setBilling] = useState<BillingMe | null>(null);
   const [ready, setReady] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -76,6 +79,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       });
     api.billingMe(token).then(setBilling).catch(() => setBilling(null));
   }, [router, locale]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   async function logout() {
     const token = getToken();
@@ -129,10 +143,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Center — search (visual for now; ⌘K palette is a follow-up) */}
             <button
               type="button"
+              onClick={() => setSearchOpen(true)}
               className="mx-auto hidden w-full max-w-xl items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:flex"
             >
               <Search className="h-4 w-4 shrink-0" />
-              <span className="flex-1 truncate">Cerca lead, clienti, attività…</span>
+              <span className="flex-1 truncate">{tSearch("placeholder")}</span>
               <kbd className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium lg:inline">
                 ⌘K
               </kbd>
@@ -190,6 +205,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </ConfirmProvider>
   );
 }
