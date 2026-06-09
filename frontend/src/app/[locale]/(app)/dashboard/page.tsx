@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { api, type Company, type DashboardStats, type Lead, type Task } from "@/lib/api";
+import { api, type Company, type DashboardStats, type Lead, type Quote, type Task } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 /**
@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
 
   useEffect(() => {
     const token = getToken();
@@ -46,6 +47,10 @@ export default function DashboardPage() {
     api
       .listCompanies(token, { limit: 8 })
       .then((p) => setCompanies(p.items))
+      .catch(() => {});
+    api
+      .listQuotes(token, { limit: 5 })
+      .then((p) => setQuotes(p.items))
       .catch(() => {});
   }, []);
 
@@ -266,9 +271,40 @@ export default function DashboardPage() {
             <SectionTitle icon={FileText}>{t("recentDocuments")}</SectionTitle>
             <CardLinkInline href={`/${locale}/quotes`}>{t("viewAll")}</CardLinkInline>
           </div>
-          <div className="grid place-items-center py-10 text-center text-xs text-muted-foreground">
-            {t("noDocuments")}
-          </div>
+          {quotes.length === 0 ? (
+            <div className="grid place-items-center py-10 text-center text-xs text-muted-foreground">
+              {t("noDocuments")}
+            </div>
+          ) : (
+            <div className="mt-3 space-y-1.5">
+              {quotes.slice(0, 5).map((doc) => (
+                <Link
+                  key={doc.id}
+                  href={`/${locale}/quotes/${doc.id}`}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-background/40 px-3 py-2 transition hover:border-primary/40"
+                >
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{doc.number}</div>
+                    <div className="truncate text-xs text-muted-foreground">{doc.title}</div>
+                  </div>
+                  <span
+                    title={doc.status}
+                    className={cn(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      doc.status === "accepted"
+                        ? "bg-emerald-500"
+                        : doc.status === "sent"
+                          ? "bg-blue-500"
+                          : doc.status === "declined" || doc.status === "expired"
+                            ? "bg-red-500"
+                            : "bg-muted-foreground",
+                    )}
+                  />
+                </Link>
+              ))}
+            </div>
+          )}
         </Panel>
       </div>
     </div>
