@@ -9,9 +9,7 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   FileText,
-  Settings2,
   Target,
   TrendingUp,
   Users,
@@ -19,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api, type Company, type DashboardStats, type Lead, type Quote, type Task } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { DashboardCustomize } from "@/components/dashboard-customize";
 
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
@@ -37,6 +36,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const token = getToken();
@@ -53,6 +53,29 @@ export default function DashboardPage() {
       .then((p) => setQuotes(p.items))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("dashboard-hidden");
+      if (raw) setHidden(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      /* ignore corrupt prefs */
+    }
+  }, []);
+
+  function toggleSection(key: string) {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try {
+        localStorage.setItem("dashboard-hidden", JSON.stringify([...next]));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   const eur = useMemo(
     () => new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }),
@@ -85,6 +108,12 @@ export default function DashboardPage() {
     },
   ];
 
+  const customizeItems = [
+    { key: "financial", label: t("financialOverview") },
+    { key: "activity", label: t("recentActivities") },
+    { key: "clients", label: t("recentCompanies") },
+  ];
+
   return (
     <div className="relative space-y-5">
       <div
@@ -108,19 +137,12 @@ export default function DashboardPage() {
           />
           <div className="min-w-0">
             <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-xl font-bold tracking-tight text-transparent dark:from-white dark:to-violet-200">
-              {tApp("name")}
+              GALLO crm
             </div>
             <div className="truncate text-xs text-muted-foreground">{t("welcome")}</div>
           </div>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm transition hover:border-primary/40"
-        >
-          <Settings2 className="h-4 w-4 text-primary" />
-          {t("customize")}
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </button>
+        <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
       </div>
 
       {/* KPI row */}
@@ -139,7 +161,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Financial overview + quotes */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("financial") && "hidden")}>
         <Panel className="p-5 lg:col-span-2">
           <SectionTitle icon={TrendingUp}>{t("financialOverview")}</SectionTitle>
           <div className="mt-4 grid gap-6 md:grid-cols-[1.5fr_1fr]">
@@ -177,7 +199,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent activity + pipeline funnel + my tasks */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("activity") && "hidden")}>
         <Panel className="flex flex-col p-5">
           <SectionTitle icon={CheckCircle2}>{t("recentActivities")}</SectionTitle>
           {recentLeads.length === 0 ? (
@@ -239,7 +261,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent clients + documents */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("clients") && "hidden")}>
         <Panel className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
             <SectionTitle icon={Building2}>{t("recentCompanies")}</SectionTitle>

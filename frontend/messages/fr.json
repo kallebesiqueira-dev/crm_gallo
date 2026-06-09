@@ -217,7 +217,8 @@
     "totalOffered": "Total proposé",
     "outstanding": "En attente",
     "accepted": "Accepté",
-    "rejected": "Refusé"
+    "rejected": "Refusé",
+    "customizeHint": "Sections visibles"
   },
   "leads": {
     "title": "Prospects",

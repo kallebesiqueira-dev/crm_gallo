@@ -217,7 +217,8 @@
     "totalOffered": "Total offered",
     "outstanding": "Outstanding",
     "accepted": "Accepted",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "customizeHint": "Secziuns visiblas"
   },
   "leads": {
     "title": "Leads",

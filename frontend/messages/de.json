@@ -217,7 +217,8 @@
     "totalOffered": "Gesamt angeboten",
     "outstanding": "Ausstehend",
     "accepted": "Akzeptiert",
-    "rejected": "Abgelehnt"
+    "rejected": "Abgelehnt",
+    "customizeHint": "Sichtbare Bereiche"
   },
   "leads": {
     "title": "Leads",

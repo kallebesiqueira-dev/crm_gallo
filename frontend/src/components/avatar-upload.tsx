@@ -52,7 +52,6 @@ export function AvatarUpload({
     }
   }
 
-  const badge = Math.max(14, Math.round(size / 3));
   return (
     <button
       type="button"
@@ -82,13 +81,6 @@ export function AvatarUpload({
             <Camera className="h-5 w-5 text-white" />
           )}
         </span>
-      </span>
-      {/* Always-visible camera badge so it's obvious the photo is editable */}
-      <span
-        className="absolute -bottom-0.5 -right-0.5 grid place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-background"
-        style={{ width: badge, height: badge }}
-      >
-        <Camera style={{ width: Math.max(8, Math.round(size / 5)), height: Math.max(8, Math.round(size / 5)) }} />
       </span>
       <input ref={inputRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
     </button>

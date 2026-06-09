@@ -137,7 +137,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Left — hamburger (mobile) + current section + org switcher */}
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <MobileNav />
-              <OrgSwitcher activeOrgId={user?.last_active_org_id ?? null} />
+              <div className="hidden sm:block">
+                <OrgSwitcher activeOrgId={user?.last_active_org_id ?? null} />
+              </div>
             </div>
 
             {/* Center — global search; opens the ⌘K command palette */}
@@ -177,9 +179,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 <HelpCircle className="h-5 w-5" />
               </button>
-              <ThemeToggle />
-              <LanguageSwitcher />
-              {billing && <PlanBadge plan={billing.plan} />}
+              <div className="hidden items-center gap-1 sm:flex sm:gap-1.5">
+                <ThemeToggle />
+                <LanguageSwitcher />
+                {billing && <PlanBadge plan={billing.plan} />}
+              </div>
               <div className="ml-1 flex items-center gap-2 border-l border-border pl-2">
                 {user ? (
                   <AvatarUpload entityType="user" entityId={user.id} fallback={initials} size={36} />
