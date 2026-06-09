@@ -27,6 +27,7 @@ from app.models import (
     MessageStatus,
     MessageType,
     Plan,
+    ProductType,
     QuoteStatus,
     SignatureStatus,
     TaskPriority,
@@ -774,6 +775,43 @@ class CompanyOut(CompanyBase):
     id: uuid.UUID
     owner_id: uuid.UUID | None
     # Optimistic locking marker — echo back as `If-Match` on PATCH.
+    version: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------- Products / Services (catalog) ----------
+class ProductBase(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    sku: str | None = Field(default=None, max_length=64)
+    type: ProductType = ProductType.product
+    description: str | None = None
+    price: Decimal | None = Field(default=None, ge=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    unit: str | None = Field(default=None, max_length=32)
+    active: bool = True
+
+
+class ProductCreate(ProductBase):
+    owner_id: uuid.UUID | None = None
+
+
+class ProductUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    sku: str | None = Field(default=None, max_length=64)
+    type: ProductType | None = None
+    description: str | None = None
+    price: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    unit: str | None = Field(default=None, max_length=32)
+    active: bool | None = None
+    owner_id: uuid.UUID | None = None
+
+
+class ProductOut(ProductBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    owner_id: uuid.UUID | None
     version: int = 0
     created_at: datetime
     updated_at: datetime

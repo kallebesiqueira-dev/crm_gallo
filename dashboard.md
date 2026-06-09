@@ -8,7 +8,7 @@ migration + API + UI + 7-language i18n — **incrementally, one well-made and te
 module at a time.** RLS mistakes = cross-tenant data leaks, so no rushing all ten at
 once.
 
-**Status:** _planned, not yet coded._ Exploration done; nav reorg + features pending.
+**Status (2026-06-09):** Nav reorg ✅ **shipped** (6-group purple sidebar + premium dashboard live). WhatsApp omnichannel ✅ **live**. Prodotti/Servizi **backend** ✅ built + RLS-verified (frontend = next slice). See the re-scoped plan below.
 
 ---
 
@@ -25,8 +25,10 @@ once.
 
 **20 of 30 items already exist** (only need grouping). **10 to build.**
 
+> **Re-scoped (2026-06-09):** auditing `main.py`, most "to build" items ALREADY HAVE BACKENDS — `deals`=Opportunità, `exports`=Esportazioni, `notifications`=Notifiche, `teams`=Team, `attachments`/`document_templates`=Documenti, `whatsapp`/inbox=Comunicazioni (shipped). They need **frontend pages only**, not new entities. The **only** item that needed a new table was **Prodotti/Servizi** (✅ backend built + RLS-verified).
+
 ## Build order (recommended, cleanest/highest-value first)
-1. **Prodotti/Servizi** — clean self-contained entity (name, type, price, SKU, active); used by quotes/contracts.
+1. **Prodotti/Servizi** — ✅ **backend done** (`products` table + RLS migration `d7e8f9a0b1c2`, `Product` model, `/api/products` CRUD, ruff + migration verified). **Next: frontend** (list/new/edit + `products` under Vendite + i18n).
 2. **Contatti** — person contacts, link to companies.
 3. **Opportunità / Deals** — ⚠️ may overlap with `leads` + `pipeline` (leads already have stages). Clarify product design before building. Label `nav.deals` already exists.
 4. **Documenti** — ties to the existing Cloudflare R2 file storage; label `nav.documents` already exists.
@@ -51,5 +53,6 @@ The app connects through the restricted `crm_app` role (NOSUPERUSER NOBYPASSRLS)
 isolation before shipping** — a missing/wrong policy leaks data across tenants.
 
 ## Next session — start here
-1. Nav reorg: group the 20 existing items into the 6 groups in `sidebar.tsx` + `mobile-nav.tsx`; add the 6 group labels to the `nav` namespace in all 7 `messages/*.json`.
-2. Then build **Prodotti/Servizi** end-to-end as the first module (template for the rest).
+1. **Nav reorg ✅ done** (6-group purple sidebar live; group labels still hardcoded Italian — move to the `nav` i18n namespace when convenient).
+2. **Prodotti/Servizi backend ✅ done.** Build its **frontend**: `[locale]/(app)/products/` list + `new` + `[id]/edit` (mirror `companies/`); add `{ href: "products", label: "products", icon: Package }` to the **Vendite** group in `sidebar.tsx`; add a `Product` type + CRUD to `lib/api.ts`; add a `products` namespace + `nav.products` to all 7 `messages/*.json`. Then deploy backend+frontend together.
+3. After Prodotti, the rest are **frontend-only over existing backends** — Notifiche (`/notifications`), Esportazioni (`/exports`), Opportunità (`/deals`), Team (`/teams`), Documenti (`/attachments`). One list page each, mirror the pattern.
