@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   BarChart3,
+  Bell,
   Building2,
   Calendar,
   CopyCheck,
@@ -71,6 +72,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "tasks", label: "tasks", icon: MessagesSquare },
       { href: "calendar", label: "calendar", icon: Calendar },
       { href: "inbox", label: "inbox", icon: MessageCircle },
+      { href: "notifications", label: "notifications", icon: Bell },
     ],
   },
   {
