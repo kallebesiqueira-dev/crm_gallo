@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { MessageCircle, Send } from "lucide-react";
+import { Link2, MessageCircle, Send, Target, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   api,
   type Conversation,
   type ConversationMessage,
+  type Customer,
+  type Lead,
   type MessageStatus,
   type User,
   type WhatsAppAccount,
@@ -258,6 +261,15 @@ export default function InboxPage() {
                 </CardTitle>
               </CardHeader>
 
+              <ConversationLinkBar
+                conversation={activeConv}
+                onLinked={(updated) =>
+                  setConversations((prev) =>
+                    prev.map((c) => (c.id === updated.id ? updated : c)),
+                  )
+                }
+              />
+
               <div ref={scrollRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-muted/30 p-4">
                 {messages.length === 0 ? (
                   <p className="py-8 text-center text-xs text-muted-foreground">
@@ -435,6 +447,178 @@ function ConnectEmptyState({
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function recordName(r: Lead | Customer): string {
+  const full = `${r.first_name} ${r.last_name}`.trim();
+  return full || r.email || r.phone || "—";
+}
+
+// Bar under the thread header: shows which Lead/Customer the conversation is
+// attached to and lets the user search-and-pick one. The backend /link route
+// validates the target belongs to the org (RLS hides foreign rows → 404).
+function ConversationLinkBar({
+  conversation,
+  onLinked,
+}: {
+  conversation: Conversation;
+  onLinked: (updated: Conversation) => void;
+}) {
+  const t = useTranslations("inbox");
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"lead" | "customer">("lead");
+  const [query, setQuery] = useState("");
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [linkedLead, setLinkedLead] = useState<Lead | null>(null);
+  const [linkedCustomer, setLinkedCustomer] = useState<Customer | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Resolve the linked records' names for display (the Conversation only
+  // carries their ids).
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    if (conversation.lead_id) {
+      api.getLead(token, conversation.lead_id).then(setLinkedLead).catch(() => setLinkedLead(null));
+    } else {
+      setLinkedLead(null);
+    }
+    if (conversation.customer_id) {
+      api
+        .getCustomer(token, conversation.customer_id)
+        .then(setLinkedCustomer)
+        .catch(() => setLinkedCustomer(null));
+    } else {
+      setLinkedCustomer(null);
+    }
+  }, [conversation.lead_id, conversation.customer_id]);
+
+  // Debounced search while the picker is open.
+  useEffect(() => {
+    if (!open) return;
+    const token = getToken();
+    if (!token) return;
+    const q = query.trim() || undefined;
+    const handle = setTimeout(() => {
+      if (tab === "lead") {
+        api
+          .listLeads(token, { q, limit: 8 })
+          .then((p) => setLeads(p.items))
+          .catch(() => setLeads([]));
+      } else {
+        api
+          .listCustomers(token, { q, limit: 8 })
+          .then((p) => setCustomers(p.items))
+          .catch(() => setCustomers([]));
+      }
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [open, tab, query]);
+
+  async function pick(target: { lead_id?: string; customer_id?: string }) {
+    const token = getToken();
+    if (!token) return;
+    setBusy(true);
+    try {
+      onLinked(await api.linkConversation(token, conversation.id, target));
+      setOpen(false);
+      setQuery("");
+    } catch {
+      /* leave the panel open so the user can retry */
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const hasLink = linkedLead || linkedCustomer;
+  const results = tab === "lead" ? leads : customers;
+
+  return (
+    <div className="border-b">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2">
+        <span className="text-xs text-muted-foreground">{t("linkedTo")}</span>
+        {linkedLead && (
+          <Badge variant="secondary" className="gap-1">
+            <Target className="h-3 w-3" />
+            {recordName(linkedLead)}
+          </Badge>
+        )}
+        {linkedCustomer && (
+          <Badge variant="secondary" className="gap-1">
+            <Users className="h-3 w-3" />
+            {recordName(linkedCustomer)}
+          </Badge>
+        )}
+        {!hasLink && <span className="text-xs text-muted-foreground">{t("linkNotLinked")}</span>}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="ml-auto h-7 gap-1 px-2 text-xs"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <Link2 className="h-3.5 w-3.5" />
+          {hasLink ? t("linkChange") : t("link")}
+        </Button>
+      </div>
+
+      {open && (
+        <div className="space-y-2 bg-muted/30 px-4 pb-3 pt-1">
+          <div className="flex gap-1">
+            {(["lead", "customer"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setTab(k)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                  tab === k
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {k === "lead" ? t("tabLead") : t("tabCustomer")}
+              </button>
+            ))}
+          </div>
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("linkSearch")}
+            className="h-8"
+          />
+          <ul className="max-h-48 divide-y overflow-y-auto rounded-md border bg-card">
+            {results.length === 0 ? (
+              <li className="px-3 py-4 text-center text-xs text-muted-foreground">
+                {t("linkNoResults")}
+              </li>
+            ) : (
+              results.map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      pick(tab === "lead" ? { lead_id: r.id } : { customer_id: r.id })
+                    }
+                    className="flex w-full flex-col items-start px-3 py-2 text-left transition-colors hover:bg-accent disabled:opacity-50"
+                  >
+                    <span className="text-sm font-medium">{recordName(r)}</span>
+                    {(r.email || r.company) && (
+                      <span className="text-xs text-muted-foreground">
+                        {[r.company, r.email].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

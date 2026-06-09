@@ -241,7 +241,10 @@ async def send_text(
     agent sees on the message row (template sends are a follow-up).
     """
     settings = get_settings()
-    url = f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}/{phone_number_id}/messages"
+    url = (
+        f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
+        f"/{phone_number_id}/messages"
+    )
     payload = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",

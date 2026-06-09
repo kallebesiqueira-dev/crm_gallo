@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import uuid
 
 import pytest
 from sqlalchemy import select, text
@@ -29,6 +30,8 @@ from app.config import get_settings
 from app.models import (
     Conversation,
     ConversationChannel,
+    Customer,
+    Lead,
     Message,
     MessageDirection,
     MessageStatus,
@@ -102,6 +105,22 @@ def _make_conversation(
     db.commit()
     db.refresh(conv)
     return conv
+
+
+def _make_lead(db: Session, org: Organization, *, first_name: str = "Lead") -> Lead:
+    lead = Lead(organization_id=org.id, first_name=first_name, last_name="Pytest")
+    db.add(lead)
+    db.commit()
+    db.refresh(lead)
+    return lead
+
+
+def _make_customer(db: Session, org: Organization, *, first_name: str = "Customer") -> Customer:
+    cust = Customer(organization_id=org.id, first_name=first_name, last_name="Pytest")
+    db.add(cust)
+    db.commit()
+    db.refresh(cust)
+    return cust
 
 
 # ---------- signed-webhook helpers ----------
@@ -267,9 +286,7 @@ def test_inbound_message_persists(
     r = _post_webhook(client, _inbound_payload(wamid="wamid.in.1", body="primeiro"))
     assert r.status_code == 200
 
-    msg = db.execute(
-        select(Message).where(Message.wa_message_id == "wamid.in.1")
-    ).scalar_one()
+    msg = db.execute(select(Message).where(Message.wa_message_id == "wamid.in.1")).scalar_one()
     assert msg.direction is MessageDirection.inbound
     assert msg.status is MessageStatus.received
     assert msg.body == "primeiro"
@@ -289,9 +306,7 @@ def test_inbound_replay_is_deduped(
     assert _post_webhook(client, payload).status_code == 200
     assert _post_webhook(client, payload).status_code == 200  # Meta redelivery
 
-    rows = db.execute(
-        select(Message).where(Message.wa_message_id == "wamid.dup.1")
-    ).scalars().all()
+    rows = db.execute(select(Message).where(Message.wa_message_id == "wamid.dup.1")).scalars().all()
     assert len(rows) == 1
     conv = db.get(Conversation, rows[0].conversation_id)
     assert conv.unread_count == 1  # not double-counted
@@ -303,9 +318,10 @@ def test_inbound_unknown_number_ignored(
     _make_account(db, test_org)  # different pnid than the payload below
     r = _post_webhook(client, _inbound_payload(pnid="pnid-not-connected", wamid="wamid.x"))
     assert r.status_code == 200  # ack so Meta stops retrying
-    assert db.execute(
-        select(Message).where(Message.wa_message_id == "wamid.x")
-    ).scalar_one_or_none() is None
+    assert (
+        db.execute(select(Message).where(Message.wa_message_id == "wamid.x")).scalar_one_or_none()
+        is None
+    )
 
 
 # ====================== webhook: status progression ======================
@@ -405,9 +421,11 @@ def test_reconnect_same_org_rotates_token(
         json={"phone_number_id": _PNID, "access_token": "rotated-token"},
     )
     assert r.status_code == 201
-    rows = db.execute(
-        select(WhatsAppAccount).where(WhatsAppAccount.phone_number_id == _PNID)
-    ).scalars().all()
+    rows = (
+        db.execute(select(WhatsAppAccount).where(WhatsAppAccount.phone_number_id == _PNID))
+        .scalars()
+        .all()
+    )
     assert len(rows) == 1  # rotated in place, not duplicated
     db.refresh(rows[0])
     assert rows[0].access_token == "rotated-token"
@@ -438,6 +456,193 @@ def test_foreign_org_cannot_read_conversation(
     )
     r = client.get(f"/api/whatsapp/conversations/{conv.id}")
     assert r.status_code == 404  # RLS hides the foreign row
+
+
+# ====================== conversations: link / unlink ======================
+
+
+def test_link_conversation_to_lead_and_customer(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    lead = _make_lead(db, test_org)
+    cust = _make_customer(db, test_org)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/link",
+        json={"lead_id": str(lead.id), "customer_id": str(cust.id)},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["lead_id"] == str(lead.id)
+    assert body["customer_id"] == str(cust.id)
+
+    db.refresh(conv)
+    assert conv.lead_id == lead.id
+    assert conv.customer_id == cust.id
+
+
+def test_link_unknown_lead_404(admin_client: CsrfAwareClient, db: Session, test_org: Organization):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/link",
+        json={"lead_id": "00000000-0000-0000-0000-000000000000"},
+    )
+    assert r.status_code == 404
+
+
+def test_link_foreign_org_record_404(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, other_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    foreign_lead = _make_lead(db, other_org)  # belongs to another tenant
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/link",
+        json={"lead_id": str(foreign_lead.id)},
+    )
+    assert r.status_code == 404  # RLS hides the foreign lead → looks absent
+    db.refresh(conv)
+    assert conv.lead_id is None  # nothing was attached
+
+
+def test_unlink_explicit_null_clears_only_that_field(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    lead = _make_lead(db, test_org)
+    cust = _make_customer(db, test_org)
+    conv.lead_id = lead.id
+    conv.customer_id = cust.id
+    db.commit()
+
+    # Explicit null clears the lead; customer omitted ⇒ left untouched.
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/link",
+        json={"lead_id": None},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["lead_id"] is None
+    assert body["customer_id"] == str(cust.id)
+
+    db.refresh(conv)
+    assert conv.lead_id is None
+    assert conv.customer_id == cust.id
+
+
+def test_link_empty_body_is_noop(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    lead = _make_lead(db, test_org)
+    conv.lead_id = lead.id
+    db.commit()
+
+    # No fields provided ⇒ existing link must survive.
+    r = admin_client.post(f"/api/whatsapp/conversations/{conv.id}/link", json={})
+    assert r.status_code == 200, r.text
+    assert r.json()["lead_id"] == str(lead.id)
+    db.refresh(conv)
+    assert conv.lead_id == lead.id
+
+
+# ============== conversations: convert → lead / customer ==============
+
+
+def test_convert_conversation_to_lead(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)  # name "Pytest Contact", wa 5511988887777
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/convert",
+        json={"target": "lead"},
+    )
+    assert r.status_code == 201, r.text
+    lead_id = r.json()["lead_id"]
+    assert lead_id is not None
+
+    lead = db.get(Lead, uuid.UUID(lead_id))
+    assert lead is not None
+    assert lead.organization_id == test_org.id
+    assert lead.first_name == "Pytest"
+    assert lead.last_name == "Contact"
+    assert lead.phone == "+5511988887777"
+    assert lead.source == "whatsapp"
+
+    db.refresh(conv)
+    assert conv.lead_id == lead.id
+
+
+def test_convert_conversation_to_customer(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/convert",
+        json={"target": "customer"},
+    )
+    assert r.status_code == 201, r.text
+    cust_id = r.json()["customer_id"]
+    assert cust_id is not None
+
+    cust = db.get(Customer, uuid.UUID(cust_id))
+    assert cust is not None
+    assert cust.phone == "+5511988887777"
+    assert cust.first_name == "Pytest"
+
+    db.refresh(conv)
+    assert conv.customer_id == cust.id
+
+
+def test_convert_honours_name_override(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/convert",
+        json={"target": "lead", "first_name": "Ada", "last_name": "Lovelace"},
+    )
+    assert r.status_code == 201, r.text
+    lead = db.get(Lead, uuid.UUID(r.json()["lead_id"]))
+    assert lead.first_name == "Ada"
+    assert lead.last_name == "Lovelace"
+
+
+def test_convert_already_linked_lead_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    existing = _make_lead(db, test_org)
+    conv.lead_id = existing.id
+    db.commit()
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/convert",
+        json={"target": "lead"},
+    )
+    assert r.status_code == 409  # already linked ⇒ refuse to fork a dupe
+    db.refresh(conv)
+    assert conv.lead_id == existing.id  # untouched
+
+
+def test_convert_unknown_conversation_404(admin_client: CsrfAwareClient, db: Session):
+    r = admin_client.post(
+        "/api/whatsapp/conversations/00000000-0000-0000-0000-000000000000/convert",
+        json={"target": "lead"},
+    )
+    assert r.status_code == 404
 
 
 # ====================== outbound send (enqueue path) ======================

@@ -28,9 +28,16 @@ from fastapi.responses import PlainTextResponse, Response
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.activities import (
+    ENTITY_CUSTOMER,
+    ENTITY_LEAD,
+    ActivityType,
+    record_activity,
+)
 from app.audit import record_audit
 from app.database import get_db, set_current_org_id
 from app.deps import get_current_org_id, get_current_user, require_roles
+from app.events import EventType, record_event
 from app.models import (
     Conversation,
     ConversationStatus,
@@ -46,6 +53,7 @@ from app.models import (
     WhatsAppAccountStatus,
 )
 from app.schemas import (
+    ConversationConvert,
     ConversationLink,
     ConversationOut,
     MessageOut,
@@ -182,18 +190,20 @@ async def list_accounts(
     db: AsyncSession = Depends(get_db),
 ) -> list[WhatsAppAccountOut]:
     rows = (
-        await db.execute(
-            select(WhatsAppAccount)
-            .where(WhatsAppAccount.organization_id == org_id)
-            .order_by(WhatsAppAccount.created_at.desc())
+        (
+            await db.execute(
+                select(WhatsAppAccount)
+                .where(WhatsAppAccount.organization_id == org_id)
+                .order_by(WhatsAppAccount.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_account_out(a) for a in rows]
 
 
-@router.post(
-    "/accounts", response_model=WhatsAppAccountOut, status_code=status.HTTP_201_CREATED
-)
+@router.post("/accounts", response_model=WhatsAppAccountOut, status_code=status.HTTP_201_CREATED)
 async def connect_account(
     payload: WhatsAppAccountConnect,
     user: User = Depends(manage),
@@ -370,23 +380,150 @@ async def link_conversation(
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ) -> Conversation:
-    """Attach the thread to a Lead and/or Customer. Validates that each target
-    belongs to the caller's org (RLS would hide a foreign row → 404)."""
+    """Attach the thread to a Lead and/or Customer — or detach it.
+
+    A field that is omitted from the body is left untouched; a field sent as
+    an explicit ``null`` clears that link. A non-null id is validated to belong
+    to the caller's org (RLS hides a foreign row → 404) before being set. We use
+    ``model_fields_set`` to tell "omitted" apart from "explicit null", since both
+    deserialize to ``None``."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
-    if payload.lead_id is not None:
-        lead = (
-            await db.execute(select(Lead.id).where(Lead.id == payload.lead_id))
-        ).scalar_one_or_none()
-        if lead is None:
-            raise HTTPException(status_code=404, detail="Lead not found")
-        conv.lead_id = payload.lead_id
-    if payload.customer_id is not None:
-        cust = (
-            await db.execute(select(Customer.id).where(Customer.id == payload.customer_id))
-        ).scalar_one_or_none()
-        if cust is None:
-            raise HTTPException(status_code=404, detail="Customer not found")
-        conv.customer_id = payload.customer_id
+    provided = payload.model_fields_set
+    if "lead_id" in provided:
+        if payload.lead_id is not None:
+            lead = (
+                await db.execute(select(Lead.id).where(Lead.id == payload.lead_id))
+            ).scalar_one_or_none()
+            if lead is None:
+                raise HTTPException(status_code=404, detail="Lead not found")
+        conv.lead_id = payload.lead_id  # None ⇒ detach
+    if "customer_id" in provided:
+        if payload.customer_id is not None:
+            cust = (
+                await db.execute(select(Customer.id).where(Customer.id == payload.customer_id))
+            ).scalar_one_or_none()
+            if cust is None:
+                raise HTTPException(status_code=404, detail="Customer not found")
+        conv.customer_id = payload.customer_id  # None ⇒ detach
+    await db.commit()
+    await db.refresh(conv)
+    return conv
+
+
+def _derive_name(
+    contact_name: str | None, wa_id: str, first: str | None, last: str | None
+) -> tuple[str, str]:
+    """Best-effort split of a WhatsApp profile name into first/last, honouring
+    explicit overrides. Both columns are NOT NULL, so we never return blanks:
+    the wa_id is the last-resort last name when nothing else is known."""
+    if first or last:
+        return (first or "WhatsApp").strip(), (last or "Contact").strip()
+    parts = (contact_name or "").split()
+    if len(parts) >= 2:
+        return parts[0], " ".join(parts[1:])
+    if len(parts) == 1:
+        return parts[0], wa_id
+    return "WhatsApp", wa_id
+
+
+@router.post(
+    "/conversations/{conversation_id}/convert",
+    response_model=ConversationOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def convert_conversation(
+    conversation_id: uuid.UUID,
+    payload: ConversationConvert,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Conversation:
+    """Create a Lead or Customer from an inbound thread and link it.
+
+    Seeds name from the contact's profile name and phone from their wa_id, then
+    attaches the new record to this conversation. Refuses (409) if the thread is
+    already linked to a record of that type, so a double-tap can't fork dupes."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    if payload.target == "lead" and conv.lead_id is not None:
+        raise HTTPException(status_code=409, detail="Conversation already linked to a lead")
+    if payload.target == "customer" and conv.customer_id is not None:
+        raise HTTPException(status_code=409, detail="Conversation already linked to a customer")
+
+    first, last = _derive_name(
+        conv.contact_name, conv.contact_wa_id, payload.first_name, payload.last_name
+    )
+    phone = f"+{conv.contact_wa_id}"
+
+    if payload.target == "lead":
+        record = Lead(
+            organization_id=org_id,
+            first_name=first,
+            last_name=last,
+            phone=phone,
+            source="whatsapp",
+            owner_id=user.id,
+        )
+        db.add(record)
+        await db.flush()
+        conv.lead_id = record.id
+        await record_audit(
+            db,
+            actor=user,
+            action="lead.create",
+            entity_type="lead",
+            entity_id=record.id,
+            organization_id=org_id,
+            metadata={"source": "whatsapp", "conversation_id": str(conv.id)},
+        )
+        await record_activity(
+            db,
+            entity_type=ENTITY_LEAD,
+            entity_id=record.id,
+            activity_type=ActivityType.created,
+            organization_id=org_id,
+            actor=user,
+            metadata={"source": "whatsapp"},
+        )
+        await record_event(
+            db,
+            event_type=EventType.lead_created,
+            organization_id=org_id,
+            payload={
+                "lead_id": record.id,
+                "owner_id": user.id,
+                "stage": record.stage.value,
+                "actor_user_id": user.id,
+            },
+        )
+    else:
+        record = Customer(
+            organization_id=org_id,
+            first_name=first,
+            last_name=last,
+            phone=phone,
+            owner_id=user.id,
+        )
+        db.add(record)
+        await db.flush()
+        conv.customer_id = record.id
+        await record_audit(
+            db,
+            actor=user,
+            action="customer.create",
+            entity_type="customer",
+            entity_id=record.id,
+            organization_id=org_id,
+            metadata={"source": "whatsapp", "conversation_id": str(conv.id)},
+        )
+        await record_activity(
+            db,
+            entity_type=ENTITY_CUSTOMER,
+            entity_id=record.id,
+            activity_type=ActivityType.created,
+            organization_id=org_id,
+            actor=user,
+        )
+
     await db.commit()
     await db.refresh(conv)
     return conv
@@ -403,13 +540,17 @@ async def list_messages(
     # 404s for a foreign/missing conversation (no enumeration).
     await _get_conversation_or_404(db, conversation_id, org_id)
     rows = (
-        await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation_id)
-            .order_by(Message.timestamp, Message.created_at)
-            .limit(limit)
+        (
+            await db.execute(
+                select(Message)
+                .where(Message.conversation_id == conversation_id)
+                .order_by(Message.timestamp, Message.created_at)
+                .limit(limit)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return list(rows)
 
 

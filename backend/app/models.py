@@ -2173,7 +2173,9 @@ class WhatsAppAccount(Base):
     )
     # Meta's stable id for the WhatsApp phone number. The routing key for
     # inbound webhooks — globally unique so a payload maps to exactly one org.
-    phone_number_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    phone_number_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True, index=True
+    )
     # WhatsApp Business Account id (the parent of the phone number). Optional —
     # only used for display / future template management.
     waba_id: Mapped[str | None] = mapped_column(String(64))

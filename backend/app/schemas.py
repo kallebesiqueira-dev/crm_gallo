@@ -1671,10 +1671,26 @@ class ConversationOut(BaseModel):
 
 
 class ConversationLink(BaseModel):
-    """Attach a conversation to a CRM record (either/both optional)."""
+    """Attach (or detach) a conversation from a CRM record.
+
+    Omit a field to leave it untouched; send it as ``null`` to clear the link.
+    The route reads ``model_fields_set`` to distinguish the two cases."""
 
     lead_id: uuid.UUID | None = None
     customer_id: uuid.UUID | None = None
+
+
+class ConversationConvert(BaseModel):
+    """Spin up a CRM record from a WhatsApp thread, then link the thread to it.
+
+    ``target`` picks Lead vs Customer. The new record's name defaults from the
+    contact's WhatsApp profile name (first token → ``first_name``, the rest →
+    ``last_name``); pass ``first_name``/``last_name`` to override. The contact's
+    ``wa_id`` always seeds the phone in E.164 (``+<digits>``)."""
+
+    target: Literal["lead", "customer"]
+    first_name: Annotated[str | None, Field(default=None, max_length=120)] = None
+    last_name: Annotated[str | None, Field(default=None, max_length=120)] = None
 
 
 class MessageOut(BaseModel):
