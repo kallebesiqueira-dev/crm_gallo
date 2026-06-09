@@ -52,31 +52,43 @@ export function AvatarUpload({
     }
   }
 
+  const badge = Math.max(14, Math.round(size / 3));
   return (
     <button
       type="button"
       onClick={() => inputRef.current?.click()}
       disabled={busy}
-      className="group relative shrink-0 overflow-hidden rounded-full ring-2 ring-border"
+      aria-label="Change photo"
+      title="Change photo"
+      className="group relative shrink-0"
       style={{ width: size, height: size }}
     >
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <span
-          className="grid h-full w-full place-items-center bg-gradient-to-br from-violet-500 to-fuchsia-500 font-semibold text-white"
-          style={{ fontSize: size / 2.6 }}
-        >
-          {fallback}
-        </span>
-      )}
-      <span className="absolute inset-0 grid place-items-center bg-black/40 opacity-0 transition group-hover:opacity-100">
-        {busy ? (
-          <Loader2 className="h-5 w-5 animate-spin text-white" />
+      <span className="relative block h-full w-full overflow-hidden rounded-full ring-2 ring-border">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="h-full w-full object-cover" />
         ) : (
-          <Camera className="h-5 w-5 text-white" />
+          <span
+            className="grid h-full w-full place-items-center bg-gradient-to-br from-violet-500 to-fuchsia-500 font-semibold text-white"
+            style={{ fontSize: size / 2.6 }}
+          >
+            {fallback}
+          </span>
         )}
+        <span className="absolute inset-0 grid place-items-center bg-black/40 opacity-0 transition group-hover:opacity-100">
+          {busy ? (
+            <Loader2 className="h-5 w-5 animate-spin text-white" />
+          ) : (
+            <Camera className="h-5 w-5 text-white" />
+          )}
+        </span>
+      </span>
+      {/* Always-visible camera badge so it's obvious the photo is editable */}
+      <span
+        className="absolute -bottom-0.5 -right-0.5 grid place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-background"
+        style={{ width: badge, height: badge }}
+      >
+        <Camera style={{ width: Math.max(8, Math.round(size / 5)), height: Math.max(8, Math.round(size / 5)) }} />
       </span>
       <input ref={inputRef} type="file" accept="image/*" onChange={onFile} className="hidden" />
     </button>

@@ -1586,5 +1586,10 @@
       "question": "Frage",
       "other": "Sonstiges"
     }
+  },
+  "search": {
+    "placeholder": "Leads, Kunden, Unternehmen suchen…",
+    "hint": "Mindestens 2 Zeichen eingeben.",
+    "noResults": "Keine Ergebnisse"
   }
 }

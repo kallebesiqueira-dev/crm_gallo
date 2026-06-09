@@ -1586,5 +1586,10 @@
       "question": "Dumonda",
       "other": "Auter"
     }
+  },
+  "search": {
+    "placeholder": "Tschertgar leads, clients, interpresas…",
+    "hint": "Tippa almain 2 caracters per tschertgar.",
+    "noResults": "Nagins resultats"
   }
 }
