@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
       {/* Activities + pipeline + my tasks */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel className="p-5">
+        <Panel className="flex flex-col p-5">
           <SectionTitle icon={CheckCircle2}>Attività recenti</SectionTitle>
           <div className="mt-3 space-y-1">
             {RECENT_ACTIVITIES.map((a) => (
@@ -177,7 +177,7 @@ export default function DashboardPage() {
           <CardLink href={`/${locale}/tasks`}>Vedi tutte le attività</CardLink>
         </Panel>
 
-        <Panel className="p-5">
+        <Panel className="flex flex-col p-5">
           <div className="flex items-center justify-between">
             <SectionTitle icon={Target}>Pipeline</SectionTitle>
             <span className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">Tutte le pipeline</span>
@@ -186,7 +186,7 @@ export default function DashboardPage() {
           <CardLink href={`/${locale}/pipeline`}>Vai alla pipeline</CardLink>
         </Panel>
 
-        <Panel className="p-5">
+        <Panel className="flex flex-col p-5">
           <div className="flex items-center justify-between">
             <SectionTitle icon={CalendarDays}>Le mie attività</SectionTitle>
             <span className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">Oggi</span>
@@ -307,7 +307,7 @@ function CardLink({ href, children }: { href: string; children: React.ReactNode 
   return (
     <Link
       href={href}
-      className="mt-3 block rounded-lg border border-border py-2 text-center text-xs font-semibold text-primary transition hover:bg-primary/5"
+      className="mt-auto block rounded-lg border border-border py-2 text-center text-xs font-semibold text-primary transition hover:bg-primary/5"
     >
       {children}
     </Link>

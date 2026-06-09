@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, TrendingUp } from "lucide-react";
+import { AlertTriangle, HelpCircle, Mail, Plus, Search, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -25,9 +25,11 @@ import { clearToken, getToken, isExpired, onTokenChange } from "@/lib/auth";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const locale = useLocale();
   const tAuth = useTranslations("auth");
   const tBilling = useTranslations("billing");
+  const tNav = useTranslations("nav");
   const [user, setUser] = useState<User | null>(null);
   const [billing, setBilling] = useState<BillingMe | null>(null);
   const [ready, setReady] = useState(false);
@@ -98,28 +100,83 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Trial / seat-limit / canceled banners.
   const banner = billingBanner(billing, locale, tBilling);
 
+  // Topbar: current section title (from the route) + user identity bits.
+  const section = pathname?.split("/")[2] || "dashboard";
+  const sectionTitle = tNav.has(section)
+    ? tNav(section)
+    : section.charAt(0).toUpperCase() + section.slice(1);
+  const fullName = user?.full_name || user?.email || "";
+  const initials =
+    fullName
+      .split(" ")
+      .map((p) => p[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "U";
+  const roleLabel = user?.role
+    ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : "";
+
   return (
     <ConfirmProvider>
       <div className="flex min-h-screen bg-muted/30">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="relative z-50 flex flex-wrap items-center justify-between gap-3 border-b bg-background px-4 py-3 sm:px-6">
+          <header className="sticky top-0 z-50 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-xl sm:px-6">
+            {/* Left — hamburger (mobile) + current section + org switcher */}
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              {/* Hamburger drawer — only renders below md, where the sidebar hides. */}
               <MobileNav />
-              {/* Org switcher hides itself when the user has 0–1 memberships,
-                  so single-tenant installs see the same chrome as before. */}
+              <h1 className="truncate text-lg font-semibold tracking-tight">{sectionTitle}</h1>
               <OrgSwitcher activeOrgId={user?.last_active_org_id ?? null} />
-              <div className="hidden truncate text-sm text-muted-foreground sm:block">{user?.email}</div>
-              {billing && <PlanBadge plan={billing.plan} />}
             </div>
-            <div className="flex items-center gap-2">
-              {/* Bell sits leftmost in the right cluster — first
-                  thing the user looks at when they're checking for
-                  new work. Polls /counts every 60s + on focus. */}
+
+            {/* Center — search (visual for now; ⌘K palette is a follow-up) */}
+            <button
+              type="button"
+              className="mx-auto hidden w-full max-w-xl items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:flex"
+            >
+              <Search className="h-4 w-4 shrink-0" />
+              <span className="flex-1 truncate">Cerca lead, clienti, attività…</span>
+              <kbd className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium lg:inline">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Right — actions + identity */}
+            <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+              <Button asChild size="sm" className="gap-1.5">
+                <Link href={`/${locale}/tasks`}>
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nuova attività</span>
+                </Link>
+              </Button>
+              <button
+                type="button"
+                aria-label="Messaggi"
+                className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground sm:grid"
+              >
+                <Mail className="h-5 w-5" />
+              </button>
               <NotificationsBell />
-              <LanguageSwitcher />
+              <button
+                type="button"
+                aria-label="Aiuto"
+                className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground sm:grid"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </button>
               <ThemeToggle />
+              <LanguageSwitcher />
+              {billing && <PlanBadge plan={billing.plan} />}
+              <div className="ml-1 flex items-center gap-2 border-l border-border pl-2">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
+                  {initials}
+                </span>
+                <div className="hidden leading-tight xl:block">
+                  <div className="max-w-[9rem] truncate text-sm font-semibold">{fullName}</div>
+                  <div className="text-[11px] text-muted-foreground">{roleLabel}</div>
+                </div>
+              </div>
               <Button variant="ghost" size="sm" onClick={logout}>
                 {tAuth("logout")}
               </Button>
