@@ -29,7 +29,8 @@
     "forms": "Forms",
     "inbox": "WhatsApp",
     "performance": "Performance",
-    "automations": "Automations"
+    "automations": "Automations",
+    "products": "Products"
   },
   "inbox": {
     "title": "WhatsApp Inbox",
@@ -1496,5 +1497,24 @@
     },
     "confirmDeleteTitle": "Delete rule?",
     "confirmDeleteBody": "“{name}” will be permanently deleted and stop firing."
+  },
+  "products": {
+    "title": "Products",
+    "new": "New product",
+    "edit": "Edit product",
+    "search": "Search products…",
+    "empty": "No products yet.",
+    "name": "Name",
+    "sku": "SKU",
+    "type": "Type",
+    "typeProduct": "Product",
+    "typeService": "Service",
+    "price": "Price",
+    "currency": "Currency",
+    "unit": "Unit",
+    "active": "Active",
+    "inactive": "Inactive",
+    "status": "Status",
+    "description": "Description"
   }
 }

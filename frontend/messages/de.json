@@ -29,7 +29,8 @@
     "forms": "Formulare",
     "inbox": "WhatsApp",
     "performance": "Leistung",
-    "automations": "Automatisierungen"
+    "automations": "Automatisierungen",
+    "products": "Produkte"
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -1496,5 +1497,24 @@
     },
     "confirmDeleteTitle": "Regel löschen?",
     "confirmDeleteBody": "„{name}“ wird dauerhaft gelöscht und nicht mehr ausgelöst."
+  },
+  "products": {
+    "title": "Produkte",
+    "new": "Neues Produkt",
+    "edit": "Produkt bearbeiten",
+    "search": "Produkte suchen…",
+    "empty": "Noch keine Produkte.",
+    "name": "Name",
+    "sku": "SKU",
+    "type": "Typ",
+    "typeProduct": "Produkt",
+    "typeService": "Dienstleistung",
+    "price": "Preis",
+    "currency": "Währung",
+    "unit": "Einheit",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "status": "Status",
+    "description": "Beschreibung"
   }
 }

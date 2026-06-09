@@ -29,7 +29,8 @@
     "forms": "Moduli",
     "inbox": "WhatsApp",
     "performance": "Performance",
-    "automations": "Automazioni"
+    "automations": "Automazioni",
+    "products": "Prodotti"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -1496,5 +1497,24 @@
     },
     "confirmDeleteTitle": "Eliminare la regola?",
     "confirmDeleteBody": "«{name}» verrà eliminata definitivamente e smetterà di attivarsi."
+  },
+  "products": {
+    "title": "Prodotti",
+    "new": "Nuovo prodotto",
+    "edit": "Modifica prodotto",
+    "search": "Cerca prodotti…",
+    "empty": "Nessun prodotto.",
+    "name": "Nome",
+    "sku": "SKU",
+    "type": "Tipo",
+    "typeProduct": "Prodotto",
+    "typeService": "Servizio",
+    "price": "Prezzo",
+    "currency": "Valuta",
+    "unit": "Unità",
+    "active": "Attivo",
+    "inactive": "Inattivo",
+    "status": "Stato",
+    "description": "Descrizione"
   }
 }

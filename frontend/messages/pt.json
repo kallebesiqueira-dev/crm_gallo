@@ -29,7 +29,8 @@
     "forms": "Formulários",
     "inbox": "WhatsApp",
     "performance": "Desempenho",
-    "automations": "Automações"
+    "automations": "Automações",
+    "products": "Produtos"
   },
   "inbox": {
     "title": "Caixa de entrada WhatsApp",
@@ -1496,5 +1497,24 @@
     },
     "confirmDeleteTitle": "Excluir regra?",
     "confirmDeleteBody": "“{name}” será excluída permanentemente e deixará de ser executada."
+  },
+  "products": {
+    "title": "Produtos",
+    "new": "Novo produto",
+    "edit": "Editar produto",
+    "search": "Procurar produtos…",
+    "empty": "Ainda não há produtos.",
+    "name": "Nome",
+    "sku": "SKU",
+    "type": "Tipo",
+    "typeProduct": "Produto",
+    "typeService": "Serviço",
+    "price": "Preço",
+    "currency": "Moeda",
+    "unit": "Unidade",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "status": "Estado",
+    "description": "Descrição"
   }
 }

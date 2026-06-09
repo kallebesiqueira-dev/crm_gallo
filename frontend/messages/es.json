@@ -29,7 +29,8 @@
     "forms": "Formularios",
     "inbox": "WhatsApp",
     "performance": "Rendimiento",
-    "automations": "Automatizaciones"
+    "automations": "Automatizaciones",
+    "products": "Productos"
   },
   "inbox": {
     "title": "Bandeja de WhatsApp",
@@ -1496,5 +1497,24 @@
     },
     "confirmDeleteTitle": "¿Eliminar regla?",
     "confirmDeleteBody": "«{name}» se eliminará permanentemente y dejará de ejecutarse."
+  },
+  "products": {
+    "title": "Productos",
+    "new": "Nuevo producto",
+    "edit": "Editar producto",
+    "search": "Buscar productos…",
+    "empty": "Aún no hay productos.",
+    "name": "Nombre",
+    "sku": "SKU",
+    "type": "Tipo",
+    "typeProduct": "Producto",
+    "typeService": "Servicio",
+    "price": "Precio",
+    "currency": "Moneda",
+    "unit": "Unidad",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "status": "Estado",
+    "description": "Descripción"
   }
 }
