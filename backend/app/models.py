@@ -2092,3 +2092,228 @@ class AutomationRun(Base):
     entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     detail: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+# ---- WhatsApp Business Cloud API (omnichannel inbox, phase 1) ----
+class WhatsAppAccountStatus(str, enum.Enum):
+    active = "active"
+    disabled = "disabled"
+
+
+class ConversationChannel(str, enum.Enum):
+    """Messaging channel a conversation rides. Only `whatsapp` is wired in
+    phase 1; `instagram` / `messenger` are declared ahead of their adapters
+    (same Meta Graph + webhook layer) so the schema doesn't churn later."""
+
+    whatsapp = "whatsapp"
+    instagram = "instagram"
+    messenger = "messenger"
+
+
+class ConversationStatus(str, enum.Enum):
+    open = "open"
+    closed = "closed"
+
+
+class MessageDirection(str, enum.Enum):
+    inbound = "inbound"
+    outbound = "outbound"
+
+
+class MessageType(str, enum.Enum):
+    text = "text"
+    image = "image"
+    document = "document"
+    audio = "audio"
+    video = "video"
+    sticker = "sticker"
+    location = "location"
+    contacts = "contacts"
+    # Anything we don't model yet (interactive replies, reactions, system
+    # notifications) lands here so an unexpected payload is persisted, not
+    # dropped or crashed on.
+    unsupported = "unsupported"
+
+
+class MessageStatus(str, enum.Enum):
+    """Lifecycle. Inbound messages are born `received`. Outbound messages
+    walk pending → sent → delivered → read (driven by Meta status webhooks),
+    or → failed."""
+
+    received = "received"
+    pending = "pending"
+    sent = "sent"
+    delivered = "delivered"
+    read = "read"
+    failed = "failed"
+
+
+class WhatsAppAccount(Base):
+    """A tenant's connected WhatsApp Business number (Cloud API).
+
+    **Deliberately NOT RLS'd — it is a routing root, like `organizations`.**
+    Inbound Meta webhooks arrive UNauthenticated and identify the tenant only
+    by the `phone_number_id` in the payload; the receiver must resolve that to
+    an org BEFORE any tenant context exists, so this lookup can't sit behind a
+    row-level-security GUC (the runtime role is NOBYPASSRLS). Isolation for the
+    authenticated API surface is enforced in the app layer (every query filters
+    `organization_id`), and the sensitive `access_token` is encrypted at rest —
+    so a non-RLS table here leaks nothing a DB dump wouldn't, while keeping the
+    webhook routable. `phone_number_id` is globally UNIQUE: one number ↔ one org.
+    """
+
+    __tablename__ = "whatsapp_accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # Meta's stable id for the WhatsApp phone number. The routing key for
+    # inbound webhooks — globally unique so a payload maps to exactly one org.
+    phone_number_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True, index=True
+    )
+    # WhatsApp Business Account id (the parent of the phone number). Optional —
+    # only used for display / future template management.
+    waba_id: Mapped[str | None] = mapped_column(String(64))
+    # Human-readable "+49 151 ..." and the Meta-verified business name, both
+    # echoed from Meta on connect for the settings UI.
+    display_phone_number: Mapped[str | None] = mapped_column(String(32))
+    verified_name: Mapped[str | None] = mapped_column(String(255))
+    # Permanent (system-user) access token for Graph API sends. Encrypted at
+    # rest (Fernet) — a DB dump can't send messages as this tenant. Width holds
+    # the Fernet token of a long Meta token (~200 chars plaintext → ~360 enc).
+    access_token: Mapped[str] = mapped_column(EncryptedSecret(1024), nullable=False)
+    status: Mapped[WhatsAppAccountStatus] = mapped_column(
+        Enum(WhatsAppAccountStatus),
+        default=WhatsAppAccountStatus.active,
+        server_default=WhatsAppAccountStatus.active.value,
+        nullable=False,
+    )
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Conversation(Base):
+    """A thread with one external contact on one connected channel.
+
+    Org-scoped + RLS like every tenant table. Polymorphically linkable to a
+    Lead and/or a Customer (both optional) so an inbox thread can be attached
+    to the CRM record it belongs to without forcing a link up front. Uniqueness
+    is `(organization_id, account_id, contact_wa_id)` — one open thread per
+    (connected number, contact)."""
+
+    __tablename__ = "conversations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("whatsapp_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    channel: Mapped[ConversationChannel] = mapped_column(
+        Enum(ConversationChannel),
+        default=ConversationChannel.whatsapp,
+        server_default=ConversationChannel.whatsapp.value,
+        nullable=False,
+    )
+    # The contact's WhatsApp id (their phone in E.164 digits, no +). Meta calls
+    # this `wa_id`. The thread key together with account_id.
+    contact_wa_id: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    # Profile name Meta attaches to inbound messages (best-effort, user-set).
+    contact_name: Mapped[str | None] = mapped_column(String(255))
+    lead_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("leads.id", ondelete="SET NULL")
+    )
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL")
+    )
+    status: Mapped[ConversationStatus] = mapped_column(
+        Enum(ConversationStatus),
+        default=ConversationStatus.open,
+        server_default=ConversationStatus.open.value,
+        nullable=False,
+    )
+    # Denormalised for the inbox list view (avoid a per-row subquery).
+    last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    last_message_preview: Mapped[str | None] = mapped_column(String(255))
+    unread_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    messages: Mapped[list["Message"]] = relationship(
+        back_populates="conversation", cascade="all, delete-orphan"
+    )
+
+
+class Message(Base):
+    """One message in a Conversation, inbound or outbound.
+
+    Org-scoped + RLS. `wa_message_id` is Meta's `wamid` — UNIQUE (nullable, so
+    multiple in-flight outbound rows can coexist before they get an id) so a
+    replayed inbound webhook or a duplicated status callback can't create two
+    rows for the same message."""
+
+    __tablename__ = "messages"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    conversation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("conversations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # Meta's `wamid`. UNIQUE for idempotency; nullable because an outbound row
+    # exists (status=pending) before the Graph send returns its id.
+    wa_message_id: Mapped[str | None] = mapped_column(
+        String(128), unique=True, index=True
+    )
+    direction: Mapped[MessageDirection] = mapped_column(Enum(MessageDirection), nullable=False)
+    type: Mapped[MessageType] = mapped_column(
+        Enum(MessageType),
+        default=MessageType.text,
+        server_default=MessageType.text.value,
+        nullable=False,
+    )
+    # Text body or media caption. Null for a bare media/location message.
+    body: Mapped[str | None] = mapped_column(Text)
+    # Meta media id (download via Graph later) + the S3 url once mirrored.
+    media_id: Mapped[str | None] = mapped_column(String(128))
+    media_url: Mapped[str | None] = mapped_column(String(1024))
+    status: Mapped[MessageStatus] = mapped_column(Enum(MessageStatus), nullable=False)
+    # Failure reason for an outbound send (Graph API error).
+    error: Mapped[str | None] = mapped_column(Text)
+    # The agent who sent an outbound message (null for inbound / system).
+    sender_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Message time: Meta's timestamp for inbound, send time for outbound.
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    conversation: Mapped["Conversation"] = relationship(back_populates="messages")

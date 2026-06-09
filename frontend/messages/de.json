@@ -27,8 +27,60 @@
     "companies": "Unternehmen",
     "duplicates": "Duplikate",
     "forms": "Formulare",
+    "inbox": "WhatsApp",
     "performance": "Leistung",
     "automations": "Automatisierungen"
+  },
+  "inbox": {
+    "title": "WhatsApp-Posteingang",
+    "subtitle": "Chatte mit deinen Kontakten in Echtzeit über WhatsApp.",
+    "loading": "Wird geladen…",
+    "conversations": "Unterhaltungen",
+    "noConversations": "Noch keine Unterhaltungen.",
+    "noMessagesYet": "Noch keine Nachrichten.",
+    "selectConversation": "Unterhaltung auswählen",
+    "selectConversationBody": "Wähle links eine Unterhaltung zum Lesen und Antworten.",
+    "messagePlaceholder": "Nachricht schreiben…",
+    "send": "Senden",
+    "mediaPlaceholder": "[{type}]",
+    "noAccounts": "Verbinde deine WhatsApp-Nummer",
+    "noAccountsBody": "Verknüpfe eine WhatsApp-Business-Nummer, um hier Nachrichten zu empfangen und zu senden.",
+    "adminOnly": "Nur ein Administrator kann eine WhatsApp-Nummer verbinden.",
+    "phoneNumberId": "Telefonnummer-ID",
+    "accessToken": "Zugriffstoken",
+    "accessTokenHint": "Verschlüsselt gespeichert. Zu finden unter Meta › WhatsApp › API-Einrichtung.",
+    "displayPhone": "Anzeigetelefon (optional)",
+    "displayName": "Anzeigename (optional)",
+    "displayNamePlaceholder": "Acme GmbH",
+    "connect": "Verbinden",
+    "connecting": "Verbinden…",
+    "linkedTo": "Verknüpft mit",
+    "linkNotLinked": "Nicht verknüpft",
+    "link": "Verknüpfen",
+    "linkChange": "Ändern",
+    "tabLead": "Lead",
+    "tabCustomer": "Kunde",
+    "linkSearch": "Nach Name suchen…",
+    "linkNoResults": "Keine Treffer",
+    "status": {
+      "received": "Empfangen",
+      "pending": "Senden…",
+      "sent": "Gesendet",
+      "delivered": "Zugestellt",
+      "read": "Gelesen",
+      "failed": "Fehlgeschlagen"
+    },
+    "type": {
+      "text": "Text",
+      "image": "Foto",
+      "document": "Dokument",
+      "audio": "Audio",
+      "video": "Video",
+      "sticker": "Sticker",
+      "location": "Standort",
+      "contacts": "Kontakt",
+      "unsupported": "Nicht unterstützt"
+    }
   },
   "auth": {
     "login": "Anmelden",
@@ -989,7 +1041,7 @@
       "aiAssistant": "Unbegrenzter KI-Assistent",
       "reports": "Berichte und Charts",
       "automations": "Workflow-Automatisierungen",
-      "integrations": "E-Mail- + Kalenderintegrationen",
+      "integrations": "E-Mail-, Kalender- + WhatsApp-Integrationen",
       "rag": "RAG-Wissensdatenbank",
       "api": "API + Webhooks",
       "support": "Support",
@@ -1031,7 +1083,7 @@
       },
       "8": {
         "q": "Welche Integrationen sind verfügbar?",
-        "a": "Stripe für Abrechnung, IMAP/SMTP für E-Mail, Google/Outlook Calendar für Termine, Slack für Benachrichtigungen. REST-API + Webhooks für individuelle Integrationen. Öffentliche Roadmap umfasst HubSpot, Pipedrive, Notion, Zapier."
+        "a": "Stripe für Abrechnung, IMAP/SMTP für E-Mail, Google/Outlook Calendar für Termine, WhatsApp Business für Nachrichten, Slack für Benachrichtigungen. REST-API + Webhooks für individuelle Integrationen. Öffentliche Roadmap umfasst Instagram, Messenger, HubSpot, Pipedrive, Notion, Zapier."
       },
       "9": {
         "q": "Ist Gallo CRM DSGVO-konform?",
@@ -1092,7 +1144,7 @@
         "features": [
           "Alles aus Business",
           "Workflow-Automatisierungen",
-          "E-Mail- und Kalenderintegrationen",
+          "E-Mail-, Kalender- und WhatsApp-Integrationen",
           "RAG: Assistent mit Wissensdatenbank",
           "Öffentliche API + API-Schlüssel",
           "Dedizierter Account-Manager"

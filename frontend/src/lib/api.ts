@@ -879,6 +879,73 @@ export interface BillingMe {
   stripe_configured: boolean;
 }
 
+// ── WhatsApp inbox (omnichannel, phase 1) ────────────────────────────
+export type WhatsAppAccountStatus = "active" | "disabled";
+export type ConversationStatus = "open" | "closed";
+export type MessageDirection = "inbound" | "outbound";
+export type MessageStatus = "received" | "pending" | "sent" | "delivered" | "read" | "failed";
+export type MessageType =
+  | "text"
+  | "image"
+  | "document"
+  | "audio"
+  | "video"
+  | "sticker"
+  | "location"
+  | "contacts"
+  | "unsupported";
+
+export interface WhatsAppAccount {
+  id: string;
+  phone_number_id: string;
+  waba_id: string | null;
+  display_phone_number: string | null;
+  verified_name: string | null;
+  status: WhatsAppAccountStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Conversation {
+  id: string;
+  account_id: string;
+  channel: "whatsapp" | "instagram" | "messenger";
+  contact_wa_id: string;
+  contact_name: string | null;
+  lead_id: string | null;
+  customer_id: string | null;
+  status: ConversationStatus;
+  last_message_at: string | null;
+  last_message_preview: string | null;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversation_id: string;
+  wa_message_id: string | null;
+  direction: MessageDirection;
+  type: MessageType;
+  body: string | null;
+  media_id: string | null;
+  media_url: string | null;
+  status: MessageStatus;
+  error: string | null;
+  sender_user_id: string | null;
+  timestamp: string;
+  created_at: string;
+}
+
+export interface WhatsAppAccountConnect {
+  phone_number_id: string;
+  access_token: string;
+  waba_id?: string | null;
+  display_phone_number?: string | null;
+  verified_name?: string | null;
+}
+
 // Hook for the app shell to redirect on 401 without circular imports.
 let onUnauthorized: (() => void) | null = null;
 export function setUnauthorizedHandler(fn: (() => void) | null) {
@@ -1997,6 +2064,55 @@ export const api = {
       method: "DELETE",
       token,
     }),
+
+  // ── WhatsApp inbox (omnichannel, phase 1) ───────────────────────
+  // Accounts are admin-gated on the backend (connect/update/delete);
+  // listing + reading + sending are any member's.
+  listWhatsAppAccounts: (token: string) =>
+    request<WhatsAppAccount[]>("/api/whatsapp/accounts", { token }),
+  connectWhatsAppAccount: (token: string, payload: WhatsAppAccountConnect) =>
+    request<WhatsAppAccount>("/api/whatsapp/accounts", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  disconnectWhatsAppAccount: (token: string, id: string) =>
+    request<void>(`/api/whatsapp/accounts/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      token,
+    }),
+  listConversations: (token: string, status?: ConversationStatus) =>
+    request<Conversation[]>(
+      `/api/whatsapp/conversations${status ? `?status=${status}` : ""}`,
+      { token },
+    ),
+  getConversation: (token: string, id: string) =>
+    request<Conversation>(`/api/whatsapp/conversations/${encodeURIComponent(id)}`, { token }),
+  markConversationRead: (token: string, id: string) =>
+    request<Conversation>(`/api/whatsapp/conversations/${encodeURIComponent(id)}/read`, {
+      method: "POST",
+      token,
+    }),
+  linkConversation: (
+    token: string,
+    id: string,
+    payload: { lead_id?: string | null; customer_id?: string | null },
+  ) =>
+    request<Conversation>(`/api/whatsapp/conversations/${encodeURIComponent(id)}/link`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  listMessages: (token: string, conversationId: string, limit = 100) =>
+    request<ConversationMessage[]>(
+      `/api/whatsapp/conversations/${encodeURIComponent(conversationId)}/messages?limit=${limit}`,
+      { token },
+    ),
+  sendMessage: (token: string, conversationId: string, body: string) =>
+    request<ConversationMessage>(
+      `/api/whatsapp/conversations/${encodeURIComponent(conversationId)}/messages`,
+      { method: "POST", token, body: JSON.stringify({ body }) },
+    ),
 
   // Public — no token. Token in URL IS the credential.
   previewInvite: (token: string) =>

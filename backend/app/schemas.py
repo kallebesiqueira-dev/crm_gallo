@@ -11,6 +11,8 @@ from app.models import (
     AutomationTrigger,
     BillingCycle,
     ContractStatus,
+    ConversationChannel,
+    ConversationStatus,
     Currency,
     CustomFieldType,
     DealStage,
@@ -21,12 +23,16 @@ from app.models import (
     ImportMode,
     ImportStatus,
     LeadStage,
+    MessageDirection,
+    MessageStatus,
+    MessageType,
     Plan,
     QuoteStatus,
     SignatureStatus,
     TaskPriority,
     TaskStatus,
     UserRole,
+    WhatsAppAccountStatus,
 )
 
 
@@ -1610,3 +1616,102 @@ class AutomationRunOut(BaseModel):
     entity_id: uuid.UUID | None
     detail: str | None
     created_at: datetime
+
+
+# ---------- WhatsApp Business Cloud API (omnichannel inbox) ----------
+class WhatsAppAccountConnect(BaseModel):
+    """Connect a tenant's WhatsApp number. `access_token` is the permanent
+    (system-user) token — write-only: accepted here, never echoed back."""
+
+    phone_number_id: Annotated[str, Field(min_length=1, max_length=64)]
+    access_token: Annotated[str, Field(min_length=1, max_length=1024)]
+    waba_id: Annotated[str | None, Field(default=None, max_length=64)]
+    display_phone_number: Annotated[str | None, Field(default=None, max_length=32)]
+    verified_name: Annotated[str | None, Field(default=None, max_length=255)]
+
+
+class WhatsAppAccountUpdate(BaseModel):
+    access_token: Annotated[str | None, Field(default=None, min_length=1, max_length=1024)]
+    display_phone_number: Annotated[str | None, Field(default=None, max_length=32)]
+    verified_name: Annotated[str | None, Field(default=None, max_length=255)]
+    status: WhatsAppAccountStatus | None = None
+
+
+class WhatsAppAccountOut(BaseModel):
+    """Account view for the settings UI. NEVER includes `access_token`."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    phone_number_id: str
+    waba_id: str | None
+    display_phone_number: str | None
+    verified_name: str | None
+    status: WhatsAppAccountStatus
+    created_at: datetime
+    updated_at: datetime
+
+
+class ConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    account_id: uuid.UUID
+    channel: ConversationChannel
+    contact_wa_id: str
+    contact_name: str | None
+    lead_id: uuid.UUID | None
+    customer_id: uuid.UUID | None
+    status: ConversationStatus
+    last_message_at: datetime | None
+    last_message_preview: str | None
+    unread_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class ConversationLink(BaseModel):
+    """Attach (or detach) a conversation from a CRM record.
+
+    Omit a field to leave it untouched; send it as ``null`` to clear the link.
+    The route reads ``model_fields_set`` to distinguish the two cases."""
+
+    lead_id: uuid.UUID | None = None
+    customer_id: uuid.UUID | None = None
+
+
+class ConversationConvert(BaseModel):
+    """Spin up a CRM record from a WhatsApp thread, then link the thread to it.
+
+    ``target`` picks Lead vs Customer. The new record's name defaults from the
+    contact's WhatsApp profile name (first token → ``first_name``, the rest →
+    ``last_name``); pass ``first_name``/``last_name`` to override. The contact's
+    ``wa_id`` always seeds the phone in E.164 (``+<digits>``)."""
+
+    target: Literal["lead", "customer"]
+    first_name: Annotated[str | None, Field(default=None, max_length=120)] = None
+    last_name: Annotated[str | None, Field(default=None, max_length=120)] = None
+
+
+class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    conversation_id: uuid.UUID
+    wa_message_id: str | None
+    direction: MessageDirection
+    type: MessageType
+    body: str | None
+    media_id: str | None
+    media_url: str | None
+    status: MessageStatus
+    error: str | None
+    sender_user_id: uuid.UUID | None
+    timestamp: datetime
+    created_at: datetime
+
+
+class SendMessageRequest(BaseModel):
+    """Agent-composed outbound text. Capped at WhatsApp's ~4096-char body."""
+
+    body: Annotated[str, Field(min_length=1, max_length=4096)]

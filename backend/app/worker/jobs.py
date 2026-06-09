@@ -32,6 +32,7 @@ from app.events import OUTBOX_MAX_ATTEMPTS
 from app.events_dispatcher import EventContext, dispatch_event
 from app.models import (
     Contract,
+    Conversation,
     Customer,
     Deal,
     ImportEntityType,
@@ -39,11 +40,15 @@ from app.models import (
     ImportMode,
     ImportStatus,
     Lead,
+    Message,
+    MessageStatus,
     Organization,
     Quote,
     User,
     WebhookDelivery,
     WebhookEndpoint,
+    WhatsAppAccount,
+    WhatsAppAccountStatus,
 )
 from app.services.ai_scoring import score_lead as score_lead_via_llm
 from app.webhook_sign import SIGNATURE_HEADER, sign_payload
@@ -905,6 +910,133 @@ async def scan_stale_leads(ctx: dict) -> dict:
     if attempted:
         log.info("automation.stale_scan", orgs=scanned_orgs, attempted=attempted)
     return {"orgs": scanned_orgs, "attempted": attempted}
+
+
+async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str) -> dict:
+    """Deliver one outbound WhatsApp text via the Graph API (phase 1).
+
+    Enqueued by `POST /api/whatsapp/conversations/{id}/messages`, which has
+    already persisted a `pending` outbound Message. This job loads that row +
+    its conversation + the connected (non-RLS) `whatsapp_accounts` token, calls
+    `app.whatsapp.send_text`, and stamps the returned `wamid` while advancing
+    the status to `sent`. A delivery/read status later rides the inbound webhook
+    (`apply_status`).
+
+    Worker is `crm_app` (NOBYPASSRLS), so the RLS GUC must be set before
+    touching the tenant `messages`/`conversations` rows. `whatsapp_accounts` is
+    the non-RLS routing root, so its SELECT doesn't depend on the GUC.
+
+    Failure model:
+      * Message gone / not pending / no active account → terminal no-op (a
+        retry can't fix it), status stamped `failed` where a row exists.
+      * Graph API send failure → `WhatsAppSendError`. A 4xx (Meta rejected the
+        message: outside the 24h window, bad number, template required) is
+        terminal — stamp `failed` + the error, don't retry. A transport/5xx is
+        transient — stamp the error but raise so arq retries with backoff.
+
+    Idempotency: a `wa_send:{id}` enqueue-dedupe key collapses double-clicks.
+    On retry, the guard `status is not pending` short-circuits a row we already
+    sent, so Meta never receives the same text twice from one click.
+    """
+    from app.whatsapp import WhatsAppSendError, send_text
+
+    SessionLocal = ctx["SessionLocal"]
+    msg_uuid = uuid.UUID(message_id)
+    org_uuid = uuid.UUID(organization_id)
+
+    set_current_org_id(org_uuid)
+
+    async with SessionLocal() as db:
+        msg = (
+            await db.execute(
+                select(Message).where(
+                    Message.id == msg_uuid, Message.organization_id == org_uuid
+                )
+            )
+        ).scalar_one_or_none()
+        if msg is None:
+            log.warning("send_whatsapp_message.missing", message_id=message_id)
+            return {"status": "missing"}
+        if msg.status is not MessageStatus.pending:
+            # Already sent (retry after success) or already failed — no-op.
+            return {"status": "already_processed", "current": msg.status.value}
+
+        conv = (
+            await db.execute(
+                select(Conversation).where(Conversation.id == msg.conversation_id)
+            )
+        ).scalar_one_or_none()
+        if conv is None:
+            msg.status = MessageStatus.failed
+            msg.error = "conversation no longer exists"
+            await db.commit()
+            return {"status": "failed", "reason": "conversation_missing"}
+
+        # Routing root — NOT RLS'd, so this lookup doesn't depend on the GUC.
+        account = (
+            await db.execute(
+                select(WhatsAppAccount).where(WhatsAppAccount.id == conv.account_id)
+            )
+        ).scalar_one_or_none()
+        if account is None or account.status is not WhatsAppAccountStatus.active:
+            msg.status = MessageStatus.failed
+            msg.error = "WhatsApp number is not connected/active"
+            await db.commit()
+            return {"status": "failed", "reason": "account_inactive"}
+
+        phone_number_id = account.phone_number_id
+        access_token = account.access_token  # EncryptedSecret → decrypted here
+        to = conv.contact_wa_id
+        body = msg.body or ""
+
+    # Network send OUTSIDE the session — don't pin a pooled connection across
+    # the Graph API round-trip.
+    try:
+        wamid = await send_text(
+            phone_number_id=phone_number_id,
+            access_token=access_token,
+            to=to,
+            body=body,
+        )
+    except WhatsAppSendError as exc:
+        # 4xx = Meta rejected it (terminal); anything else = transient → retry.
+        terminal = exc.status_code is not None and 400 <= exc.status_code < 500
+        async with SessionLocal() as db:
+            failed = (
+                await db.execute(select(Message).where(Message.id == msg_uuid))
+            ).scalar_one_or_none()
+            if failed is not None and failed.status is MessageStatus.pending and terminal:
+                failed.status = MessageStatus.failed
+                failed.error = str(exc)[:2000]
+            await db.commit()
+        log.warning(
+            "send_whatsapp_message.send_failed",
+            message_id=message_id,
+            organization_id=organization_id,
+            status_code=exc.status_code,
+            terminal=terminal,
+            error=str(exc),
+        )
+        if terminal:
+            return {"status": "failed", "reason": str(exc)}
+        raise  # arq retries transient failures with backoff
+
+    async with SessionLocal() as db:
+        sent = (
+            await db.execute(select(Message).where(Message.id == msg_uuid))
+        ).scalar_one_or_none()
+        if sent is not None and sent.status is MessageStatus.pending:
+            sent.wa_message_id = wamid
+            sent.status = MessageStatus.sent
+            await db.commit()
+
+    log.info(
+        "send_whatsapp_message.sent",
+        message_id=message_id,
+        organization_id=organization_id,
+        wa_message_id=wamid,
+    )
+    return {"status": "sent", "wa_message_id": wamid}
 
 
 def _dedupe_keys(clean: dict) -> tuple[str | None, str | None]:
