@@ -1496,6 +1496,12 @@ class InviteAcceptRequest(BaseModel):
 
 
 # ---------- Dashboard ----------
+class FunnelStageStat(BaseModel):
+    stage: str
+    count: int
+    value_eur: float = 0.0
+
+
 class DashboardStats(BaseModel):
     total_leads: int
     leads_by_stage: dict[str, int]
@@ -1507,6 +1513,7 @@ class DashboardStats(BaseModel):
     total_deals: int = 0
     pipeline_value_eur: float = 0.0
     open_tasks: int = 0
+    pipeline_funnel: list[FunnelStageStat] = Field(default_factory=list)
 
 
 # ---------- Performance / KPI ----------

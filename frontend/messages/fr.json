@@ -184,7 +184,13 @@
     "leadsByStage": "Prospects par étape",
     "trend14Days": "Prospects — 14 derniers jours",
     "leadsCreated": "Prospects créés",
-    "noData": "Aucune donnée"
+    "noData": "Aucune donnée",
+    "pipeline": "Pipeline",
+    "myTasks": "Mes tâches",
+    "recentCompanies": "Clients récents",
+    "goToPipeline": "Voir le pipeline",
+    "viewAll": "Voir tout",
+    "noTasks": "Aucune tâche"
   },
   "leads": {
     "title": "Prospects",

@@ -184,7 +184,13 @@
     "leadsByStage": "Leads nach Phase",
     "trend14Days": "Leads — letzte 14 Tage",
     "leadsCreated": "Leads erstellt",
-    "noData": "Noch keine Daten"
+    "noData": "Noch keine Daten",
+    "pipeline": "Pipeline",
+    "myTasks": "Meine Aufgaben",
+    "recentCompanies": "Neueste Kunden",
+    "goToPipeline": "Zur Pipeline",
+    "viewAll": "Alle ansehen",
+    "noTasks": "Keine Aufgaben"
   },
   "leads": {
     "title": "Leads",
