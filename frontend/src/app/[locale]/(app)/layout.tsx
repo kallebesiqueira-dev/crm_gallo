@@ -14,6 +14,7 @@ import { PlanBadge } from "@/components/plan-badge";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { AvatarUpload } from "@/components/avatar-upload";
+import { SupportDialog } from "@/components/support-dialog";
 import { Button } from "@/components/ui/button";
 import {
   api,
@@ -32,6 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [billing, setBilling] = useState<BillingMe | null>(null);
   const [ready, setReady] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -154,6 +156,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <NotificationsBell />
               <button
                 type="button"
+                onClick={() => setSupportOpen(true)}
                 aria-label="Aiuto"
                 className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground sm:grid"
               >
@@ -186,6 +189,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 p-3 sm:p-6">{children}</main>
         </div>
       </div>
+      <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
     </ConfirmProvider>
   );
 }

@@ -1568,5 +1568,23 @@
       "company": "Unternehmen",
       "product": "Produkte"
     }
+  },
+  "support": {
+    "title": "Problem melden",
+    "category": "Kategorie",
+    "titleField": "Titel",
+    "description": "Beschreibung",
+    "attach": "Screenshot anhängen — zum Hochladen klicken",
+    "autoInfo": "Seiten-URL und Browser-Infos werden automatisch hinzugefügt.",
+    "cancel": "Abbrechen",
+    "submit": "Senden",
+    "sent": "Danke! Deine Meldung wurde gesendet.",
+    "categories": {
+      "technical": "Technisches Problem",
+      "bug": "Fehler",
+      "feature": "Funktionswunsch",
+      "question": "Frage",
+      "other": "Sonstiges"
+    }
   }
 }
