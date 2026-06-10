@@ -1592,5 +1592,20 @@
     "placeholder": "Buscar leads, clientes, empresas…",
     "hint": "Digite ao menos 2 caracteres para buscar.",
     "noResults": "Nenhum resultado"
+  },
+  "documents": {
+    "title": "Documentos",
+    "subtitle": "Todos os seus orçamentos e contratos num só lugar",
+    "loading": "Carregando…",
+    "empty": "Nenhum documento ainda.",
+    "filter": {
+      "all": "Todos",
+      "quote": "Orçamentos",
+      "contract": "Contratos"
+    },
+    "kind": {
+      "quote": "Orçamento",
+      "contract": "Contrato"
+    }
   }
 }

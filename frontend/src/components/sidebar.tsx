@@ -15,6 +15,7 @@ import {
   Download,
   FileSignature,
   FileText,
+  Files,
   Gauge,
   Inbox,
   LayoutDashboard,
@@ -58,6 +59,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "quotes", label: "quotes", icon: FileText },
       { href: "contracts", label: "contracts", icon: FileSignature },
       { href: "products", label: "products", icon: Package },
+      { href: "documents", label: "documents", icon: Files },
     ],
   },
   {

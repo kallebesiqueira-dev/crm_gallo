@@ -1592,5 +1592,20 @@
     "placeholder": "Leads, Kunden, Unternehmen suchen…",
     "hint": "Mindestens 2 Zeichen eingeben.",
     "noResults": "Keine Ergebnisse"
+  },
+  "documents": {
+    "title": "Dokumente",
+    "subtitle": "Alle Angebote und Verträge an einem Ort",
+    "loading": "Wird geladen…",
+    "empty": "Noch keine Dokumente.",
+    "filter": {
+      "all": "Alle",
+      "quote": "Angebote",
+      "contract": "Verträge"
+    },
+    "kind": {
+      "quote": "Angebot",
+      "contract": "Vertrag"
+    }
   }
 }
