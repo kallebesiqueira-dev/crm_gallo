@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from app.models import Customer
 from app.services.llm import LLMError, chat_completion, is_configured
@@ -47,11 +48,15 @@ def _heuristic_summary(customer: Customer) -> str:
     return "Heuristic summary: " + ", ".join(b for b in bits if b)
 
 
-async def summarize_customer(customer: Customer) -> str:
+async def summarize_customer(
+    customer: Customer,
+    open_deals: list[Any] | None = None,
+    open_tasks: list[Any] | None = None,
+) -> str:
     if not is_configured():
         return _heuristic_summary(customer)
 
-    payload = {
+    payload: dict[str, Any] = {
         "name": f"{customer.first_name} {customer.last_name}",
         "company": customer.company,
         "industry": customer.industry,
@@ -59,13 +64,24 @@ async def summarize_customer(customer: Customer) -> str:
         "website": customer.website,
         "notes": customer.notes,
     }
+    if open_deals:
+        payload["open_deals"] = [
+            {"title": d.title, "value": float(d.value or 0), "currency": d.currency.value, "stage": d.stage.value}
+            for d in open_deals
+        ]
+    if open_tasks:
+        payload["pending_tasks"] = [
+            {"title": t.title, "due_date": str(t.due_date) if t.due_date else None, "priority": t.priority.value}
+            for t in open_tasks
+        ]
+
     try:
         return await chat_completion(
             messages=[{"role": "user", "content": f"Summarize this customer:\n{payload}"}],
             system=(
                 "You write concise CRM customer summaries (2-3 sentences). "
-                "Highlight the relationship status, last known activity, and "
-                "the single most useful follow-up action."
+                "Highlight the relationship status, open pipeline value, and "
+                "the single most useful next action for the sales rep."
             ),
             max_tokens=400,
         )

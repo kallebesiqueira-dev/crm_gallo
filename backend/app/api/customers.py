@@ -15,7 +15,7 @@ from app.audit import record_audit
 from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
-from app.models import Customer, User
+from app.models import Customer, Deal, DealStage, Task, TaskStatus, User
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import CustomerCreate, CustomerOut, CustomerUpdate
 from app.services.ai_assistant import summarize_customer
@@ -206,7 +206,31 @@ async def summarize(
 ) -> Customer:
     customer = await _get_customer_or_404(db, customer_id, org_id)
     ensure_can_mutate(user, customer.owner_id)
-    summary = await summarize_customer(customer)
+
+    # Enrich the LLM prompt with open deals + pending tasks so the
+    # summary reflects actual pipeline state, not just profile fields.
+    open_deals = (
+        await db.execute(
+            select(Deal.title, Deal.value, Deal.currency, Deal.stage).where(
+                Deal.customer_id == customer.id,
+                Deal.organization_id == org_id,
+                Deal.stage.notin_([DealStage.won, DealStage.lost]),
+                Deal.deleted_at.is_(None),
+            )
+        )
+    ).all()
+    open_tasks = (
+        await db.execute(
+            select(Task.title, Task.due_date, Task.priority).where(
+                Task.customer_id == customer.id,
+                Task.organization_id == org_id,
+                Task.status != TaskStatus.done,
+                Task.deleted_at.is_(None),
+            ).order_by(Task.due_date.asc().nullslast()).limit(5)
+        )
+    ).all()
+
+    summary = await summarize_customer(customer, open_deals=open_deals, open_tasks=open_tasks)
     customer.ai_summary = summary
     customer.ai_summary_updated_at = datetime.now(UTC)
     await record_audit(
