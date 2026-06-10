@@ -45,7 +45,7 @@ export function DashboardCustomize({
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-1.5 w-60 rounded-lg border bg-popover p-1.5 text-popover-foreground shadow-xl">
+        <div className="absolute left-0 z-50 mt-1.5 w-60 max-w-[calc(100vw-2rem)] rounded-lg border bg-popover p-1.5 text-popover-foreground shadow-xl sm:left-auto sm:right-0">
           <div className="px-2 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {t("customizeHint")}
           </div>

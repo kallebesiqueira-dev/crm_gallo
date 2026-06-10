@@ -139,7 +139,7 @@ export default function DashboardPage() {
             <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-xl font-bold tracking-tight text-transparent dark:from-white dark:to-violet-200">
               GALLO crm
             </div>
-            <div className="truncate text-xs text-muted-foreground">{t("welcome")}</div>
+            <div className="line-clamp-2 text-xs text-muted-foreground">{t("welcome")}</div>
           </div>
         </div>
         <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
