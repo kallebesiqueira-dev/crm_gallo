@@ -117,7 +117,7 @@ export function Testimonials() {
           </button>
 
           {/* Sliding track */}
-          <div className="overflow-hidden">
+          <div className="overflow-x-clip py-4">
             <motion.div
               className="flex items-stretch"
               animate={{ x: `-${(index * 100) / visible}%` }}
