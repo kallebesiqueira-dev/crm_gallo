@@ -14,6 +14,7 @@ import { AttachmentsPanel } from "@/components/attachments-panel";
 import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
+import { useToast } from "@/components/toast-provider";
 import { api, type Lead, type LeadStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -36,6 +37,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
+  const toast = useToast();
   const [lead, setLead] = useState<Lead | null>(null);
   const [scoring, setScoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,20 +69,25 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   async function changeStage(stage: LeadStage) {
     const token = getToken();
     if (!token || !lead) return;
-    const updated = await api.updateLead(token, lead.id, { stage });
-    setLead(updated);
+    try {
+      const updated = await api.updateLead(token, lead.id, { stage });
+      setLead(updated);
+      toast("Stage updated", "success");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Failed to update stage", "error");
+    }
   }
 
   async function runScore() {
     const token = getToken();
     if (!token || !lead) return;
     setScoring(true);
-    setError(null);
     try {
       const scored = await api.scoreLead(token, lead.id);
       setLead(scored);
+      toast("Lead scored", "success");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Scoring failed");
+      toast(e instanceof Error ? e.message : "Scoring failed", "error");
     } finally {
       setScoring(false);
     }

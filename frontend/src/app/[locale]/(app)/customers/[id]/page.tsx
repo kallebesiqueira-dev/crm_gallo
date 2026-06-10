@@ -13,6 +13,7 @@ import { AttachmentsPanel } from "@/components/attachments-panel";
 import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
+import { useToast } from "@/components/toast-provider";
 import { api, type Customer } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -24,6 +25,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
+  const toast = useToast();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,8 +43,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     try {
       const updated = await api.summarizeCustomer(token, customer.id);
       setCustomer(updated);
+      toast("Summary updated", "success");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      toast(e instanceof Error ? e.message : "Failed", "error");
     } finally {
       setBusy(false);
     }

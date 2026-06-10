@@ -59,6 +59,41 @@ jobs:
         # generateStaticParams cases, etc.) that lint + tsc miss.
         run: npm run build
 
+      - name: Locale key parity
+        # Asserts all 7 locale JSON files have the exact same key set
+        # as en.json. Catches missing translations before they ship.
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+          from pathlib import Path
+          msgs = Path("frontend/messages")
+          def flatten(d, prefix=""):
+              keys = set()
+              for k, v in d.items():
+                  full = f"{prefix}.{k}" if prefix else k
+                  keys |= flatten(v, full) if isinstance(v, dict) else {full}
+              return keys
+          ref = flatten(json.loads((msgs / "en.json").read_text(encoding="utf-8")))
+          errors = []
+          for fpath in sorted(msgs.glob("*.json")):
+              if fpath.name == "en.json":
+                  continue
+              keys = flatten(json.loads(fpath.read_text(encoding="utf-8")))
+              missing = ref - keys
+              extra = keys - ref
+              if missing:
+                  errors.append(f"{fpath.name} missing {len(missing)} keys: {sorted(missing)[:5]}")
+              if extra:
+                  errors.append(f"{fpath.name} extra {len(extra)} keys: {sorted(extra)[:5]}")
+          if errors:
+              print("Locale key parity FAILED:")
+              for e in errors:
+                  print(" ", e)
+              sys.exit(1)
+          print(f"Locale key parity OK ({len(ref)} keys across all locales)")
+          EOF
+
       - name: npm audit (production)
         # Fail the build only on HIGH+CRITICAL vulnerabilities in
         # runtime deps. Dev-only vulns are noted but not blocking —
