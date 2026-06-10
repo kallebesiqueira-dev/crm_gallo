@@ -45,6 +45,7 @@ from app.models import (
 from app.whatsapp import (
     WhatsAppSendError,
     fetch_media,
+    mark_read,
     parse_webhook,
     send_interactive,
     send_media,
@@ -2028,3 +2029,121 @@ def test_inbound_reaction_persists_via_webhook(
     assert msg.body == "🔥"
     assert msg.context_wa_message_id == "wamid.orig.9"
     assert msg.direction is MessageDirection.inbound
+
+
+# ---------- read receipts (blue ticks) ----------
+
+
+def test_mark_read_builds_status_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    result = asyncio.run(
+        mark_read(
+            phone_number_id="PNID",
+            access_token="tok",
+            message_id="wamid.inbound.1",
+        )
+    )
+    assert result is None
+    assert captured["json"] == {
+        "messaging_product": "whatsapp",
+        "status": "read",
+        "message_id": "wamid.inbound.1",
+    }
+    assert "/PNID/messages" in captured["url"]
+
+
+def test_read_endpoint_resets_unread_and_enqueues_latest_inbound(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    conv.unread_count = 3
+    # Two inbound messages with wamids — the newest one should be marked read.
+    older = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.in.old",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="primeiro",
+        status=MessageStatus.received,
+    )
+    db.add(older)
+    db.commit()
+    newer = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.in.new",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="segundo",
+        status=MessageStatus.received,
+    )
+    db.add(newer)
+    db.commit()
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(f"/api/whatsapp/conversations/{conv.id}/read")
+    assert r.status_code == 200, r.text
+    assert r.json()["unread_count"] == 0
+
+    db.refresh(conv)
+    assert conv.unread_count == 0
+
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "mark_whatsapp_read"
+    assert args[1] == "wamid.in.new"
+    assert args[2] == str(test_org.id)
+    assert kwargs["dedupe_key"] == "wa_read:wamid.in.new"
+
+
+def test_read_endpoint_no_inbound_wamid_skips_enqueue(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    conv.unread_count = 2
+    # Only an OUTBOUND message — nothing inbound to mark read.
+    out = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.out.1",
+        direction=MessageDirection.outbound,
+        type=MessageType.text,
+        body="oi",
+        status=MessageStatus.sent,
+    )
+    db.add(out)
+    db.commit()
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(f"/api/whatsapp/conversations/{conv.id}/read")
+    assert r.status_code == 200, r.text
+    assert r.json()["unread_count"] == 0
+
+    db.refresh(conv)
+    assert conv.unread_count == 0
+    assert calls == []

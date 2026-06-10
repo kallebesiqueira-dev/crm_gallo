@@ -404,6 +404,33 @@ async def mark_read(
     conv.unread_count = 0
     await db.commit()
     await db.refresh(conv)
+
+    # Send a read receipt (blue ticks) to the contact for the most recent inbound
+    # message that carries a wamid. Best-effort: the worker is fire-and-forget and
+    # `wa_read:{wamid}` collapses repeat opens, so re-marking is a no-op.
+    latest_inbound_wamid = (
+        await db.execute(
+            select(Message.wa_message_id)
+            .where(
+                Message.conversation_id == conv.id,
+                Message.direction == MessageDirection.inbound,
+                Message.wa_message_id.is_not(None),
+            )
+            .order_by(Message.created_at.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if latest_inbound_wamid:
+        from app.worker.queue import enqueue
+
+        await enqueue(
+            "mark_whatsapp_read",
+            latest_inbound_wamid,
+            str(org_id),
+            dedupe_key=f"wa_read:{latest_inbound_wamid}",
+            dedupe_ttl_seconds=3600,
+        )
+
     return conv
 
 

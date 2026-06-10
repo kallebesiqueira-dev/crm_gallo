@@ -1201,6 +1201,81 @@ async def mirror_whatsapp_media(ctx: dict, wa_message_id: str, organization_id: 
     return {"status": "mirrored", "key": key, "bytes": len(data)}
 
 
+async def mark_whatsapp_read(ctx: dict, wa_message_id: str, organization_id: str) -> dict:
+    """Send a read receipt (blue ticks) to Meta for one inbound message.
+
+    Enqueued when the agent opens a conversation (`POST /conversations/{id}/read`)
+    — we mark the most recent inbound wamid as read so the contact sees the blue
+    ticks. Best-effort: Meta returns {"success": true}, there's nothing to persist.
+
+    Worker is `crm_app` (NOBYPASSRLS); the GUC is set before the tenant read.
+    `whatsapp_accounts` is the non-RLS routing root. A `wa_read:{wamid}` enqueue-
+    dedupe key collapses repeat opens. Terminal 4xx is logged + dropped; a
+    transient error raises so arq retries.
+    """
+    from app.whatsapp import WhatsAppSendError, mark_read
+
+    SessionLocal = ctx["SessionLocal"]
+    org_uuid = uuid.UUID(organization_id)
+    set_current_org_id(org_uuid)
+
+    async with SessionLocal() as db:
+        msg = (
+            await db.execute(
+                select(Message).where(
+                    Message.wa_message_id == wa_message_id,
+                    Message.organization_id == org_uuid,
+                )
+            )
+        ).scalar_one_or_none()
+        if msg is None:
+            return {"status": "missing"}
+
+        conv = (
+            await db.execute(select(Conversation).where(Conversation.id == msg.conversation_id))
+        ).scalar_one_or_none()
+        if conv is None:
+            return {"status": "conversation_missing"}
+
+        # Routing root — NOT RLS'd, so this lookup doesn't depend on the GUC.
+        account = (
+            await db.execute(select(WhatsAppAccount).where(WhatsAppAccount.id == conv.account_id))
+        ).scalar_one_or_none()
+        if account is None:
+            return {"status": "account_missing"}
+
+        phone_number_id = account.phone_number_id
+        access_token = account.access_token  # EncryptedSecret → decrypted here
+
+    # Network I/O OUTSIDE the session — don't pin a pooled connection.
+    try:
+        await mark_read(
+            phone_number_id=phone_number_id,
+            access_token=access_token,
+            message_id=wa_message_id,
+        )
+    except WhatsAppSendError as exc:
+        terminal = exc.status_code is not None and 400 <= exc.status_code < 500
+        log.warning(
+            "mark_whatsapp_read.failed",
+            wa_message_id=wa_message_id,
+            organization_id=organization_id,
+            status_code=exc.status_code,
+            terminal=terminal,
+            error=str(exc),
+        )
+        if terminal:
+            return {"status": "failed", "reason": str(exc)}
+        raise  # transient → arq retries
+
+    log.info(
+        "mark_whatsapp_read.marked",
+        wa_message_id=wa_message_id,
+        organization_id=organization_id,
+    )
+    return {"status": "marked"}
+
+
 def _dedupe_keys(clean: dict) -> tuple[str | None, str | None]:
     """The two match keys for one validated row: `lower(email)` and the
     digits-normalised phone. Either may be None (the column was blank)."""

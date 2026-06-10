@@ -258,13 +258,15 @@ def parse_webhook(payload: dict) -> ParsedWebhook:
     return result
 
 
-async def _post_message(phone_number_id: str, access_token: str, payload: dict) -> str:
-    """POST one `/messages` body to the Graph API and return Meta's `wamid`.
+async def _graph_post(phone_number_id: str, access_token: str, payload: dict) -> dict:
+    """POST one body to the `/{phone_number_id}/messages` Graph endpoint and
+    return the parsed JSON response.
 
-    Shared by every send shape (text, template, …). Raises `WhatsAppSendError`
-    on any non-2xx — carrying the HTTP status so the worker can tell a terminal
-    4xx (Meta rejected the message) from a transient 5xx/transport error worth
-    retrying."""
+    Shared by every write to that endpoint — message sends AND status updates
+    (read receipts), which use the same URL but return different bodies. Raises
+    `WhatsAppSendError` on any non-2xx, carrying the HTTP status so the caller
+    can tell a terminal 4xx (Meta rejected it) from a transient 5xx/transport
+    error worth retrying."""
     settings = get_settings()
     url = (
         f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
@@ -290,11 +292,27 @@ async def _post_message(phone_number_id: str, access_token: str, payload: dict) 
             pass
         raise WhatsAppSendError(f"HTTP {r.status_code}: {detail}", status_code=r.status_code)
 
-    data = r.json()
+    return r.json()
+
+
+async def _post_message(phone_number_id: str, access_token: str, payload: dict) -> str:
+    """POST one message-send body and return Meta's `wamid`. Shared by every send
+    shape (text, template, …)."""
+    data = await _graph_post(phone_number_id, access_token, payload)
     messages = data.get("messages") or []
     if not messages or not messages[0].get("id"):
         raise WhatsAppSendError("send succeeded but no message id returned")
     return messages[0]["id"]
+
+
+async def mark_read(*, phone_number_id: str, access_token: str, message_id: str) -> None:
+    """Send a read receipt (blue ticks) for an inbound message via the Graph API.
+    Best-effort: Meta returns {"success": true} with no wamid."""
+    await _graph_post(
+        phone_number_id,
+        access_token,
+        {"messaging_product": "whatsapp", "status": "read", "message_id": message_id},
+    )
 
 
 async def send_text(
