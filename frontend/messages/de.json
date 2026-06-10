@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "GALLO CRM",
-    "collapseSidebar": "Seitenleiste einklappen",
+    "collapseSidebar": "Collapse",
     "expandSidebar": "Seitenleiste ausklappen",
     "tagline": "KI-gestütztes CRM für moderne Unternehmen"
   },
