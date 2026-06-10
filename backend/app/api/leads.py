@@ -2,12 +2,13 @@ import uuid
 from datetime import UTC, datetime
 
 import sqlalchemy as sa
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import ENTITY_LEAD, ActivityType, record_activity
+from app.api._concurrency import check_if_match
 from app.api._errors import raise_for_duplicate_email
 from app.audit import record_audit
 from app.config import get_settings
@@ -149,9 +150,16 @@ async def update_lead(
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
+    if_match: str | None = Header(default=None, alias="If-Match"),
 ) -> Lead:
     lead = await _get_lead_or_404(db, lead_id, org_id)
     ensure_can_mutate(user, lead.owner_id)
+    check_if_match(
+        entity="lead",
+        entity_id=lead.id,
+        current_version=lead.version,
+        if_match=if_match,
+    )
     changes = payload.model_dump(exclude_unset=True)
     # Even if a (buggy) caller smuggles organization_id into the patch
     # body, refuse to let it move tenants.
@@ -172,6 +180,7 @@ async def update_lead(
     prev_stage = lead.stage
     for field, value in changes.items():
         setattr(lead, field, value)
+    lead.version = lead.version + 1
     # Flush the entity change HERE so a per-org email collision surfaces as
     # a 409 now. The record_audit/record_activity/record_event/notify calls
     # below each issue their own flush, which would otherwise raise the

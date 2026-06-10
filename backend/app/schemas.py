@@ -678,6 +678,7 @@ class LeadOut(LeadBase):
     ai_conversion_probability: float | None
     ai_risk_analysis: str | None
     ai_scored_at: datetime | None
+    version: int = 0
     created_at: datetime
     updated_at: datetime
 

@@ -610,6 +610,10 @@ class Lead(SoftDeleteMixin, Base):
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     owner: Mapped[User | None] = relationship(back_populates="leads")
 
+    # Optimistic locking — bumped on every PATCH; clients echo current
+    # value as `If-Match: <version>` to detect lost updates.
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
