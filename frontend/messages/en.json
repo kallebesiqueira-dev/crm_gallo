@@ -1592,5 +1592,20 @@
     "placeholder": "Search leads, customers, companies…",
     "hint": "Type at least 2 characters to search.",
     "noResults": "No results"
+  },
+  "documents": {
+    "title": "Documents",
+    "subtitle": "All your quotes and contracts in one place",
+    "loading": "Loading…",
+    "empty": "No documents yet.",
+    "filter": {
+      "all": "All",
+      "quote": "Quotes",
+      "contract": "Contracts"
+    },
+    "kind": {
+      "quote": "Quote",
+      "contract": "Contract"
+    }
   }
 }

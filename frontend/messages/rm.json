@@ -1592,5 +1592,20 @@
     "placeholder": "Tschertgar leads, clients, interpresas…",
     "hint": "Tippa almain 2 caracters per tschertgar.",
     "noResults": "Nagins resultats"
+  },
+  "documents": {
+    "title": "Documents",
+    "subtitle": "Tut tes preventivs e contracts en in sulet lieu",
+    "loading": "Chargiar…",
+    "empty": "Anc nagins documents.",
+    "filter": {
+      "all": "Tuts",
+      "quote": "Preventivs",
+      "contract": "Contracts"
+    },
+    "kind": {
+      "quote": "Preventiv",
+      "contract": "Contract"
+    }
   }
 }
