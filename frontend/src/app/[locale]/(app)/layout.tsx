@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, HelpCircle, Mail, Plus, Search, TrendingUp } from "lucide-react";
+import { AlertTriangle, HelpCircle, Mail, Search, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -157,12 +157,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Right — actions + identity */}
             <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
-              <Button asChild size="sm" className="gap-1.5">
-                <Link href={`/${locale}/tasks`}>
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nuova attività</span>
-                </Link>
-              </Button>
               <Link
                 href={`/${locale}/inbox`}
                 aria-label="Messaggi"

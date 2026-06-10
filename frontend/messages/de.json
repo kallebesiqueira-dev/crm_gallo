@@ -206,6 +206,7 @@
     "viewAll": "Alle ansehen",
     "noTasks": "Keine Aufgaben",
     "customize": "Anpassen",
+    "newActivity": "Neue Aufgabe",
     "recentActivities": "Letzte Aktivität",
     "viewCalendar": "Kalender öffnen",
     "summary": "Übersicht",
@@ -857,12 +858,12 @@
         "2": {
           "year": "2026",
           "title": "Öffentlicher Launch",
-          "body": "Open Source unter AGPL-3.0, 7 native Sprachen, Stripe-Abrechnung, erste Kundenteams."
+          "body": "Open Source unter AGPL-3.0, 7 native Sprachen, Mandantenfähigkeit, Automatisierungen und Stripe-Abrechnung."
         },
         "3": {
           "year": "Nächste Schritte",
-          "title": "Multi-Tenant + Automatisierungen",
-          "body": "Isolierte Organisationen, visuelle Automatisierungen und E-Mail-/Kalender-Integrationen folgen."
+          "title": "Integrationen und Mobile",
+          "body": "Externe E-Mail-/Kalendersynchronisierung (Gmail, Outlook), WhatsApp-Kanal und mobile App folgen in Kürze."
         }
       }
     },
