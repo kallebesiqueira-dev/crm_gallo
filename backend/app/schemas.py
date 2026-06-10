@@ -1725,6 +1725,32 @@ class WhatsAppTemplateOut(BaseModel):
     variable_count: int
 
 
+class WhatsAppBusinessProfileOut(BaseModel):
+    """The public business profile customers see (the "about" card). All fields
+    are optional — a freshly-connected number may have none set yet.
+    ``profile_picture_url`` is read-only (uploaded out-of-band)."""
+
+    about: str | None = None
+    address: str | None = None
+    description: str | None = None
+    email: str | None = None
+    vertical: str | None = None
+    websites: list[str] = Field(default_factory=list)
+    profile_picture_url: str | None = None
+
+
+class WhatsAppBusinessProfileUpdate(BaseModel):
+    """Patch editable business-profile fields. Omit a field to leave it
+    untouched — only fields explicitly set are sent on to Meta."""
+
+    about: str | None = None
+    address: str | None = None
+    description: str | None = None
+    email: str | None = None
+    vertical: str | None = None
+    websites: list[str] | None = None
+
+
 class ConversationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

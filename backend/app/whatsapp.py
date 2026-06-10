@@ -643,3 +643,61 @@ def parse_template(raw: dict) -> dict:
         "body_text": body_text,
         "variable_count": max(indices) if indices else 0,
     }
+
+
+# The editable business-profile fields Meta exposes on
+# `/{phone_number_id}/whatsapp_business_profile`. `profile_picture_url` is
+# read-only (set via the resumable upload API, a separate flow), so it's
+# fetched but never written back.
+_PROFILE_FIELDS = "about,address,description,email,profile_picture_url,websites,vertical"
+
+
+async def fetch_business_profile(phone_number_id: str, access_token: str) -> dict:
+    """Read the WhatsApp business profile (the "about" card customers see).
+
+    Meta wraps the single profile in a one-element `data` list; we unwrap it to
+    a flat dict (empty dict if Meta returns nothing). Raises `WhatsAppSendError`
+    on any non-2xx, surfacing Meta's own `error.message`.
+    """
+    settings = get_settings()
+    base = f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"{base}/{phone_number_id}/whatsapp_business_profile"
+    try:
+        async with httpx.AsyncClient(timeout=_SEND_TIMEOUT_S) as client:
+            resp = await client.get(url, headers=headers, params={"fields": _PROFILE_FIELDS})
+    except httpx.HTTPError as e:
+        raise WhatsAppSendError(f"transport error: {type(e).__name__}: {e}") from e
+    if resp.status_code >= 300:
+        body = resp.json() if resp.content else {}
+        detail = (body.get("error") or {}).get("message") or "profile read failed"
+        raise WhatsAppSendError(f"HTTP {resp.status_code}: {detail}", status_code=resp.status_code)
+    data = (resp.json() or {}).get("data") or []
+    return data[0] if data else {}
+
+
+async def update_business_profile(phone_number_id: str, access_token: str, fields: dict) -> None:
+    """Patch one or more editable business-profile fields.
+
+    Meta's update is a POST that always carries `messaging_product: whatsapp`
+    plus only the fields being changed. Returns nothing on success (`{success:
+    true}`); raises `WhatsAppSendError` on any non-2xx so a validation rejection
+    (e.g. an over-long `about`) surfaces as Meta's message.
+    """
+    settings = get_settings()
+    base = f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    url = f"{base}/{phone_number_id}/whatsapp_business_profile"
+    payload = {"messaging_product": "whatsapp", **fields}
+    try:
+        async with httpx.AsyncClient(timeout=_SEND_TIMEOUT_S) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+    except httpx.HTTPError as e:
+        raise WhatsAppSendError(f"transport error: {type(e).__name__}: {e}") from e
+    if resp.status_code >= 300:
+        body = resp.json() if resp.content else {}
+        detail = (body.get("error") or {}).get("message") or "profile update failed"
+        raise WhatsAppSendError(f"HTTP {resp.status_code}: {detail}", status_code=resp.status_code)

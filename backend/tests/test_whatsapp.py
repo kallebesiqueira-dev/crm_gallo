@@ -47,6 +47,7 @@ from app.models import (
 from app.whatsapp import (
     SERVICE_WINDOW,
     WhatsAppSendError,
+    fetch_business_profile,
     fetch_media,
     fetch_message_templates,
     mark_read,
@@ -59,6 +60,7 @@ from app.whatsapp import (
     send_text,
     service_window_expires_at,
     service_window_open,
+    update_business_profile,
     verify_challenge,
     verify_signature,
 )
@@ -2686,3 +2688,193 @@ def test_list_conversations_filter_unassigned(
 def test_list_conversations_bad_assignee_422(admin_client: CsrfAwareClient):
     r = admin_client.get("/api/whatsapp/conversations?assignee=not-a-uuid")
     assert r.status_code == 422
+
+
+# ---------- business profile ----------
+
+
+def _profile_http(*, status=200, body=None, capture=None):
+    """Fake httpx.AsyncClient returning one canned response for GET or POST,
+    recording each call as (method, url, params, json) into `capture`."""
+
+    class _Resp:
+        def __init__(self):
+            self.status_code = status
+            self._json = body if body is not None else {}
+            self.content = json.dumps(self._json).encode()
+
+        def json(self):
+            return self._json
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def get(self, url, headers=None, params=None):
+            if capture is not None:
+                capture.append(("GET", url, params, None))
+            return _Resp()
+
+        async def post(self, url, json=None, headers=None):
+            if capture is not None:
+                capture.append(("POST", url, None, json))
+            return _Resp()
+
+    return _Client
+
+
+def test_fetch_business_profile_unwraps_data(monkeypatch):
+    calls: list = []
+    body = {"data": [{"about": "We sell cats", "websites": ["https://cats.example"]}]}
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(body=body, capture=calls))
+
+    import asyncio
+
+    out = asyncio.run(fetch_business_profile("PNID9", "tok"))
+    assert out["about"] == "We sell cats"
+    assert calls[0][0] == "GET"
+    assert calls[0][1].endswith("/PNID9/whatsapp_business_profile")
+    assert "about" in calls[0][2]["fields"]  # asks Meta for the editable fields
+
+
+def test_fetch_business_profile_empty_returns_dict(monkeypatch):
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(body={"data": []}))
+
+    import asyncio
+
+    assert asyncio.run(fetch_business_profile("PNID9", "tok")) == {}
+
+
+def test_fetch_business_profile_non_2xx_raises(monkeypatch):
+    body = {"error": {"message": "Unsupported get request"}}
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(status=403, body=body))
+
+    import asyncio
+
+    with pytest.raises(WhatsAppSendError) as ei:
+        asyncio.run(fetch_business_profile("PNID9", "tok"))
+    assert ei.value.status_code == 403
+    assert "Unsupported get request" in str(ei.value)
+
+
+def test_update_business_profile_posts_messaging_product(monkeypatch):
+    calls: list = []
+    monkeypatch.setattr(
+        "app.whatsapp.httpx.AsyncClient",
+        _profile_http(body={"success": True}, capture=calls),
+    )
+
+    import asyncio
+
+    asyncio.run(update_business_profile("PNID9", "tok", {"about": "New bio"}))
+    method, url, _params, sent = calls[0]
+    assert method == "POST"
+    assert url.endswith("/PNID9/whatsapp_business_profile")
+    assert sent["messaging_product"] == "whatsapp"
+    assert sent["about"] == "New bio"
+
+
+def test_update_business_profile_non_2xx_raises(monkeypatch):
+    body = {"error": {"message": "About is too long"}}
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(status=400, body=body))
+
+    import asyncio
+
+    with pytest.raises(WhatsAppSendError) as ei:
+        asyncio.run(update_business_profile("PNID9", "tok", {"about": "x" * 1000}))
+    assert ei.value.status_code == 400
+    assert "About is too long" in str(ei.value)
+
+
+def test_get_profile_endpoint_returns_parsed(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+
+    async def fake_fetch(phone_number_id, access_token):
+        assert phone_number_id == acct.phone_number_id
+        return {"about": "Hello", "email": "shop@example.com"}
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", fake_fetch)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/profile")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["about"] == "Hello"
+    assert body["email"] == "shop@example.com"
+    assert body["websites"] == []  # default when Meta omits it
+
+
+def test_patch_profile_updates_then_returns_fresh(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    sent: list = []
+
+    async def fake_update(phone_number_id, access_token, fields):
+        sent.append(fields)
+
+    async def fake_fetch(phone_number_id, access_token):
+        return {"about": "Updated bio"}
+
+    monkeypatch.setattr("app.api.whatsapp.update_business_profile", fake_update)
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", fake_fetch)
+
+    r = admin_client.patch(
+        f"/api/whatsapp/accounts/{acct.id}/profile",
+        json={"about": "Updated bio"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["about"] == "Updated bio"
+    # Only the provided field is forwarded to Meta — not the whole model.
+    assert sent == [{"about": "Updated bio"}]
+
+
+def test_patch_profile_empty_body_skips_update(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+
+    async def boom_update(*a, **k):
+        raise AssertionError("update must not be called for an empty patch")
+
+    async def fake_fetch(phone_number_id, access_token):
+        return {"about": "unchanged"}
+
+    monkeypatch.setattr("app.api.whatsapp.update_business_profile", boom_update)
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", fake_fetch)
+
+    r = admin_client.patch(f"/api/whatsapp/accounts/{acct.id}/profile", json={})
+    assert r.status_code == 200, r.text
+    assert r.json()["about"] == "unchanged"
+
+
+def test_patch_profile_non_admin_403(
+    other_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    r = other_client.patch(
+        f"/api/whatsapp/accounts/{acct.id}/profile",
+        json={"about": "nope"},
+    )
+    assert r.status_code == 403
+
+
+def test_get_profile_meta_failure_502(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+
+    async def boom(phone_number_id, access_token):
+        raise WhatsAppSendError("HTTP 401: token expired", status_code=401)
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", boom)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/profile")
+    assert r.status_code == 502

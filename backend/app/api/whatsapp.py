@@ -71,6 +71,8 @@ from app.schemas import (
     WhatsAppAccountConnect,
     WhatsAppAccountOut,
     WhatsAppAccountUpdate,
+    WhatsAppBusinessProfileOut,
+    WhatsAppBusinessProfileUpdate,
     WhatsAppTemplateOut,
 )
 from app.storage import presigned_download_url
@@ -78,9 +80,11 @@ from app.whatsapp import (
     SIGNATURE_HEADER,
     WhatsAppNotConfigured,
     WhatsAppSendError,
+    fetch_business_profile,
     fetch_message_templates,
     parse_template,
     parse_webhook,
+    update_business_profile,
     verify_challenge,
     verify_signature,
 )
@@ -387,6 +391,68 @@ async def list_templates(
         wanted = status_filter.upper()
         parsed = [t for t in parsed if t["status"].upper() == wanted]
     return [WhatsAppTemplateOut(**t) for t in parsed]
+
+
+@router.get(
+    "/accounts/{account_id}/profile",
+    response_model=WhatsAppBusinessProfileOut,
+)
+async def get_business_profile(
+    account_id: uuid.UUID,
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> WhatsAppBusinessProfileOut:
+    """Read the number's public business profile (the customer-facing "about"
+    card) live from Meta."""
+    account = await _get_account_or_404(db, account_id, org_id)
+    try:
+        raw = await fetch_business_profile(account.phone_number_id, account.access_token)
+    except WhatsAppSendError as e:
+        raise HTTPException(status_code=502, detail=f"WhatsApp profile read failed: {e}") from e
+    return WhatsAppBusinessProfileOut(**raw)
+
+
+@router.patch(
+    "/accounts/{account_id}/profile",
+    response_model=WhatsAppBusinessProfileOut,
+)
+async def patch_business_profile(
+    account_id: uuid.UUID,
+    payload: WhatsAppBusinessProfileUpdate,
+    user: User = Depends(manage),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> WhatsAppBusinessProfileOut:
+    """Update editable business-profile fields, then echo the fresh profile back.
+
+    Only fields present in the body are sent to Meta. A no-op (empty body) skips
+    the write and just returns the current profile. Meta validation rejections
+    (e.g. an over-long ``about``) surface as 502 carrying Meta's message."""
+    account = await _get_account_or_404(db, account_id, org_id)
+    changes = payload.model_dump(exclude_unset=True)
+    if changes:
+        try:
+            await update_business_profile(account.phone_number_id, account.access_token, changes)
+        except WhatsAppSendError as e:
+            raise HTTPException(
+                status_code=502, detail=f"WhatsApp profile update failed: {e}"
+            ) from e
+        await record_audit(
+            db,
+            actor=user,
+            action="whatsapp.account.profile_update",
+            entity_type="whatsapp_account",
+            entity_id=account.id,
+            organization_id=org_id,
+            metadata={"fields": list(changes.keys())},
+        )
+        await db.commit()
+    try:
+        raw = await fetch_business_profile(account.phone_number_id, account.access_token)
+    except WhatsAppSendError as e:
+        raise HTTPException(status_code=502, detail=f"WhatsApp profile read failed: {e}") from e
+    return WhatsAppBusinessProfileOut(**raw)
 
 
 # ===================== Conversations + messages (members) =====================
