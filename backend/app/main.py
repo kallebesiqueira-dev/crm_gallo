@@ -175,6 +175,15 @@ def _get_header(scope, name: str) -> str | None:
     return None
 
 
+# Re-auth entry points must work even when the browser still carries a STALE
+# `access_token` cookie (an expired/old session). Without this, a returning user
+# whose session lapsed can't log back in: the CSRF check fires on /login because
+# the old auth cookie is present, but their `csrf_token` cookie no longer matches
+# the freshly-minted one — a hard 403 lockout. These endpoints are password- /
+# challenge-gated, so exempting them from CSRF is the standard, safe trade-off.
+CSRF_EXEMPT_PATHS = frozenset({"/api/auth/login", "/api/auth/mfa/verify"})
+
+
 class CSRFMiddleware:
     """Double-submit cookie CSRF protection — pure-ASGI implementation.
 
@@ -184,6 +193,8 @@ class CSRFMiddleware:
         have no cookie-based credential to abuse.
       - Mutating methods WITH the auth cookie must echo `csrf_token`
         in the `X-CSRF-Token` header. Constant-time compare.
+      - The re-auth entry points in `CSRF_EXEMPT_PATHS` are skipped so a
+        stale auth cookie can never lock a returning user out of /login.
 
     Pure ASGI (no `BaseHTTPMiddleware`) so it composes cleanly with
     asyncpg under `httpx.TestClient` — see `tests/conftest.py` for
@@ -199,7 +210,7 @@ class CSRFMiddleware:
             await self.app(scope, receive, send)
             return
         method = scope["method"]
-        if method in CSRF_PROTECTED_METHODS:
+        if method in CSRF_PROTECTED_METHODS and scope.get("path", "") not in CSRF_EXEMPT_PATHS:
             cookies = _parse_cookies(scope)
             if cookies.get(ACCESS_TOKEN_COOKIE):
                 cookie_csrf = cookies.get(CSRF_TOKEN_COOKIE, "")
