@@ -11,12 +11,17 @@ at each step:
 
 with the correct actor and organization stamped on each row.
 
-Scope note: this covers the CRUD/trash call sites that the four
-entity routers + `app/api/trash.py` emit. The remaining ~60
-`record_audit` call sites (Stripe webhooks, e-sign, quote/contract
-state machines, worker jobs, settings) live behind their own
-fixtures and are exercised by their dedicated suites — folding them
-all into one matrix would couple unrelated subsystems.
+A second, shorter matrix covers the non-trash-able resources
+(company / product / tag — `/api/trash` only handles the four core
+entities, so their lifecycle stops at soft_delete), plus dedicated
+cases for notes (polymorphic, hosted on a lead), `trash.empty`, and
+the security-relevant surfaces (invite, api-key, team).
+
+Scope note: the remaining `record_audit` call sites (Stripe webhooks,
+e-sign, quote/contract state machines, worker jobs, WhatsApp,
+imports) live behind their own fixtures and are exercised by their
+dedicated suites — folding them all into one matrix would couple
+unrelated subsystems.
 
 Audit rows are read via the `db` fixture (admin engine, BYPASSRLS)
 to keep the assertion independent of the request-path tenant GUC.
@@ -132,3 +137,152 @@ def test_audit_matrix_full_lifecycle(
         f"{entity_type}.hard_delete",
     }
     assert expected <= actions, f"missing audit actions: {expected - actions}"
+
+
+# (entity_type, plural_path, create_body, patch_body)
+# Not trash-able (`/api/trash` only handles lead/customer/deal/task),
+# so the audited lifecycle is create → update → soft_delete.
+NON_TRASH_ENTITIES = [
+    (
+        "company",
+        "companies",
+        {"name": "Aud Matrix Co"},
+        {"industry": "software"},
+    ),
+    (
+        "product",
+        "products",
+        {"name": "Aud Matrix Product"},
+        {"description": "updated"},
+    ),
+    (
+        "tag",
+        "tags",
+        {"name": "aud-matrix-tag"},
+        {"color": "#ff0000"},
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "entity_type,plural,create_body,patch_body",
+    NON_TRASH_ENTITIES,
+    ids=[e[0] for e in NON_TRASH_ENTITIES],
+)
+def test_audit_matrix_non_trash_lifecycle(
+    entity_type: str,
+    plural: str,
+    create_body: dict,
+    patch_body: dict,
+    admin_client: CsrfAwareClient,
+    db: Session,
+    admin_user: User,
+):
+    r = admin_client.post(f"/api/{plural}", json=create_body)
+    assert r.status_code == 201, r.text
+    created = r.json()
+    eid = created["id"]
+    _assert_stamped(db, eid, f"{entity_type}.create", admin_user)
+
+    patch_headers = {"If-Match": str(created["version"])} if "version" in created else {}
+    r = admin_client.patch(f"/api/{plural}/{eid}", json=patch_body, headers=patch_headers)
+    assert r.status_code == 200, r.text
+    _assert_stamped(db, eid, f"{entity_type}.update", admin_user)
+
+    assert admin_client.delete(f"/api/{plural}/{eid}").status_code == 204
+    _assert_stamped(db, eid, f"{entity_type}.soft_delete", admin_user)
+
+
+def test_audit_note_lifecycle(admin_client: CsrfAwareClient, db: Session, admin_user: User):
+    """Notes are polymorphic (entity_type + entity_id) — hosted on a lead."""
+    lead_id = admin_client.post(
+        "/api/leads",
+        json={"first_name": "Note", "last_name": "Host", "stage": "new"},
+    ).json()["id"]
+
+    r = admin_client.post(
+        "/api/notes",
+        json={"entity_type": "lead", "entity_id": lead_id, "body": "audit probe"},
+    )
+    assert r.status_code == 201, r.text
+    note_id = r.json()["id"]
+    _assert_stamped(db, note_id, "note.create", admin_user)
+
+    r = admin_client.patch(f"/api/notes/{note_id}", json={"body": "edited"})
+    assert r.status_code == 200, r.text
+    _assert_stamped(db, note_id, "note.update", admin_user)
+
+    assert admin_client.delete(f"/api/notes/{note_id}").status_code == 204
+    _assert_stamped(db, note_id, "note.soft_delete", admin_user)
+
+
+def test_audit_trash_empty(admin_client: CsrfAwareClient, db: Session, admin_user: User):
+    """`/api/trash/empty` audits one `trash.empty` row (no per-row
+    entity_id), stamped with the actor who pulled the trigger."""
+    lead_id = admin_client.post(
+        "/api/leads",
+        json={"first_name": "Empty", "last_name": "Probe", "stage": "new"},
+    ).json()["id"]
+    admin_client.delete(f"/api/leads/{lead_id}")
+
+    before = len(
+        db.execute(
+            select(AuditLog).where(
+                AuditLog.action == "trash.empty",
+                AuditLog.actor_id == admin_user.id,
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert admin_client.post("/api/trash/empty").status_code == 204
+    rows = (
+        db.execute(
+            select(AuditLog).where(
+                AuditLog.action == "trash.empty",
+                AuditLog.actor_id == admin_user.id,
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(rows) == before + 1, "no audit row for trash.empty"
+    assert rows[-1].organization_id == admin_user.last_active_org_id
+
+
+def test_audit_invite_actions(admin_client: CsrfAwareClient, db: Session, admin_user: User):
+    r = admin_client.post(
+        "/api/orgs/current/invites",
+        json={"email": "pytest-audit-invite@example.com"},
+    )
+    assert r.status_code == 201, r.text
+    invite_id = r.json()["id"]
+    _assert_stamped(db, invite_id, "invite.create", admin_user)
+
+    assert admin_client.delete(f"/api/orgs/current/invites/{invite_id}").status_code == 204
+    _assert_stamped(db, invite_id, "invite.revoke", admin_user)
+
+
+def test_audit_api_key_actions(admin_client: CsrfAwareClient, db: Session, admin_user: User):
+    r = admin_client.post("/api/api-keys", json={"name": "aud-matrix-key"})
+    assert r.status_code == 201, r.text
+    key_id = r.json()["id"]
+    _assert_stamped(db, key_id, "api_key.create", admin_user)
+
+    # revoke echoes the (now revoked) key back — 200, not 204
+    assert admin_client.delete(f"/api/api-keys/{key_id}").status_code == 200
+    _assert_stamped(db, key_id, "api_key.revoke", admin_user)
+
+
+def test_audit_team_actions(admin_client: CsrfAwareClient, db: Session, admin_user: User):
+    r = admin_client.post("/api/teams", json={"name": "Aud Matrix Team"})
+    assert r.status_code == 201, r.text
+    team_id = r.json()["id"]
+    _assert_stamped(db, team_id, "team.create", admin_user)
+
+    r = admin_client.patch(f"/api/teams/{team_id}", json={"name": "Aud Matrix Renamed"})
+    assert r.status_code == 200, r.text
+    _assert_stamped(db, team_id, "team.update", admin_user)
+
+    assert admin_client.delete(f"/api/teams/{team_id}").status_code == 204
+    _assert_stamped(db, team_id, "team.delete", admin_user)
