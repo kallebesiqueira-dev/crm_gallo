@@ -46,3 +46,6 @@ ruff==0.7.4
 pip-audit==2.7.3
 structlog==24.4.0
 stripe==11.4.1
+# Server-side product analytics (PostHog). Same project key as the frontend's
+# NEXT_PUBLIC_POSTHOG_KEY; gated on POSTHOG_API_KEY (empty -> analytics off).
+posthog==7.18.0
