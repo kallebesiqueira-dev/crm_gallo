@@ -1,21 +1,23 @@
 """Microsoft (Entra ID) social login — OpenID Connect authorization-code flow.
 
 Matches an EXISTING user by their verified Microsoft email (no oauth-account
-table ⇒ no DB migration). Disabled (404) until MICROSOFT_OAUTH_CLIENT_ID +
-MICROSOFT_OAUTH_CLIENT_SECRET are set. CSRF is a short-lived state cookie checked
-in constant time. The id/access token is exchanged back-channel over TLS, so the
-profile from `/userinfo` is trusted without local JWT verification. Sign-up via
-Microsoft (provisioning a new org) is a follow-up — today it logs in known
-accounts and bounces unknown emails back to the login page with a hint.
+table ⇒ no DB migration). Disabled (404) until MICROSOFT_CLIENT_ID +
+MICROSOFT_CLIENT_SECRET are set. CSRF is a short-lived state cookie checked in
+constant time. The email is read from the id_token (returned back-channel over
+TLS from the token endpoint, so trusted without re-verifying its signature) —
+Microsoft's /userinfo returns a minimal claim set that often omits the email.
+Sign-up via Microsoft (provisioning a new org) is a follow-up — today it logs in
+known accounts and bounces unknown emails back to the login page with a hint.
 """
 
 import secrets
 import urllib.parse
-from typing import Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from jose import jwt
+from jose.exceptions import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -102,21 +104,23 @@ async def callback(
                 "scope": _SCOPE,
             },
         )
-        if token_resp.status_code != 200:
-            log.warning("oauth.token_exchange_failed", status=token_resp.status_code)
-            raise HTTPException(status_code=400, detail="Token exchange failed")
-        access_token = token_resp.json().get("access_token")
-        if not access_token:
-            raise HTTPException(status_code=400, detail="No access token from Microsoft")
-        userinfo_resp = await client.get(
-            "https://graph.microsoft.com/oidc/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        if userinfo_resp.status_code != 200:
-            raise HTTPException(status_code=400, detail="Could not read Microsoft profile")
-        info: dict[str, Any] = userinfo_resp.json()
+    if token_resp.status_code != 200:
+        log.warning("oauth.token_exchange_failed", status=token_resp.status_code)
+        raise HTTPException(status_code=400, detail="Token exchange failed")
 
-    email = (info.get("email") or info.get("preferred_username") or "").lower().strip()
+    # Read the email from the id_token, NOT from /userinfo: Microsoft's
+    # graph.microsoft.com/oidc/userinfo returns a minimal claim set that often
+    # omits the email and never carries preferred_username, whereas the id_token
+    # has both. It arrived back-channel over TLS from the token endpoint, so it's
+    # trusted without re-verifying its signature.
+    id_token = token_resp.json().get("id_token")
+    try:
+        claims = jwt.get_unverified_claims(id_token) if id_token else {}
+    except JWTError:
+        log.warning("oauth.id_token_decode_failed")
+        claims = {}
+    raw_email = claims.get("email") or claims.get("preferred_username") or claims.get("upn")
+    email = (raw_email or "").lower().strip()
     frontend = settings.frontend_base_url.rstrip("/")
     if not email:
         return RedirectResponse(f"{frontend}/login?oauth=no_email")
