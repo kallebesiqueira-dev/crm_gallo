@@ -206,6 +206,7 @@
     "viewAll": "Ver todos",
     "noTasks": "Nenhuma tarefa",
     "customize": "Personalizar",
+    "newActivity": "Nova tarefa",
     "recentActivities": "Atividades recentes",
     "viewCalendar": "Ver calendário",
     "summary": "Resumo",
@@ -857,12 +858,12 @@
         "2": {
           "year": "2026",
           "title": "Lançamento público",
-          "body": "Open source sob AGPL-3.0, 7 idiomas nativos, Stripe integrado, primeiros times clientes."
+          "body": "Open source sob AGPL-3.0, 7 idiomas nativos, multi-tenant, automações e Stripe integrado."
         },
         "3": {
           "year": "Próximos passos",
-          "title": "Multi-tenant + automações",
-          "body": "Organizações isoladas, automações visuais e integrações de e-mail/calendário a caminho."
+          "title": "Integrações e mobile",
+          "body": "Sincronização de e-mail/calendário externos (Gmail, Outlook), canal WhatsApp e app mobile a caminho."
         }
       }
     },

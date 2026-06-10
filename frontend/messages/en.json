@@ -206,6 +206,7 @@
     "viewAll": "View all",
     "noTasks": "No tasks for now",
     "customize": "Customize",
+    "newActivity": "New task",
     "recentActivities": "Recent activity",
     "viewCalendar": "View calendar",
     "summary": "Summary",
@@ -857,12 +858,12 @@
         "2": {
           "year": "2026",
           "title": "Public launch",
-          "body": "Open sourced under AGPL-3.0, 7 native languages, Stripe billing, first customer teams."
+          "body": "Open sourced under AGPL-3.0, 7 native languages, multi-tenant, automations and Stripe billing."
         },
         "3": {
           "year": "Next",
-          "title": "Multi-tenant + automations",
-          "body": "Isolated organizations, visual automations and email/calendar integrations coming next."
+          "title": "Integrations and mobile",
+          "body": "External email/calendar sync (Gmail, Outlook), a WhatsApp channel and a mobile app coming next."
         }
       }
     },

@@ -10,6 +10,7 @@ import {
   CalendarDays,
   CheckCircle2,
   FileText,
+  Plus,
   Target,
   TrendingUp,
   Users,
@@ -17,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api, type Company, type DashboardStats, type Lead, type Quote, type Task } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
 import { DashboardCustomize } from "@/components/dashboard-customize";
 
 /**
@@ -142,7 +144,15 @@ export default function DashboardPage() {
             <div className="line-clamp-2 text-xs text-muted-foreground">{t("welcome")}</div>
           </div>
         </div>
-        <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" className="gap-1.5">
+            <Link href={`/${locale}/tasks`}>
+              <Plus className="h-4 w-4" />
+              <span>{t("newActivity")}</span>
+            </Link>
+          </Button>
+          <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
+        </div>
       </div>
 
       {/* KPI row */}

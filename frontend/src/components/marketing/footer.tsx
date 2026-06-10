@@ -6,14 +6,11 @@ import {
   Cloud,
   Cpu,
   CreditCard,
-  Facebook,
   Instagram,
-  Linkedin,
   Lock,
   Mail,
   ShieldCheck,
   Sparkles,
-  Youtube,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -62,9 +59,6 @@ interface SocialLink {
 const SOCIAL_LINKS: SocialLink[] = [
   { id: "whatsapp",  label: "WhatsApp",  href: "https://wa.me/393717403464", Icon: null },
   { id: "instagram", label: "Instagram", href: "#",                       Icon: Instagram },
-  { id: "facebook",  label: "Facebook",  href: "#",                       Icon: Facebook },
-  { id: "linkedin",  label: "LinkedIn",  href: "#",                       Icon: Linkedin },
-  { id: "youtube",   label: "YouTube",   href: "#",                       Icon: Youtube },
   { id: "email",     label: "Email",     href: "mailto:gallo-crm@hotmail.com", Icon: Mail },
 ];
 

@@ -206,6 +206,7 @@
     "viewAll": "View all",
     "noTasks": "No tasks for now",
     "customize": "Customize",
+    "newActivity": "New task",
     "recentActivities": "Recent activity",
     "viewCalendar": "View calendar",
     "summary": "Summary",
@@ -857,12 +858,12 @@
         "2": {
           "year": "2026",
           "title": "Lantschada publica",
-          "body": "Open source sut AGPL-3.0, 7 linguas nativas, integraziun Stripe, emprims teams clients."
+          "body": "Open source sut AGPL-3.0, 7 linguas nativas, multi-tenant, automatisaziuns ed integraziun Stripe."
         },
         "3": {
           "year": "Proxims pass",
-          "title": "Multi-tenant + automatisaziuns",
-          "body": "Organisaziuns isoladas, automatisaziuns visualas ed integraziuns e-mail/chalender en vegnida."
+          "title": "Integraziuns e mobil",
+          "body": "Sincronisaziun e-mail/chalender extern (Gmail, Outlook), chanal WhatsApp ed app mobila en vegnida."
         }
       }
     },
