@@ -66,7 +66,7 @@ from app.cookies import (
 )
 from app.database import engine
 from app.logging_setup import configure_logging, get_logger
-from app.metrics import OUTBOX_PENDING, PrometheusMiddleware, metrics_response
+from app.metrics import DLQ_DEPTH, OUTBOX_PENDING, PrometheusMiddleware, metrics_response
 from app.rate_limit import limiter
 from app.sentry_setup import init_sentry
 
@@ -443,6 +443,14 @@ async def metrics(request: Request):
         OUTBOX_PENDING.set(pending)
     except Exception:
         pass  # stale gauge is better than a broken /metrics
+    # DLQ depth: count entries in the Redis arq:dead list. O(1) via LLEN.
+    try:
+        from app.redis_client import get_redis
+        from app.worker.dlq import DLQ_KEY
+
+        DLQ_DEPTH.set(await get_redis().llen(DLQ_KEY))
+    except Exception:
+        pass
     return metrics_response()
 
 

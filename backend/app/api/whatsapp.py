@@ -29,6 +29,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import (
+
     ENTITY_CUSTOMER,
     ENTITY_LEAD,
     ActivityType,
@@ -105,6 +106,26 @@ log = structlog.get_logger(__name__)
 webhook_router = APIRouter(prefix="/api/whatsapp", tags=["whatsapp"])
 router = APIRouter(prefix="/api/whatsapp", tags=["whatsapp"])
 
+
+async def _webhook_ip_guard(request: Request) -> None:
+    """600 req/min per IP on the unauthenticated webhook path.
+
+    Implemented as a Depends rather than @limiter.limit() because the
+    latter wraps the function with functools.wraps, which causes Pydantic
+    to resolve Annotated[..., Header/Query()] forward-refs in SlowAPI's
+    module scope (where they're undefined) instead of ours.
+    """
+    from app.redis_client import get_redis
+
+    ip = (request.client.host if request.client else None) or "unknown"
+    r = get_redis()
+    key = f"wh_ip:{ip}"
+    count = await r.incr(key)
+    if count == 1:
+        await r.expire(key, 60)
+    if count > 600:
+        raise HTTPException(status_code=429, detail="Too Many Requests")
+
 # Connecting / disconnecting a number changes the org's messaging identity, so
 # gate account mutations to admin. Reading + sending is any member's job.
 manage = require_roles(UserRole.admin)
@@ -129,6 +150,7 @@ async def receive_webhook(
     request: Request,
     db: AsyncSession = Depends(get_db),
     signature: Annotated[str | None, Header(alias=SIGNATURE_HEADER)] = None,
+    _rl: None = Depends(_webhook_ip_guard),
 ) -> Response:
     """Inbound messages + delivery-status callbacks from Meta.
 

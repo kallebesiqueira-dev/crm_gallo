@@ -306,6 +306,10 @@ class Settings(BaseSettings):
 
     def validate_for_runtime(self) -> None:
         """Refuse to start with insecure defaults in production."""
+        import logging as _logging
+
+        _log = _logging.getLogger(__name__)
+
         if self.jwt_secret in _DEFAULT_SECRETS or len(self.jwt_secret) < 32:
             msg = (
                 f"Insecure JWT_SECRET (length={len(self.jwt_secret)}). "
@@ -313,9 +317,15 @@ class Settings(BaseSettings):
             )
             if self.is_production:
                 raise RuntimeError(msg)
-            import logging
+            _log.warning("SECURITY: %s", msg)
 
-            logging.getLogger(__name__).warning("SECURITY: %s", msg)
+        if self.is_production and not self.mfa_required_for_privileged:
+            _log.warning(
+                "SECURITY: MFA_REQUIRED_FOR_PRIVILEGED is off. "
+                "Admin/manager accounts are not required to enroll in TOTP MFA. "
+                "Set MFA_REQUIRED_FOR_PRIVILEGED=true before going live with "
+                "real user data."
+            )
 
 
 @lru_cache

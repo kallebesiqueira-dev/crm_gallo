@@ -41,6 +41,22 @@ from app.services.stripe_service import (
 log = get_logger(__name__)
 settings = get_settings()
 
+
+async def _stripe_webhook_ip_guard(request: Request) -> None:
+    """600 req/min per IP on the unauthenticated Stripe webhook path.
+    Stripe sends at most a few events/second under peak load; this cap
+    stops DDoS without touching the HMAC-verified happy path."""
+    from app.redis_client import get_redis
+
+    ip = (request.client.host if request.client else None) or "unknown"
+    r = get_redis()
+    key = f"stripe_wh_ip:{ip}"
+    count = await r.incr(key)
+    if count == 1:
+        await r.expire(key, 60)
+    if count > 600:
+        raise HTTPException(status_code=429, detail="Too Many Requests")
+
 router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 
@@ -195,6 +211,7 @@ async def webhook(
     request: Request,
     stripe_signature: str | None = Header(default=None, alias="Stripe-Signature"),
     db: AsyncSession = Depends(get_db),
+    _rl: None = Depends(_stripe_webhook_ip_guard),
 ) -> None:
     """Stripe-signed webhook receiver. Idempotent by event id.
 

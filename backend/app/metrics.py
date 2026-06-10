@@ -52,6 +52,11 @@ OUTBOX_PENDING = Gauge(
     "Number of outbox_events rows not yet processed (processed_at IS NULL).",
 )
 
+DLQ_DEPTH = Gauge(
+    "arq_dead_queue_depth",
+    "Number of entries in the arq dead-letter queue (arq:dead Redis list).",
+)
+
 REQUESTS_IN_PROGRESS = Gauge(
     "http_requests_in_progress",
     "Number of HTTP requests currently being processed.",
