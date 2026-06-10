@@ -24,6 +24,7 @@ from prometheus_client import (
     CONTENT_TYPE_LATEST,
     REGISTRY,
     Counter,
+    Gauge,
     Histogram,
     generate_latest,
 )
@@ -43,6 +44,18 @@ REQUEST_LATENCY = Histogram(
     # Buckets chosen for a typical CRUD API: sub-10ms = good, 100ms
     # is the eyebrow-raiser, anything >1s = paging the operator.
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+)
+
+
+OUTBOX_PENDING = Gauge(
+    "outbox_events_pending_total",
+    "Number of outbox_events rows not yet processed (processed_at IS NULL).",
+)
+
+REQUESTS_IN_PROGRESS = Gauge(
+    "http_requests_in_progress",
+    "Number of HTTP requests currently being processed.",
+    labelnames=("method",),
 )
 
 
@@ -77,6 +90,7 @@ class PrometheusMiddleware:
         method = scope["method"]
         start = time.perf_counter()
         status_holder = {"status": 500}
+        REQUESTS_IN_PROGRESS.labels(method=method).inc()
 
         async def send_wrapper(message):
             if message["type"] == "http.response.start":
@@ -86,6 +100,7 @@ class PrometheusMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         finally:
+            REQUESTS_IN_PROGRESS.labels(method=method).dec()
             elapsed = time.perf_counter() - start
             # Prefer the matched route template; fall back to the raw
             # path if routing didn't run (e.g. middleware short-

@@ -5,9 +5,9 @@ groups:
       - alert: HighErrorRate
         expr: |
           (
-            sum(rate(starlette_requests_total{status_code=~"5.."}[5m]))
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
             /
-            sum(rate(starlette_requests_total[5m]))
+            sum(rate(http_requests_total[5m]))
           ) > 0.05
         for: 2m
         labels:
@@ -23,21 +23,21 @@ groups:
         expr: |
           histogram_quantile(
             0.95,
-            sum(rate(starlette_request_duration_seconds_bucket[5m])) by (le, method, path)
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, method, route)
           ) > 1.0
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "p95 latency above 1s on {{ $labels.method }} {{ $labels.path }}"
+          summary: "p95 latency above 1s on {{ $labels.method }} {{ $labels.route }}"
           description: >
-            The 95th-percentile response time for {{ $labels.method }} {{ $labels.path }}
+            The 95th-percentile response time for {{ $labels.method }} {{ $labels.route }}
             has been above 1 second for 5 minutes. Investigate slow queries or N+1 patterns.
 
       # --- No traffic (dead canary) ---
       - alert: NoInboundTraffic
         expr: |
-          sum(rate(starlette_requests_total[10m])) == 0
+          sum(rate(http_requests_total[10m])) == 0
         for: 10m
         labels:
           severity: warning
@@ -48,6 +48,8 @@ groups:
             misconfigured, or Prometheus scraping broken.
 
       # --- Outbox drain backlog ---
+      # Metric source: GET /metrics on the web process queries
+      # outbox_events WHERE processed_at IS NULL on every Prometheus scrape.
       - alert: OutboxDrainBacklog
         expr: |
           outbox_events_pending_total > 100
@@ -64,9 +66,9 @@ groups:
       - alert: High4xxRate
         expr: |
           (
-            sum(rate(starlette_requests_total{status_code=~"4.."}[5m]))
+            sum(rate(http_requests_total{status=~"4.."}[5m]))
             /
-            sum(rate(starlette_requests_total[5m]))
+            sum(rate(http_requests_total[5m]))
           ) > 0.20
         for: 3m
         labels:

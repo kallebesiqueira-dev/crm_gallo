@@ -66,7 +66,7 @@ from app.cookies import (
 )
 from app.database import engine
 from app.logging_setup import configure_logging, get_logger
-from app.metrics import PrometheusMiddleware, metrics_response
+from app.metrics import OUTBOX_PENDING, PrometheusMiddleware, metrics_response
 from app.rate_limit import limiter
 from app.sentry_setup import init_sentry
 
@@ -427,6 +427,22 @@ async def metrics(request: Request):
         provided = request.headers.get("authorization", "")
         if not expected or not _consteq(provided, f"Bearer {expected}"):
             raise HTTPException(status_code=404)
+    # Refresh the outbox-pending gauge on every scrape so the
+    # OutboxDrainBacklog alert has a live value without requiring a
+    # separate worker-side metrics server. COUNT on (processed_at IS NULL)
+    # is a fast index scan (partial index covers this column).
+    try:
+        async with engine.connect() as conn:
+            pending = (
+                await conn.execute(
+                    text(
+                        "SELECT COUNT(*) FROM outbox_events WHERE processed_at IS NULL"
+                    )
+                )
+            ).scalar_one()
+        OUTBOX_PENDING.set(pending)
+    except Exception:
+        pass  # stale gauge is better than a broken /metrics
     return metrics_response()
 
 
