@@ -233,6 +233,13 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_use_tls: bool = True
 
+    # ---- Product analytics (PostHog) ----
+    # Server-side event capture. Same PostHog project key as the frontend's
+    # NEXT_PUBLIC_POSTHOG_KEY; EU cloud by default for GDPR. Empty key ⇒ off,
+    # so a fresh clone / dev runs with analytics disabled and zero setup.
+    posthog_api_key: str = ""
+    posthog_host: str = "https://eu.i.posthog.com"
+
     # ---- E-signature (ADR-016) ----
     # Which signing backend `app.signing.get_provider()` selects. `manual`
     # is the dev/low-stakes default: it signs in-app via an opaque token
