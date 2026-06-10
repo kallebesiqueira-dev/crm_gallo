@@ -68,11 +68,15 @@ from app.schemas import (
     WhatsAppAccountConnect,
     WhatsAppAccountOut,
     WhatsAppAccountUpdate,
+    WhatsAppTemplateOut,
 )
 from app.storage import presigned_download_url
 from app.whatsapp import (
     SIGNATURE_HEADER,
     WhatsAppNotConfigured,
+    WhatsAppSendError,
+    fetch_message_templates,
+    parse_template,
     parse_webhook,
     verify_challenge,
     verify_signature,
@@ -344,6 +348,42 @@ async def disconnect_account(
     )
     await db.delete(account)
     await db.commit()
+
+
+@router.get(
+    "/accounts/{account_id}/templates",
+    response_model=list[WhatsAppTemplateOut],
+)
+async def list_templates(
+    account_id: uuid.UUID,
+    status_filter: str | None = Query(default=None, alias="status"),
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> list[WhatsAppTemplateOut]:
+    """Live-list this number's message templates straight from Meta.
+
+    Templates are the only way to (re)open a conversation outside the 24h
+    service window, so the compose UI fetches them on demand rather than
+    caching — approval state changes on Meta's side, not ours. Requires the
+    account to carry a `waba_id`; optional `?status=APPROVED` filters Meta's
+    review state client-side.
+    """
+    account = await _get_account_or_404(db, account_id, org_id)
+    if not account.waba_id:
+        raise HTTPException(
+            status_code=409,
+            detail="account has no WABA id; reconnect with a waba_id to list templates",
+        )
+    try:
+        raw = await fetch_message_templates(account.waba_id, account.access_token)
+    except WhatsAppSendError as e:
+        raise HTTPException(status_code=502, detail=f"WhatsApp template list failed: {e}") from e
+    parsed = [parse_template(t) for t in raw]
+    if status_filter:
+        wanted = status_filter.upper()
+        parsed = [t for t in parsed if t["status"].upper() == wanted]
+    return [WhatsAppTemplateOut(**t) for t in parsed]
 
 
 # ===================== Conversations + messages (members) =====================

@@ -47,7 +47,9 @@ from app.whatsapp import (
     SERVICE_WINDOW,
     WhatsAppSendError,
     fetch_media,
+    fetch_message_templates,
     mark_read,
+    parse_template,
     parse_webhook,
     send_interactive,
     send_media,
@@ -91,12 +93,14 @@ def _make_account(
     *,
     phone_number_id: str = _PNID,
     status: WhatsAppAccountStatus = WhatsAppAccountStatus.active,
+    waba_id: str | None = None,
 ) -> WhatsAppAccount:
     acct = WhatsAppAccount(
         organization_id=org.id,
         phone_number_id=phone_number_id,
         access_token="seed-access-token",
         status=status,
+        waba_id=waba_id,
     )
     db.add(acct)
     db.commit()
@@ -1470,6 +1474,194 @@ def test_fetch_media_404_raises_terminal(monkeypatch):
     with pytest.raises(WhatsAppSendError) as ei:
         asyncio.run(fetch_media("GONE", "tok"))
     assert ei.value.status_code == 404  # worker treats 4xx as terminal
+
+
+# ---------- message templates ----------
+
+
+def test_parse_template_extracts_body_and_var_count():
+    raw = {
+        "name": "order_update",
+        "language": "pt_BR",
+        "status": "APPROVED",
+        "category": "UTILITY",
+        "components": [
+            {"type": "HEADER", "text": "Olá"},
+            {"type": "BODY", "text": "Oi {{1}}, seu pedido {{2}} foi enviado."},
+            {"type": "FOOTER", "text": "Obrigado"},
+        ],
+    }
+    out = parse_template(raw)
+    assert out == {
+        "name": "order_update",
+        "language": "pt_BR",
+        "status": "APPROVED",
+        "category": "UTILITY",
+        "body_text": "Oi {{1}}, seu pedido {{2}} foi enviado.",
+        "variable_count": 2,
+    }
+
+
+def test_parse_template_no_body_no_vars():
+    out = parse_template(
+        {"name": "ping", "language": "en", "status": "APPROVED", "category": "UTILITY"}
+    )
+    assert out["body_text"] == ""
+    assert out["variable_count"] == 0
+
+
+def _template_client(pages: list, calls: list):
+    """Fake httpx.AsyncClient that replays `pages` (list of (status, json))
+    one per GET, recording (url, params) into `calls`."""
+
+    class _Resp:
+        def __init__(self, status_code, json_body):
+            self.status_code = status_code
+            self._json = json_body
+            self.content = json.dumps(json_body or {}).encode()
+
+        def json(self):
+            return self._json
+
+    seq = iter(pages)
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def get(self, url, headers=None, params=None):
+            calls.append((url, params))
+            status_code, body = next(seq)
+            return _Resp(status_code, body)
+
+    return _Client
+
+
+def test_fetch_templates_single_page(monkeypatch):
+    calls: list = []
+    pages = [
+        (200, {"data": [{"name": "a", "language": "en"}], "paging": {}}),
+    ]
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _template_client(pages, calls))
+
+    import asyncio
+
+    out = asyncio.run(fetch_message_templates("WABA1", "tok"))
+    assert [t["name"] for t in out] == ["a"]
+    assert len(calls) == 1
+    assert calls[0][0].endswith("/WABA1/message_templates")
+    assert calls[0][1]["limit"] == 100  # first call carries query params
+
+
+def test_fetch_templates_follows_pagination(monkeypatch):
+    calls: list = []
+    pages = [
+        (200, {"data": [{"name": "a"}], "paging": {"next": "https://graph.meta/next?after=X"}}),
+        (200, {"data": [{"name": "b"}], "paging": {}}),
+    ]
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _template_client(pages, calls))
+
+    import asyncio
+
+    out = asyncio.run(fetch_message_templates("WABA1", "tok"))
+    assert [t["name"] for t in out] == ["a", "b"]
+    assert len(calls) == 2
+    assert calls[1][0] == "https://graph.meta/next?after=X"
+    assert calls[1][1] is None  # the `next` url already embeds cursor + fields
+
+
+def test_fetch_templates_non_2xx_raises_with_meta_message(monkeypatch):
+    calls: list = []
+    pages = [(401, {"error": {"message": "Invalid OAuth access token"}})]
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _template_client(pages, calls))
+
+    import asyncio
+
+    with pytest.raises(WhatsAppSendError) as ei:
+        asyncio.run(fetch_message_templates("WABA1", "tok"))
+    assert ei.value.status_code == 401
+    assert "Invalid OAuth access token" in str(ei.value)
+
+
+def test_list_templates_endpoint_returns_parsed(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org, waba_id="WABA-XYZ")
+
+    async def fake_fetch(waba_id, access_token):
+        assert waba_id == "WABA-XYZ"
+        return [
+            {
+                "name": "welcome",
+                "language": "pt_BR",
+                "status": "APPROVED",
+                "category": "MARKETING",
+                "components": [{"type": "BODY", "text": "Bem-vindo {{1}}!"}],
+            }
+        ]
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_message_templates", fake_fetch)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body == [
+        {
+            "name": "welcome",
+            "language": "pt_BR",
+            "status": "APPROVED",
+            "category": "MARKETING",
+            "body_text": "Bem-vindo {{1}}!",
+            "variable_count": 1,
+        }
+    ]
+
+
+def test_list_templates_no_waba_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)  # no waba_id
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates")
+    assert r.status_code == 409
+
+
+def test_list_templates_status_filter(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org, waba_id="WABA-XYZ")
+
+    async def fake_fetch(waba_id, access_token):
+        return [
+            {"name": "ok", "status": "APPROVED", "language": "en", "category": "UTILITY"},
+            {"name": "pending", "status": "PENDING", "language": "en", "category": "UTILITY"},
+        ]
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_message_templates", fake_fetch)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates?status=approved")
+    assert r.status_code == 200, r.text
+    names = [t["name"] for t in r.json()]
+    assert names == ["ok"]  # case-insensitive filter, PENDING dropped
+
+
+def test_list_templates_meta_failure_502(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org, waba_id="WABA-XYZ")
+
+    async def boom(waba_id, access_token):
+        raise WhatsAppSendError("HTTP 400: bad request", status_code=400)
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_message_templates", boom)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates")
+    assert r.status_code == 502
 
 
 def test_inbound_media_enqueues_mirror_job(

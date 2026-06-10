@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
@@ -575,3 +576,70 @@ async def fetch_media(media_id: str, access_token: str) -> tuple[bytes, str]:
             return blob.content, mime
     except httpx.HTTPError as e:
         raise WhatsAppSendError(f"transport error: {type(e).__name__}: {e}") from e
+
+
+_TEMPLATE_VAR_RE = re.compile(r"\{\{\s*(\d+)\s*\}\}")
+_TEMPLATE_PAGE_CAP = 20
+
+
+async def fetch_message_templates(waba_id: str, access_token: str) -> list[dict]:
+    """List every message template defined on a WhatsApp Business Account.
+
+    `GET /{waba_id}/message_templates` is cursor-paginated; Meta hands back a
+    full `paging.next` url (cursor already embedded) which we follow verbatim
+    until it stops appearing, capped at `_TEMPLATE_PAGE_CAP` pages so a broken
+    cursor can never loop forever. Raises `WhatsAppSendError` on any non-2xx,
+    surfacing Meta's own `error.message` when present.
+    """
+    settings = get_settings()
+    base = f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url: str | None = f"{base}/{waba_id}/message_templates"
+    params: dict | None = {
+        "limit": 100,
+        "fields": "name,language,status,category,components",
+    }
+    out: list[dict] = []
+    try:
+        async with httpx.AsyncClient(timeout=_SEND_TIMEOUT_S) as client:
+            for _ in range(_TEMPLATE_PAGE_CAP):
+                if url is None:
+                    break
+                resp = await client.get(url, headers=headers, params=params)
+                if resp.status_code >= 300:
+                    body = resp.json() if resp.content else {}
+                    detail = (body.get("error") or {}).get("message") or "template list failed"
+                    raise WhatsAppSendError(
+                        f"HTTP {resp.status_code}: {detail}",
+                        status_code=resp.status_code,
+                    )
+                payload = resp.json() or {}
+                out.extend(payload.get("data") or [])
+                url = ((payload.get("paging") or {}).get("next")) or None
+                params = None  # the `next` url already carries cursor + fields
+    except httpx.HTTPError as e:
+        raise WhatsAppSendError(f"transport error: {type(e).__name__}: {e}") from e
+    return out
+
+
+def parse_template(raw: dict) -> dict:
+    """Flatten one raw Meta template into the fields the UI cares about.
+
+    Pulls the BODY component's text (the only part an agent picks a template
+    by) and counts its `{{n}}` placeholders so the frontend knows how many
+    variables to collect before sending.
+    """
+    body_text = ""
+    for comp in raw.get("components") or []:
+        if (comp.get("type") or "").upper() == "BODY":
+            body_text = comp.get("text") or ""
+            break
+    indices = [int(m) for m in _TEMPLATE_VAR_RE.findall(body_text)]
+    return {
+        "name": raw.get("name") or "",
+        "language": raw.get("language") or "",
+        "status": raw.get("status") or "",
+        "category": raw.get("category") or "",
+        "body_text": body_text,
+        "variable_count": max(indices) if indices else 0,
+    }

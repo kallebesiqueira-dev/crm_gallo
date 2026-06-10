@@ -1714,6 +1714,17 @@ class WhatsAppAccountOut(BaseModel):
     updated_at: datetime
 
 
+class WhatsAppTemplateOut(BaseModel):
+    """One approved (or pending/rejected) message template, flattened for the UI."""
+
+    name: str
+    language: str
+    status: str
+    category: str
+    body_text: str
+    variable_count: int
+
+
 class ConversationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
