@@ -1,0 +1,78 @@
+groups:
+  - name: crm_gallo
+    rules:
+      # --- Error rate ---
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(starlette_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(starlette_requests_total[5m]))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High 5xx error rate ({{ $value | humanizePercentage }})"
+          description: >
+            More than 5% of requests are returning 5xx for the last 2 minutes.
+            Check application logs and Sentry for root cause.
+
+      # --- Latency ---
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(starlette_request_duration_seconds_bucket[5m])) by (le, method, path)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency above 1s on {{ $labels.method }} {{ $labels.path }}"
+          description: >
+            The 95th-percentile response time for {{ $labels.method }} {{ $labels.path }}
+            has been above 1 second for 5 minutes. Investigate slow queries or N+1 patterns.
+
+      # --- No traffic (dead canary) ---
+      - alert: NoInboundTraffic
+        expr: |
+          sum(rate(starlette_requests_total[10m])) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No HTTP traffic in the last 10 minutes"
+          description: >
+            Zero requests recorded. The app may be down, the load balancer
+            misconfigured, or Prometheus scraping broken.
+
+      # --- Outbox drain backlog ---
+      - alert: OutboxDrainBacklog
+        expr: |
+          outbox_events_pending_total > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox drain backlog: {{ $value }} pending events"
+          description: >
+            More than 100 outbox events are waiting to be drained. The Arq
+            worker may be down or unable to process jobs. Check worker logs.
+
+      # --- 4xx spike (abuse / misconfigured clients) ---
+      - alert: High4xxRate
+        expr: |
+          (
+            sum(rate(starlette_requests_total{status_code=~"4.."}[5m]))
+            /
+            sum(rate(starlette_requests_total[5m]))
+          ) > 0.20
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 4xx rate ({{ $value | humanizePercentage }})"
+          description: >
+            More than 20% of requests are returning 4xx for 3 minutes.
+            Could indicate a client bug, DDoS, or broken frontend deploy.

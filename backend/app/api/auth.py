@@ -44,6 +44,7 @@ from app.rate_limit import limiter
 from app.redis_client import (
     check_rotated_token,
     create_session,
+    get_redis,
     list_user_sessions,
     resolve_refresh_token,
     revoke_refresh_token,
@@ -933,12 +934,28 @@ async def confirm_password_reset(
       - unknown / never-existed token → 404
       - already used token → 410 Gone
       - expired token → 410 Gone
+
+    Defense-in-depth: a per-token Redis counter invalidates the token
+    after 10 failed attempts, preventing brute-force across multiple
+    IPs that would otherwise bypass the per-IP SlowAPI limit.
     """
+    _FAIL_KEY = f"pwd_reset_fail:{payload.token}"
+    _FAIL_LIMIT = 10
+    _FAIL_TTL = PASSWORD_RESET_TTL_HOURS * 3600
+
+    r = get_redis()
+    fail_count = await r.get(_FAIL_KEY)
+    if fail_count is not None and int(fail_count) >= _FAIL_LIMIT:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Token invalidated")
+
     result = await db.execute(
         select(PasswordResetToken).where(PasswordResetToken.token == payload.token)
     )
     reset = result.scalar_one_or_none()
     if reset is None:
+        count = await r.incr(_FAIL_KEY)
+        if count == 1:
+            await r.expire(_FAIL_KEY, _FAIL_TTL)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token")
     if reset.used_at is not None:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Token already used")
@@ -953,6 +970,7 @@ async def confirm_password_reset(
 
     user.hashed_password = hash_password(payload.new_password)
     reset.used_at = datetime.now(UTC)
+    await r.delete(_FAIL_KEY)
     await record_audit(
         db,
         actor=user,
