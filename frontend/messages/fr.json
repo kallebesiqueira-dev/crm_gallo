@@ -1592,5 +1592,20 @@
     "placeholder": "Rechercher leads, clients, entreprises…",
     "hint": "Saisissez au moins 2 caractères.",
     "noResults": "Aucun résultat"
+  },
+  "documents": {
+    "title": "Documents",
+    "subtitle": "Tous vos devis et contrats au même endroit",
+    "loading": "Chargement…",
+    "empty": "Aucun document.",
+    "filter": {
+      "all": "Tous",
+      "quote": "Devis",
+      "contract": "Contrats"
+    },
+    "kind": {
+      "quote": "Devis",
+      "contract": "Contrat"
+    }
   }
 }

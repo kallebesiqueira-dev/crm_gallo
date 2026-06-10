@@ -1592,5 +1592,20 @@
     "placeholder": "Cerca lead, clienti, aziende…",
     "hint": "Digita almeno 2 caratteri per cercare.",
     "noResults": "Nessun risultato"
+  },
+  "documents": {
+    "title": "Documenti",
+    "subtitle": "Tutti i tuoi preventivi e contratti in un unico posto",
+    "loading": "Caricamento…",
+    "empty": "Nessun documento.",
+    "filter": {
+      "all": "Tutti",
+      "quote": "Preventivi",
+      "contract": "Contratti"
+    },
+    "kind": {
+      "quote": "Preventivo",
+      "contract": "Contratto"
+    }
   }
 }
