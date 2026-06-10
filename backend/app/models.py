@@ -2318,6 +2318,12 @@ class Conversation(Base):
     # recent INBOUND message. Free-form (non-template) sends are only allowed
     # while now < last_inbound_at + 24h; None = the contact has never messaged.
     last_inbound_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    # Team-inbox ownership: the agent responsible for this thread. NULL = in the
+    # shared unassigned queue. SET NULL on user delete so a departing agent's
+    # threads fall back to the queue instead of cascading away.
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

@@ -48,12 +48,15 @@ from app.models import (
     MessageDirection,
     MessageStatus,
     MessageType,
+    OrgMembership,
     User,
     UserRole,
     WhatsAppAccount,
     WhatsAppAccountStatus,
 )
+from app.notifications import NotificationType, notify
 from app.schemas import (
+    ConversationAssign,
     ConversationConvert,
     ConversationLink,
     ConversationOut,
@@ -406,11 +409,14 @@ async def _get_conversation_or_404(
 @router.get("/conversations", response_model=list[ConversationOut])
 async def list_conversations(
     conv_status: Annotated[ConversationStatus | None, Query(alias="status")] = None,
+    assignee: Annotated[str | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
-    _: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ) -> list[Conversation]:
+    """List threads, newest activity first. `?assignee=` filters by ownership:
+    `me` (the caller), `unassigned` (the shared queue), or a user uuid."""
     stmt = (
         select(Conversation)
         .where(Conversation.organization_id == org_id)
@@ -419,6 +425,19 @@ async def list_conversations(
     )
     if conv_status is not None:
         stmt = stmt.where(Conversation.status == conv_status)
+    if assignee is not None:
+        if assignee == "me":
+            stmt = stmt.where(Conversation.assignee_id == user.id)
+        elif assignee == "unassigned":
+            stmt = stmt.where(Conversation.assignee_id.is_(None))
+        else:
+            try:
+                target = uuid.UUID(assignee)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=422, detail="assignee must be 'me', 'unassigned', or a user id"
+                ) from e
+            stmt = stmt.where(Conversation.assignee_id == target)
     rows = (await db.execute(stmt)).scalars().all()
     return list(rows)
 
@@ -497,6 +516,66 @@ async def set_conversation_status(
             organization_id=org_id,
             metadata={"from": prev.value, "to": payload.status.value},
         )
+    await db.commit()
+    await db.refresh(conv)
+    return conv
+
+
+@router.post("/conversations/{conversation_id}/assign", response_model=ConversationOut)
+async def assign_conversation(
+    conversation_id: uuid.UUID,
+    payload: ConversationAssign,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Conversation:
+    """Assign a thread to an agent (or `null` to release it to the shared queue).
+
+    The target must be a member of the caller's org (a foreign user → 404). On a
+    real change to someone other than the actor, the new owner gets a bell. A
+    no-op re-assign returns 200 without re-notifying (idempotent)."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    target_id = payload.assignee_id
+    if target_id is not None:
+        member = (
+            await db.execute(
+                select(OrgMembership.user_id).where(
+                    OrgMembership.user_id == target_id,
+                    OrgMembership.organization_id == org_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if member is None:
+            raise HTTPException(status_code=404, detail="Assignee is not a member of this org")
+
+    prev = conv.assignee_id
+    if target_id != prev:
+        conv.assignee_id = target_id
+        await record_audit(
+            db,
+            actor=user,
+            action="whatsapp.conversation.assign",
+            entity_type="conversation",
+            entity_id=conv.id,
+            organization_id=org_id,
+            metadata={
+                "from": str(prev) if prev else None,
+                "to": str(target_id) if target_id else None,
+            },
+        )
+        # Bell the new owner — but not when an agent claims a thread for themselves.
+        if target_id is not None and target_id != user.id:
+            await notify(
+                db,
+                user_id=target_id,
+                organization_id=org_id,
+                notification_type=NotificationType.conversation_assigned,
+                title=f"{user.full_name} assigned you a conversation",
+                body=conv.contact_name or conv.contact_wa_id,
+                link_url=f"/inbox?conversation={conv.id}",
+                actor=user,
+                metadata={"conversation_id": str(conv.id)},
+            )
     await db.commit()
     await db.refresh(conv)
     return conv

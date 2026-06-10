@@ -1739,6 +1739,7 @@ class ConversationOut(BaseModel):
     last_message_at: datetime | None
     last_message_preview: str | None
     last_inbound_at: datetime | None
+    assignee_id: uuid.UUID | None
     unread_count: int
     created_at: datetime
     updated_at: datetime
@@ -1777,6 +1778,16 @@ class ConversationStatusUpdate(BaseModel):
     stays put until reopened by hand."""
 
     status: ConversationStatus
+
+
+class ConversationAssign(BaseModel):
+    """Assign a thread to an agent — or release it back to the shared queue.
+
+    ``assignee_id`` is the target agent (must belong to the caller's org); send
+    ``null`` to unassign. The field is required so the intent is always explicit
+    (unlike ``ConversationLink``, there is no "leave untouched" case here)."""
+
+    assignee_id: uuid.UUID | None
 
 
 class ConversationConvert(BaseModel):

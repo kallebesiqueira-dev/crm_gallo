@@ -38,6 +38,7 @@ from app.models import (
     MessageDirection,
     MessageStatus,
     MessageType,
+    Notification,
     Organization,
     User,
     WhatsAppAccount,
@@ -2548,3 +2549,140 @@ def test_inbound_message_anchors_service_window(
     conv = db.get(Conversation, msg.conversation_id)
     assert conv.last_inbound_at is not None
     assert conv.last_inbound_at == msg.timestamp
+
+
+# ---------- conversation assignment (team inbox) ----------
+
+
+def _notifications_for(db: Session, user_id) -> list[Notification]:
+    return list(
+        db.execute(select(Notification).where(Notification.user_id == user_id)).scalars().all()
+    )
+
+
+def test_assign_conversation_sets_owner_and_bells(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+    other_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": str(other_user.id)},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["assignee_id"] == str(other_user.id)
+
+    db.refresh(conv)
+    assert conv.assignee_id == other_user.id
+
+    notes = _notifications_for(db, other_user.id)
+    assert len(notes) == 1
+    assert notes[0].type == "conversation_assigned"
+    assert notes[0].actor_user_id == admin_user.id
+
+
+def test_assign_to_self_does_not_bell(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": str(admin_user.id)},
+    )
+    assert r.status_code == 200, r.text
+    db.refresh(conv)
+    assert conv.assignee_id == admin_user.id
+    # Claiming a thread for yourself must NOT self-bell.
+    assert _notifications_for(db, admin_user.id) == []
+
+
+def test_unassign_releases_to_queue(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    other_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    conv.assignee_id = other_user.id
+    db.commit()
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": None},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["assignee_id"] is None
+    db.refresh(conv)
+    assert conv.assignee_id is None
+
+
+def test_assign_foreign_user_404(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    foreign_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": str(foreign_user.id)},
+    )
+    assert r.status_code == 404, r.text
+    db.refresh(conv)
+    assert conv.assignee_id is None  # unchanged — a foreign user can't own the thread
+
+
+def test_list_conversations_filter_assignee_me(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+):
+    acct = _make_account(db, test_org)
+    mine = _make_conversation(db, test_org, acct, contact_wa_id="5511900000001")
+    other = _make_conversation(db, test_org, acct, contact_wa_id="5511900000002")
+    mine.assignee_id = admin_user.id
+    db.commit()
+
+    r = admin_client.get("/api/whatsapp/conversations?assignee=me")
+    assert r.status_code == 200, r.text
+    ids = {c["id"] for c in r.json()}
+    assert str(mine.id) in ids
+    assert str(other.id) not in ids
+
+
+def test_list_conversations_filter_unassigned(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+):
+    acct = _make_account(db, test_org)
+    mine = _make_conversation(db, test_org, acct, contact_wa_id="5511900000003")
+    queued = _make_conversation(db, test_org, acct, contact_wa_id="5511900000004")
+    mine.assignee_id = admin_user.id
+    db.commit()
+
+    r = admin_client.get("/api/whatsapp/conversations?assignee=unassigned")
+    assert r.status_code == 200, r.text
+    ids = {c["id"] for c in r.json()}
+    assert str(queued.id) in ids
+    assert str(mine.id) not in ids
+
+
+def test_list_conversations_bad_assignee_422(admin_client: CsrfAwareClient):
+    r = admin_client.get("/api/whatsapp/conversations?assignee=not-a-uuid")
+    assert r.status_code == 422
