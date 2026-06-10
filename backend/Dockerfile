@@ -6,7 +6,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+# Bump the date to invalidate this layer: CI's layer cache otherwise pins
+# `apt-get upgrade` to whenever the layer was last built, so OS security
+# patches (e.g. openssl deb13u2) never land in the scanned image.
+ARG APT_SNAPSHOT=2026-06-10
+RUN echo "apt snapshot: ${APT_SNAPSHOT}" \
+ && apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl \
     # WeasyPrint runtime (ADR-016): Pango/HarfBuzz do text layout, the
     # libjpeg/openjp2 pair lets embedded logos render, fonts-dejavu-core
