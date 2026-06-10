@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/marketing/auth-shell";
-import { api, ApiError, isMfaChallenge, isMfaSetupRequired } from "@/lib/api";
+import { MicrosoftIcon } from "@/components/microsoft-icon";
+import { api, API_URL, ApiError, isMfaChallenge, isMfaSetupRequired } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -35,6 +36,19 @@ export default function LoginPage() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
   const [resendDone, setResendDone] = useState(false);
+  // Social login: ask the backend which providers are wired so we only render
+  // a button that actually works. `oauthError` surfaces the hint the callback
+  // bounces back with (?oauth=no_account / no_email) for an unmatched email.
+  const [msEnabled, setMsEnabled] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  useEffect(() => {
+    api
+      .oauthProviders()
+      .then((p) => setMsEnabled(p.microsoft))
+      .catch(() => {});
+    const o = new URLSearchParams(window.location.search).get("oauth");
+    if (o) setOauthError(o);
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -201,6 +215,12 @@ export default function LoginPage() {
               <p className="text-sm text-muted-foreground">{tAuth("loginSubtitle")}</p>
             </div>
 
+            {oauthError && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                {oauthError === "no_account" ? tAuth("oauthNoAccount") : tAuth("oauthNoEmail")}
+              </div>
+            )}
+
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">{tAuth("email")}</Label>
@@ -269,6 +289,23 @@ export default function LoginPage() {
                 {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
               </Button>
             </form>
+
+            {msEnabled && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" />
+                  {tAuth("orContinueWith")}
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <a
+                  href={`${API_URL}/api/auth/oauth/microsoft/start`}
+                  className="flex w-full items-center justify-center gap-2.5 rounded-md border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent"
+                >
+                  <MicrosoftIcon className="h-[18px] w-[18px]" />
+                  {tAuth("continueWithMicrosoft")}
+                </a>
+              </div>
+            )}
 
             <div className="space-y-3 text-center text-sm">
               <p className="text-muted-foreground">

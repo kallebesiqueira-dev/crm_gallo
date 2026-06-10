@@ -240,6 +240,18 @@ class Settings(BaseSettings):
     posthog_api_key: str = ""
     posthog_host: str = "https://eu.i.posthog.com"
 
+    # ---- OAuth / social login (Microsoft Entra ID) ----
+    # Empty client id/secret ⇒ social login is OFF (endpoints 404, button hides).
+    # Match is by verified email — no oauth-account table, so NO migration.
+    # Client id + tenant are public identifiers; the secret is set on the backend
+    # service only and never committed.
+    microsoft_client_id: str = ""
+    microsoft_client_secret: str = ""
+    microsoft_tenant_id: str = "common"
+    # Public base URL of THIS backend (e.g. https://api.gallo-crm.com) used to
+    # build the OAuth redirect URI; falls back to the request's base URL.
+    oauth_redirect_base: str = ""
+
     # ---- E-signature (ADR-016) ----
     # Which signing backend `app.signing.get_provider()` selects. `manual`
     # is the dev/low-stakes default: it signs in-app via an opaque token
