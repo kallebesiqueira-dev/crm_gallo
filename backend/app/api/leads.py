@@ -17,6 +17,7 @@ from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.models import Lead, LeadStage, User
 from app.notifications import NotificationType, notify
+from app.api.dashboard import invalidate_dashboard_cache
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.rate_limit import limiter, user_or_ip_key
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
@@ -126,6 +127,7 @@ async def create_lead(
         },
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(lead)
     return lead
 
@@ -242,6 +244,7 @@ async def update_lead(
             metadata={"fields": list(changes.keys())},
         )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(lead)
     return lead
 
@@ -265,6 +268,7 @@ async def delete_lead(
         organization_id=org_id,
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
 
 
 @router.post("/{lead_id}/score", response_model=LeadOut)
@@ -308,6 +312,7 @@ async def score(
         metadata={"score": lead.ai_score, "priority": lead.ai_priority},
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(lead)
     return lead
 

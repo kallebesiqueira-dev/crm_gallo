@@ -11,9 +11,15 @@ router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 settings = get_settings()
 
 
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+
 class AssistantRequest(BaseModel):
     message: str
     locale: str = "en"
+    history: list[ChatMessage] = []
 
 
 class AssistantResponse(BaseModel):
@@ -27,5 +33,6 @@ async def chat_with_assistant(
     payload: AssistantRequest,
     user: User = Depends(get_current_user),
 ) -> AssistantResponse:
-    reply = await chat(payload.message, locale=payload.locale or user.locale)
+    prior = [{"role": m.role, "content": m.content} for m in payload.history]
+    reply = await chat(payload.message, locale=payload.locale or user.locale, history=prior)
     return AssistantResponse(reply=reply)

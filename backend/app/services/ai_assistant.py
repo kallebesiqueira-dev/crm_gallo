@@ -13,16 +13,22 @@ SYSTEM_PROMPT = (
 )
 
 
-async def chat(user_message: str, locale: str = "en") -> str:
+async def chat(
+    user_message: str,
+    locale: str = "en",
+    history: list[dict] | None = None,
+) -> str:
     if not is_configured():
         return (
             "AI assistant is not configured. Configure LLM_PROVIDER + ANTHROPIC_API_KEY "
             f"or start the Ollama container to enable AI responses. (locale={locale})"
         )
 
+    messages = list(history or [])
+    messages.append({"role": "user", "content": user_message})
     try:
         return await chat_completion(
-            messages=[{"role": "user", "content": user_message}],
+            messages=messages,
             system=f"{SYSTEM_PROMPT} Reply in locale: {locale}.",
             max_tokens=1024,
         )

@@ -29,6 +29,14 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
 _CACHE_TTL = 60  # seconds — stale stats for at most 1 minute is fine for a dashboard
 
+
+async def invalidate_dashboard_cache(org_id: uuid.UUID) -> None:
+    """Best-effort cache bust — called by mutation endpoints in leads/deals/customers/tasks."""
+    try:
+        await get_redis().delete(f"dashboard:stats:{org_id}")
+    except Exception:
+        pass
+
 # Rough conversion to EUR for quick pipeline-value approximation.
 # In production, fetch live rates and persist them. Decimal so the
 # Numeric deal values (also Decimal) multiply without a float mix.

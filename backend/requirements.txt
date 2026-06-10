@@ -8,7 +8,9 @@ alembic==1.13.3
 pydantic==2.9.2
 pydantic-settings==2.5.2
 python-jose[cryptography]==3.5.0
-passlib[bcrypt]==1.7.4
+argon2-cffi==23.1.0
+# bcrypt kept for verifying legacy hashes during migration (remove after all
+# users have re-authenticated once and hashes are fully rotated to argon2).
 bcrypt==4.0.1
 python-multipart==0.0.30
 email-validator==2.2.0

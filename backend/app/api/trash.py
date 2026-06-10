@@ -3,7 +3,7 @@
 import uuid
 from typing import Literal, cast
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,6 +52,14 @@ class TrashItem(BaseModel):
     deleted_at: str
 
 
+class TrashPage(BaseModel):
+    items: list[TrashItem]
+    total: int
+    offset: int
+    limit: int
+    has_more: bool
+
+
 class TrashCounts(BaseModel):
     lead: int
     customer: int
@@ -71,12 +79,14 @@ def _row_owner(row, kind: str) -> uuid.UUID | None:
     return getattr(row, "owner_id", None)
 
 
-@router.get("", response_model=list[TrashItem])
+@router.get("", response_model=TrashPage)
 async def list_trash(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
-) -> list[TrashItem]:
+) -> TrashPage:
     items: list[TrashItem] = []
     for kind, model in _MODELS.items():
         stmt = (
@@ -99,7 +109,9 @@ async def list_trash(
                 )
             )
     items.sort(key=lambda t: t.deleted_at, reverse=True)
-    return items
+    total = len(items)
+    page = items[offset : offset + limit]
+    return TrashPage(items=page, total=total, offset=offset, limit=limit, has_more=offset + limit < total)
 
 
 @router.get("/counts", response_model=TrashCounts)

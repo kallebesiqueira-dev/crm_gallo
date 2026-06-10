@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import ENTITY_DEAL, ActivityType, record_activity
 from app.api._concurrency import check_if_match
+from app.api.dashboard import invalidate_dashboard_cache
 from app.audit import record_audit
 from app.custom_fields import validate_custom_fields
 from app.database import get_db
@@ -82,7 +83,7 @@ async def list_deals(
     stmt = (
         select(Deal)
         .where(Deal.organization_id == org_id)
-        .order_by(Deal.stage, Deal.sort_index, Deal.created_at.desc())
+        .order_by(Deal.stage, Deal.sort_index, Deal.created_at.desc(), Deal.id.desc())
         .limit(limit)
     )
     if stage:
@@ -156,6 +157,7 @@ async def create_deal(
         },
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(deal)
     return deal
 
@@ -215,6 +217,7 @@ async def update_deal(
         metadata={"fields": list(changes.keys())},
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(deal)
     return deal
 
@@ -287,6 +290,7 @@ async def move_deal(
                 payload=event_payload,
             )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(deal)
     return deal
 
@@ -310,3 +314,4 @@ async def delete_deal(
         organization_id=org_id,
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.activities import ENTITY_CUSTOMER, ActivityType, record_activity
 from app.api._concurrency import check_if_match
 from app.api._errors import raise_for_duplicate_email
+from app.api.dashboard import invalidate_dashboard_cache
 from app.audit import record_audit
 from app.custom_fields import validate_custom_fields
 from app.database import get_db
@@ -95,6 +96,7 @@ async def create_customer(
         actor=user,
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(customer)
     return customer
 
@@ -168,6 +170,7 @@ async def update_customer(
         metadata={"fields": list(changes.keys())},
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(customer)
     return customer
 
@@ -191,6 +194,7 @@ async def delete_customer(
         organization_id=org_id,
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
 
 
 @router.post("/{customer_id}/summarize", response_model=CustomerOut)
