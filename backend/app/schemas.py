@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, model_validator
 
 from app.models import (
     ApiKeyScope,
@@ -1714,6 +1714,43 @@ class WhatsAppAccountOut(BaseModel):
     updated_at: datetime
 
 
+class WhatsAppTemplateOut(BaseModel):
+    """One approved (or pending/rejected) message template, flattened for the UI."""
+
+    name: str
+    language: str
+    status: str
+    category: str
+    body_text: str
+    variable_count: int
+
+
+class WhatsAppBusinessProfileOut(BaseModel):
+    """The public business profile customers see (the "about" card). All fields
+    are optional — a freshly-connected number may have none set yet.
+    ``profile_picture_url`` is read-only (uploaded out-of-band)."""
+
+    about: str | None = None
+    address: str | None = None
+    description: str | None = None
+    email: str | None = None
+    vertical: str | None = None
+    websites: list[str] = Field(default_factory=list)
+    profile_picture_url: str | None = None
+
+
+class WhatsAppBusinessProfileUpdate(BaseModel):
+    """Patch editable business-profile fields. Omit a field to leave it
+    untouched — only fields explicitly set are sent on to Meta."""
+
+    about: str | None = None
+    address: str | None = None
+    description: str | None = None
+    email: str | None = None
+    vertical: str | None = None
+    websites: list[str] | None = None
+
+
 class ConversationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -1727,9 +1764,28 @@ class ConversationOut(BaseModel):
     status: ConversationStatus
     last_message_at: datetime | None
     last_message_preview: str | None
+    last_inbound_at: datetime | None
+    assignee_id: uuid.UUID | None
     unread_count: int
     created_at: datetime
     updated_at: datetime
+
+    @computed_field
+    @property
+    def service_window_expires_at(self) -> datetime | None:
+        """When the 24h free-form window closes (None if never opened). The UI
+        uses this to warn the agent before a free-form send gets rejected."""
+        from app.whatsapp import service_window_expires_at
+
+        return service_window_expires_at(self.last_inbound_at)
+
+    @computed_field
+    @property
+    def service_window_open(self) -> bool:
+        """Whether free-form (non-template) sends are currently allowed."""
+        from app.whatsapp import service_window_open
+
+        return service_window_open(self.last_inbound_at)
 
 
 class ConversationLink(BaseModel):
@@ -1748,6 +1804,16 @@ class ConversationStatusUpdate(BaseModel):
     stays put until reopened by hand."""
 
     status: ConversationStatus
+
+
+class ConversationAssign(BaseModel):
+    """Assign a thread to an agent — or release it back to the shared queue.
+
+    ``assignee_id`` is the target agent (must belong to the caller's org); send
+    ``null`` to unassign. The field is required so the intent is always explicit
+    (unlike ``ConversationLink``, there is no "leave untouched" case here)."""
+
+    assignee_id: uuid.UUID | None
 
 
 class ConversationConvert(BaseModel):
@@ -1774,6 +1840,7 @@ class MessageOut(BaseModel):
     body: str | None
     media_id: str | None
     media_url: str | None
+    context_wa_message_id: str | None
     status: MessageStatus
     error: str | None
     sender_user_id: uuid.UUID | None
@@ -1782,6 +1849,135 @@ class MessageOut(BaseModel):
 
 
 class SendMessageRequest(BaseModel):
-    """Agent-composed outbound text. Capped at WhatsApp's ~4096-char body."""
+    """Agent-composed outbound text. Capped at WhatsApp's ~4096-char body.
+
+    `reply_to_message_id` (one of our Message UUIDs in the same conversation)
+    sends this as a quoted reply threaded under that message."""
 
     body: Annotated[str, Field(min_length=1, max_length=4096)]
+    reply_to_message_id: uuid.UUID | None = None
+
+
+class SendTemplateRequest(BaseModel):
+    """Send a pre-approved WhatsApp message template — the ONLY way to message a
+    contact outside the 24h customer-service window (a free-form text there is
+    rejected by Meta).
+
+    ``template_name`` + ``language_code`` identify an approved template in the
+    WABA. ``body_params`` fills the template's positional ``{{1}}``, ``{{2}}`` …
+    body placeholders in order; leave it empty for a template with no variables.
+    We don't fetch the template catalog, so an unknown name / wrong placeholder
+    count surfaces as a Meta send error on the message row."""
+
+    template_name: Annotated[str, Field(min_length=1, max_length=512)]
+    language_code: Annotated[str, Field(default="en_US", min_length=2, max_length=15)] = "en_US"
+    body_params: Annotated[list[str], Field(default_factory=list, max_length=30)] = []
+
+
+class SendMediaRequest(BaseModel):
+    """Send an outbound media message (image / document / video / audio).
+
+    Source the media EITHER by ``link`` (a public https URL Meta fetches) OR by
+    ``media_id`` (a handle from an earlier upload to Meta) — exactly one. We do
+    NOT proxy bytes through our backend; the link route is the common case (e.g.
+    a hosted/presigned file URL). ``caption`` is honoured for image/video/
+    document only; ``filename`` for document only (both ignored otherwise so a
+    stray field is forgiving, not a 422)."""
+
+    media_type: Literal["image", "document", "video", "audio"]
+    link: Annotated[str | None, Field(default=None, max_length=2048)] = None
+    media_id: Annotated[str | None, Field(default=None, max_length=128)] = None
+    caption: Annotated[str | None, Field(default=None, max_length=1024)] = None
+    filename: Annotated[str | None, Field(default=None, max_length=255)] = None
+    reply_to_message_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def _exactly_one_source(self) -> "SendMediaRequest":
+        if bool(self.link) == bool(self.media_id):
+            raise ValueError("provide exactly one of `link` or `media_id`")
+        if self.link and not self.link.startswith(("https://", "http://")):
+            raise ValueError("`link` must be an http(s) URL")
+        return self
+
+
+class MediaDownloadOut(BaseModel):
+    """Short-lived presigned URL for an inbound message's mirrored media —
+    the SPA redirects the browser there to stream it straight from S3."""
+
+    url: str
+    expires_in: int
+
+
+class InteractiveButton(BaseModel):
+    """One reply button. `id` comes back verbatim in the inbound button_reply,
+    so it's the stable handle automations key off; `title` is the visible label
+    (Meta caps it at 20 chars)."""
+
+    id: Annotated[str, Field(min_length=1, max_length=256)]
+    title: Annotated[str, Field(min_length=1, max_length=20)]
+
+
+class InteractiveRow(BaseModel):
+    """One selectable row in a list section."""
+
+    id: Annotated[str, Field(min_length=1, max_length=200)]
+    title: Annotated[str, Field(min_length=1, max_length=24)]
+    description: Annotated[str | None, Field(default=None, max_length=72)] = None
+
+
+class InteractiveSection(BaseModel):
+    """A titled group of list rows."""
+
+    title: Annotated[str | None, Field(default=None, max_length=24)] = None
+    rows: Annotated[list[InteractiveRow], Field(min_length=1, max_length=10)]
+
+
+class SendInteractiveRequest(BaseModel):
+    """Send an interactive message: reply buttons (`interactive_type="button"`,
+    1-3 buttons) or a list menu (`"list"`, up to 10 rows total across sections).
+
+    Both are session messages — only deliverable INSIDE the 24h window, same as
+    free-form text. The Meta size caps live on the nested models; this validator
+    enforces that the fields present match the chosen type and that the reply
+    ids are unique (a duplicate id makes the inbound reply ambiguous)."""
+
+    interactive_type: Literal["button", "list"]
+    body_text: Annotated[str, Field(min_length=1, max_length=1024)]
+    header_text: Annotated[str | None, Field(default=None, max_length=60)] = None
+    footer_text: Annotated[str | None, Field(default=None, max_length=60)] = None
+    buttons: Annotated[list[InteractiveButton] | None, Field(default=None, max_length=3)] = None
+    button_text: Annotated[str | None, Field(default=None, max_length=20)] = None
+    sections: Annotated[list[InteractiveSection] | None, Field(default=None, max_length=10)] = None
+    reply_to_message_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def _shape(self) -> "SendInteractiveRequest":
+        if self.interactive_type == "button":
+            if not self.buttons:
+                raise ValueError("`buttons` is required for interactive_type=button (1-3)")
+            if self.sections or self.button_text:
+                raise ValueError("`sections`/`button_text` are list-only fields")
+            ids = [b.id for b in self.buttons]
+        else:
+            if not self.sections:
+                raise ValueError("`sections` is required for interactive_type=list")
+            if not self.button_text:
+                raise ValueError("`button_text` is required for interactive_type=list")
+            if self.buttons:
+                raise ValueError("`buttons` is a button-only field")
+            if sum(len(s.rows) for s in self.sections) > 10:
+                raise ValueError("a list may carry at most 10 rows total")
+            ids = [r.id for s in self.sections for r in s.rows]
+        if len(ids) != len(set(ids)):
+            raise ValueError("interactive reply ids must be unique")
+        return self
+
+
+class SendReactionRequest(BaseModel):
+    """React to a message with a single emoji. The target message is named by
+    the URL (`/messages/{message_id}/reaction`), so only the emoji is in the
+    body. An empty string removes a previously sent reaction (Meta's
+    convention); any non-empty value must be a single emoji grapheme — we don't
+    validate the unicode here, Meta rejects a non-emoji with a send error."""
+
+    emoji: Annotated[str, Field(default="", max_length=8)] = ""

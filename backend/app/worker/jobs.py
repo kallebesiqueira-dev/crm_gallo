@@ -912,15 +912,36 @@ async def scan_stale_leads(ctx: dict) -> dict:
     return {"orgs": scanned_orgs, "attempted": attempted}
 
 
-async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str) -> dict:
-    """Deliver one outbound WhatsApp text via the Graph API (phase 1).
+async def send_whatsapp_message(
+    ctx: dict,
+    message_id: str,
+    organization_id: str,
+    template: dict | None = None,
+    media: dict | None = None,
+    interactive: dict | None = None,
+    reaction: dict | None = None,
+) -> dict:
+    """Deliver one outbound WhatsApp message via the Graph API.
 
-    Enqueued by `POST /api/whatsapp/conversations/{id}/messages`, which has
-    already persisted a `pending` outbound Message. This job loads that row +
-    its conversation + the connected (non-RLS) `whatsapp_accounts` token, calls
-    `app.whatsapp.send_text`, and stamps the returned `wamid` while advancing
-    the status to `sent`. A delivery/read status later rides the inbound webhook
-    (`apply_status`).
+    Enqueued by `POST /api/whatsapp/conversations/{id}/messages` (free-form
+    text), `.../template` (a pre-approved template), `.../media` (image/
+    document/video/audio), or `.../interactive` (reply buttons / list menu). All
+    have already persisted a `pending` outbound Message. This job loads that row
+    + its conversation + the connected (non-RLS) `whatsapp_accounts` token, calls
+    the matching transport function, and stamps the returned `wamid` while
+    advancing the status to `sent`. A delivery/read status later rides the
+    inbound webhook (`apply_status`).
+
+    `template`, when present, is ``{"name", "language", "params"}`` and routes
+    the send through `send_template`. `media`, when present, is
+    ``{"media_type", "link", "media_id", "caption", "filename"}`` and routes
+    through `send_media`. `interactive`, when present, is ``{"interactive_type",
+    "body_text", "buttons"|"button_text"+"sections", "header_text",
+    "footer_text"}`` and routes through `send_interactive`. `reaction`, when
+    present, is ``{"message_id", "emoji"}`` (empty emoji = remove) and routes
+    through `send_reaction`. At most one is set; otherwise plain `send_text` runs.
+    The persisted `Message.body` is then a human-readable preview, not the wire
+    payload.
 
     Worker is `crm_app` (NOBYPASSRLS), so the RLS GUC must be set before
     touching the tenant `messages`/`conversations` rows. `whatsapp_accounts` is
@@ -938,7 +959,14 @@ async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str
     On retry, the guard `status is not pending` short-circuits a row we already
     sent, so Meta never receives the same text twice from one click.
     """
-    from app.whatsapp import WhatsAppSendError, send_text
+    from app.whatsapp import (
+        WhatsAppSendError,
+        send_interactive,
+        send_media,
+        send_reaction,
+        send_template,
+        send_text,
+    )
 
     SessionLocal = ctx["SessionLocal"]
     msg_uuid = uuid.UUID(message_id)
@@ -949,9 +977,7 @@ async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str
     async with SessionLocal() as db:
         msg = (
             await db.execute(
-                select(Message).where(
-                    Message.id == msg_uuid, Message.organization_id == org_uuid
-                )
+                select(Message).where(Message.id == msg_uuid, Message.organization_id == org_uuid)
             )
         ).scalar_one_or_none()
         if msg is None:
@@ -962,9 +988,7 @@ async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str
             return {"status": "already_processed", "current": msg.status.value}
 
         conv = (
-            await db.execute(
-                select(Conversation).where(Conversation.id == msg.conversation_id)
-            )
+            await db.execute(select(Conversation).where(Conversation.id == msg.conversation_id))
         ).scalar_one_or_none()
         if conv is None:
             msg.status = MessageStatus.failed
@@ -974,9 +998,7 @@ async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str
 
         # Routing root — NOT RLS'd, so this lookup doesn't depend on the GUC.
         account = (
-            await db.execute(
-                select(WhatsAppAccount).where(WhatsAppAccount.id == conv.account_id)
-            )
+            await db.execute(select(WhatsAppAccount).where(WhatsAppAccount.id == conv.account_id))
         ).scalar_one_or_none()
         if account is None or account.status is not WhatsAppAccountStatus.active:
             msg.status = MessageStatus.failed
@@ -988,16 +1010,62 @@ async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str
         access_token = account.access_token  # EncryptedSecret → decrypted here
         to = conv.contact_wa_id
         body = msg.body or ""
+        context_wamid = msg.context_wa_message_id  # set for a quoted reply
 
     # Network send OUTSIDE the session — don't pin a pooled connection across
     # the Graph API round-trip.
     try:
-        wamid = await send_text(
-            phone_number_id=phone_number_id,
-            access_token=access_token,
-            to=to,
-            body=body,
-        )
+        if template is not None:
+            wamid = await send_template(
+                phone_number_id=phone_number_id,
+                access_token=access_token,
+                to=to,
+                template_name=template["name"],
+                language_code=template["language"],
+                body_params=template.get("params") or [],
+            )
+        elif media is not None:
+            wamid = await send_media(
+                phone_number_id=phone_number_id,
+                access_token=access_token,
+                to=to,
+                media_type=media["media_type"],
+                link=media.get("link"),
+                media_id=media.get("media_id"),
+                caption=media.get("caption"),
+                filename=media.get("filename"),
+                context_message_id=context_wamid,
+            )
+        elif interactive is not None:
+            wamid = await send_interactive(
+                phone_number_id=phone_number_id,
+                access_token=access_token,
+                to=to,
+                interactive_type=interactive["interactive_type"],
+                body_text=interactive["body_text"],
+                buttons=interactive.get("buttons"),
+                button_text=interactive.get("button_text"),
+                sections=interactive.get("sections"),
+                header_text=interactive.get("header_text"),
+                footer_text=interactive.get("footer_text"),
+                context_message_id=context_wamid,
+            )
+        elif reaction is not None:
+            wamid = await send_reaction(
+                phone_number_id=phone_number_id,
+                access_token=access_token,
+                to=to,
+                message_id=reaction["message_id"],
+                emoji=reaction.get("emoji") or "",
+            )
+        else:
+            wamid = await send_text(
+                phone_number_id=phone_number_id,
+                access_token=access_token,
+                to=to,
+                body=body,
+                context_message_id=context_wamid,
+            )
     except WhatsAppSendError as exc:
         # 4xx = Meta rejected it (terminal); anything else = transient → retry.
         terminal = exc.status_code is not None and 400 <= exc.status_code < 500
@@ -1037,6 +1105,175 @@ async def send_whatsapp_message(ctx: dict, message_id: str, organization_id: str
         wa_message_id=wamid,
     )
     return {"status": "sent", "wa_message_id": wamid}
+
+
+async def mirror_whatsapp_media(ctx: dict, wa_message_id: str, organization_id: str) -> dict:
+    """Mirror one inbound media message off Meta's CDN into our S3 bucket.
+
+    Enqueued by the webhook handler right after it persists an inbound image/
+    document/video/audio/sticker. Looks the row up by `wa_message_id` (unique),
+    downloads the bytes from Meta with the connected account's token, uploads
+    them to S3, and stamps `Message.media_storage_key`. The agent later fetches
+    them via a presigned URL — Meta's own media urls are short-lived and require
+    the bearer token, so we keep our own copy.
+
+    Worker is `crm_app` (NOBYPASSRLS), so the RLS GUC is set before any tenant
+    read/write. `whatsapp_accounts` is the non-RLS routing root.
+
+    Idempotent: a `wa_media:{wamid}` enqueue-dedupe key collapses webhook
+    replays, and the `media_storage_key is not None` guard short-circuits a row
+    we already mirrored. A terminal 4xx from Meta (handle expired) is logged and
+    dropped; a transient error raises so arq retries with backoff.
+    """
+    from app.storage import put_object
+    from app.whatsapp import WhatsAppSendError, fetch_media
+
+    SessionLocal = ctx["SessionLocal"]
+    org_uuid = uuid.UUID(organization_id)
+    set_current_org_id(org_uuid)
+
+    async with SessionLocal() as db:
+        msg = (
+            await db.execute(
+                select(Message).where(
+                    Message.wa_message_id == wa_message_id,
+                    Message.organization_id == org_uuid,
+                )
+            )
+        ).scalar_one_or_none()
+        if msg is None:
+            return {"status": "missing"}
+        if msg.media_storage_key is not None:
+            return {"status": "already_mirrored"}
+        if not msg.media_id:
+            return {"status": "no_media"}
+
+        conv = (
+            await db.execute(select(Conversation).where(Conversation.id == msg.conversation_id))
+        ).scalar_one_or_none()
+        if conv is None:
+            return {"status": "conversation_missing"}
+
+        # Routing root — NOT RLS'd, so this lookup doesn't depend on the GUC.
+        account = (
+            await db.execute(select(WhatsAppAccount).where(WhatsAppAccount.id == conv.account_id))
+        ).scalar_one_or_none()
+        if account is None:
+            return {"status": "account_missing"}
+
+        media_id = msg.media_id
+        access_token = account.access_token  # EncryptedSecret → decrypted here
+        msg_uuid = msg.id
+        conv_id = conv.id
+
+    # Network + S3 I/O OUTSIDE the session — don't pin a pooled connection.
+    try:
+        data, content_type = await fetch_media(media_id, access_token)
+    except WhatsAppSendError as exc:
+        terminal = exc.status_code is not None and 400 <= exc.status_code < 500
+        log.warning(
+            "mirror_whatsapp_media.fetch_failed",
+            wa_message_id=wa_message_id,
+            organization_id=organization_id,
+            status_code=exc.status_code,
+            terminal=terminal,
+            error=str(exc),
+        )
+        if terminal:
+            return {"status": "failed", "reason": str(exc)}
+        raise  # transient → arq retries
+
+    key = f"org-{organization_id}/whatsapp-media/{conv_id}/{msg_uuid}"
+    await put_object(key, data, content_type)
+
+    async with SessionLocal() as db:
+        row = (await db.execute(select(Message).where(Message.id == msg_uuid))).scalar_one_or_none()
+        if row is not None and row.media_storage_key is None:
+            row.media_storage_key = key
+            await db.commit()
+
+    log.info(
+        "mirror_whatsapp_media.mirrored",
+        wa_message_id=wa_message_id,
+        organization_id=organization_id,
+        bytes=len(data),
+    )
+    return {"status": "mirrored", "key": key, "bytes": len(data)}
+
+
+async def mark_whatsapp_read(ctx: dict, wa_message_id: str, organization_id: str) -> dict:
+    """Send a read receipt (blue ticks) to Meta for one inbound message.
+
+    Enqueued when the agent opens a conversation (`POST /conversations/{id}/read`)
+    — we mark the most recent inbound wamid as read so the contact sees the blue
+    ticks. Best-effort: Meta returns {"success": true}, there's nothing to persist.
+
+    Worker is `crm_app` (NOBYPASSRLS); the GUC is set before the tenant read.
+    `whatsapp_accounts` is the non-RLS routing root. A `wa_read:{wamid}` enqueue-
+    dedupe key collapses repeat opens. Terminal 4xx is logged + dropped; a
+    transient error raises so arq retries.
+    """
+    from app.whatsapp import WhatsAppSendError, mark_read
+
+    SessionLocal = ctx["SessionLocal"]
+    org_uuid = uuid.UUID(organization_id)
+    set_current_org_id(org_uuid)
+
+    async with SessionLocal() as db:
+        msg = (
+            await db.execute(
+                select(Message).where(
+                    Message.wa_message_id == wa_message_id,
+                    Message.organization_id == org_uuid,
+                )
+            )
+        ).scalar_one_or_none()
+        if msg is None:
+            return {"status": "missing"}
+
+        conv = (
+            await db.execute(select(Conversation).where(Conversation.id == msg.conversation_id))
+        ).scalar_one_or_none()
+        if conv is None:
+            return {"status": "conversation_missing"}
+
+        # Routing root — NOT RLS'd, so this lookup doesn't depend on the GUC.
+        account = (
+            await db.execute(select(WhatsAppAccount).where(WhatsAppAccount.id == conv.account_id))
+        ).scalar_one_or_none()
+        if account is None:
+            return {"status": "account_missing"}
+
+        phone_number_id = account.phone_number_id
+        access_token = account.access_token  # EncryptedSecret → decrypted here
+
+    # Network I/O OUTSIDE the session — don't pin a pooled connection.
+    try:
+        await mark_read(
+            phone_number_id=phone_number_id,
+            access_token=access_token,
+            message_id=wa_message_id,
+        )
+    except WhatsAppSendError as exc:
+        terminal = exc.status_code is not None and 400 <= exc.status_code < 500
+        log.warning(
+            "mark_whatsapp_read.failed",
+            wa_message_id=wa_message_id,
+            organization_id=organization_id,
+            status_code=exc.status_code,
+            terminal=terminal,
+            error=str(exc),
+        )
+        if terminal:
+            return {"status": "failed", "reason": str(exc)}
+        raise  # transient → arq retries
+
+    log.info(
+        "mark_whatsapp_read.marked",
+        wa_message_id=wa_message_id,
+        organization_id=organization_id,
+    )
+    return {"status": "marked"}
 
 
 def _dedupe_keys(clean: dict) -> tuple[str | None, str | None]:

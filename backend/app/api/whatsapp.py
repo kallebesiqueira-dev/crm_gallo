@@ -35,6 +35,7 @@ from app.activities import (
     record_activity,
 )
 from app.audit import record_audit
+from app.config import get_settings
 from app.database import get_db, set_current_org_id
 from app.deps import get_current_org_id, get_current_user, require_roles
 from app.events import EventType, record_event
@@ -47,29 +48,57 @@ from app.models import (
     MessageDirection,
     MessageStatus,
     MessageType,
+    OrgMembership,
     User,
     UserRole,
     WhatsAppAccount,
     WhatsAppAccountStatus,
 )
+from app.notifications import NotificationType, notify
 from app.schemas import (
+    ConversationAssign,
     ConversationConvert,
     ConversationLink,
     ConversationOut,
+    ConversationStatusUpdate,
+    MediaDownloadOut,
     MessageOut,
+    SendInteractiveRequest,
+    SendMediaRequest,
     SendMessageRequest,
+    SendReactionRequest,
+    SendTemplateRequest,
     WhatsAppAccountConnect,
     WhatsAppAccountOut,
     WhatsAppAccountUpdate,
+    WhatsAppBusinessProfileOut,
+    WhatsAppBusinessProfileUpdate,
+    WhatsAppTemplateOut,
 )
+from app.storage import presigned_download_url
 from app.whatsapp import (
     SIGNATURE_HEADER,
     WhatsAppNotConfigured,
+    WhatsAppSendError,
+    fetch_business_profile,
+    fetch_message_templates,
+    parse_template,
     parse_webhook,
+    update_business_profile,
     verify_challenge,
     verify_signature,
 )
 from app.whatsapp_inbox import apply_status, ingest_inbound, resolve_accounts
+
+# Inbound message types whose bytes we mirror off Meta's short-lived CDN into
+# our own S3 (text/location/contacts carry no media to copy).
+_MIRRORABLE_TYPES = {
+    MessageType.image,
+    MessageType.document,
+    MessageType.video,
+    MessageType.audio,
+    MessageType.sticker,
+}
 
 log = structlog.get_logger(__name__)
 
@@ -134,6 +163,9 @@ async def receive_webhook(
     await db.commit()
 
     ingested = 0
+    # (wa_message_id, org_id) for newly-stored media messages — enqueued AFTER
+    # the per-message commit so the worker can't race ahead of a visible row.
+    mirror_jobs: list[tuple[str, uuid.UUID]] = []
     for msg in parsed.messages:
         account = accounts.get(msg.phone_number_id)
         if account is None or account.status is WhatsAppAccountStatus.disabled:
@@ -141,7 +173,21 @@ async def receive_webhook(
         set_current_org_id(account.organization_id)
         if await ingest_inbound(db, account, msg):
             ingested += 1
+            if msg.media_id and msg.type in _MIRRORABLE_TYPES:
+                mirror_jobs.append((msg.wa_message_id, account.organization_id))
         await db.commit()
+
+    if mirror_jobs:
+        from app.worker.queue import enqueue
+
+        for wamid, mirror_org in mirror_jobs:
+            await enqueue(
+                "mirror_whatsapp_media",
+                wamid,
+                str(mirror_org),
+                dedupe_key=f"wa_media:{wamid}",
+                dedupe_ttl_seconds=3600,
+            )
 
     statuses_applied = 0
     for st in parsed.statuses:
@@ -311,6 +357,104 @@ async def disconnect_account(
     await db.commit()
 
 
+@router.get(
+    "/accounts/{account_id}/templates",
+    response_model=list[WhatsAppTemplateOut],
+)
+async def list_templates(
+    account_id: uuid.UUID,
+    status_filter: str | None = Query(default=None, alias="status"),
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> list[WhatsAppTemplateOut]:
+    """Live-list this number's message templates straight from Meta.
+
+    Templates are the only way to (re)open a conversation outside the 24h
+    service window, so the compose UI fetches them on demand rather than
+    caching — approval state changes on Meta's side, not ours. Requires the
+    account to carry a `waba_id`; optional `?status=APPROVED` filters Meta's
+    review state client-side.
+    """
+    account = await _get_account_or_404(db, account_id, org_id)
+    if not account.waba_id:
+        raise HTTPException(
+            status_code=409,
+            detail="account has no WABA id; reconnect with a waba_id to list templates",
+        )
+    try:
+        raw = await fetch_message_templates(account.waba_id, account.access_token)
+    except WhatsAppSendError as e:
+        raise HTTPException(status_code=502, detail=f"WhatsApp template list failed: {e}") from e
+    parsed = [parse_template(t) for t in raw]
+    if status_filter:
+        wanted = status_filter.upper()
+        parsed = [t for t in parsed if t["status"].upper() == wanted]
+    return [WhatsAppTemplateOut(**t) for t in parsed]
+
+
+@router.get(
+    "/accounts/{account_id}/profile",
+    response_model=WhatsAppBusinessProfileOut,
+)
+async def get_business_profile(
+    account_id: uuid.UUID,
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> WhatsAppBusinessProfileOut:
+    """Read the number's public business profile (the customer-facing "about"
+    card) live from Meta."""
+    account = await _get_account_or_404(db, account_id, org_id)
+    try:
+        raw = await fetch_business_profile(account.phone_number_id, account.access_token)
+    except WhatsAppSendError as e:
+        raise HTTPException(status_code=502, detail=f"WhatsApp profile read failed: {e}") from e
+    return WhatsAppBusinessProfileOut(**raw)
+
+
+@router.patch(
+    "/accounts/{account_id}/profile",
+    response_model=WhatsAppBusinessProfileOut,
+)
+async def patch_business_profile(
+    account_id: uuid.UUID,
+    payload: WhatsAppBusinessProfileUpdate,
+    user: User = Depends(manage),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> WhatsAppBusinessProfileOut:
+    """Update editable business-profile fields, then echo the fresh profile back.
+
+    Only fields present in the body are sent to Meta. A no-op (empty body) skips
+    the write and just returns the current profile. Meta validation rejections
+    (e.g. an over-long ``about``) surface as 502 carrying Meta's message."""
+    account = await _get_account_or_404(db, account_id, org_id)
+    changes = payload.model_dump(exclude_unset=True)
+    if changes:
+        try:
+            await update_business_profile(account.phone_number_id, account.access_token, changes)
+        except WhatsAppSendError as e:
+            raise HTTPException(
+                status_code=502, detail=f"WhatsApp profile update failed: {e}"
+            ) from e
+        await record_audit(
+            db,
+            actor=user,
+            action="whatsapp.account.profile_update",
+            entity_type="whatsapp_account",
+            entity_id=account.id,
+            organization_id=org_id,
+            metadata={"fields": list(changes.keys())},
+        )
+        await db.commit()
+    try:
+        raw = await fetch_business_profile(account.phone_number_id, account.access_token)
+    except WhatsAppSendError as e:
+        raise HTTPException(status_code=502, detail=f"WhatsApp profile read failed: {e}") from e
+    return WhatsAppBusinessProfileOut(**raw)
+
+
 # ===================== Conversations + messages (members) =====================
 async def _get_conversation_or_404(
     db: AsyncSession, conversation_id: uuid.UUID, org_id: uuid.UUID
@@ -331,11 +475,14 @@ async def _get_conversation_or_404(
 @router.get("/conversations", response_model=list[ConversationOut])
 async def list_conversations(
     conv_status: Annotated[ConversationStatus | None, Query(alias="status")] = None,
+    assignee: Annotated[str | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
-    _: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ) -> list[Conversation]:
+    """List threads, newest activity first. `?assignee=` filters by ownership:
+    `me` (the caller), `unassigned` (the shared queue), or a user uuid."""
     stmt = (
         select(Conversation)
         .where(Conversation.organization_id == org_id)
@@ -344,6 +491,19 @@ async def list_conversations(
     )
     if conv_status is not None:
         stmt = stmt.where(Conversation.status == conv_status)
+    if assignee is not None:
+        if assignee == "me":
+            stmt = stmt.where(Conversation.assignee_id == user.id)
+        elif assignee == "unassigned":
+            stmt = stmt.where(Conversation.assignee_id.is_(None))
+        else:
+            try:
+                target = uuid.UUID(assignee)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=422, detail="assignee must be 'me', 'unassigned', or a user id"
+                ) from e
+            stmt = stmt.where(Conversation.assignee_id == target)
     rows = (await db.execute(stmt)).scalars().all()
     return list(rows)
 
@@ -367,6 +527,121 @@ async def mark_read(
 ) -> Conversation:
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     conv.unread_count = 0
+    await db.commit()
+    await db.refresh(conv)
+
+    # Send a read receipt (blue ticks) to the contact for the most recent inbound
+    # message that carries a wamid. Best-effort: the worker is fire-and-forget and
+    # `wa_read:{wamid}` collapses repeat opens, so re-marking is a no-op.
+    latest_inbound_wamid = (
+        await db.execute(
+            select(Message.wa_message_id)
+            .where(
+                Message.conversation_id == conv.id,
+                Message.direction == MessageDirection.inbound,
+                Message.wa_message_id.is_not(None),
+            )
+            .order_by(Message.created_at.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if latest_inbound_wamid:
+        from app.worker.queue import enqueue
+
+        await enqueue(
+            "mark_whatsapp_read",
+            latest_inbound_wamid,
+            str(org_id),
+            dedupe_key=f"wa_read:{latest_inbound_wamid}",
+            dedupe_ttl_seconds=3600,
+        )
+
+    return conv
+
+
+@router.post("/conversations/{conversation_id}/status", response_model=ConversationOut)
+async def set_conversation_status(
+    conversation_id: uuid.UUID,
+    payload: ConversationStatusUpdate,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Conversation:
+    """Move a thread through its lifecycle (open / closed / archived). A no-op
+    re-set of the current status still returns 200 (idempotent)."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    if conv.status is not payload.status:
+        prev = conv.status
+        conv.status = payload.status
+        await record_audit(
+            db,
+            actor=user,
+            action="whatsapp.conversation.status",
+            entity_type="conversation",
+            entity_id=conv.id,
+            organization_id=org_id,
+            metadata={"from": prev.value, "to": payload.status.value},
+        )
+    await db.commit()
+    await db.refresh(conv)
+    return conv
+
+
+@router.post("/conversations/{conversation_id}/assign", response_model=ConversationOut)
+async def assign_conversation(
+    conversation_id: uuid.UUID,
+    payload: ConversationAssign,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Conversation:
+    """Assign a thread to an agent (or `null` to release it to the shared queue).
+
+    The target must be a member of the caller's org (a foreign user → 404). On a
+    real change to someone other than the actor, the new owner gets a bell. A
+    no-op re-assign returns 200 without re-notifying (idempotent)."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    target_id = payload.assignee_id
+    if target_id is not None:
+        member = (
+            await db.execute(
+                select(OrgMembership.user_id).where(
+                    OrgMembership.user_id == target_id,
+                    OrgMembership.organization_id == org_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if member is None:
+            raise HTTPException(status_code=404, detail="Assignee is not a member of this org")
+
+    prev = conv.assignee_id
+    if target_id != prev:
+        conv.assignee_id = target_id
+        await record_audit(
+            db,
+            actor=user,
+            action="whatsapp.conversation.assign",
+            entity_type="conversation",
+            entity_id=conv.id,
+            organization_id=org_id,
+            metadata={
+                "from": str(prev) if prev else None,
+                "to": str(target_id) if target_id else None,
+            },
+        )
+        # Bell the new owner — but not when an agent claims a thread for themselves.
+        if target_id is not None and target_id != user.id:
+            await notify(
+                db,
+                user_id=target_id,
+                organization_id=org_id,
+                notification_type=NotificationType.conversation_assigned,
+                title=f"{user.full_name} assigned you a conversation",
+                body=conv.contact_name or conv.contact_wa_id,
+                link_url=f"/inbox?conversation={conv.id}",
+                actor=user,
+                metadata={"conversation_id": str(conv.id)},
+            )
     await db.commit()
     await db.refresh(conv)
     return conv
@@ -554,6 +829,99 @@ async def list_messages(
     return list(rows)
 
 
+@router.get(
+    "/conversations/{conversation_id}/messages/{message_id}/media",
+    response_model=MediaDownloadOut,
+)
+async def download_message_media(
+    conversation_id: uuid.UUID,
+    message_id: uuid.UUID,
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> MediaDownloadOut:
+    """Short-lived presigned URL for an inbound message's mirrored media. 404 if
+    the message isn't in this conversation/org, or hasn't been mirrored yet (the
+    `mirror_whatsapp_media` job hadn't landed)."""
+    await _get_conversation_or_404(db, conversation_id, org_id)
+    msg = (
+        await db.execute(
+            select(Message).where(
+                Message.id == message_id,
+                Message.conversation_id == conversation_id,
+                Message.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if msg is None or not msg.media_storage_key:
+        raise HTTPException(status_code=404, detail="No downloadable media for this message")
+    url = await presigned_download_url(msg.media_storage_key)
+    return MediaDownloadOut(url=url, expires_in=get_settings().s3_download_url_ttl)
+
+
+async def _require_active_account(
+    db: AsyncSession, conv: Conversation, org_id: uuid.UUID
+) -> WhatsAppAccount:
+    """The conversation's connected number must still be active to send.
+    409 (not 404) — the thread exists, it's the channel that isn't sendable."""
+    account = (
+        await db.execute(
+            select(WhatsAppAccount).where(
+                WhatsAppAccount.id == conv.account_id,
+                WhatsAppAccount.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if account is None or account.status is not WhatsAppAccountStatus.active:
+        raise HTTPException(status_code=409, detail="WhatsApp number is not connected/active")
+    return account
+
+
+def _require_service_window_open(conv: Conversation) -> None:
+    """Guard free-form (non-template) sends. WhatsApp only accepts text/media/
+    interactive/reaction within 24h of the contact's last inbound message; Meta
+    rejects them otherwise. We block here with an actionable 409 instead of
+    queuing a doomed send that the worker would only stamp `failed`. Templates
+    are exempt — they're the sanctioned way to re-open the conversation."""
+    from app.whatsapp import service_window_open
+
+    if not service_window_open(conv.last_inbound_at):
+        raise HTTPException(
+            status_code=409,
+            detail="service_window_closed: send a template to message outside the 24h window",
+        )
+
+
+async def _resolve_reply_context(
+    db: AsyncSession,
+    conversation_id: uuid.UUID,
+    org_id: uuid.UUID,
+    reply_to_message_id: uuid.UUID | None,
+) -> str | None:
+    """Resolve a `reply_to_message_id` (one of our Message UUIDs) into the target
+    message's wamid, to send the new message as a quoted reply. None when no
+    reply is requested. 404 if the target isn't in this conversation/org; 409 if
+    it exists but has no wamid yet (an outbound row still pending its send)."""
+    if reply_to_message_id is None:
+        return None
+    target = (
+        await db.execute(
+            select(Message).where(
+                Message.id == reply_to_message_id,
+                Message.conversation_id == conversation_id,
+                Message.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if target is None:
+        raise HTTPException(status_code=404, detail="Quoted message not found")
+    if not target.wa_message_id:
+        raise HTTPException(
+            status_code=409, detail="Cannot quote a message that has no WhatsApp id yet"
+        )
+    return target.wa_message_id
+
+
 @router.post(
     "/conversations/{conversation_id}/messages",
     response_model=MessageOut,
@@ -569,19 +937,14 @@ async def send_message(
     """Queue an outbound text. Persists a `pending` Message immediately (so the
     UI shows it optimistically) and hands the actual Graph API send to the
     worker, which stamps the `wamid` + advances the status. The connected
-    account must be active."""
+    account must be active. `reply_to_message_id` quotes an earlier message in
+    the same conversation (409 if that target has no `wamid` yet)."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
-
-    account = (
-        await db.execute(
-            select(WhatsAppAccount).where(
-                WhatsAppAccount.id == conv.account_id,
-                WhatsAppAccount.organization_id == org_id,
-            )
-        )
-    ).scalar_one_or_none()
-    if account is None or account.status is not WhatsAppAccountStatus.active:
-        raise HTTPException(status_code=409, detail="WhatsApp number is not connected/active")
+    await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
+    context_wamid = await _resolve_reply_context(
+        db, conversation_id, org_id, payload.reply_to_message_id
+    )
 
     msg = Message(
         organization_id=org_id,
@@ -589,6 +952,7 @@ async def send_message(
         direction=MessageDirection.outbound,
         type=MessageType.text,
         body=payload.body,
+        context_wa_message_id=context_wamid,
         status=MessageStatus.pending,
         sender_user_id=user.id,
     )
@@ -614,6 +978,329 @@ async def send_message(
         "send_whatsapp_message",
         str(msg.id),
         str(org_id),
+        dedupe_key=f"wa_send:{msg.id}",
+        dedupe_ttl_seconds=300,
+    )
+    return msg
+
+
+def _template_preview(template_name: str, body_params: list[str]) -> str:
+    """A human-readable stand-in for the message list — we don't render the
+    template locally (Meta does), so show the name + the filled variables."""
+    preview = f"[template: {template_name}]"
+    if body_params:
+        preview += " " + " · ".join(body_params)
+    return preview[:255]
+
+
+@router.post(
+    "/conversations/{conversation_id}/template",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def send_template_message(
+    conversation_id: uuid.UUID,
+    payload: SendTemplateRequest,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Message:
+    """Queue a pre-approved template send — the way to (re)open a conversation
+    outside the 24h window. Persists a `pending` Message (type=template, body =
+    a preview of the filled template) and hands the Graph API send to the
+    worker. The connected account must be active."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    await _require_active_account(db, conv, org_id)
+
+    preview = _template_preview(payload.template_name, payload.body_params)
+    msg = Message(
+        organization_id=org_id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.template,
+        body=preview,
+        status=MessageStatus.pending,
+        sender_user_id=user.id,
+    )
+    db.add(msg)
+    conv.last_message_at = msg.timestamp
+    conv.last_message_preview = preview
+    await db.flush()
+    await record_audit(
+        db,
+        actor=user,
+        action="whatsapp.message.send_template",
+        entity_type="conversation",
+        entity_id=conv.id,
+        organization_id=org_id,
+        metadata={
+            "message_id": str(msg.id),
+            "template": payload.template_name,
+            "language": payload.language_code,
+        },
+    )
+    await db.commit()
+    await db.refresh(msg)
+
+    from app.worker.queue import enqueue
+
+    await enqueue(
+        "send_whatsapp_message",
+        str(msg.id),
+        str(org_id),
+        {
+            "name": payload.template_name,
+            "language": payload.language_code,
+            "params": payload.body_params,
+        },
+        dedupe_key=f"wa_send:{msg.id}",
+        dedupe_ttl_seconds=300,
+    )
+    return msg
+
+
+_MEDIA_TYPE_MAP = {
+    "image": MessageType.image,
+    "document": MessageType.document,
+    "video": MessageType.video,
+    "audio": MessageType.audio,
+}
+
+
+@router.post(
+    "/conversations/{conversation_id}/media",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def send_media_message(
+    conversation_id: uuid.UUID,
+    payload: SendMediaRequest,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Message:
+    """Queue an outbound media message (image/document/video/audio) sourced by a
+    public URL or a Meta media id. Persists a `pending` Message of the matching
+    type — `media_url`/`media_id` recording the source, `body` the caption — and
+    hands the Graph API send to the worker. The connected account must be
+    active."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
+    context_wamid = await _resolve_reply_context(
+        db, conversation_id, org_id, payload.reply_to_message_id
+    )
+
+    preview = (payload.caption or f"[{payload.media_type}]")[:255]
+    msg = Message(
+        organization_id=org_id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=_MEDIA_TYPE_MAP[payload.media_type],
+        body=payload.caption,
+        media_id=payload.media_id,
+        media_url=payload.link,
+        context_wa_message_id=context_wamid,
+        status=MessageStatus.pending,
+        sender_user_id=user.id,
+    )
+    db.add(msg)
+    conv.last_message_at = msg.timestamp
+    conv.last_message_preview = preview
+    await db.flush()
+    await record_audit(
+        db,
+        actor=user,
+        action="whatsapp.message.send_media",
+        entity_type="conversation",
+        entity_id=conv.id,
+        organization_id=org_id,
+        metadata={"message_id": str(msg.id), "media_type": payload.media_type},
+    )
+    await db.commit()
+    await db.refresh(msg)
+
+    from app.worker.queue import enqueue
+
+    await enqueue(
+        "send_whatsapp_message",
+        str(msg.id),
+        str(org_id),
+        None,
+        {
+            "media_type": payload.media_type,
+            "link": payload.link,
+            "media_id": payload.media_id,
+            "caption": payload.caption,
+            "filename": payload.filename,
+        },
+        dedupe_key=f"wa_send:{msg.id}",
+        dedupe_ttl_seconds=300,
+    )
+    return msg
+
+
+def _interactive_preview(payload: SendInteractiveRequest) -> str:
+    """A human-readable stand-in for the message list — show the prompt plus the
+    tappable options so the agent sees what the contact was offered."""
+    if payload.interactive_type == "button":
+        options = " · ".join(b.title for b in payload.buttons or [])
+    else:
+        options = payload.button_text or ""
+    return f"{payload.body_text} [{options}]"[:255]
+
+
+@router.post(
+    "/conversations/{conversation_id}/interactive",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def send_interactive_message(
+    conversation_id: uuid.UUID,
+    payload: SendInteractiveRequest,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Message:
+    """Queue an interactive outbound message — reply buttons or a list menu.
+    Persists a `pending` Message (type=interactive, body = a preview of the
+    prompt + options) and hands the Graph API send to the worker. Like text,
+    these are session messages, so the connected account must be active and the
+    24h window open (Meta rejects otherwise → the row is stamped failed)."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
+    context_wamid = await _resolve_reply_context(
+        db, conversation_id, org_id, payload.reply_to_message_id
+    )
+
+    preview = _interactive_preview(payload)
+    msg = Message(
+        organization_id=org_id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.interactive,
+        body=preview,
+        context_wa_message_id=context_wamid,
+        status=MessageStatus.pending,
+        sender_user_id=user.id,
+    )
+    db.add(msg)
+    conv.last_message_at = msg.timestamp
+    conv.last_message_preview = preview
+    await db.flush()
+    await record_audit(
+        db,
+        actor=user,
+        action="whatsapp.message.send_interactive",
+        entity_type="conversation",
+        entity_id=conv.id,
+        organization_id=org_id,
+        metadata={"message_id": str(msg.id), "interactive_type": payload.interactive_type},
+    )
+    await db.commit()
+    await db.refresh(msg)
+
+    from app.worker.queue import enqueue
+
+    await enqueue(
+        "send_whatsapp_message",
+        str(msg.id),
+        str(org_id),
+        None,
+        None,
+        {
+            "interactive_type": payload.interactive_type,
+            "body_text": payload.body_text,
+            "header_text": payload.header_text,
+            "footer_text": payload.footer_text,
+            "buttons": [b.model_dump() for b in payload.buttons] if payload.buttons else None,
+            "button_text": payload.button_text,
+            "sections": [s.model_dump() for s in payload.sections] if payload.sections else None,
+        },
+        dedupe_key=f"wa_send:{msg.id}",
+        dedupe_ttl_seconds=300,
+    )
+    return msg
+
+
+@router.post(
+    "/conversations/{conversation_id}/messages/{message_id}/reaction",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def send_message_reaction(
+    conversation_id: uuid.UUID,
+    message_id: uuid.UUID,
+    payload: SendReactionRequest,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> Message:
+    """React to a message in this conversation with an emoji (empty = remove).
+
+    The target must already have a `wa_message_id` (Meta needs the wamid to
+    attach a reaction) — 409 if it's an outbound row still pending its id. Like
+    text, a reaction is a session message: the account must be active and the
+    24h window open. Persists a `pending` outbound Message (type=reaction, body =
+    the emoji, `context_wa_message_id` = the target's wamid) and queues the send."""
+    conv = await _get_conversation_or_404(db, conversation_id, org_id)
+    await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
+
+    target = (
+        await db.execute(
+            select(Message).where(
+                Message.id == message_id,
+                Message.conversation_id == conversation_id,
+                Message.organization_id == org_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if target is None:
+        raise HTTPException(status_code=404, detail="Message not found")
+    if not target.wa_message_id:
+        raise HTTPException(
+            status_code=409, detail="Cannot react to a message that has no WhatsApp id yet"
+        )
+
+    preview = payload.emoji or "[reaction removed]"
+    msg = Message(
+        organization_id=org_id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.reaction,
+        body=payload.emoji or None,
+        context_wa_message_id=target.wa_message_id,
+        status=MessageStatus.pending,
+        sender_user_id=user.id,
+    )
+    db.add(msg)
+    conv.last_message_at = msg.timestamp
+    conv.last_message_preview = preview[:255]
+    await db.flush()
+    await record_audit(
+        db,
+        actor=user,
+        action="whatsapp.message.send_reaction",
+        entity_type="conversation",
+        entity_id=conv.id,
+        organization_id=org_id,
+        metadata={"message_id": str(msg.id), "target_message_id": str(target.id)},
+    )
+    await db.commit()
+    await db.refresh(msg)
+
+    from app.worker.queue import enqueue
+
+    await enqueue(
+        "send_whatsapp_message",
+        str(msg.id),
+        str(org_id),
+        None,
+        None,
+        None,
+        {"message_id": target.wa_message_id, "emoji": payload.emoji},
         dedupe_key=f"wa_send:{msg.id}",
         dedupe_ttl_seconds=300,
     )

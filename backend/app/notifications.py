@@ -34,6 +34,7 @@ class NotificationType(str, enum.Enum):
     note_mention = "note_mention"  # reserved for @-mention v2
     file_attached = "file_attached"
     automation = "automation"  # raised by an automation rule (app.automations)
+    conversation_assigned = "conversation_assigned"  # WhatsApp/omnichannel inbox
 
 
 async def notify(

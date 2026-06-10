@@ -2180,12 +2180,19 @@ class MessageType(str, enum.Enum):
     sticker = "sticker"
     location = "location"
     contacts = "contacts"
+    # Both directions: the quick-reply buttons / list menus we send, and the
+    # button_reply/list_reply the contact taps back (stored with the tapped
+    # title as the body so the thread stays readable).
+    interactive = "interactive"
+    # Both directions: an emoji reaction to another message. The emoji is the
+    # body; `context_wa_message_id` points at the message reacted to. An empty
+    # body means the reaction was removed.
+    reaction = "reaction"
     # Outbound only: a pre-approved WhatsApp message template (business-initiated
     # send outside the 24h window). Inbound never carries this type.
     template = "template"
-    # Anything we don't model yet (interactive replies, reactions, system
-    # notifications) lands here so an unexpected payload is persisted, not
-    # dropped or crashed on.
+    # Anything we don't model yet (reactions, system notifications) lands here so
+    # an unexpected payload is persisted, not dropped or crashed on.
     unsupported = "unsupported"
 
 
@@ -2307,6 +2314,16 @@ class Conversation(Base):
     last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     last_message_preview: Mapped[str | None] = mapped_column(String(255))
     unread_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Anchor for WhatsApp's 24h customer-service window: timestamp of the most
+    # recent INBOUND message. Free-form (non-template) sends are only allowed
+    # while now < last_inbound_at + 24h; None = the contact has never messaged.
+    last_inbound_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    # Team-inbox ownership: the agent responsible for this thread. NULL = in the
+    # shared unassigned queue. SET NULL on user delete so a departing agent's
+    # threads fall back to the queue instead of cascading away.
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -2362,6 +2379,10 @@ class Message(Base):
     # lived CDN into our own bucket. Null until the `mirror_whatsapp_media`
     # worker job lands; served to the agent via a presigned download URL.
     media_storage_key: Mapped[str | None] = mapped_column(String(512))
+    # The wamid of the message this one reacts to / quotes (Meta's
+    # reaction.message_id or context.id). Indexed so the UI can attach a
+    # reaction to its target bubble.
+    context_wa_message_id: Mapped[str | None] = mapped_column(String(128), index=True)
     status: Mapped[MessageStatus] = mapped_column(Enum(MessageStatus), nullable=False)
     # Failure reason for an outbound send (Graph API error).
     error: Mapped[str | None] = mapped_column(Text)

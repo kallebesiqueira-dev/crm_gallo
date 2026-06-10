@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import json
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import select, text
@@ -30,18 +31,39 @@ from app.config import get_settings
 from app.models import (
     Conversation,
     ConversationChannel,
+    ConversationStatus,
     Customer,
     Lead,
     Message,
     MessageDirection,
     MessageStatus,
     MessageType,
+    Notification,
     Organization,
     User,
     WhatsAppAccount,
     WhatsAppAccountStatus,
 )
-from app.whatsapp import parse_webhook, verify_challenge, verify_signature
+from app.whatsapp import (
+    SERVICE_WINDOW,
+    WhatsAppSendError,
+    fetch_business_profile,
+    fetch_media,
+    fetch_message_templates,
+    mark_read,
+    parse_template,
+    parse_webhook,
+    send_interactive,
+    send_media,
+    send_reaction,
+    send_template,
+    send_text,
+    service_window_expires_at,
+    service_window_open,
+    update_business_profile,
+    verify_challenge,
+    verify_signature,
+)
 from tests.conftest import TEST_PASSWORD, CsrfAwareClient
 
 _APP_SECRET = "pytest-app-secret"
@@ -74,17 +96,26 @@ def _make_account(
     *,
     phone_number_id: str = _PNID,
     status: WhatsAppAccountStatus = WhatsAppAccountStatus.active,
+    waba_id: str | None = None,
 ) -> WhatsAppAccount:
     acct = WhatsAppAccount(
         organization_id=org.id,
         phone_number_id=phone_number_id,
         access_token="seed-access-token",
         status=status,
+        waba_id=waba_id,
     )
     db.add(acct)
     db.commit()
     db.refresh(acct)
     return acct
+
+
+# Sentinel: default a freshly-made conversation to an OPEN 24h service window
+# (the contact just messaged) so the existing free-form-send tests keep working.
+# Pass `last_inbound_at=None` to simulate a contact who never messaged, or a past
+# datetime to simulate an expired window.
+_WINDOW_OPEN = object()
 
 
 def _make_conversation(
@@ -93,6 +124,7 @@ def _make_conversation(
     account: WhatsAppAccount,
     *,
     contact_wa_id: str = "5511988887777",
+    last_inbound_at=_WINDOW_OPEN,
 ) -> Conversation:
     conv = Conversation(
         organization_id=org.id,
@@ -100,6 +132,7 @@ def _make_conversation(
         channel=ConversationChannel.whatsapp,
         contact_wa_id=contact_wa_id,
         contact_name="Pytest Contact",
+        last_inbound_at=(datetime.now(UTC) if last_inbound_at is _WINDOW_OPEN else last_inbound_at),
     )
     db.add(conv)
     db.commit()
@@ -162,6 +195,40 @@ def _inbound_payload(
                                     "type": "text",
                                     "timestamp": "1700000000",
                                     "text": {"body": body},
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def _inbound_media_payload(
+    pnid: str = _PNID,
+    *,
+    sender: str = "5511988887777",
+    wamid: str = "wamid.media.in.1",
+    media_id: str = "MEDIAIN1",
+    mtype: str = "image",
+    caption: str = "foto",
+) -> dict:
+    return {
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "metadata": {"phone_number_id": pnid},
+                            "contacts": [{"wa_id": sender, "profile": {"name": "Alice"}}],
+                            "messages": [
+                                {
+                                    "id": wamid,
+                                    "from": sender,
+                                    "type": mtype,
+                                    "timestamp": "1700000000",
+                                    mtype: {"id": media_id, "caption": caption},
                                 }
                             ],
                         }
@@ -645,6 +712,96 @@ def test_convert_unknown_conversation_404(admin_client: CsrfAwareClient, db: Ses
     assert r.status_code == 404
 
 
+# ============== conversations: status lifecycle ==============
+
+
+def test_status_close_then_reopen(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/status", json={"status": "closed"}
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "closed"
+    db.refresh(conv)
+    assert conv.status is ConversationStatus.closed
+
+    r = admin_client.post(f"/api/whatsapp/conversations/{conv.id}/status", json={"status": "open"})
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "open"
+
+
+def test_status_archive(admin_client: CsrfAwareClient, db: Session, test_org: Organization):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/status", json={"status": "archived"}
+    )
+    assert r.status_code == 200, r.text
+    db.refresh(conv)
+    assert conv.status is ConversationStatus.archived
+
+
+def test_status_invalid_value_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/status", json={"status": "banana"}
+    )
+    assert r.status_code == 422
+
+
+def test_status_filter_excludes_other_statuses(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    open_conv = _make_conversation(db, test_org, acct, contact_wa_id="5511900000001")
+    archived = _make_conversation(db, test_org, acct, contact_wa_id="5511900000002")
+    archived.status = ConversationStatus.archived
+    db.commit()
+
+    r = admin_client.get("/api/whatsapp/conversations?status=archived")
+    assert r.status_code == 200, r.text
+    ids = {c["id"] for c in r.json()}
+    assert str(archived.id) in ids
+    assert str(open_conv.id) not in ids
+
+
+def test_inbound_reopens_closed_conversation(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    acct = _make_account(db, test_org)  # pnid _PNID, matches the inbound payload
+    conv = _make_conversation(db, test_org, acct)  # contact 5511988887777 (payload sender)
+    conv.status = ConversationStatus.closed
+    db.commit()
+
+    r = _post_webhook(client, _inbound_payload(wamid="wamid.reopen.1", body="oi de novo"))
+    assert r.status_code == 200
+
+    db.refresh(conv)
+    assert conv.status is ConversationStatus.open  # reply pulled it back in
+
+
+def test_inbound_leaves_archived_filed(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    conv.status = ConversationStatus.archived
+    db.commit()
+
+    r = _post_webhook(client, _inbound_payload(wamid="wamid.archived.1", body="ainda aqui"))
+    assert r.status_code == 200
+
+    db.refresh(conv)
+    assert conv.status is ConversationStatus.archived  # stays filed away
+
+
 # ====================== outbound send (enqueue path) ======================
 
 
@@ -693,3 +850,2031 @@ def test_send_message_inactive_account_409(
         json={"body": "should fail"},
     )
     assert r.status_code == 409
+
+
+def test_send_text_with_context_quotes(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.quote.1")
+    import asyncio
+
+    wamid = asyncio.run(
+        send_text(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            body="claro!",
+            context_message_id="wamid.orig.1",
+        )
+    )
+    assert wamid == "wamid.quote.1"
+    assert captured["json"]["context"] == {"message_id": "wamid.orig.1"}
+
+
+def test_send_text_without_context_omits_it(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_text(phone_number_id="PNID", access_token="tok", to="5511988887777", body="oi")
+    )
+    assert "context" not in captured["json"]
+
+
+def test_send_message_reply_to_persists_context(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.quote.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="pergunta do cliente",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "resposta citada", "reply_to_message_id": str(target.id)},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["context_wa_message_id"] == "wamid.quote.target.1"
+
+
+def test_send_message_reply_to_nonexistent_404(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "oi", "reply_to_message_id": str(uuid.uuid4())},
+    )
+    assert r.status_code == 404
+
+
+def test_send_message_reply_to_message_without_wamid_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    pending = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.text,
+        body="ainda pendente",
+        status=MessageStatus.pending,
+    )
+    db.add(pending)
+    db.commit()
+    db.refresh(pending)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "oi", "reply_to_message_id": str(pending.id)},
+    )
+    assert r.status_code == 409
+
+
+# ====================== outbound template send ======================
+
+
+def test_send_template_builds_wire_payload(monkeypatch):
+    """The transport layer must emit Meta's `type:template` shape, with the
+    positional body params filling the template's variables in order."""
+    captured: dict = {}
+
+    class _Resp:
+        status_code = 200
+
+        def json(self):
+            return {"messages": [{"id": "wamid.tmpl.1"}]}
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def post(self, url, json, headers):
+            captured["url"] = url
+            captured["json"] = json
+            captured["headers"] = headers
+            return _Resp()
+
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _Client)
+
+    import asyncio
+
+    wamid = asyncio.run(
+        send_template(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            template_name="welcome",
+            language_code="pt_BR",
+            body_params=["Ada", "10%"],
+        )
+    )
+    assert wamid == "wamid.tmpl.1"
+    p = captured["json"]
+    assert p["type"] == "template"
+    assert p["to"] == "5511988887777"
+    assert p["template"]["name"] == "welcome"
+    assert p["template"]["language"] == {"code": "pt_BR"}
+    comp = p["template"]["components"][0]
+    assert comp["type"] == "body"
+    assert [x["text"] for x in comp["parameters"]] == ["Ada", "10%"]
+    assert captured["headers"]["Authorization"] == "Bearer tok"
+
+
+def test_send_template_no_params_omits_components(monkeypatch):
+    """A variable-free template must NOT carry an (empty) components array —
+    Meta rejects a body component with zero parameters."""
+    captured: dict = {}
+
+    class _Resp:
+        status_code = 200
+
+        def json(self):
+            return {"messages": [{"id": "wamid.tmpl.2"}]}
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def post(self, url, json, headers):
+            captured["json"] = json
+            return _Resp()
+
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _Client)
+
+    import asyncio
+
+    asyncio.run(
+        send_template(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            template_name="ping",
+            language_code="en_US",
+        )
+    )
+    assert "components" not in captured["json"]["template"]
+
+
+def test_send_template_persists_pending_and_enqueues(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/template",
+        json={
+            "template_name": "welcome",
+            "language_code": "pt_BR",
+            "body_params": ["Ada", "10%"],
+        },
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["direction"] == "outbound"
+    assert body["status"] == "pending"
+    assert body["type"] == "template"
+    # Body is a human preview, not the wire payload.
+    assert body["body"] == "[template: welcome] Ada · 10%"
+
+    # The conversation's preview denorm tracks it too.
+    db.refresh(conv)
+    assert conv.last_message_preview == "[template: welcome] Ada · 10%"
+
+    # Job queued with the template spec as the 3rd positional arg.
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "send_whatsapp_message"
+    assert args[1] == body["id"]
+    assert args[3] == {"name": "welcome", "language": "pt_BR", "params": ["Ada", "10%"]}
+    assert kwargs["dedupe_key"] == f"wa_send:{body['id']}"
+
+
+def test_send_template_inactive_account_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org, status=WhatsAppAccountStatus.disabled)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/template",
+        json={"template_name": "welcome"},
+    )
+    assert r.status_code == 409
+
+
+def test_send_template_missing_name_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/template",
+        json={"template_name": ""},
+    )
+    assert r.status_code == 422
+
+
+# ====================== outbound media send ======================
+
+
+def _patch_httpx_capture(monkeypatch, *, wamid: str = "wamid.cap.1") -> dict:
+    """Patch `app.whatsapp.httpx.AsyncClient` so a transport send records the
+    posted body/headers instead of hitting the network, and returns a fake 200
+    carrying `wamid`."""
+    captured: dict = {}
+
+    class _Resp:
+        status_code = 200
+
+        def json(self):
+            return {"messages": [{"id": wamid}]}
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def post(self, url, json, headers):
+            captured["url"] = url
+            captured["json"] = json
+            captured["headers"] = headers
+            return _Resp()
+
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _Client)
+    return captured
+
+
+def test_send_media_link_builds_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.media.1")
+    import asyncio
+
+    wamid = asyncio.run(
+        send_media(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            media_type="image",
+            link="https://cdn.example/cat.jpg",
+            caption="meu gato",
+        )
+    )
+    assert wamid == "wamid.media.1"
+    p = captured["json"]
+    assert p["type"] == "image"
+    assert p["image"] == {"link": "https://cdn.example/cat.jpg", "caption": "meu gato"}
+
+
+def test_send_media_document_by_id_with_filename(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_media(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            media_type="document",
+            media_id="MEDIA123",
+            caption="contrato",
+            filename="contrato.pdf",
+        )
+    )
+    assert captured["json"]["document"] == {
+        "id": "MEDIA123",
+        "caption": "contrato",
+        "filename": "contrato.pdf",
+    }
+
+
+def test_send_media_audio_omits_caption_and_filename(monkeypatch):
+    """Audio carries neither caption nor filename — Meta rejects them on the
+    wrong media kind, so the transport must drop them."""
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_media(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            media_type="audio",
+            link="https://cdn.example/a.mp3",
+            caption="ignored",
+            filename="ignored.mp3",
+        )
+    )
+    assert captured["json"]["audio"] == {"link": "https://cdn.example/a.mp3"}
+
+
+def test_send_media_persists_pending_and_enqueues(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={
+            "media_type": "image",
+            "link": "https://cdn.example/cat.jpg",
+            "caption": "meu gato",
+        },
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["direction"] == "outbound"
+    assert body["status"] == "pending"
+    assert body["type"] == "image"
+    assert body["body"] == "meu gato"
+    assert body["media_url"] == "https://cdn.example/cat.jpg"
+
+    db.refresh(conv)
+    assert conv.last_message_preview == "meu gato"
+
+    # Job queued with template slot None + the media spec as the 4th/5th args.
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "send_whatsapp_message"
+    assert args[1] == body["id"]
+    assert args[3] is None
+    assert args[4] == {
+        "media_type": "image",
+        "link": "https://cdn.example/cat.jpg",
+        "media_id": None,
+        "caption": "meu gato",
+        "filename": None,
+    }
+    assert kwargs["dedupe_key"] == f"wa_send:{body['id']}"
+
+
+def test_send_media_with_context_quotes(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.media.quote.1")
+    import asyncio
+
+    asyncio.run(
+        send_media(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            media_type="image",
+            link="https://cdn.example/cat.jpg",
+            context_message_id="wamid.orig.1",
+        )
+    )
+    assert captured["json"]["context"] == {"message_id": "wamid.orig.1"}
+
+
+def test_send_media_reply_to_persists_context(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.media.quote.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="manda a foto",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={
+            "media_type": "image",
+            "link": "https://cdn.example/cat.jpg",
+            "reply_to_message_id": str(target.id),
+        },
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["context_wa_message_id"] == "wamid.media.quote.target.1"
+
+
+def test_send_interactive_reply_to_persists_context(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.int.quote.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="quais opções?",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "Escolha:",
+            "buttons": [{"id": "a", "title": "A"}],
+            "reply_to_message_id": str(target.id),
+        },
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["context_wa_message_id"] == "wamid.int.quote.target.1"
+
+
+def test_send_media_no_caption_uses_bracket_preview(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={"media_type": "document", "media_id": "MEDIA1"},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["body"] is None
+    db.refresh(conv)
+    assert conv.last_message_preview == "[document]"
+
+
+def test_send_media_both_sources_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={"media_type": "image", "link": "https://x/y.jpg", "media_id": "ID1"},
+    )
+    assert r.status_code == 422  # exactly-one-of guard
+
+
+def test_send_media_neither_source_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={"media_type": "image"},
+    )
+    assert r.status_code == 422
+
+
+def test_send_media_inactive_account_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org, status=WhatsAppAccountStatus.disabled)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={"media_type": "image", "link": "https://cdn.example/cat.jpg"},
+    )
+    assert r.status_code == 409
+
+
+# ====================== inbound media mirroring ======================
+
+
+def test_fetch_media_two_hop(monkeypatch):
+    """Resolve the media id to a CDN url, then download the bytes — both hops
+    carrying the bearer token."""
+    calls: list = []
+
+    class _Resp:
+        def __init__(self, status_code, json_body=None, content=b""):
+            self.status_code = status_code
+            self._json = json_body
+            self.content = content
+
+        def json(self):
+            return self._json
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def get(self, url, headers):
+            calls.append((url, headers))
+            if url.endswith("/MEDIA123"):
+                return _Resp(200, {"url": "https://cdn.meta/blob", "mime_type": "image/jpeg"})
+            return _Resp(200, content=b"\xff\xd8\xffbytes")
+
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _Client)
+
+    import asyncio
+
+    data, mime = asyncio.run(fetch_media("MEDIA123", "tok"))
+    assert data == b"\xff\xd8\xffbytes"
+    assert mime == "image/jpeg"
+    assert calls[1][0] == "https://cdn.meta/blob"  # 2nd hop hits the CDN url
+    assert all(h["Authorization"] == "Bearer tok" for _, h in calls)
+
+
+def test_fetch_media_404_raises_terminal(monkeypatch):
+    class _Resp:
+        status_code = 404
+
+        def json(self):
+            return {}
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def get(self, url, headers):
+            return _Resp()
+
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _Client)
+
+    import asyncio
+
+    with pytest.raises(WhatsAppSendError) as ei:
+        asyncio.run(fetch_media("GONE", "tok"))
+    assert ei.value.status_code == 404  # worker treats 4xx as terminal
+
+
+# ---------- message templates ----------
+
+
+def test_parse_template_extracts_body_and_var_count():
+    raw = {
+        "name": "order_update",
+        "language": "pt_BR",
+        "status": "APPROVED",
+        "category": "UTILITY",
+        "components": [
+            {"type": "HEADER", "text": "Olá"},
+            {"type": "BODY", "text": "Oi {{1}}, seu pedido {{2}} foi enviado."},
+            {"type": "FOOTER", "text": "Obrigado"},
+        ],
+    }
+    out = parse_template(raw)
+    assert out == {
+        "name": "order_update",
+        "language": "pt_BR",
+        "status": "APPROVED",
+        "category": "UTILITY",
+        "body_text": "Oi {{1}}, seu pedido {{2}} foi enviado.",
+        "variable_count": 2,
+    }
+
+
+def test_parse_template_no_body_no_vars():
+    out = parse_template(
+        {"name": "ping", "language": "en", "status": "APPROVED", "category": "UTILITY"}
+    )
+    assert out["body_text"] == ""
+    assert out["variable_count"] == 0
+
+
+def _template_client(pages: list, calls: list):
+    """Fake httpx.AsyncClient that replays `pages` (list of (status, json))
+    one per GET, recording (url, params) into `calls`."""
+
+    class _Resp:
+        def __init__(self, status_code, json_body):
+            self.status_code = status_code
+            self._json = json_body
+            self.content = json.dumps(json_body or {}).encode()
+
+        def json(self):
+            return self._json
+
+    seq = iter(pages)
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def get(self, url, headers=None, params=None):
+            calls.append((url, params))
+            status_code, body = next(seq)
+            return _Resp(status_code, body)
+
+    return _Client
+
+
+def test_fetch_templates_single_page(monkeypatch):
+    calls: list = []
+    pages = [
+        (200, {"data": [{"name": "a", "language": "en"}], "paging": {}}),
+    ]
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _template_client(pages, calls))
+
+    import asyncio
+
+    out = asyncio.run(fetch_message_templates("WABA1", "tok"))
+    assert [t["name"] for t in out] == ["a"]
+    assert len(calls) == 1
+    assert calls[0][0].endswith("/WABA1/message_templates")
+    assert calls[0][1]["limit"] == 100  # first call carries query params
+
+
+def test_fetch_templates_follows_pagination(monkeypatch):
+    calls: list = []
+    pages = [
+        (200, {"data": [{"name": "a"}], "paging": {"next": "https://graph.meta/next?after=X"}}),
+        (200, {"data": [{"name": "b"}], "paging": {}}),
+    ]
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _template_client(pages, calls))
+
+    import asyncio
+
+    out = asyncio.run(fetch_message_templates("WABA1", "tok"))
+    assert [t["name"] for t in out] == ["a", "b"]
+    assert len(calls) == 2
+    assert calls[1][0] == "https://graph.meta/next?after=X"
+    assert calls[1][1] is None  # the `next` url already embeds cursor + fields
+
+
+def test_fetch_templates_non_2xx_raises_with_meta_message(monkeypatch):
+    calls: list = []
+    pages = [(401, {"error": {"message": "Invalid OAuth access token"}})]
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _template_client(pages, calls))
+
+    import asyncio
+
+    with pytest.raises(WhatsAppSendError) as ei:
+        asyncio.run(fetch_message_templates("WABA1", "tok"))
+    assert ei.value.status_code == 401
+    assert "Invalid OAuth access token" in str(ei.value)
+
+
+def test_list_templates_endpoint_returns_parsed(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org, waba_id="WABA-XYZ")
+
+    async def fake_fetch(waba_id, access_token):
+        assert waba_id == "WABA-XYZ"
+        return [
+            {
+                "name": "welcome",
+                "language": "pt_BR",
+                "status": "APPROVED",
+                "category": "MARKETING",
+                "components": [{"type": "BODY", "text": "Bem-vindo {{1}}!"}],
+            }
+        ]
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_message_templates", fake_fetch)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body == [
+        {
+            "name": "welcome",
+            "language": "pt_BR",
+            "status": "APPROVED",
+            "category": "MARKETING",
+            "body_text": "Bem-vindo {{1}}!",
+            "variable_count": 1,
+        }
+    ]
+
+
+def test_list_templates_no_waba_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)  # no waba_id
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates")
+    assert r.status_code == 409
+
+
+def test_list_templates_status_filter(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org, waba_id="WABA-XYZ")
+
+    async def fake_fetch(waba_id, access_token):
+        return [
+            {"name": "ok", "status": "APPROVED", "language": "en", "category": "UTILITY"},
+            {"name": "pending", "status": "PENDING", "language": "en", "category": "UTILITY"},
+        ]
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_message_templates", fake_fetch)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates?status=approved")
+    assert r.status_code == 200, r.text
+    names = [t["name"] for t in r.json()]
+    assert names == ["ok"]  # case-insensitive filter, PENDING dropped
+
+
+def test_list_templates_meta_failure_502(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org, waba_id="WABA-XYZ")
+
+    async def boom(waba_id, access_token):
+        raise WhatsAppSendError("HTTP 400: bad request", status_code=400)
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_message_templates", boom)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/templates")
+    assert r.status_code == 502
+
+
+def test_inbound_media_enqueues_mirror_job(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config, monkeypatch
+):
+    _make_account(db, test_org)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = _post_webhook(client, _inbound_media_payload(wamid="wamid.mediajob.1", media_id="MID9"))
+    assert r.status_code == 200
+
+    msg = db.execute(
+        select(Message).where(Message.wa_message_id == "wamid.mediajob.1")
+    ).scalar_one()
+    assert msg.type is MessageType.image
+    assert msg.media_id == "MID9"
+    assert msg.media_storage_key is None  # worker hasn't run in this test
+
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "mirror_whatsapp_media"
+    assert args[1] == "wamid.mediajob.1"
+    assert args[2] == str(test_org.id)
+    assert kwargs["dedupe_key"] == "wa_media:wamid.mediajob.1"
+
+
+def test_inbound_text_enqueues_no_mirror(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config, monkeypatch
+):
+    _make_account(db, test_org)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append(args)
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = _post_webhook(client, _inbound_payload(wamid="wamid.textnojob.1"))
+    assert r.status_code == 200
+    assert calls == []  # a text message carries no media to mirror
+
+
+def test_download_message_media_returns_presigned(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    msg = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.dl.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.image,
+        status=MessageStatus.received,
+        media_id="MID",
+        media_storage_key=f"org-{test_org.id}/whatsapp-media/{conv.id}/abc",
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+
+    async def fake_presign(key, filename=None):
+        return f"https://s3.local/{key}?sig=abc"
+
+    monkeypatch.setattr("app.api.whatsapp.presigned_download_url", fake_presign)
+
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}/messages/{msg.id}/media")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["url"].startswith("https://s3.local/")
+    assert body["expires_in"] > 0
+
+
+def test_download_message_media_not_mirrored_404(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    msg = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.dl.2",
+        direction=MessageDirection.inbound,
+        type=MessageType.image,
+        status=MessageStatus.received,
+        media_id="MID",
+        media_storage_key=None,  # not yet mirrored
+    )
+    db.add(msg)
+    db.commit()
+
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}/messages/{msg.id}/media")
+    assert r.status_code == 404
+
+
+# ====================== interactive messages ======================
+
+
+def _inbound_interactive_payload(
+    pnid: str = _PNID,
+    *,
+    sender: str = "5511988887777",
+    wamid: str = "wamid.int.in.1",
+    reply_kind: str = "button_reply",
+    reply_id: str = "OPT_YES",
+    reply_title: str = "Sim",
+) -> dict:
+    return {
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "metadata": {"phone_number_id": pnid},
+                            "contacts": [{"wa_id": sender, "profile": {"name": "Alice"}}],
+                            "messages": [
+                                {
+                                    "id": wamid,
+                                    "from": sender,
+                                    "type": "interactive",
+                                    "timestamp": "1700000000",
+                                    "interactive": {
+                                        "type": reply_kind,
+                                        reply_kind: {"id": reply_id, "title": reply_title},
+                                    },
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def test_send_interactive_buttons_builds_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.int.1")
+    import asyncio
+
+    wamid = asyncio.run(
+        send_interactive(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            interactive_type="button",
+            body_text="Confirma?",
+            buttons=[{"id": "yes", "title": "Sim"}, {"id": "no", "title": "Não"}],
+            footer_text="Equipe Gallo",
+        )
+    )
+    assert wamid == "wamid.int.1"
+    p = captured["json"]
+    assert p["type"] == "interactive"
+    assert p["interactive"]["type"] == "button"
+    assert p["interactive"]["body"] == {"text": "Confirma?"}
+    assert p["interactive"]["footer"] == {"text": "Equipe Gallo"}
+    assert p["interactive"]["action"]["buttons"] == [
+        {"type": "reply", "reply": {"id": "yes", "title": "Sim"}},
+        {"type": "reply", "reply": {"id": "no", "title": "Não"}},
+    ]
+
+
+def test_send_interactive_list_builds_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_interactive(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            interactive_type="list",
+            body_text="Escolha um plano",
+            button_text="Ver planos",
+            sections=[
+                {
+                    "title": "Mensais",
+                    "rows": [
+                        {"id": "std", "title": "Standard", "description": "9€/mês"},
+                        {"id": "prm", "title": "Premium"},
+                    ],
+                }
+            ],
+        )
+    )
+    interactive = captured["json"]["interactive"]
+    assert interactive["type"] == "list"
+    assert interactive["action"]["button"] == "Ver planos"
+    section = interactive["action"]["sections"][0]
+    assert section["title"] == "Mensais"
+    assert section["rows"] == [
+        {"id": "std", "title": "Standard", "description": "9€/mês"},
+        {"id": "prm", "title": "Premium"},
+    ]
+
+
+def test_send_interactive_buttons_persists_pending_and_enqueues(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "Confirma o horário?",
+            "buttons": [
+                {"id": "yes", "title": "Sim"},
+                {"id": "no", "title": "Não"},
+            ],
+        },
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["direction"] == "outbound"
+    assert body["status"] == "pending"
+    assert body["type"] == "interactive"
+    assert body["body"] == "Confirma o horário? [Sim · Não]"
+
+    db.refresh(conv)
+    assert conv.last_message_preview == "Confirma o horário? [Sim · Não]"
+
+    # Job queued with template + media slots None and the interactive spec 6th.
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "send_whatsapp_message"
+    assert args[1] == body["id"]
+    assert args[3] is None
+    assert args[4] is None
+    assert args[5] == {
+        "interactive_type": "button",
+        "body_text": "Confirma o horário?",
+        "header_text": None,
+        "footer_text": None,
+        "buttons": [{"id": "yes", "title": "Sim"}, {"id": "no", "title": "Não"}],
+        "button_text": None,
+        "sections": None,
+    }
+    assert kwargs["dedupe_key"] == f"wa_send:{body['id']}"
+
+
+def test_send_interactive_button_missing_buttons_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={"interactive_type": "button", "body_text": "oi"},
+    )
+    assert r.status_code == 422
+
+
+def test_send_interactive_list_missing_sections_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={"interactive_type": "list", "body_text": "oi", "button_text": "Ver"},
+    )
+    assert r.status_code == 422
+
+
+def test_send_interactive_duplicate_ids_422(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "oi",
+            "buttons": [{"id": "x", "title": "A"}, {"id": "x", "title": "B"}],
+        },
+    )
+    assert r.status_code == 422
+
+
+def test_send_interactive_inactive_account_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org, status=WhatsAppAccountStatus.disabled)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "oi",
+            "buttons": [{"id": "y", "title": "Sim"}],
+        },
+    )
+    assert r.status_code == 409
+
+
+def test_inbound_interactive_button_reply_parsed():
+    parsed = parse_webhook(_inbound_interactive_payload(reply_title="Sim", reply_id="OPT_YES"))
+    assert len(parsed.messages) == 1
+    m = parsed.messages[0]
+    assert m.type is MessageType.interactive
+    assert m.body == "Sim"  # the tapped title threads as the message body
+
+
+def test_inbound_interactive_list_reply_parsed():
+    parsed = parse_webhook(
+        _inbound_interactive_payload(
+            reply_kind="list_reply", reply_id="std", reply_title="Standard"
+        )
+    )
+    assert parsed.messages[0].type is MessageType.interactive
+    assert parsed.messages[0].body == "Standard"
+
+
+def test_inbound_interactive_persists_via_webhook(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    _make_account(db, test_org)
+    r = _post_webhook(client, _inbound_interactive_payload(wamid="wamid.int.in.9"))
+    assert r.status_code == 200
+    msg = db.execute(select(Message).where(Message.wa_message_id == "wamid.int.in.9")).scalar_one()
+    assert msg.type is MessageType.interactive
+    assert msg.body == "Sim"
+    assert msg.direction is MessageDirection.inbound
+
+
+# ====================== reactions ======================
+
+
+def _inbound_reaction_payload(
+    pnid: str = _PNID,
+    *,
+    sender: str = "5511988887777",
+    wamid: str = "wamid.react.in.1",
+    target_wamid: str = "wamid.target.1",
+    emoji: str = "👍",
+) -> dict:
+    reaction: dict = {"message_id": target_wamid}
+    if emoji:
+        reaction["emoji"] = emoji
+    return {
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "metadata": {"phone_number_id": pnid},
+                            "contacts": [{"wa_id": sender, "profile": {"name": "Alice"}}],
+                            "messages": [
+                                {
+                                    "id": wamid,
+                                    "from": sender,
+                                    "type": "reaction",
+                                    "timestamp": "1700000000",
+                                    "reaction": reaction,
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def test_send_reaction_builds_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch, wamid="wamid.react.1")
+    import asyncio
+
+    wamid = asyncio.run(
+        send_reaction(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            message_id="wamid.target.1",
+            emoji="👍",
+        )
+    )
+    assert wamid == "wamid.react.1"
+    p = captured["json"]
+    assert p["type"] == "reaction"
+    assert p["reaction"] == {"message_id": "wamid.target.1", "emoji": "👍"}
+
+
+def test_send_reaction_empty_emoji_removes(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    asyncio.run(
+        send_reaction(
+            phone_number_id="PNID",
+            access_token="tok",
+            to="5511988887777",
+            message_id="wamid.target.1",
+            emoji="",
+        )
+    )
+    assert captured["json"]["reaction"] == {"message_id": "wamid.target.1", "emoji": ""}
+
+
+def test_react_endpoint_persists_pending_and_enqueues(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.target.endpoint.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="olá",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{target.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["direction"] == "outbound"
+    assert body["status"] == "pending"
+    assert body["type"] == "reaction"
+    assert body["body"] == "👍"
+    assert body["context_wa_message_id"] == "wamid.target.endpoint.1"
+
+    db.refresh(conv)
+    assert conv.last_message_preview == "👍"
+
+    # template+media+interactive slots None; reaction spec 7th.
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "send_whatsapp_message"
+    assert args[1] == body["id"]
+    assert args[3] is None
+    assert args[4] is None
+    assert args[5] is None
+    assert args[6] == {"message_id": "wamid.target.endpoint.1", "emoji": "👍"}
+    assert kwargs["dedupe_key"] == f"wa_send:{body['id']}"
+
+
+def test_react_to_message_without_wamid_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    pending = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        direction=MessageDirection.outbound,
+        type=MessageType.text,
+        body="still pending",
+        status=MessageStatus.pending,
+    )
+    db.add(pending)
+    db.commit()
+    db.refresh(pending)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{pending.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 409
+
+
+def test_react_to_nonexistent_message_404(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{uuid.uuid4()}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 404
+
+
+def test_react_inactive_account_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org, status=WhatsAppAccountStatus.disabled)
+    conv = _make_conversation(db, test_org, acct)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.target.inactive.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="oi",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{target.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 409
+
+
+def test_inbound_reaction_parsed():
+    parsed = parse_webhook(_inbound_reaction_payload(emoji="❤️", target_wamid="wamid.orig.7"))
+    assert len(parsed.messages) == 1
+    m = parsed.messages[0]
+    assert m.type is MessageType.reaction
+    assert m.body == "❤️"
+    assert m.context_wa_message_id == "wamid.orig.7"
+
+
+def test_inbound_reaction_removed_has_empty_body():
+    parsed = parse_webhook(_inbound_reaction_payload(emoji="", target_wamid="wamid.orig.8"))
+    m = parsed.messages[0]
+    assert m.type is MessageType.reaction
+    assert not m.body
+    assert m.context_wa_message_id == "wamid.orig.8"
+
+
+def test_inbound_reaction_persists_via_webhook(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    _make_account(db, test_org)
+    r = _post_webhook(
+        client,
+        _inbound_reaction_payload(
+            wamid="wamid.react.in.9", target_wamid="wamid.orig.9", emoji="🔥"
+        ),
+    )
+    assert r.status_code == 200
+    msg = db.execute(
+        select(Message).where(Message.wa_message_id == "wamid.react.in.9")
+    ).scalar_one()
+    assert msg.type is MessageType.reaction
+    assert msg.body == "🔥"
+    assert msg.context_wa_message_id == "wamid.orig.9"
+    assert msg.direction is MessageDirection.inbound
+
+
+# ---------- read receipts (blue ticks) ----------
+
+
+def test_mark_read_builds_status_payload(monkeypatch):
+    captured = _patch_httpx_capture(monkeypatch)
+    import asyncio
+
+    result = asyncio.run(
+        mark_read(
+            phone_number_id="PNID",
+            access_token="tok",
+            message_id="wamid.inbound.1",
+        )
+    )
+    assert result is None
+    assert captured["json"] == {
+        "messaging_product": "whatsapp",
+        "status": "read",
+        "message_id": "wamid.inbound.1",
+    }
+    assert "/PNID/messages" in captured["url"]
+
+
+def test_read_endpoint_resets_unread_and_enqueues_latest_inbound(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    conv.unread_count = 3
+    # Two inbound messages with wamids — the newest one should be marked read.
+    older = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.in.old",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="primeiro",
+        status=MessageStatus.received,
+    )
+    db.add(older)
+    db.commit()
+    newer = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.in.new",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="segundo",
+        status=MessageStatus.received,
+    )
+    db.add(newer)
+    db.commit()
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(f"/api/whatsapp/conversations/{conv.id}/read")
+    assert r.status_code == 200, r.text
+    assert r.json()["unread_count"] == 0
+
+    db.refresh(conv)
+    assert conv.unread_count == 0
+
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args[0] == "mark_whatsapp_read"
+    assert args[1] == "wamid.in.new"
+    assert args[2] == str(test_org.id)
+    assert kwargs["dedupe_key"] == "wa_read:wamid.in.new"
+
+
+def test_read_endpoint_no_inbound_wamid_skips_enqueue(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    monkeypatch,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    conv.unread_count = 2
+    # Only an OUTBOUND message — nothing inbound to mark read.
+    out = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.out.1",
+        direction=MessageDirection.outbound,
+        type=MessageType.text,
+        body="oi",
+        status=MessageStatus.sent,
+    )
+    db.add(out)
+    db.commit()
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(f"/api/whatsapp/conversations/{conv.id}/read")
+    assert r.status_code == 200, r.text
+    assert r.json()["unread_count"] == 0
+
+    db.refresh(conv)
+    assert conv.unread_count == 0
+    assert calls == []
+
+
+# ---------- 24h customer-service window ----------
+
+
+def test_service_window_open_helper():
+    now = datetime.now(UTC)
+    # Never messaged → no window.
+    assert service_window_open(None) is False
+    # Fresh inbound → open.
+    assert service_window_open(now) is True
+    # 23h ago → still open; 25h ago → closed.
+    assert service_window_open(now - timedelta(hours=23)) is True
+    assert service_window_open(now - timedelta(hours=25)) is False
+    # Exactly at the boundary is closed (`now < expires` is strict).
+    assert service_window_open(now - SERVICE_WINDOW, now=now) is False
+
+
+def test_service_window_expires_at_helper():
+    anchor = datetime(2026, 6, 10, 12, 0, tzinfo=UTC)
+    assert service_window_expires_at(anchor) == anchor + SERVICE_WINDOW
+    assert service_window_expires_at(None) is None
+
+
+def test_conversation_out_exposes_open_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)  # window open by default
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["service_window_open"] is True
+    assert body["service_window_expires_at"] is not None
+    assert body["last_inbound_at"] is not None
+
+
+def test_conversation_out_exposes_closed_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    # Contact last messaged 30h ago → window closed.
+    conv = _make_conversation(
+        db, test_org, acct, last_inbound_at=datetime.now(UTC) - timedelta(hours=30)
+    )
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["service_window_open"] is False
+    assert body["service_window_expires_at"] is not None
+
+
+def test_conversation_out_never_messaged_has_no_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["service_window_open"] is False
+    assert body["service_window_expires_at"] is None
+    assert body["last_inbound_at"] is None
+
+
+def test_send_text_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(
+        db, test_org, acct, last_inbound_at=datetime.now(UTC) - timedelta(hours=25)
+    )
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "oi, tudo bem?"},
+    )
+    assert r.status_code == 409, r.text
+    assert "service_window_closed" in r.json()["detail"]
+    # Nothing persisted, nothing queued — the send was blocked up front.
+    assert calls == []
+    count = db.execute(select(Message).where(Message.conversation_id == conv.id)).scalars().all()
+    assert count == []
+
+
+def test_send_text_never_messaged_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "primeiro contato"},
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_send_media_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={"media_type": "image", "link": "https://cdn.example/cat.jpg"},
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_send_interactive_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "Escolha:",
+            "buttons": [{"id": "sim", "title": "Sim"}],
+        },
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_react_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.window.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="oi",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{target.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_send_template_allowed_outside_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    """Templates are the SANCTIONED way to re-open a closed conversation, so the
+    window guard must NOT block them."""
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/template",
+        json={"template_name": "welcome", "language_code": "pt_BR"},
+    )
+    assert r.status_code == 201, r.text
+
+
+def test_inbound_message_anchors_service_window(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    """The webhook stamps `last_inbound_at` from the inbound message timestamp —
+    that's the anchor the 24h window is computed from. (The fixture uses a fixed
+    2023 epoch, so we assert the anchor itself, not the live open/closed state.)"""
+    _make_account(db, test_org)
+    r = _post_webhook(client, _inbound_payload(wamid="wamid.window.in.1", body="oi"))
+    assert r.status_code == 200
+    msg = db.execute(
+        select(Message).where(Message.wa_message_id == "wamid.window.in.1")
+    ).scalar_one()
+    conv = db.get(Conversation, msg.conversation_id)
+    assert conv.last_inbound_at is not None
+    assert conv.last_inbound_at == msg.timestamp
+
+
+# ---------- conversation assignment (team inbox) ----------
+
+
+def _notifications_for(db: Session, user_id) -> list[Notification]:
+    return list(
+        db.execute(select(Notification).where(Notification.user_id == user_id)).scalars().all()
+    )
+
+
+def test_assign_conversation_sets_owner_and_bells(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+    other_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": str(other_user.id)},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["assignee_id"] == str(other_user.id)
+
+    db.refresh(conv)
+    assert conv.assignee_id == other_user.id
+
+    notes = _notifications_for(db, other_user.id)
+    assert len(notes) == 1
+    assert notes[0].type == "conversation_assigned"
+    assert notes[0].actor_user_id == admin_user.id
+
+
+def test_assign_to_self_does_not_bell(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": str(admin_user.id)},
+    )
+    assert r.status_code == 200, r.text
+    db.refresh(conv)
+    assert conv.assignee_id == admin_user.id
+    # Claiming a thread for yourself must NOT self-bell.
+    assert _notifications_for(db, admin_user.id) == []
+
+
+def test_unassign_releases_to_queue(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    other_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+    conv.assignee_id = other_user.id
+    db.commit()
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": None},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["assignee_id"] is None
+    db.refresh(conv)
+    assert conv.assignee_id is None
+
+
+def test_assign_foreign_user_404(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    foreign_user: User,
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/assign",
+        json={"assignee_id": str(foreign_user.id)},
+    )
+    assert r.status_code == 404, r.text
+    db.refresh(conv)
+    assert conv.assignee_id is None  # unchanged — a foreign user can't own the thread
+
+
+def test_list_conversations_filter_assignee_me(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+):
+    acct = _make_account(db, test_org)
+    mine = _make_conversation(db, test_org, acct, contact_wa_id="5511900000001")
+    other = _make_conversation(db, test_org, acct, contact_wa_id="5511900000002")
+    mine.assignee_id = admin_user.id
+    db.commit()
+
+    r = admin_client.get("/api/whatsapp/conversations?assignee=me")
+    assert r.status_code == 200, r.text
+    ids = {c["id"] for c in r.json()}
+    assert str(mine.id) in ids
+    assert str(other.id) not in ids
+
+
+def test_list_conversations_filter_unassigned(
+    admin_client: CsrfAwareClient,
+    db: Session,
+    test_org: Organization,
+    admin_user: User,
+):
+    acct = _make_account(db, test_org)
+    mine = _make_conversation(db, test_org, acct, contact_wa_id="5511900000003")
+    queued = _make_conversation(db, test_org, acct, contact_wa_id="5511900000004")
+    mine.assignee_id = admin_user.id
+    db.commit()
+
+    r = admin_client.get("/api/whatsapp/conversations?assignee=unassigned")
+    assert r.status_code == 200, r.text
+    ids = {c["id"] for c in r.json()}
+    assert str(queued.id) in ids
+    assert str(mine.id) not in ids
+
+
+def test_list_conversations_bad_assignee_422(admin_client: CsrfAwareClient):
+    r = admin_client.get("/api/whatsapp/conversations?assignee=not-a-uuid")
+    assert r.status_code == 422
+
+
+# ---------- business profile ----------
+
+
+def _profile_http(*, status=200, body=None, capture=None):
+    """Fake httpx.AsyncClient returning one canned response for GET or POST,
+    recording each call as (method, url, params, json) into `capture`."""
+
+    class _Resp:
+        def __init__(self):
+            self.status_code = status
+            self._json = body if body is not None else {}
+            self.content = json.dumps(self._json).encode()
+
+        def json(self):
+            return self._json
+
+    class _Client:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def get(self, url, headers=None, params=None):
+            if capture is not None:
+                capture.append(("GET", url, params, None))
+            return _Resp()
+
+        async def post(self, url, json=None, headers=None):
+            if capture is not None:
+                capture.append(("POST", url, None, json))
+            return _Resp()
+
+    return _Client
+
+
+def test_fetch_business_profile_unwraps_data(monkeypatch):
+    calls: list = []
+    body = {"data": [{"about": "We sell cats", "websites": ["https://cats.example"]}]}
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(body=body, capture=calls))
+
+    import asyncio
+
+    out = asyncio.run(fetch_business_profile("PNID9", "tok"))
+    assert out["about"] == "We sell cats"
+    assert calls[0][0] == "GET"
+    assert calls[0][1].endswith("/PNID9/whatsapp_business_profile")
+    assert "about" in calls[0][2]["fields"]  # asks Meta for the editable fields
+
+
+def test_fetch_business_profile_empty_returns_dict(monkeypatch):
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(body={"data": []}))
+
+    import asyncio
+
+    assert asyncio.run(fetch_business_profile("PNID9", "tok")) == {}
+
+
+def test_fetch_business_profile_non_2xx_raises(monkeypatch):
+    body = {"error": {"message": "Unsupported get request"}}
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(status=403, body=body))
+
+    import asyncio
+
+    with pytest.raises(WhatsAppSendError) as ei:
+        asyncio.run(fetch_business_profile("PNID9", "tok"))
+    assert ei.value.status_code == 403
+    assert "Unsupported get request" in str(ei.value)
+
+
+def test_update_business_profile_posts_messaging_product(monkeypatch):
+    calls: list = []
+    monkeypatch.setattr(
+        "app.whatsapp.httpx.AsyncClient",
+        _profile_http(body={"success": True}, capture=calls),
+    )
+
+    import asyncio
+
+    asyncio.run(update_business_profile("PNID9", "tok", {"about": "New bio"}))
+    method, url, _params, sent = calls[0]
+    assert method == "POST"
+    assert url.endswith("/PNID9/whatsapp_business_profile")
+    assert sent["messaging_product"] == "whatsapp"
+    assert sent["about"] == "New bio"
+
+
+def test_update_business_profile_non_2xx_raises(monkeypatch):
+    body = {"error": {"message": "About is too long"}}
+    monkeypatch.setattr("app.whatsapp.httpx.AsyncClient", _profile_http(status=400, body=body))
+
+    import asyncio
+
+    with pytest.raises(WhatsAppSendError) as ei:
+        asyncio.run(update_business_profile("PNID9", "tok", {"about": "x" * 1000}))
+    assert ei.value.status_code == 400
+    assert "About is too long" in str(ei.value)
+
+
+def test_get_profile_endpoint_returns_parsed(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+
+    async def fake_fetch(phone_number_id, access_token):
+        assert phone_number_id == acct.phone_number_id
+        return {"about": "Hello", "email": "shop@example.com"}
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", fake_fetch)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/profile")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["about"] == "Hello"
+    assert body["email"] == "shop@example.com"
+    assert body["websites"] == []  # default when Meta omits it
+
+
+def test_patch_profile_updates_then_returns_fresh(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    sent: list = []
+
+    async def fake_update(phone_number_id, access_token, fields):
+        sent.append(fields)
+
+    async def fake_fetch(phone_number_id, access_token):
+        return {"about": "Updated bio"}
+
+    monkeypatch.setattr("app.api.whatsapp.update_business_profile", fake_update)
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", fake_fetch)
+
+    r = admin_client.patch(
+        f"/api/whatsapp/accounts/{acct.id}/profile",
+        json={"about": "Updated bio"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["about"] == "Updated bio"
+    # Only the provided field is forwarded to Meta — not the whole model.
+    assert sent == [{"about": "Updated bio"}]
+
+
+def test_patch_profile_empty_body_skips_update(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+
+    async def boom_update(*a, **k):
+        raise AssertionError("update must not be called for an empty patch")
+
+    async def fake_fetch(phone_number_id, access_token):
+        return {"about": "unchanged"}
+
+    monkeypatch.setattr("app.api.whatsapp.update_business_profile", boom_update)
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", fake_fetch)
+
+    r = admin_client.patch(f"/api/whatsapp/accounts/{acct.id}/profile", json={})
+    assert r.status_code == 200, r.text
+    assert r.json()["about"] == "unchanged"
+
+
+def test_patch_profile_non_admin_403(
+    other_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    r = other_client.patch(
+        f"/api/whatsapp/accounts/{acct.id}/profile",
+        json={"about": "nope"},
+    )
+    assert r.status_code == 403
+
+
+def test_get_profile_meta_failure_502(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+
+    async def boom(phone_number_id, access_token):
+        raise WhatsAppSendError("HTTP 401: token expired", status_code=401)
+
+    monkeypatch.setattr("app.api.whatsapp.fetch_business_profile", boom)
+
+    r = admin_client.get(f"/api/whatsapp/accounts/{acct.id}/profile")
+    assert r.status_code == 502
