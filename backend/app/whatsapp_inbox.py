@@ -113,6 +113,7 @@ async def ingest_inbound(db: AsyncSession, account: WhatsAppAccount, msg: Inboun
     db.add(row)
 
     conv.last_message_at = msg.timestamp
+    conv.last_inbound_at = msg.timestamp  # anchors the 24h service window
     conv.last_message_preview = (msg.body or f"[{msg.type.value}]")[:_PREVIEW_MAX]
     conv.unread_count += 1
     # A reply on a resolved thread pulls it back into the inbox. An `archived`

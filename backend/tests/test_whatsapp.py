@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import json
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import select, text
@@ -43,6 +44,7 @@ from app.models import (
     WhatsAppAccountStatus,
 )
 from app.whatsapp import (
+    SERVICE_WINDOW,
     WhatsAppSendError,
     fetch_media,
     mark_read,
@@ -52,6 +54,8 @@ from app.whatsapp import (
     send_reaction,
     send_template,
     send_text,
+    service_window_expires_at,
+    service_window_open,
     verify_challenge,
     verify_signature,
 )
@@ -100,12 +104,20 @@ def _make_account(
     return acct
 
 
+# Sentinel: default a freshly-made conversation to an OPEN 24h service window
+# (the contact just messaged) so the existing free-form-send tests keep working.
+# Pass `last_inbound_at=None` to simulate a contact who never messaged, or a past
+# datetime to simulate an expired window.
+_WINDOW_OPEN = object()
+
+
 def _make_conversation(
     db: Session,
     org: Organization,
     account: WhatsAppAccount,
     *,
     contact_wa_id: str = "5511988887777",
+    last_inbound_at=_WINDOW_OPEN,
 ) -> Conversation:
     conv = Conversation(
         organization_id=org.id,
@@ -113,6 +125,7 @@ def _make_conversation(
         channel=ConversationChannel.whatsapp,
         contact_wa_id=contact_wa_id,
         contact_name="Pytest Contact",
+        last_inbound_at=(datetime.now(UTC) if last_inbound_at is _WINDOW_OPEN else last_inbound_at),
     )
     db.add(conv)
     db.commit()
@@ -2147,3 +2160,199 @@ def test_read_endpoint_no_inbound_wamid_skips_enqueue(
     db.refresh(conv)
     assert conv.unread_count == 0
     assert calls == []
+
+
+# ---------- 24h customer-service window ----------
+
+
+def test_service_window_open_helper():
+    now = datetime.now(UTC)
+    # Never messaged → no window.
+    assert service_window_open(None) is False
+    # Fresh inbound → open.
+    assert service_window_open(now) is True
+    # 23h ago → still open; 25h ago → closed.
+    assert service_window_open(now - timedelta(hours=23)) is True
+    assert service_window_open(now - timedelta(hours=25)) is False
+    # Exactly at the boundary is closed (`now < expires` is strict).
+    assert service_window_open(now - SERVICE_WINDOW, now=now) is False
+
+
+def test_service_window_expires_at_helper():
+    anchor = datetime(2026, 6, 10, 12, 0, tzinfo=UTC)
+    assert service_window_expires_at(anchor) == anchor + SERVICE_WINDOW
+    assert service_window_expires_at(None) is None
+
+
+def test_conversation_out_exposes_open_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct)  # window open by default
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["service_window_open"] is True
+    assert body["service_window_expires_at"] is not None
+    assert body["last_inbound_at"] is not None
+
+
+def test_conversation_out_exposes_closed_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    # Contact last messaged 30h ago → window closed.
+    conv = _make_conversation(
+        db, test_org, acct, last_inbound_at=datetime.now(UTC) - timedelta(hours=30)
+    )
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["service_window_open"] is False
+    assert body["service_window_expires_at"] is not None
+
+
+def test_conversation_out_never_messaged_has_no_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.get(f"/api/whatsapp/conversations/{conv.id}")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["service_window_open"] is False
+    assert body["service_window_expires_at"] is None
+    assert body["last_inbound_at"] is None
+
+
+def test_send_text_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(
+        db, test_org, acct, last_inbound_at=datetime.now(UTC) - timedelta(hours=25)
+    )
+
+    calls: list = []
+
+    async def fake_enqueue(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "oi, tudo bem?"},
+    )
+    assert r.status_code == 409, r.text
+    assert "service_window_closed" in r.json()["detail"]
+    # Nothing persisted, nothing queued — the send was blocked up front.
+    assert calls == []
+    count = db.execute(select(Message).where(Message.conversation_id == conv.id)).scalars().all()
+    assert count == []
+
+
+def test_send_text_never_messaged_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages",
+        json={"body": "primeiro contato"},
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_send_media_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/media",
+        json={"media_type": "image", "link": "https://cdn.example/cat.jpg"},
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_send_interactive_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/interactive",
+        json={
+            "interactive_type": "button",
+            "body_text": "Escolha:",
+            "buttons": [{"id": "sim", "title": "Sim"}],
+        },
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_react_outside_window_409(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+    target = Message(
+        organization_id=test_org.id,
+        conversation_id=conv.id,
+        wa_message_id="wamid.window.target.1",
+        direction=MessageDirection.inbound,
+        type=MessageType.text,
+        body="oi",
+        status=MessageStatus.received,
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/messages/{target.id}/reaction",
+        json={"emoji": "👍"},
+    )
+    assert r.status_code == 409
+    assert "service_window_closed" in r.json()["detail"]
+
+
+def test_send_template_allowed_outside_window(
+    admin_client: CsrfAwareClient, db: Session, test_org: Organization, monkeypatch
+):
+    """Templates are the SANCTIONED way to re-open a closed conversation, so the
+    window guard must NOT block them."""
+    acct = _make_account(db, test_org)
+    conv = _make_conversation(db, test_org, acct, last_inbound_at=None)
+
+    async def fake_enqueue(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.worker.queue.enqueue", fake_enqueue)
+
+    r = admin_client.post(
+        f"/api/whatsapp/conversations/{conv.id}/template",
+        json={"template_name": "welcome", "language_code": "pt_BR"},
+    )
+    assert r.status_code == 201, r.text
+
+
+def test_inbound_message_anchors_service_window(
+    client: CsrfAwareClient, db: Session, test_org: Organization, wa_config
+):
+    """The webhook stamps `last_inbound_at` from the inbound message timestamp —
+    that's the anchor the 24h window is computed from. (The fixture uses a fixed
+    2023 epoch, so we assert the anchor itself, not the live open/closed state.)"""
+    _make_account(db, test_org)
+    r = _post_webhook(client, _inbound_payload(wamid="wamid.window.in.1", body="oi"))
+    assert r.status_code == 200
+    msg = db.execute(
+        select(Message).where(Message.wa_message_id == "wamid.window.in.1")
+    ).scalar_one()
+    conv = db.get(Conversation, msg.conversation_id)
+    assert conv.last_inbound_at is not None
+    assert conv.last_inbound_at == msg.timestamp

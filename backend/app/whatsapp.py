@@ -16,7 +16,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import structlog
@@ -29,6 +29,28 @@ log = structlog.get_logger(__name__)
 SIGNATURE_HEADER = "X-Hub-Signature-256"
 _SIGNATURE_PREFIX = "sha256="
 _SEND_TIMEOUT_S = 15.0
+
+# WhatsApp's customer-service window: a business may send free-form (non-template)
+# messages only within 24h of the contact's most recent inbound message. Outside
+# it, Meta rejects everything but pre-approved templates.
+SERVICE_WINDOW = timedelta(hours=24)
+
+
+def service_window_expires_at(last_inbound_at: datetime | None) -> datetime | None:
+    """When the free-form window closes for a thread whose last inbound message
+    arrived at `last_inbound_at`. None if the contact has never messaged."""
+    return last_inbound_at + SERVICE_WINDOW if last_inbound_at is not None else None
+
+
+def service_window_open(last_inbound_at: datetime | None, *, now: datetime | None = None) -> bool:
+    """True if the 24h free-form window is currently open. A thread with no
+    inbound message ever (`last_inbound_at is None`) has NO open window — Meta
+    requires a template to initiate."""
+    expires = service_window_expires_at(last_inbound_at)
+    if expires is None:
+        return False
+    return (now or datetime.now(UTC)) < expires
+
 
 # Meta message `type` string → our MessageType enum. Anything absent maps to
 # `unsupported` so an unmodeled payload is persisted, not dropped.

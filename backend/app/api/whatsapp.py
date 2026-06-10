@@ -692,6 +692,21 @@ async def _require_active_account(
     return account
 
 
+def _require_service_window_open(conv: Conversation) -> None:
+    """Guard free-form (non-template) sends. WhatsApp only accepts text/media/
+    interactive/reaction within 24h of the contact's last inbound message; Meta
+    rejects them otherwise. We block here with an actionable 409 instead of
+    queuing a doomed send that the worker would only stamp `failed`. Templates
+    are exempt — they're the sanctioned way to re-open the conversation."""
+    from app.whatsapp import service_window_open
+
+    if not service_window_open(conv.last_inbound_at):
+        raise HTTPException(
+            status_code=409,
+            detail="service_window_closed: send a template to message outside the 24h window",
+        )
+
+
 async def _resolve_reply_context(
     db: AsyncSession,
     conversation_id: uuid.UUID,
@@ -741,6 +756,7 @@ async def send_message(
     the same conversation (409 if that target has no `wamid` yet)."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
     context_wamid = await _resolve_reply_context(
         db, conversation_id, org_id, payload.reply_to_message_id
     )
@@ -885,6 +901,7 @@ async def send_media_message(
     active."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
     context_wamid = await _resolve_reply_context(
         db, conversation_id, org_id, payload.reply_to_message_id
     )
@@ -967,6 +984,7 @@ async def send_interactive_message(
     24h window open (Meta rejects otherwise → the row is stamped failed)."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
     context_wamid = await _resolve_reply_context(
         db, conversation_id, org_id, payload.reply_to_message_id
     )
@@ -1043,6 +1061,7 @@ async def send_message_reaction(
     the emoji, `context_wa_message_id` = the target's wamid) and queues the send."""
     conv = await _get_conversation_or_404(db, conversation_id, org_id)
     await _require_active_account(db, conv, org_id)
+    _require_service_window_open(conv)
 
     target = (
         await db.execute(

@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, model_validator
 
 from app.models import (
     ApiKeyScope,
@@ -1727,9 +1727,27 @@ class ConversationOut(BaseModel):
     status: ConversationStatus
     last_message_at: datetime | None
     last_message_preview: str | None
+    last_inbound_at: datetime | None
     unread_count: int
     created_at: datetime
     updated_at: datetime
+
+    @computed_field
+    @property
+    def service_window_expires_at(self) -> datetime | None:
+        """When the 24h free-form window closes (None if never opened). The UI
+        uses this to warn the agent before a free-form send gets rejected."""
+        from app.whatsapp import service_window_expires_at
+
+        return service_window_expires_at(self.last_inbound_at)
+
+    @computed_field
+    @property
+    def service_window_open(self) -> bool:
+        """Whether free-form (non-template) sends are currently allowed."""
+        from app.whatsapp import service_window_open
+
+        return service_window_open(self.last_inbound_at)
 
 
 class ConversationLink(BaseModel):
