@@ -37,6 +37,7 @@ from app.api import (
     leads,
     notes,
     notifications,
+    oauth,
     orgs,
     outbox,
     performance,
@@ -349,6 +350,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 
 app.include_router(auth.router)
+app.include_router(oauth.router)
 app.include_router(billing.router)
 # Public, unauthenticated marketing surface (landing chatbot). Rate-limited.
 app.include_router(public.router)

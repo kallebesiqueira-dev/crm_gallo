@@ -1179,6 +1179,12 @@ export const api = {
       body: JSON.stringify({ email }),
     }),
 
+  // ---- OAuth / social login ----
+  // Public: which providers the backend has configured. Drives whether the
+  // "Continue with Microsoft" button renders (no button for an unwired provider).
+  oauthProviders: () =>
+    request<{ microsoft: boolean }>("/api/auth/oauth/providers"),
+
   // ---- MFA (TOTP) ----
   mfaStatus: () => request<MfaStatus>("/api/auth/mfa/status"),
   mfaSetup: () =>
