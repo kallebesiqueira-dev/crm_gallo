@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "GALLO CRM",
-    "collapseSidebar": "Collapse sidebar",
+    "collapseSidebar": "Collapse",
     "expandSidebar": "Expand sidebar",
     "tagline": "AI-powered CRM for modern businesses"
   },

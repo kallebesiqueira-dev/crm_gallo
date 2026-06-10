@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "GALLO CRM",
-    "collapseSidebar": "Comprimi la barra laterale",
+    "collapseSidebar": "Collapse",
     "expandSidebar": "Espandi la barra laterale",
     "tagline": "CRM con IA per aziende moderne"
   },
