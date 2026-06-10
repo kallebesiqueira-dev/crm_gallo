@@ -14,6 +14,7 @@ from sqlalchemy import text
 
 from app.api import (
     activities,
+    admin_dlq,
     api_keys,
     assistant,
     attachments,
@@ -375,6 +376,7 @@ app.include_router(automations.router)
 app.include_router(assistant.router)
 app.include_router(trash.router)
 app.include_router(audit.router)
+app.include_router(admin_dlq.router)
 app.include_router(outbox.router)
 app.include_router(webhooks.router)
 app.include_router(whatsapp.webhook_router)
