@@ -94,7 +94,7 @@ function MarqueeRow({
           "group-hover:[animation-play-state:paused]",
         )}
       >
-        {[...logos, ...logos].map((logo, i) => (
+        {[...logos, ...logos, ...logos, ...logos].map((logo, i) => (
           <div
             key={`${logo.name}-${i}`}
             className={cn(

@@ -50,7 +50,7 @@ export function AboutSection() {
             {t("about.body")}
           </Reveal>
 
-          <Reveal variant="card" className="pt-4">
+          <Reveal variant="card" className="flex justify-center pt-4">
             <div className="w-40">
               <MiniStat value={t("about.mini.1.value")} label={t("about.mini.1.label")} />
             </div>

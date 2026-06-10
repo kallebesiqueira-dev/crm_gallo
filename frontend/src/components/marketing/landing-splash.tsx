@@ -71,7 +71,7 @@ export function LandingSplash() {
         <div className="relative">
           <div
             aria-hidden
-            className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-violet-600/25 blur-3xl animate-pulse-slow"
+            className="pointer-events-none absolute -inset-10 -z-10 rounded-[2.5rem] bg-violet-600/30 blur-3xl animate-pulse-slow"
           />
           <Image
             src="/gallo-logo.png"
@@ -79,7 +79,7 @@ export function LandingSplash() {
             width={260}
             height={260}
             priority
-            className="h-auto w-44 select-none drop-shadow-[0_12px_44px_rgba(124,58,237,0.45)] sm:w-56"
+            className="h-auto w-44 select-none rounded-[2rem] shadow-[0_24px_70px_-12px_rgba(124,58,237,0.6)] ring-1 ring-white/10 sm:w-56"
           />
         </div>
 
