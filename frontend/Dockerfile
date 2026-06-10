@@ -51,12 +51,18 @@ ARG NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0.1
 # Cloudflare Turnstile site key (public) — must be inlined at build time so the
 # register widget can render; without it the widget is a no-op.
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+# PostHog product analytics (EU cloud by default). Empty key ⇒ analytics off,
+# so the bundle builds + runs identically until a key is supplied at build time.
+ARG NEXT_PUBLIC_POSTHOG_KEY=
+ARG NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_DEFAULT_LOCALE=$NEXT_PUBLIC_DEFAULT_LOCALE \
     NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
     NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT \
     NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=$NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE \
     NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
+    NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY \
+    NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST \
     NEXT_TELEMETRY_DISABLED=1
 
 # node_modules from the deps stage (clean, linux). .dockerignore keeps the
