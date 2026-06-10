@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PostHogProvider } from "@/components/posthog-provider";
 import { SentryBoot } from "@/sentry/sentry-boot";
 import { locales, type Locale } from "@/i18n/config";
 
@@ -27,7 +28,7 @@ export default async function LocaleLayout({
         <SentryBoot />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {children}
+            <PostHogProvider>{children}</PostHogProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
