@@ -1729,6 +1729,13 @@ class Activity(Base):
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
+    # Plain INSERT, never INSERT...RETURNING: Postgres re-checks a RETURNING
+    # row against the table's SELECT policy, and the strict audit policy
+    # (migration 9f8e7d6c5b4a) makes org-scoped rows invisible to unscoped
+    # sessions (register, login, org switch, Stripe webhooks) — their own
+    # audit insert would fail. The id is client-generated and record_audit
+    # never reads the row back, so RETURNING buys nothing here.
+    __table_args__ = {"implicit_returning": False}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     # Nullable: platform-level events (a user logging in before they've
