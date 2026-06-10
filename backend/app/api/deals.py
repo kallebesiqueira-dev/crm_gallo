@@ -74,6 +74,7 @@ async def generate_deal_pdf_endpoint(
 @router.get("", response_model=list[DealOut])
 async def list_deals(
     stage: DealStage | None = None,
+    q: str | None = Query(default=None, description="search by title"),
     team_id: uuid.UUID | None = Query(default=None, description="filter by team_id"),
     limit: int = Query(default=200, ge=1, le=500),
     _: User = Depends(get_current_user),
@@ -88,6 +89,8 @@ async def list_deals(
     )
     if stage:
         stmt = stmt.where(Deal.stage == stage)
+    if q:
+        stmt = stmt.where(Deal.title.ilike(f"%{q}%"))
     if team_id is not None:
         stmt = stmt.where(Deal.team_id == team_id)
     result = await db.execute(stmt)
