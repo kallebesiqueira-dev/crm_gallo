@@ -45,6 +45,7 @@ from app.schemas import (
     InviteCreate,
     InviteOut,
     InvitePreview,
+    InviteTokenRequest,
     Token,
     UserOut,
 )
@@ -260,6 +261,71 @@ async def revoke_invite(
     await db.commit()
 
 
+@admin_router.post("/{invite_id}/resend", response_model=InviteOut)
+async def resend_invite(
+    invite_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    membership: OrgMembership = Depends(get_current_membership),
+    db: AsyncSession = Depends(get_db),
+) -> InviteOut:
+    """Re-send the invite email. If the invite is expired, rotate the
+    token and extend the expiry by another 7 days. Idempotent: an
+    already-accepted invite returns 410."""
+    _ensure_admin(membership)
+
+    result = await db.execute(
+        select(OrgInvite).where(
+            OrgInvite.id == invite_id,
+            OrgInvite.organization_id == org_id,
+        )
+    )
+    invite = result.scalar_one_or_none()
+    if invite is None:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if invite.accepted_at is not None:
+        raise HTTPException(status_code=410, detail="Invite already used")
+
+    # Rotate token + extend if expired so resend always produces a usable link.
+    if invite.expires_at <= datetime.now(UTC):
+        invite.token = _new_token()
+        invite.expires_at = datetime.now(UTC) + timedelta(days=INVITE_TTL_DAYS)
+
+    url = _invite_url(invite.token)
+    org = await db.get(Organization, org_id)
+    try:
+        await email_service.send(
+            to=invite.email,
+            template=email_service.TEMPLATE_INVITE,
+            locale=user.locale,
+            ctx={
+                "org_name": org.name if org else "",
+                "role": invite.role.value,
+                "url": url,
+                "expires_at": invite.expires_at.strftime("%Y-%m-%d"),
+            },
+            dedupe_key=f"invite_resend:{invite.token}",
+        )
+    except Exception:
+        log.warning("invite.resend_email_failed", invite_id=str(invite_id), exc_info=True)
+
+    await record_audit(
+        db,
+        actor=user,
+        action="invite.resend",
+        entity_type="invite",
+        entity_id=invite.id,
+        organization_id=org_id,
+        metadata={"email": invite.email},
+    )
+    await db.commit()
+    await db.refresh(invite)
+
+    out = InviteOut.model_validate(invite)
+    out.invite_url = url
+    return out
+
+
 # ──────────────────────────── Public endpoints ───────────────────────────
 
 
@@ -406,3 +472,82 @@ async def register_with_invite(
         refresh_token=refresh,
     )
     return AuthResponse(user=UserOut.model_validate(user), token=token)
+
+
+@accept_router.post(
+    "/accept-invite",
+    response_model=InviteOut,
+    summary="Accept an org invite while already logged in",
+)
+@limiter.limit(f"{settings.rate_limit_login_per_minute}/minute")
+async def accept_invite_logged_in(
+    request: Request,
+    payload: InviteTokenRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> InviteOut:
+    """Join an org using an invite token without creating a new account.
+
+    The logged-in user's email must match the invite email. On success
+    the user gains membership in the inviting org and their
+    `last_active_org_id` is updated to it.
+    """
+    invite = (
+        await db.execute(select(OrgInvite).where(OrgInvite.token == payload.token))
+    ).scalar_one_or_none()
+    if invite is None:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if invite.accepted_at is not None:
+        raise HTTPException(status_code=410, detail="Invite already used")
+    if invite.expires_at <= datetime.now(UTC):
+        raise HTTPException(status_code=410, detail="Invite expired")
+
+    if current_user.email.lower() != invite.email.lower():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This invite was issued to a different email address.",
+        )
+
+    # Idempotent: already a member → return the existing invite row (accepted).
+    existing = (
+        await db.execute(
+            select(OrgMembership).where(
+                OrgMembership.user_id == current_user.id,
+                OrgMembership.organization_id == invite.organization_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You are already a member of this organization.",
+        )
+
+    ok, reason = await can_accept_new_user(db, invite.organization_id)
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=reason)
+
+    membership = OrgMembership(
+        user_id=current_user.id,
+        organization_id=invite.organization_id,
+        role=invite.role,
+    )
+    db.add(membership)
+    invite.accepted_at = datetime.now(UTC)
+    current_user.last_active_org_id = invite.organization_id
+
+    await record_audit(
+        db,
+        actor=current_user,
+        action="invite.accept",
+        entity_type="invite",
+        entity_id=invite.id,
+        organization_id=invite.organization_id,
+        metadata={"role": invite.role.value, "user_id": str(current_user.id)},
+    )
+    await db.commit()
+    await db.refresh(invite)
+
+    out = InviteOut.model_validate(invite)
+    out.invite_url = _invite_url(invite.token)
+    return out

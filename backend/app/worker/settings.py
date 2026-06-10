@@ -40,6 +40,7 @@ from app.worker.jobs import (
     mark_whatsapp_read,
     mirror_whatsapp_media,
     process_import,
+    prune_expired_invites,
     scan_stale_leads,
     score_lead,
     send_email,
@@ -141,6 +142,17 @@ class WorkerSettings:
             scan_stale_leads,
             name="scan_stale_leads",
             minute={0},
+            run_at_startup=False,
+            unique=True,
+            max_tries=1,
+        ),
+        # Prune expired-and-unaccepted invites older than 30 days.
+        # Daily at 03:17 (off-peak, avoids :00 thundering-herd).
+        cron(
+            prune_expired_invites,
+            name="prune_expired_invites",
+            hour={3},
+            minute={17},
             run_at_startup=False,
             unique=True,
             max_tries=1,

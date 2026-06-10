@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -21,9 +22,12 @@ from app.models import (
     User,
 )
 from app.money import ZERO, q2
+from app.redis_client import get_redis
 from app.schemas import DashboardStats, FunnelStageStat, MonthValue, QuotesSummary
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+
+_CACHE_TTL = 60  # seconds — stale stats for at most 1 minute is fine for a dashboard
 
 # Rough conversion to EUR for quick pipeline-value approximation.
 # In production, fetch live rates and persist them. Decimal so the
@@ -53,6 +57,17 @@ async def stats(
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
 ) -> DashboardStats:
+    # Serve from Redis cache when available — 60s TTL means at most one
+    # DB round-trip per org per minute instead of one per page load.
+    cache_key = f"dashboard:stats:{org_id}"
+    r = get_redis()
+    try:
+        cached = await r.get(cache_key)
+        if cached:
+            return DashboardStats.model_validate_json(cached)
+    except Exception:
+        pass  # Redis miss or error — fall through to DB
+
     # Every aggregate filters by the current org — without it the dashboard
     # would leak counts across tenants (a tiny but real existence leak:
     # "this install has 12k leads" tells you something about other orgs).
@@ -194,7 +209,7 @@ async def stats(
         overdue_eur=float(q2(q_overdue)),
     )
 
-    return DashboardStats(
+    result = DashboardStats(
         total_leads=total_leads,
         leads_by_stage=by_stage,
         won_count=won,
@@ -210,3 +225,8 @@ async def stats(
         revenue_total_eur=float(q2(revenue_total)),
         quotes=quotes_summary,
     )
+    try:
+        await r.set(cache_key, result.model_dump_json(), ex=_CACHE_TTL)
+    except Exception:
+        pass  # best-effort cache write
+    return result

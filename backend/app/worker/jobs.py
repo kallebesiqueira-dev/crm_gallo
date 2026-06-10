@@ -18,12 +18,12 @@ import asyncio
 import json
 import time
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import structlog
 from arq import Retry
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 
 from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.audit import record_audit
@@ -42,6 +42,7 @@ from app.models import (
     Lead,
     Message,
     MessageStatus,
+    OrgInvite,
     Organization,
     Quote,
     User,
@@ -1520,3 +1521,26 @@ async def process_import(ctx: dict, import_job_id: str, organization_id: str) ->
         "skipped": skipped,
         "errors": errors,
     }
+
+
+async def prune_expired_invites(ctx: dict) -> dict:
+    """Daily sweep: delete OrgInvite rows that expired > 30 days ago and
+    were never accepted. Keeps the table clean for audit while preserving
+    recently-expired rows in case an admin needs to see the history.
+
+    `org_invites` is NOT RLS'd (invites are org-scoped by FK, not by
+    policy), so no tenant GUC needed here.
+    """
+    SessionLocal = ctx["SessionLocal"]
+    cutoff = datetime.now(UTC) - timedelta(days=30)
+    async with SessionLocal() as db:
+        result = await db.execute(
+            delete(OrgInvite).where(
+                OrgInvite.accepted_at.is_(None),
+                OrgInvite.expires_at < cutoff,
+            )
+        )
+        await db.commit()
+    pruned = result.rowcount
+    log.info("invites.pruned", count=pruned)
+    return {"pruned": pruned}

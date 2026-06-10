@@ -52,6 +52,12 @@ OUTBOX_PENDING = Gauge(
     "Number of outbox_events rows not yet processed (processed_at IS NULL).",
 )
 
+OUTBOX_LAG_SECONDS = Gauge(
+    "outbox_oldest_pending_age_seconds",
+    "Age in seconds of the oldest unprocessed outbox event eligible for delivery. "
+    "0 when the queue is empty.",
+)
+
 DLQ_DEPTH = Gauge(
     "arq_dead_queue_depth",
     "Number of entries in the arq dead-letter queue (arq:dead Redis list).",

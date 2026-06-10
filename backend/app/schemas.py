@@ -1495,6 +1495,12 @@ class InviteAcceptRequest(BaseModel):
     locale: str = "en"
 
 
+class InviteTokenRequest(BaseModel):
+    """Body for POST /api/auth/accept-invite (logged-in user accepts)."""
+
+    token: str
+
+
 # ---------- Dashboard ----------
 class FunnelStageStat(BaseModel):
     stage: str

@@ -62,6 +62,24 @@ groups:
             More than 100 outbox events are waiting to be drained. The Arq
             worker may be down or unable to process jobs. Check worker logs.
 
+      # --- Outbox lag by age ---
+      # Fires when the OLDEST eligible (not exhausted-retries) outbox event
+      # has been sitting unprocessed for > 60s. Detects a slow/stalled worker
+      # even if the queue is small (a few stuck retries won't trigger
+      # OutboxDrainBacklog but will age).
+      - alert: OutboxLag
+        expr: |
+          outbox_oldest_pending_age_seconds > 60
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox lag: oldest pending event is {{ $value | humanizeDuration }} old"
+          description: >
+            The oldest unprocessed outbox event has been waiting more than 60 seconds.
+            The Arq worker may be overloaded or stuck. Check worker logs and
+            arq:dead queue depth.
+
       # --- arq dead-letter queue depth ---
       # Metric source: GET /metrics reads LLEN arq:dead from Redis.
       # Any entry in the DLQ means a job exhausted all retries — operator action needed.

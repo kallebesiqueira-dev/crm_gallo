@@ -66,7 +66,7 @@ from app.cookies import (
 )
 from app.database import engine
 from app.logging_setup import configure_logging, get_logger
-from app.metrics import DLQ_DEPTH, OUTBOX_PENDING, PrometheusMiddleware, metrics_response
+from app.metrics import DLQ_DEPTH, OUTBOX_LAG_SECONDS, OUTBOX_PENDING, PrometheusMiddleware, metrics_response
 from app.rate_limit import limiter
 from app.sentry_setup import init_sentry
 
@@ -433,16 +433,26 @@ async def metrics(request: Request):
     # is a fast index scan (partial index covers this column).
     try:
         async with engine.connect() as conn:
-            pending = (
+            row = (
                 await conn.execute(
                     text(
-                        "SELECT COUNT(*) FROM outbox_events WHERE processed_at IS NULL"
+                        """
+                        SELECT
+                            COUNT(*) AS pending,
+                            COALESCE(
+                                EXTRACT(EPOCH FROM (now() - MIN(occurred_at))),
+                                0
+                            ) AS oldest_age_s
+                        FROM outbox_events
+                        WHERE processed_at IS NULL
+                        """
                     )
                 )
-            ).scalar_one()
-        OUTBOX_PENDING.set(pending)
+            ).one()
+        OUTBOX_PENDING.set(row.pending)
+        OUTBOX_LAG_SECONDS.set(row.oldest_age_s)
     except Exception:
-        pass  # stale gauge is better than a broken /metrics
+        pass  # stale gauges are better than a broken /metrics
     # DLQ depth: count entries in the Redis arq:dead list. O(1) via LLEN.
     try:
         from app.redis_client import get_redis
