@@ -16,10 +16,8 @@ Retries:
     `arq.JobStatus` lookups by job id work for the typical "did
     the click take?" follow-up without bloating Redis.
 
-DLQ: arq has no built-in dead-letter queue. After max_tries the
-exception is logged and the job is dropped. A real DLQ would be
-a Redis list `arq:queue:dead` we LPUSH to from a fail callback;
-tracked as a P2 follow-up.
+DLQ: terminal failures (job_try >= max_tries) are pushed to
+``arq:dead`` via `dlq_wrap`. Inspect via GET /api/admin/dlq.
 """
 
 from __future__ import annotations
@@ -32,6 +30,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.config import get_settings
 from app.database import register_org_guc
+from app.worker.dlq import dlq_wrap
 from app.worker.jobs import (
     deliver_webhook,
     drain_outbox,
@@ -103,17 +102,19 @@ class WorkerSettings:
     `on_shutdown`, `max_tries`, etc. off the class directly."""
 
     functions: ClassVar = [
-        score_lead,
-        deliver_webhook,
-        send_email,
-        generate_deal_pdf,
-        generate_quote_pdf,
-        generate_contract_pdf,
-        process_import,
-        scan_stale_leads,
-        send_whatsapp_message,
-        mirror_whatsapp_media,
-        mark_whatsapp_read,
+        # Regular jobs — wrapped with dlq_wrap so terminal failures
+        # (job_try >= max_tries) land in arq:dead for inspection.
+        dlq_wrap(score_lead),
+        dlq_wrap(deliver_webhook, max_tries=8),  # webhook has its own _WEBHOOK_MAX_TRIES=8
+        dlq_wrap(send_email),
+        dlq_wrap(generate_deal_pdf),
+        dlq_wrap(generate_quote_pdf),
+        dlq_wrap(generate_contract_pdf),
+        dlq_wrap(process_import),
+        dlq_wrap(scan_stale_leads),
+        dlq_wrap(send_whatsapp_message),
+        dlq_wrap(mirror_whatsapp_media),
+        dlq_wrap(mark_whatsapp_read),
     ]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1

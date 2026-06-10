@@ -2359,9 +2359,7 @@ class Message(Base):
     )
     # Meta's `wamid`. UNIQUE for idempotency; nullable because an outbound row
     # exists (status=pending) before the Graph send returns its id.
-    wa_message_id: Mapped[str | None] = mapped_column(
-        String(128), unique=True, index=True
-    )
+    wa_message_id: Mapped[str | None] = mapped_column(String(128), unique=True, index=True)
     direction: Mapped[MessageDirection] = mapped_column(Enum(MessageDirection), nullable=False)
     type: Mapped[MessageType] = mapped_column(
         Enum(MessageType),

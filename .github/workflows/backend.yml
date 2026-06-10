@@ -94,6 +94,39 @@ jobs:
         # `ruff format .` to fix.
         run: ruff format --check .
 
+      - name: Guard audit_logs cross-org leak
+        # Catches API endpoints that query audit_logs without an
+        # organization_id filter — a missing clause leaks cross-tenant
+        # rows because the SELECT policy on audit_logs is advisory.
+        # False-positive rate is low: the check only fires on .py files
+        # inside app/api/ that reference 'audit_logs' without the guard.
+        run: |
+          python - <<'EOF'
+          import sys, pathlib, re
+
+          api_dir = pathlib.Path("app/api")
+          violations = []
+          pattern = re.compile(r'audit_logs', re.IGNORECASE)
+          guard = re.compile(r'organization_id', re.IGNORECASE)
+
+          for path in sorted(api_dir.rglob("*.py")):
+              text = path.read_text(encoding="utf-8")
+              for i, line in enumerate(text.splitlines(), 1):
+                  if pattern.search(line) and not line.strip().startswith("#"):
+                      # Check ±5 lines for an organization_id reference
+                      lines = text.splitlines()
+                      window = "\n".join(lines[max(0, i-6):i+5])
+                      if not guard.search(window):
+                          violations.append(f"{path}:{i}: {line.strip()}")
+
+          if violations:
+              print("audit_logs queries missing organization_id filter:")
+              for v in violations:
+                  print(f"  {v}")
+              sys.exit(1)
+          print("audit_logs guard: OK")
+          EOF
+
       - name: Apply migrations
         # Validates the migration chain end-to-end against a real
         # Postgres. An invalid migration (broken op, missing column,

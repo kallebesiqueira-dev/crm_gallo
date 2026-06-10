@@ -88,8 +88,7 @@ async def report_issue(
     html = (
         f"<h2 style='margin:0 0 8px'>{h(title)}</h2>"
         f"<p style='white-space:pre-wrap;margin:0 0 16px'>{h(description)}</p>"
-        f"<table style='border-top:1px solid #eee;font-size:13px'>{meta_html}</table>"
-        + shot_html
+        f"<table style='border-top:1px solid #eee;font-size:13px'>{meta_html}</table>" + shot_html
     )
     text = (
         f"{title}\n\n{description}\n\n"
