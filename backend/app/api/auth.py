@@ -9,6 +9,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import analytics
 from app import email as email_service
 from app.api.billing import can_accept_new_user
 from app.audit import record_audit
@@ -384,6 +385,7 @@ async def login(
     )
     await db.commit()
     token = await _start_session(request, response, user)
+    analytics.capture(str(user.id), "user_logged_in")
     return AuthResponse(user=UserOut.model_validate(user), token=token)
 
 
