@@ -41,7 +41,7 @@ def _heuristic_summary(customer: Customer) -> str:
     return "Heuristic summary: " + ", ".join(b for b in bits if b)
 
 
-async def summarize_customer(customer: Customer) -> str:
+async def summarize_customer(customer: Customer, locale: str = "en") -> str:
     if not is_configured():
         return _heuristic_summary(customer)
 
@@ -59,7 +59,8 @@ async def summarize_customer(customer: Customer) -> str:
             system=(
                 "You write concise CRM customer summaries (2-3 sentences). "
                 "Highlight the relationship status, last known activity, and "
-                "the single most useful follow-up action."
+                "the single most useful follow-up action. "
+                f"Write the summary in the user's language (locale code: {locale})."
             ),
             max_tokens=400,
         )
