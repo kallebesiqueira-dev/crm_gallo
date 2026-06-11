@@ -357,7 +357,7 @@ function Panel({ className, children }: { className?: string; children: React.Re
       className={cn(
         "rounded-2xl border bg-card shadow-sm",
         "border-border",
-        "dark:border-white/10 dark:bg-white/[0.04] dark:backdrop-blur-xl dark:shadow-[0_8px_40px_-12px_rgba(139,92,246,0.25)]",
+        "dark:border-white/10 dark:bg-[#1d1545] dark:shadow-[0_8px_40px_-12px_rgba(139,92,246,0.25)]",
         className,
       )}
     >
