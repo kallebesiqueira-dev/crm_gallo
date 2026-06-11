@@ -174,7 +174,7 @@ export default function CustomersPage() {
           <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[40rem] text-sm">
+          <table className="w-full min-w-[20rem] text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="w-10 px-4 py-3 text-left font-medium">
@@ -187,10 +187,10 @@ export default function CustomersPage() {
                   />
                 </th>
                 <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("company")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("country")}</th>
-                <th className="px-4 py-3 text-left font-medium">{tTags("title")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
+                <th className="hidden px-4 py-3 text-left font-medium md:table-cell">{t("company")}</th>
+                <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">{t("country")}</th>
+                <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{tTags("title")}</th>
+                <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{t("created")}</th>
                 <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
               </tr>
             </thead>
@@ -215,12 +215,12 @@ export default function CustomersPage() {
                     </Link>
                     {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
                   </td>
-                  <td className="px-4 py-3">{c.company ?? "—"}</td>
-                  <td className="px-4 py-3">{c.country ?? "—"}</td>
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 md:table-cell">{c.company ?? "—"}</td>
+                  <td className="hidden px-4 py-3 sm:table-cell">{c.country ?? "—"}</td>
+                  <td className="hidden px-4 py-3 lg:table-cell">
                     <TagChipList tags={tagMap[c.id] ?? []} />
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
                     {new Date(c.created_at).toLocaleDateString(locale)}
                   </td>
                   <td className="px-4 py-3">

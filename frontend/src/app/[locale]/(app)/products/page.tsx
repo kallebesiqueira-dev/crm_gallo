@@ -122,13 +122,13 @@ export default function ProductsPage() {
           <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[40rem] text-sm">
+            <table className="w-full min-w-[20rem] text-sm">
               <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                  <th className="px-4 py-3 text-left font-medium">{t("sku")}</th>
-                  <th className="px-4 py-3 text-left font-medium">{t("type")}</th>
-                  <th className="px-4 py-3 text-right font-medium">{t("price")}</th>
+                  <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{t("sku")}</th>
+                  <th className="hidden px-4 py-3 text-left font-medium md:table-cell">{t("type")}</th>
+                  <th className="hidden px-4 py-3 text-right font-medium sm:table-cell">{t("price")}</th>
                   <th className="px-4 py-3 text-left font-medium">{t("status")}</th>
                   <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
                 </tr>
@@ -145,11 +145,11 @@ export default function ProductsPage() {
                       </Link>
                       {p.unit && <div className="text-xs text-muted-foreground">/ {p.unit}</div>}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{p.sku ?? "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">{p.sku ?? "—"}</td>
+                    <td className="hidden px-4 py-3 md:table-cell">
                       {p.type === "service" ? t("typeService") : t("typeProduct")}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{fmtPrice(p)}</td>
+                    <td className="hidden px-4 py-3 text-right tabular-nums sm:table-cell">{fmtPrice(p)}</td>
                     <td className="px-4 py-3">
                       <span
                         className={
