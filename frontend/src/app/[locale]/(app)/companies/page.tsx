@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Building2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { TagChipList } from "@/components/entity-tags";
 import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
+import { EmptyState } from "@/components/empty-state";
 import { api, type Company, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -162,7 +163,12 @@ export default function CompaniesPage() {
 
       <Card className="overflow-hidden">
         {items.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
+          <EmptyState
+            icon={Building2}
+            title={t("empty")}
+            actionLabel={t("new")}
+            actionHref={`/${locale}/companies/new`}
+          />
         ) : (
           <div className="overflow-x-auto">
           <table className="w-full min-w-[40rem] text-sm">
