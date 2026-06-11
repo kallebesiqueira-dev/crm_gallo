@@ -1074,7 +1074,7 @@
     "perUserPerMonth": "/ user / month",
     "freeCtaSubtext": "Up to 2 users · forever",
     "billedMonthly": "Billed monthly",
-    "billedYearly": "Billed yearly (-20%)",
+    "billedYearly": "Billed {total}/year (-20%)",
     "trialBadge": "{days}-day free trial",
     "startFree": "Start free",
     "choose": "Choose plan",

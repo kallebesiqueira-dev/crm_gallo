@@ -202,12 +202,20 @@ export default function PricingPage() {
     }
   }, [stripeFlag, t]);
 
-  const moneyFmt = new Intl.NumberFormat(locale, {
+  // Whole monthly prices stay clean ("€19"); fractional yearly per-user prices
+  // show their cents ("€15,20") so the −20% math is exact, never rounded off.
+  const moneyWhole = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "EUR",
-    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });
+  const moneyCents = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const money = (n: number) => (Number.isInteger(n) ? moneyWhole : moneyCents).format(n);
 
   async function handleChoose(plan: PlanOut) {
     if (!plan.requires_payment) {
@@ -581,7 +589,7 @@ export default function PricingPage() {
                   <PlanCard
                     plan={plan}
                     cycle={cycle}
-                    moneyFmt={moneyFmt}
+                    money={money}
                     busy={busyPlan === plan.id}
                     onChoose={() => handleChoose(plan)}
                   />
@@ -770,13 +778,13 @@ function CycleTab({
 function PlanCard({
   plan,
   cycle,
-  moneyFmt,
+  money,
   busy,
   onChoose,
 }: {
   plan: PlanOut;
   cycle: BillingCycle;
-  moneyFmt: Intl.NumberFormat;
+  money: (n: number) => string;
   busy: boolean;
   onChoose: () => void;
 }) {
@@ -821,7 +829,7 @@ function PlanCard({
 
         <div className="mt-6 flex items-baseline gap-1">
           <span className="text-5xl font-semibold tracking-tight">
-            {isFree ? t("free") : moneyFmt.format(price)}
+            {isFree ? t("free") : money(price)}
           </span>
           {!isFree && (
             <span className="text-sm text-muted-foreground">{t("perUserPerMonth")}</span>
@@ -831,7 +839,7 @@ function PlanCard({
           {isFree
             ? t("freeCtaSubtext")
             : cycle === "yearly"
-              ? t("billedYearly")
+              ? t("billedYearly", { total: money(plan.yearly_total_eur) })
               : t("billedMonthly")}
         </p>
 
