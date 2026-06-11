@@ -1074,7 +1074,7 @@
     "perUserPerMonth": "/ utilisatur / mais",
     "freeCtaSubtext": "Fin a 2 utilisaturs · per adina",
     "billedMonthly": "Quint meinsil",
-    "billedYearly": "Quint annual (-20%)",
+    "billedYearly": "Quint annual {total} (-20%)",
     "trialBadge": "{days} dis gratuits",
     "startFree": "Cumenzar gratuitamain",
     "choose": "Tscherner plan",

@@ -1074,7 +1074,7 @@
     "perUserPerMonth": "/ Benutzer / Monat",
     "freeCtaSubtext": "Bis zu 2 Benutzer · für immer",
     "billedMonthly": "Monatliche Abrechnung",
-    "billedYearly": "Jährliche Abrechnung (-20%)",
+    "billedYearly": "Jährliche Abrechnung {total} (-20%)",
     "trialBadge": "{days} Tage kostenlos testen",
     "startFree": "Kostenlos starten",
     "choose": "Plan wählen",
