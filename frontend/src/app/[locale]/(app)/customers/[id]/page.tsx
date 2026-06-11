@@ -70,7 +70,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   if (!customer) return <p className="text-sm text-muted-foreground">…</p>;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
@@ -95,7 +95,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Email" value={customer.email} />
             <Field label="Phone" value={customer.phone} />
             <Field label="Industry" value={customer.industry} />

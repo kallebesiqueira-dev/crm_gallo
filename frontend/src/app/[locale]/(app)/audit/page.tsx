@@ -82,7 +82,7 @@ export default function AuditPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={applyFilters} className="grid gap-3 md:grid-cols-5">
+          <form onSubmit={applyFilters} className="grid grid-cols-1 gap-3 md:grid-cols-5">
             <div className="space-y-1.5">
               <Label htmlFor="action">{t("filterAction")}</Label>
               <Input

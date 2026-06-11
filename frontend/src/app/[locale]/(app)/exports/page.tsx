@@ -49,7 +49,7 @@ export default function ExportsPage() {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {ENTITIES.map((entity) => (
           <Card key={entity} className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">

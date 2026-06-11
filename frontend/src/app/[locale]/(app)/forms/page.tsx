@@ -148,7 +148,7 @@ export default function FormsPage() {
       )}
 
       <Card className="p-4">
-        <form onSubmit={handleCreate} className="grid gap-3 sm:grid-cols-2">
+        <form onSubmit={handleCreate} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="form-name">{t("name")}</Label>
             <Input

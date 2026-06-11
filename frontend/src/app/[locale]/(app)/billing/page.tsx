@@ -228,7 +228,7 @@ export default function BillingPage() {
           </div>
         </CardHeader>
         <CardContent className="relative">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <MetricTile
               icon={<Users className="h-4 w-4" />}
               label={t("seatsUsed")}
@@ -277,7 +277,7 @@ export default function BillingPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {plans.map((plan) => (
                 <UpgradeCard
                   key={plan.id}

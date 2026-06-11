@@ -98,7 +98,7 @@ export default function TasksPage() {
           <CardTitle className="text-base">{t("new")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={create} className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+          <form onSubmit={create} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}

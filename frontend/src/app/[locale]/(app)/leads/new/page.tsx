@@ -72,7 +72,7 @@ export default function NewLeadPage() {
         <CardTitle>{t("new")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+        <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="first_name">First name</Label>
             <Input

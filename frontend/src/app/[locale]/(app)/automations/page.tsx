@@ -194,7 +194,7 @@ export default function AutomationsPage() {
           <CardTitle className="text-sm font-medium text-muted-foreground">{t("newRule")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCreate} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <form onSubmit={handleCreate} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1 sm:col-span-2 lg:col-span-1">
               <Label htmlFor="a-name">{t("name")}</Label>
               <Input id="a-name" value={name} onChange={(e) => setName(e.target.value)} required />

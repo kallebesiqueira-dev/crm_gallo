@@ -65,7 +65,7 @@ export default function NewCompanyPage() {
         <CardTitle>{t("new")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+        <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field id="name" label={t("name")} required value={form.name} onChange={(v) => set("name", v)} />
           <Field id="industry" label={t("industry")} value={form.industry} onChange={(v) => set("industry", v)} />
           <Field id="website" label={t("website")} value={form.website} onChange={(v) => set("website", v)} />
