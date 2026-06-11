@@ -85,7 +85,7 @@ _IMPORT_MODELS = {
 }
 
 
-async def score_lead(ctx: dict, lead_id: str, organization_id: str) -> dict:
+async def score_lead(ctx: dict, lead_id: str, organization_id: str, locale: str = "en") -> dict:
     """Re-score one lead in the background.
 
     Mirrors the sync `POST /api/leads/{id}/score` endpoint but with
@@ -122,7 +122,7 @@ async def score_lead(ctx: dict, lead_id: str, organization_id: str) -> dict:
             log.warning("score_lead.lead_missing", lead_id=lead_id, organization_id=organization_id)
             return {"status": "missing"}
 
-        scoring = await score_lead_via_llm(lead)
+        scoring = await score_lead_via_llm(lead, locale)
         lead.ai_score = scoring["score"]
         lead.ai_priority = scoring["priority"]
         lead.ai_next_action = scoring["next_action"]
