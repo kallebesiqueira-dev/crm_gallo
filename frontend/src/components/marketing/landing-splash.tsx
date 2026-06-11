@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  * stays out of the way on SPA navigations back to the landing. Clear it (or a
  * fresh tab / incognito) to see it again.
  */
-const DURATION_MS = 1300;
+const DURATION_MS = 2200;
 
 export function LandingSplash() {
   const [mounted, setMounted] = useState(false);
@@ -38,7 +38,7 @@ export function LandingSplash() {
       const pct = Math.min(100, ((now - startTs) / DURATION_MS) * 100);
       setProgress(pct);
       if (pct < 100) raf = requestAnimationFrame(tick);
-      else window.setTimeout(() => setFading(true), 180);
+      else window.setTimeout(() => setFading(true), 350);
     };
     raf = requestAnimationFrame(tick);
     return () => {
@@ -56,7 +56,8 @@ export function LandingSplash() {
   return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-[200] grid place-items-center transition-opacity duration-500 ease-out",
+        "fixed inset-x-0 top-0 z-[200] grid h-[100dvh] place-items-center px-6 transition-opacity duration-700 ease-out",
+        "pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
         "bg-[radial-gradient(circle_at_center,#1b0f33_0%,#0a0612_72%)]",
         fading ? "pointer-events-none opacity-0" : "opacity-100",
       )}
@@ -67,11 +68,11 @@ export function LandingSplash() {
         }
       }}
     >
-      <div className="flex flex-col items-center gap-10">
+      <div className="flex max-h-full flex-col items-center gap-8">
         <div className="relative">
           <div
             aria-hidden
-            className="pointer-events-none absolute -inset-10 -z-10 rounded-[2.5rem] bg-violet-600/30 blur-3xl animate-pulse-slow"
+            className="pointer-events-none absolute -inset-8 -z-10 rounded-[2.5rem] bg-violet-600/30 blur-3xl animate-pulse-slow"
           />
           <Image
             src="/gallo-logo.png"
@@ -79,7 +80,7 @@ export function LandingSplash() {
             width={260}
             height={260}
             priority
-            className="h-auto w-44 select-none rounded-[2rem] shadow-[0_24px_70px_-12px_rgba(124,58,237,0.6)] ring-1 ring-white/10 sm:w-56"
+            className="h-auto w-40 max-w-[60vw] select-none rounded-[2rem] object-contain shadow-[0_24px_70px_-12px_rgba(124,58,237,0.6)] ring-1 ring-white/10 sm:w-56"
           />
         </div>
 
