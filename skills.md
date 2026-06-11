@@ -86,7 +86,7 @@ For the user-facing story, see [README.md](README.md). This document is the engi
 - All 7 locales (en/pt/de/fr/it/rm/es) ship `pricing`, `billing`, `marketing` namespaces
 
 ### 🔄 In progress
-*(2026-06-11 session 2: next_action system + Hoje page + lead conversion + WebhooksCard + customer deals panel + inline task completion on Hoje — all uncommitted local)*
+*(2026-06-11 session 3: owner assignment on Lead/Deal create+edit forms; onboarding checklist widget + pipeline template wizard (components/onboarding-checklist.tsx + app/[locale]/(app)/onboarding/page.tsx); 7-locale i18n for onboarding — all uncommitted local. tsc clean + locale parity pass)*
 
 ### ⏭️ Next milestone
 **P0 multi-tenant is DONE** (orgs + RLS + invites + billing migration — all of §3 P0). So is the P1 backend-depth round (worker, outbox, webhooks, search, locking), the **Transactional-email workstream** (DONE 2026-06-01, ADR-017), and the **full ADR-016 Documents stack** — PDF foundation, versioned Quotes, versioned Contracts (backend + frontend + create-from-quote), merge-field templates, e-signature on both quotes and contracts, bulk Imports/Exports, and the Public API + API keys are ALL DONE and pushed to `main` (commits `4cfb6bc`/`37dcf6b`/`40ea9b2`/`b0374dc`/`5a02240`/`a7c5c1a`/`2e0302a`/`380898d`). Cursor pagination (TD-11) and money→Decimal (TD-30) done too. **CI is green** on all 4 workflows; frontend Vitest + backend cross-org RLS guard + Playwright e2e (core gate + opt-in scoring) all landed 2026-06-04.
@@ -278,7 +278,7 @@ These are the modules every serious CRM has and we don't.
 #### Outbox + event bus (foundation for automations + webhooks)
 - [x] **`outbox_events` table** — done 2026-06-01 (migration `22779df17c2e`). `record_event(db, event_type, organization_id, payload)` in `app/events.py` appends a row in the SAME session as the domain mutation, so it commits-or-rolls-back with it — never a phantom event.
 - [x] **Worker drains** (`drain_outbox`, cron every 5s) → claims a batch with `FOR UPDATE SKIP LOCKED` + exponential backoff (`occurred_at + 2^attempt s`) → dispatches to in-process subscribers (`app/events_dispatcher.py`) AND fans out to outgoing webhooks → marks `processed_at`.
-- [x] Event types (v1 subset): `lead.created`, `lead.stage_changed`, `deal.created`, `deal.stage_changed`, `deal.won`, `deal.lost`. **Follow-up:** `task.overdue`, `customer.created`, `user.invited` not emitted yet.
+- [x] Event types (v1 subset): `lead.created`, `lead.stage_changed`, `deal.created`, `deal.stage_changed`, `deal.won`, `deal.lost`. ~~Follow-up: task.overdue, customer.created, user.invited~~ **DONE 2026-06-11 (`48049ea`)**: `customer.created` (create + lead-convert, reuse não re-emite), `user.invited` (invite create, owner=inviter), `task.overdue` (sweep diário 06:07 UTC, 1× por (task, due_date), dedupe via outbox). AutomationTrigger ampliado (migration `c6d7e8f9a0b1`, ALTER TYPE ×3) + `_ID_KEY_FOR_ENTITY` generaliza o engine p/ customer/task/invite. 5 testes. **Follow-up restante:** expor os 3 triggers novos no picker da UI de automations (lane frontend).
 - [x] Unlocks reliable webhooks (live — see below). Automation actions + search indexing are downstream consumers that can now register as subscribers.
 - [x] **Lag alert** — `outbox_oldest_pending_age_seconds` gauge + `OutboxLag` alert rule (oldest > 60s for 2m). Done 2026-06-10.
 
