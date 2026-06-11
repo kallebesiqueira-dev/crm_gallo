@@ -108,7 +108,7 @@ export default function ImportsPage() {
       <Card className="p-6">
         <h2 className="text-lg font-medium">{t("startTitle")}</h2>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
               <span className="text-sm font-medium">{t("entityType")}</span>
               <select

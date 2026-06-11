@@ -280,7 +280,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
       )}
 
       <Card>
-        <CardContent className="grid gap-x-8 gap-y-3 p-6 text-sm sm:grid-cols-2">
+        <CardContent className="grid grid-cols-1 gap-x-8 gap-y-3 p-6 text-sm sm:grid-cols-2">
           <Field label={t("value")} value={money(contract.value)} />
           <Field label={t("currency")} value={contract.currency} />
           <Field label={t("effectiveDate")} value={fmtDate(contract.effective_date)} />

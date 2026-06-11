@@ -56,7 +56,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   const { company, customers, leads, deals } = data;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
@@ -79,7 +79,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label={t("website")} value={company.website} />
             <Field label={t("email")} value={company.email} />
             <Field label={t("phone")} value={company.phone} />
