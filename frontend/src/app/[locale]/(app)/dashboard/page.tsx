@@ -256,7 +256,7 @@ export default function DashboardPage() {
               {openTasks.map((task) => (
                 <div key={task.id} className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-accent">
                   <span className="h-4 w-4 shrink-0 rounded-full border-2 border-primary/50" />
-                  <div className="flex-1 truncate text-sm">{task.title}</div>
+                  <div className="min-w-0 flex-1 truncate text-sm">{task.title}</div>
                   {task.due_date && (
                     <div className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                       {new Date(task.due_date).toLocaleDateString(locale)}
@@ -372,11 +372,11 @@ function SectionTitle({ icon: Icon, children }: { icon: typeof Target; children:
 function LegendRow({ color, label, value }: { color: string; label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="flex items-center gap-2 text-muted-foreground">
-        <span className={cn("h-2.5 w-2.5 rounded-full", color)} />
-        {label}
+      <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
+        <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", color)} />
+        <span className="truncate">{label}</span>
       </span>
-      <span className="font-semibold text-foreground">{value}</span>
+      <span className="shrink-0 whitespace-nowrap font-semibold text-foreground">{value}</span>
     </div>
   );
 }
@@ -522,9 +522,9 @@ function Funnel({
     <div className="my-4 mb-4 flex flex-col gap-1">
       {funnel.map((s, i) => (
         <div key={s.stage} className="flex items-center gap-2">
-          <div className="flex flex-1 justify-center">
+          <div className="flex min-w-0 flex-1 justify-center">
             <div
-              className="flex h-8 items-center justify-center truncate rounded px-2 text-center text-[11px] font-semibold text-white shadow-sm"
+              className="flex h-8 max-w-full items-center justify-center truncate rounded px-2 text-center text-[11px] font-semibold text-white shadow-sm"
               style={{
                 width: `${widths[i] ?? 44}%`,
                 background: `linear-gradient(135deg, hsl(264 72% ${42 + i * 7}%), hsl(288 70% ${46 + i * 7}%))`,
@@ -533,8 +533,8 @@ function Funnel({
               {tStages(s.stage)}
             </div>
           </div>
-          <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums">{s.count}</span>
-          <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
+          <span className="w-7 shrink-0 text-right text-xs font-semibold tabular-nums">{s.count}</span>
+          <span className="w-20 shrink-0 whitespace-nowrap text-right text-[11px] text-muted-foreground tabular-nums">
             {eur.format(s.value_eur)}
           </span>
         </div>
