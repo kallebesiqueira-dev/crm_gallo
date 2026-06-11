@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Copy, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,19 +44,18 @@ export function MfaCard({ onEnabled }: { onEnabled?: () => void } = {}) {
   const [disableBusy, setDisableBusy] = useState(false);
   const [disableError, setDisableError] = useState<string | null>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setStatus(await api.mfaStatus());
       setLoadError(null);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Load failed");
     }
-  }
+  }, []);
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   async function startSetup() {
     setEnrollError(null);

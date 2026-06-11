@@ -1815,10 +1815,12 @@ export const api = {
     request<void>(`/api/deals/${id}`, { method: "DELETE", token }),
 
   // Tasks
-  listTasks: (token: string, opts?: { status?: TaskStatus; mine?: boolean }) => {
+  listTasks: (token: string, opts?: { status?: TaskStatus; mine?: boolean; limit?: number; offset?: number }) => {
     const params = new URLSearchParams();
     if (opts?.status) params.set("status", opts.status);
     if (opts?.mine) params.set("mine", "true");
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    if (opts?.offset) params.set("offset", String(opts.offset));
     const qs = params.toString();
     return request<Task[]>(`/api/tasks${qs ? `?${qs}` : ""}`, { token });
   },

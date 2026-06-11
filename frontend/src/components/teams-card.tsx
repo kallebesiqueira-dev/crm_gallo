@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Plus, ShieldAlert, Trash2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export function TeamsCard({ canManage }: Props) {
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setTeams(await api.listTeams());
       setError(null);
@@ -52,12 +52,11 @@ export function TeamsCard({ canManage }: Props) {
         setError(e instanceof Error ? e.message : "Load failed");
       }
     }
-  }
+  }, []);
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();

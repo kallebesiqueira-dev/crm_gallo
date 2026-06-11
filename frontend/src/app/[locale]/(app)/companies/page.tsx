@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
@@ -29,7 +29,7 @@ export default function CompaniesPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadTags(ids: string[]) {
+  const loadTags = useCallback(async (ids: string[]) => {
     const token = getToken();
     if (!token || ids.length === 0) return;
     try {
@@ -42,7 +42,7 @@ export default function CompaniesPage() {
     } catch {
       /* chips are non-critical — ignore */
     }
-  }
+  }, []);
 
   useEffect(() => {
     const token = getToken();
@@ -65,8 +65,7 @@ export default function CompaniesPage() {
         });
     }, 200);
     return () => clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, loadTags]);
 
   async function loadMore() {
     const token = getToken();

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.api._concurrency import check_if_match
 from app.api._errors import raise_for_duplicate_email
+from app.api.dashboard import invalidate_dashboard_cache
 from app.audit import record_audit
 from app.config import get_settings
 from app.custom_fields import validate_custom_fields
@@ -18,7 +19,6 @@ from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.models import Lead, LeadStage, User
 from app.notifications import NotificationType, notify
-from app.api.dashboard import invalidate_dashboard_cache
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.rate_limit import limiter, user_or_ip_key
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
@@ -65,14 +65,30 @@ async def list_leads(
         stmt = stmt.where(Lead.team_id == team_id)
     if q:
         # Postgres FTS via the stored `search_vector` generated column
-        # (migration 062fbc7b628d) + GIN index. Replaces the previous
-        # `LOWER() LIKE '%q%'` full-table scan. `websearch_to_tsquery`
+        # (migration 062fbc7b628d) + GIN index. `websearch_to_tsquery`
         # parses Google-style input: `acme corp`, `"exact phrase"`,
         # `acme -spam`. `simple` config matches the index — locale-
         # agnostic since the data is multilingual.
-        stmt = stmt.where(
-            sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
-        )
+        fts_filter = sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
+        # EXISTS probe: if FTS returns nothing, fall back to trigram
+        # similarity (handles typos, e.g. "bratrice" → Beatrice).
+        # The EXISTS stops at the first hit, so it's cheap with the GIN index.
+        has_fts = (
+            await db.execute(
+                select(sa.literal(1)).where(Lead.organization_id == org_id, fts_filter).limit(1)
+            )
+        ).first() is not None
+        if has_fts:
+            stmt = stmt.where(fts_filter)
+        else:
+            stmt = stmt.where(
+                sa.or_(
+                    sa.func.similarity(Lead.first_name, q) > 0.3,
+                    sa.func.similarity(Lead.last_name, q) > 0.3,
+                    sa.func.similarity(Lead.email, q) > 0.3,
+                    sa.func.similarity(Lead.company, q) > 0.3,
+                )
+            )
     return await paginate(db, stmt, Lead, limit=limit, cursor=cursor)
 
 

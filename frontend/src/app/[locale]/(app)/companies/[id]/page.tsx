@@ -12,6 +12,7 @@ import { ActivityTimeline } from "@/components/activity-timeline";
 import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
+import { PageSpinner } from "@/components/page-spinner";
 import { api, type CompanyRollup } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -51,7 +52,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   }
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
-  if (!data) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!data) return <PageSpinner />;
 
   const { company, customers, leads, deals } = data;
 

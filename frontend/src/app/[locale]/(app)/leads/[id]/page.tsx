@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Sparkles, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { AttachmentsPanel } from "@/components/attachments-panel";
 import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
+import { PageSpinner } from "@/components/page-spinner";
 import { useToast } from "@/components/toast-provider";
 import { api, type Lead, type LeadStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -94,7 +95,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
-  if (!lead) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!lead) return <PageSpinner />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -200,7 +201,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <CardTitle className="text-base">{t("score")}</CardTitle>
               <Button size="sm" onClick={runScore} disabled={scoring}>
                 <Sparkles className="h-4 w-4" />
-                {scoring ? "…" : t("scoreNow")}
+                {scoring ? <Loader2 className="h-4 w-4 animate-spin" /> : t("scoreNow")}
               </Button>
             </div>
           </CardHeader>

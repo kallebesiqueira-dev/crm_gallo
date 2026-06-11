@@ -1,8 +1,9 @@
 import logging
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from app.models import Customer
-from app.services.llm import LLMError, chat_completion, is_configured
+from app.services.llm import LLMError, chat_completion, chat_completion_stream, is_configured
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,33 @@ async def chat(
     except LLMError as e:
         logger.warning("Assistant LLM failed: %s", e)
         return f"⚠️ AI provider error: {e}"
+
+
+async def chat_stream(
+    user_message: str,
+    locale: str = "en",
+    history: list[dict] | None = None,
+) -> AsyncGenerator[str, None]:
+    """Streaming variant of chat() — yields text tokens as they arrive."""
+    if not is_configured():
+        yield (
+            "AI assistant is not configured. Configure LLM_PROVIDER + ANTHROPIC_API_KEY "
+            f"or start the Ollama container to enable AI responses. (locale={locale})"
+        )
+        return
+
+    messages = list(history or [])
+    messages.append({"role": "user", "content": user_message})
+    try:
+        async for chunk in chat_completion_stream(
+            messages=messages,
+            system=f"{SYSTEM_PROMPT} Reply in locale: {locale}.",
+            max_tokens=1024,
+        ):
+            yield chunk
+    except LLMError as e:
+        logger.warning("Assistant LLM stream failed: %s", e)
+        yield f"⚠️ AI provider error: {e}"
 
 
 def _heuristic_summary(customer: Customer) -> str:

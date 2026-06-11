@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError, type Task, type TaskPriority, type TaskStatus } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -33,17 +34,37 @@ export default function TasksPage() {
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const PAGE = 50;
 
   async function refresh() {
     const token = getToken();
     if (!token) return;
-    const list = await api.listTasks(token);
+    const list = await api.listTasks(token, { limit: PAGE });
     setTasks(list);
+    setHasMore(list.length === PAGE);
+    setLoading(false);
   }
 
   useEffect(() => {
     refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function loadMore() {
+    const token = getToken();
+    if (!token || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const more = await api.listTasks(token, { limit: PAGE, offset: tasks.length });
+      setTasks((prev) => [...prev, ...more]);
+      setHasMore(more.length === PAGE);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -133,7 +154,17 @@ export default function TasksPage() {
 
       <Card>
         <CardContent className="p-0">
-          {tasks.length === 0 ? (
+          {loading ? (
+            <ul className="divide-y">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <li key={i} className="flex items-center gap-3 px-4 py-3">
+                  <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </li>
+              ))}
+            </ul>
+          ) : tasks.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
           ) : (
             <ul className="divide-y">
@@ -181,6 +212,14 @@ export default function TasksPage() {
           )}
         </CardContent>
       </Card>
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button type="button" variant="outline" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("loadMore")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

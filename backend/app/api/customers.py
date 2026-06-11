@@ -52,11 +52,27 @@ async def list_customers(
     stmt = select(Customer).where(Customer.organization_id == org_id)
     if q:
         # FTS via the stored search_vector column + GIN index
-        # (migration 062fbc7b628d). Same pattern as leads — see
-        # the comment there.
-        stmt = stmt.where(
-            sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
-        )
+        # (migration 062fbc7b628d). Falls back to trigram similarity
+        # when FTS returns no hits (handles typos).
+        fts_filter = sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
+        has_fts = (
+            await db.execute(
+                select(sa.literal(1))
+                .where(Customer.organization_id == org_id, fts_filter)
+                .limit(1)
+            )
+        ).first() is not None
+        if has_fts:
+            stmt = stmt.where(fts_filter)
+        else:
+            stmt = stmt.where(
+                sa.or_(
+                    sa.func.similarity(Customer.first_name, q) > 0.3,
+                    sa.func.similarity(Customer.last_name, q) > 0.3,
+                    sa.func.similarity(Customer.email, q) > 0.3,
+                    sa.func.similarity(Customer.company, q) > 0.3,
+                )
+            )
     return await paginate(db, stmt, Customer, limit=limit, cursor=cursor)
 
 

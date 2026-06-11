@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Sparkles, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -13,6 +13,7 @@ import { AttachmentsPanel } from "@/components/attachments-panel";
 import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
+import { PageSpinner } from "@/components/page-spinner";
 import { useToast } from "@/components/toast-provider";
 import { api, type Customer } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -70,7 +71,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   }
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
-  if (!customer) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!customer) return <PageSpinner />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -146,7 +147,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               <CardTitle className="text-base">{t("aiSummary")}</CardTitle>
               <Button size="sm" onClick={summarize} disabled={busy}>
                 <Sparkles className="h-4 w-4" />
-                {busy ? "…" : t("summarize")}
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("summarize")}
               </Button>
             </div>
           </CardHeader>

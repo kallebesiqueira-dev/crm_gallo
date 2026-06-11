@@ -358,16 +358,16 @@ Auth is browser cookie + CSRF, which can't do server-to-server, and routes aren'
 #### Frontend DX
 - [ ] **TanStack Query** — eliminate ~12 `useEffect(() => api.foo().then(setX), [])` patterns; gain cache, retries, mutations
 - [ ] **openapi-typescript** — generate `Lead`, `Customer`, etc. from FastAPI's OpenAPI schema; kill drift between front/back types
-- [ ] `<Skeleton>` on every list page during initial load
-- [ ] Toast system (radix-toast or simple custom) for transient errors (assistant, mutations)
+- [x] `<Skeleton>` on every list page during initial load — leads + customers done 2026-06-11.
+- [x] Toast system — custom `toast-provider.tsx`, no new deps, wired in layout. Done 2026-06-11.
 - [ ] Pagination UI on lists (backend already accepts `limit`/`offset`)
 - [ ] Fix `react-hooks/exhaustive-deps` warnings throughout
 - [ ] Replace `…` loading placeholders with proper spinners
 
 #### AI
-- [ ] Assistant chat: **stream responses** (SSE or fetch ReadableStream)
+- [x] Assistant chat: **stream responses** — SSE endpoint + ReadableStream frontend. Done 2026-06-11.
 - [x] **Assistant conversation history** — `history[]` field in `AssistantRequest`; prior turns prepended to LLM messages. Done 2026-06-10.
-- [ ] Customer summary: include open deals + recent tasks/notes in the LLM prompt (currently it gets only basic fields — junior smell)
+- [x] Customer summary: include open deals + recent tasks/notes in the LLM prompt — done 2026-06-10.
 - [ ] Per-user / per-org LLM token usage tracking
 - [ ] Configurable temperature/max_tokens per use case
 
@@ -378,7 +378,7 @@ Auth is browser cookie + CSRF, which can't do server-to-server, and routes aren'
 - [x] Switch `passlib + bcrypt` → `argon2-cffi` — done 2026-06-10.
 
 #### i18n quality
-- [ ] CI script: assert all locale files have identical key set
+- [x] CI script: assert all locale files have identical key set — added to frontend.yml. Done 2026-06-11.
 - [ ] Pluralization: messages with counts should use ICU/`{count, plural}` syntax
 
 #### API quality

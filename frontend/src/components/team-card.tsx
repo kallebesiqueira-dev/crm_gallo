@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Copy, Loader2, ShieldAlert, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export function TeamCard({ canInvite }: { canInvite: boolean }) {
   const [lastUrl, setLastUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  async function reload() {
+  const reload = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     try {
@@ -51,12 +51,11 @@ export function TeamCard({ canInvite }: { canInvite: boolean }) {
         setLoadError(e instanceof Error ? e.message : "Load failed");
       }
     }
-  }
+  }, []);
 
   useEffect(() => {
     reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reload]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

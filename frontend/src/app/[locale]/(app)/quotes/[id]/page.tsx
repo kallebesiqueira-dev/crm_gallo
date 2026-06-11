@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import { SignaturePanel } from "@/components/signature-panel";
+import { PageSpinner } from "@/components/page-spinner";
 import { api, type DocumentTemplate, type FileAttachment, type Quote } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { STATUS_VARIANT } from "../status";
@@ -165,7 +166,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   if (error && !quote) return <p className="text-sm text-destructive">{error}</p>;
-  if (!quote) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!quote) return <PageSpinner />;
 
   const isDraft = quote.status === "draft";
   const isSent = quote.status === "sent";

@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ContractForm } from "@/components/contract-form";
+import { PageSpinner } from "@/components/page-spinner";
 import { api, type Contract, type ContractCreate } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -37,7 +38,7 @@ export default function EditContractPage({ params }: { params: Promise<{ id: str
   }
 
   if (error && !contract) return <p className="text-sm text-destructive">{error}</p>;
-  if (!contract) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!contract) return <PageSpinner />;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">

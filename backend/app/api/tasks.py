@@ -32,6 +32,7 @@ async def list_tasks(
     status_filter: TaskStatus | None = Query(default=None, alias="status"),
     mine: bool = False,
     limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
@@ -40,6 +41,7 @@ async def list_tasks(
         select(Task)
         .where(Task.organization_id == org_id)
         .order_by(Task.due_date.asc().nullslast(), Task.created_at.desc())
+        .offset(offset)
         .limit(limit)
     )
     if status_filter:

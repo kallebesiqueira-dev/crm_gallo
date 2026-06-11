@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import { SignaturePanel } from "@/components/signature-panel";
+import { PageSpinner } from "@/components/page-spinner";
 import { api, type Contract, type DocumentTemplate, type FileAttachment } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { STATUS_VARIANT } from "../status";
@@ -172,7 +173,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
   }
 
   if (error && !contract) return <p className="text-sm text-destructive">{error}</p>;
-  if (!contract) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!contract) return <PageSpinner />;
 
   const isDraft = contract.status === "draft";
   const isSent = contract.status === "sent";
