@@ -245,6 +245,7 @@
     "stage": "Étape",
     "score": "Score IA",
     "owner": "Responsable",
+    "unassigned": "Non assigné",
     "created": "Créé",
     "empty": "Aucun prospect. Créez votre premier.",
     "save": "Enregistrer",
@@ -666,6 +667,7 @@
     "lineItems": "Lignes",
     "addLine": "Ajouter une ligne",
     "lineDescription": "Description",
+    "fromCatalog": "Depuis le catalogue…",
     "quantity": "Qté",
     "unitPrice": "Prix unit.",
     "lineTotal": "Total",
@@ -1660,6 +1662,44 @@
     "kind": {
       "quote": "Devis",
       "contract": "Contrat"
+    }
+  },
+  "onboarding": {
+    "title": "Commencer",
+    "subtitle": "Complétez ces étapes pour configurer votre CRM",
+    "dismiss": "Ignorer",
+    "completed": "{completed} sur {total} terminés",
+    "allDone": "Tout est prêt ! Prêt à conclure des affaires.",
+    "steps": {
+      "pipeline_ready": "Configurer votre pipeline",
+      "first_lead": "Ajouter votre premier lead",
+      "next_action_set": "Définir une prochaine action sur une affaire",
+      "teammate_invited": "Inviter un coéquipier",
+      "proposal_sent": "Envoyer votre première proposition"
+    },
+    "stepHints": {
+      "pipeline_ready": "Choisissez un modèle de pipeline pour votre secteur",
+      "first_lead": "Importez ou créez votre premier contact",
+      "next_action_set": "Ne perdez jamais le fil d'un suivi",
+      "teammate_invited": "Collaborez avec votre équipe commerciale",
+      "proposal_sent": "Créez un devis et marquez-le comme envoyé"
+    },
+    "wizard": {
+      "title": "Choisir votre pipeline",
+      "subtitle": "Sélectionnez le modèle qui correspond le mieux à votre activité",
+      "apply": "Utiliser ce modèle",
+      "applied": "Modèle appliqué !",
+      "alreadyApplied": "Un pipeline pour ce modèle existe déjà.",
+      "stages": "Étapes",
+      "sectors": {
+        "agency": "Agence",
+        "saas": "SaaS / Logiciel",
+        "consulting": "Conseil",
+        "construction": "Construction",
+        "real-estate": "Immobilier",
+        "whatsapp-sales": "Ventes WhatsApp",
+        "b2b-simple": "B2B simple"
+      }
     }
   }
 }

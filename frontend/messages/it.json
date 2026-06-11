@@ -245,6 +245,7 @@
     "stage": "Fase",
     "score": "Punteggio IA",
     "owner": "Responsabile",
+    "unassigned": "Non assegnato",
     "created": "Creato",
     "empty": "Nessun lead. Crea il primo.",
     "save": "Salva",
@@ -666,6 +667,7 @@
     "lineItems": "Voci",
     "addLine": "Aggiungi voce",
     "lineDescription": "Descrizione",
+    "fromCatalog": "Dal catalogo…",
     "quantity": "Qtà",
     "unitPrice": "Prezzo unit.",
     "lineTotal": "Totale",
@@ -1660,6 +1662,44 @@
     "kind": {
       "quote": "Preventivo",
       "contract": "Contratto"
+    }
+  },
+  "onboarding": {
+    "title": "Inizia",
+    "subtitle": "Completa questi passaggi per configurare il tuo CRM",
+    "dismiss": "Ignora",
+    "completed": "{completed} di {total} completati",
+    "allDone": "Tutto pronto! Pronto a chiudere affari.",
+    "steps": {
+      "pipeline_ready": "Configura la tua pipeline",
+      "first_lead": "Aggiungi il tuo primo lead",
+      "next_action_set": "Imposta una prossima azione su un affare",
+      "teammate_invited": "Invita un collega",
+      "proposal_sent": "Invia la tua prima proposta"
+    },
+    "stepHints": {
+      "pipeline_ready": "Scegli un modello di pipeline per il tuo settore",
+      "first_lead": "Importa o crea il tuo primo contatto",
+      "next_action_set": "Non perdere mai il filo di un follow-up",
+      "teammate_invited": "Collabora con il tuo team di vendita",
+      "proposal_sent": "Crea un preventivo e contrassegnalo come inviato"
+    },
+    "wizard": {
+      "title": "Scegli la tua pipeline",
+      "subtitle": "Seleziona il modello più adatto alla tua attività",
+      "apply": "Usa questo modello",
+      "applied": "Modello applicato!",
+      "alreadyApplied": "Una pipeline per questo modello esiste già.",
+      "stages": "Fasi",
+      "sectors": {
+        "agency": "Agenzia",
+        "saas": "SaaS / Software",
+        "consulting": "Consulenza",
+        "construction": "Edilizia",
+        "real-estate": "Immobiliare",
+        "whatsapp-sales": "Vendite WhatsApp",
+        "b2b-simple": "B2B semplice"
+      }
     }
   }
 }

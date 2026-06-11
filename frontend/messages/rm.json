@@ -245,6 +245,7 @@
     "stage": "Stadi",
     "score": "Score IA",
     "owner": "Responsabel",
+    "unassigned": "Betg attribuì",
     "created": "Creà",
     "empty": "Nagins leads. Crea il emprim.",
     "save": "Memorisar",
@@ -666,6 +667,7 @@
     "lineItems": "Posiziuns",
     "addLine": "Agiuntar posiziun",
     "lineDescription": "Descripziun",
+    "fromCatalog": "Dal catalog…",
     "quantity": "Quant.",
     "unitPrice": "Pretsch sing.",
     "lineTotal": "Total",
@@ -1660,6 +1662,44 @@
     "kind": {
       "quote": "Preventiv",
       "contract": "Contract"
+    }
+  },
+  "onboarding": {
+    "title": "Cumenzar",
+    "subtitle": "Completa quests pass per configurar tiu CRM",
+    "dismiss": "Serra",
+    "completed": "{completed} da {total} fatgs",
+    "allDone": "Tut pront! Pronts per serrar transacziuns.",
+    "steps": {
+      "pipeline_ready": "Configurar tia pipeline",
+      "first_lead": "Agiuntar tia primara lead",
+      "next_action_set": "Fixar in'acziun proxima per in affar",
+      "teammate_invited": "Invitar in collavuratur",
+      "proposal_sent": "Trametter tia primara proposta"
+    },
+    "stepHints": {
+      "pipeline_ready": "Tscherna in model da pipeline per tiu sectur",
+      "first_lead": "Importa u crea tia primara contact",
+      "next_action_set": "Na perder mai il fil d'in suandament",
+      "teammate_invited": "Collavura cun tia equipa da vendita",
+      "proposal_sent": "Crea in preventiv e merca'l sco tramess"
+    },
+    "wizard": {
+      "title": "Tscherna tia pipeline",
+      "subtitle": "Selecziunescha il model che correspunda meglier a tia interpresa",
+      "apply": "Utilisar quest model",
+      "applied": "Model applitgà!",
+      "alreadyApplied": "Exista gia ina pipeline per quest model.",
+      "stages": "Fases",
+      "sectors": {
+        "agency": "Agentura",
+        "saas": "SaaS / Software",
+        "consulting": "Consultaziun",
+        "construction": "Construcziun",
+        "real-estate": "Bains immobigls",
+        "whatsapp-sales": "Vendita via WhatsApp",
+        "b2b-simple": "B2B simpel"
+      }
     }
   }
 }

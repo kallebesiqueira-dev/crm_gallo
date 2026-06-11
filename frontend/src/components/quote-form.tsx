@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Currency, Quote, QuoteCreate } from "@/lib/api";
+import { api, type Currency, type Product, type Quote, type QuoteCreate } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 const CURRENCIES: Currency[] = ["EUR", "CHF", "USD", "GBP"];
 
@@ -15,6 +16,9 @@ interface LineRow {
   description: string;
   quantity: number;
   unit_price: number;
+  // UI-only helper: which catalog product filled this line (line items
+  // carry no product FK server-side — picking just pre-fills the fields).
+  product_id?: string;
 }
 
 interface Props {
@@ -46,6 +50,19 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
       : [{ description: "", quantity: 1, unit_price: 0 }],
   );
 
+  // Catalog for the per-line product picker (plan.md §7). Active
+  // products only; an empty catalog hides the picker entirely so the
+  // form is unchanged for orgs that don't use it.
+  const [products, setProducts] = useState<Product[]>([]);
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    api
+      .listProducts(token, { limit: 200 })
+      .then((page) => setProducts(page.items.filter((p) => p.active)))
+      .catch(() => {});
+  }, []);
+
   const totals = useMemo(() => {
     const subtotal = round2(lines.reduce((s, l) => s + round2(l.quantity * l.unit_price), 0));
     const tax = round2((subtotal * taxRate) / 100);
@@ -54,6 +71,20 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
 
   function updateLine(i: number, patch: Partial<LineRow>) {
     setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+  }
+
+  function applyProduct(i: number, productId: string) {
+    if (!productId) {
+      updateLine(i, { product_id: undefined });
+      return;
+    }
+    const p = products.find((x) => x.id === productId);
+    if (!p) return;
+    updateLine(i, {
+      product_id: p.id,
+      description: p.name,
+      unit_price: Number(p.price ?? 0),
+    });
   }
 
   function addLine() {
@@ -171,11 +202,30 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
               key={i}
               className="grid gap-2 sm:grid-cols-[1fr_5rem_7rem_7rem_2rem] sm:items-center"
             >
-              <Input
-                value={line.description}
-                onChange={(e) => updateLine(i, { description: e.target.value })}
-                placeholder={t("lineDescription")}
-              />
+              <div className="flex gap-2">
+                {products.length > 0 && (
+                  <select
+                    className="h-10 w-36 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                    value={line.product_id ?? ""}
+                    onChange={(e) => applyProduct(i, e.target.value)}
+                    aria-label={t("fromCatalog")}
+                  >
+                    <option value="">{t("fromCatalog")}</option>
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                        {p.sku ? ` · ${p.sku}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <Input
+                  className="flex-1"
+                  value={line.description}
+                  onChange={(e) => updateLine(i, { description: e.target.value })}
+                  placeholder={t("lineDescription")}
+                />
+              </div>
               <Input
                 type="number"
                 min={0}

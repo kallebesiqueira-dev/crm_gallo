@@ -245,6 +245,7 @@
     "stage": "Etapa",
     "score": "Score IA",
     "owner": "Responsable",
+    "unassigned": "Sin asignar",
     "created": "Creado",
     "empty": "Sin leads. Crea el primero.",
     "save": "Guardar",
@@ -666,6 +667,7 @@
     "lineItems": "Líneas",
     "addLine": "Añadir línea",
     "lineDescription": "Descripción",
+    "fromCatalog": "Del catálogo…",
     "quantity": "Cant.",
     "unitPrice": "Precio unit.",
     "lineTotal": "Total",
@@ -1660,6 +1662,44 @@
     "kind": {
       "quote": "Presupuesto",
       "contract": "Contrato"
+    }
+  },
+  "onboarding": {
+    "title": "Empezar",
+    "subtitle": "Completa estos pasos para configurar tu CRM",
+    "dismiss": "Ignorar",
+    "completed": "{completed} de {total} completados",
+    "allDone": "¡Todo listo! Preparado para cerrar tratos.",
+    "steps": {
+      "pipeline_ready": "Configurar tu pipeline",
+      "first_lead": "Agregar tu primer lead",
+      "next_action_set": "Establecer una próxima acción en un trato",
+      "teammate_invited": "Invitar a un compañero",
+      "proposal_sent": "Enviar tu primera propuesta"
+    },
+    "stepHints": {
+      "pipeline_ready": "Elige una plantilla de pipeline para tu sector",
+      "first_lead": "Importa o crea tu primer contacto",
+      "next_action_set": "Nunca pierdas el hilo de un seguimiento",
+      "teammate_invited": "Colabora con tu equipo de ventas",
+      "proposal_sent": "Crea un presupuesto y márcalo como enviado"
+    },
+    "wizard": {
+      "title": "Elige tu pipeline",
+      "subtitle": "Selecciona la plantilla que mejor se adapte a tu negocio",
+      "apply": "Usar esta plantilla",
+      "applied": "¡Plantilla aplicada!",
+      "alreadyApplied": "Ya existe un pipeline para esta plantilla.",
+      "stages": "Etapas",
+      "sectors": {
+        "agency": "Agencia",
+        "saas": "SaaS / Software",
+        "consulting": "Consultoría",
+        "construction": "Construcción",
+        "real-estate": "Inmobiliaria",
+        "whatsapp-sales": "Ventas por WhatsApp",
+        "b2b-simple": "B2B simple"
+      }
     }
   }
 }

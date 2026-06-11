@@ -245,6 +245,7 @@
     "stage": "Phase",
     "score": "KI-Score",
     "owner": "Verantwortlich",
+    "unassigned": "Nicht zugewiesen",
     "created": "Erstellt",
     "empty": "Noch keine Leads. Erstellen Sie Ihren ersten.",
     "save": "Speichern",
@@ -666,6 +667,7 @@
     "lineItems": "Positionen",
     "addLine": "Position hinzufügen",
     "lineDescription": "Beschreibung",
+    "fromCatalog": "Aus dem Katalog…",
     "quantity": "Menge",
     "unitPrice": "Einzelpreis",
     "lineTotal": "Summe",
@@ -1660,6 +1662,44 @@
     "kind": {
       "quote": "Angebot",
       "contract": "Vertrag"
+    }
+  },
+  "onboarding": {
+    "title": "Loslegen",
+    "subtitle": "Schließen Sie diese Schritte ab, um Ihr CRM einzurichten",
+    "dismiss": "Schließen",
+    "completed": "{completed} von {total} erledigt",
+    "allDone": "Alles bereit! Viel Erfolg beim Abschluss.",
+    "steps": {
+      "pipeline_ready": "Pipeline einrichten",
+      "first_lead": "Ersten Lead hinzufügen",
+      "next_action_set": "Nächste Aktion für einen Deal festlegen",
+      "teammate_invited": "Teammitglied einladen",
+      "proposal_sent": "Erstes Angebot versenden"
+    },
+    "stepHints": {
+      "pipeline_ready": "Wählen Sie eine Pipeline-Vorlage für Ihre Branche",
+      "first_lead": "Importieren oder erstellen Sie Ihren ersten Kontakt",
+      "next_action_set": "Keine Follow-ups mehr vergessen",
+      "teammate_invited": "Arbeiten Sie mit Ihrem Vertriebsteam zusammen",
+      "proposal_sent": "Erstellen Sie ein Angebot und markieren Sie es als gesendet"
+    },
+    "wizard": {
+      "title": "Pipeline auswählen",
+      "subtitle": "Wählen Sie die Vorlage, die am besten zu Ihrem Unternehmen passt",
+      "apply": "Diese Vorlage verwenden",
+      "applied": "Vorlage angewendet!",
+      "alreadyApplied": "Für diese Vorlage existiert bereits eine Pipeline.",
+      "stages": "Phasen",
+      "sectors": {
+        "agency": "Agentur",
+        "saas": "SaaS / Software",
+        "consulting": "Beratung",
+        "construction": "Bauwesen",
+        "real-estate": "Immobilien",
+        "whatsapp-sales": "WhatsApp-Vertrieb",
+        "b2b-simple": "Einfaches B2B"
+      }
     }
   }
 }

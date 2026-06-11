@@ -245,6 +245,7 @@
     "stage": "Stage",
     "score": "AI Score",
     "owner": "Owner",
+    "unassigned": "Unassigned",
     "created": "Created",
     "empty": "No leads yet. Create your first one.",
     "save": "Save",
@@ -666,6 +667,7 @@
     "lineItems": "Line items",
     "addLine": "Add line",
     "lineDescription": "Description",
+    "fromCatalog": "From catalog…",
     "quantity": "Qty",
     "unitPrice": "Unit price",
     "lineTotal": "Total",
@@ -1660,6 +1662,44 @@
     "kind": {
       "quote": "Quote",
       "contract": "Contract"
+    }
+  },
+  "onboarding": {
+    "title": "Get started",
+    "subtitle": "Complete these steps to set up your CRM",
+    "dismiss": "Dismiss",
+    "completed": "{completed} of {total} done",
+    "allDone": "You're all set! Ready to close deals.",
+    "steps": {
+      "pipeline_ready": "Set up your pipeline",
+      "first_lead": "Add your first lead",
+      "next_action_set": "Set a next action on a deal",
+      "teammate_invited": "Invite a teammate",
+      "proposal_sent": "Send your first proposal"
+    },
+    "stepHints": {
+      "pipeline_ready": "Choose a pipeline template for your industry",
+      "first_lead": "Import or create your first contact",
+      "next_action_set": "Never lose track of a follow-up",
+      "teammate_invited": "Collaborate with your sales team",
+      "proposal_sent": "Create a quote and mark it as sent"
+    },
+    "wizard": {
+      "title": "Choose your pipeline",
+      "subtitle": "Pick the template that best matches your business",
+      "apply": "Use this template",
+      "applied": "Template applied!",
+      "alreadyApplied": "A pipeline for this template already exists.",
+      "stages": "Stages",
+      "sectors": {
+        "agency": "Agency",
+        "saas": "SaaS / Software",
+        "consulting": "Consulting",
+        "construction": "Construction",
+        "real-estate": "Real estate",
+        "whatsapp-sales": "WhatsApp sales",
+        "b2b-simple": "Simple B2B"
+      }
     }
   }
 }
