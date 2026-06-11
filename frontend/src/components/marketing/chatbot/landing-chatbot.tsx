@@ -162,7 +162,7 @@ export default function LandingChatbot() {
             width={128}
             height={128}
             priority={false}
-            className="h-24 w-24 animate-bob object-contain drop-shadow-[0_8px_22px_rgba(76,29,149,0.5)]"
+            className="h-16 w-16 animate-bob object-contain drop-shadow-[0_8px_22px_rgba(76,29,149,0.5)] sm:h-24 sm:w-24"
           />
         </button>
       </div>
@@ -174,9 +174,9 @@ export default function LandingChatbot() {
           aria-modal="false"
           aria-label={t("title")}
           className={cn(
-            "fixed bottom-40 right-5 z-50 flex flex-col overflow-hidden rounded-2xl",
+            "fixed bottom-24 right-4 z-50 flex flex-col overflow-hidden rounded-2xl sm:bottom-40 sm:right-5",
             "border border-border bg-background shadow-2xl",
-            "h-[70vh] max-h-[600px] w-[calc(100vw-2.5rem)] sm:w-[380px]",
+            "h-[68vh] max-h-[600px] w-[calc(100vw-2rem)] sm:w-[380px]",
           )}
         >
           <header className="flex items-center gap-3 bg-violet-600 px-4 py-3 text-white">
