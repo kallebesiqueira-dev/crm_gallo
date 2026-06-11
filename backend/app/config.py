@@ -184,12 +184,34 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = ""
 
     # Price IDs — create one per (plan, cycle) in your Stripe dashboard.
+    # The bare names are EUR (legacy, zero-change for existing deploys);
+    # CHF/GBP/BRL variants append the currency code (plan.md §6). Unset =
+    # that currency isn't offered for that plan yet — checkout 503s with
+    # a clear message instead of silently falling back to EUR.
     stripe_price_standard_monthly: str = ""
     stripe_price_standard_yearly: str = ""
     stripe_price_business_monthly: str = ""
     stripe_price_business_yearly: str = ""
     stripe_price_premium_monthly: str = ""
     stripe_price_premium_yearly: str = ""
+    stripe_price_standard_monthly_chf: str = ""
+    stripe_price_standard_yearly_chf: str = ""
+    stripe_price_business_monthly_chf: str = ""
+    stripe_price_business_yearly_chf: str = ""
+    stripe_price_premium_monthly_chf: str = ""
+    stripe_price_premium_yearly_chf: str = ""
+    stripe_price_standard_monthly_gbp: str = ""
+    stripe_price_standard_yearly_gbp: str = ""
+    stripe_price_business_monthly_gbp: str = ""
+    stripe_price_business_yearly_gbp: str = ""
+    stripe_price_premium_monthly_gbp: str = ""
+    stripe_price_premium_yearly_gbp: str = ""
+    stripe_price_standard_monthly_brl: str = ""
+    stripe_price_standard_yearly_brl: str = ""
+    stripe_price_business_monthly_brl: str = ""
+    stripe_price_business_yearly_brl: str = ""
+    stripe_price_premium_monthly_brl: str = ""
+    stripe_price_premium_yearly_brl: str = ""
 
     # Landing-checkout price aliases. The public landing CTA addresses the three
     # paid tiers by simple names (starter→Standard, pro→Business, enterprise→
