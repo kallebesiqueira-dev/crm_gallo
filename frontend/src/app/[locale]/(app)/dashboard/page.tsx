@@ -184,7 +184,13 @@ export default function DashboardPage() {
             </div>
             <div className="md:border-l md:border-border md:pl-5">
               <div className="text-xs text-muted-foreground">{t("openAmounts")}</div>
-              <DonutOpen pct={openPct} />
+              {openTotal > 0 ? (
+                <DonutOpen pct={openPct} />
+              ) : (
+                <div className="grid h-32 place-items-center text-center text-xs text-muted-foreground">
+                  {t("noData")}
+                </div>
+              )}
               <div className="mt-3 space-y-1.5 text-xs">
                 <LegendRow color="bg-violet-500" label={t("openLabel")} value={eur2.format(q?.open_eur ?? 0)} />
                 <LegendRow color="bg-rose-500" label={t("overdue")} value={eur2.format(q?.overdue_eur ?? 0)} />
@@ -426,12 +432,18 @@ function PaymentsBars({
   return (
     <div className="mt-3 flex h-36 items-end gap-1.5">
       {data.map((d) => (
-        <div key={d.month} className="flex flex-1 flex-col items-center gap-1">
-          <div
-            className="w-full rounded-t-md bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-all hover:opacity-80"
-            style={{ height: `${Math.max(2, (d.value_eur / max) * 100)}%` }}
-            title={`${d.month}: ${d.value_eur}`}
-          />
+        <div key={d.month} className="flex h-full flex-1 flex-col items-center gap-1">
+          {/* The bar's `height: %` needs a parent with a DEFINITE height, or it
+              collapses to 0 (the bug that left this chart blank). The column is
+              `h-full` and this flex-1 track gives the bar a real height to grow
+              against; the bar aligns to the bottom. */}
+          <div className="flex w-full flex-1 items-end">
+            <div
+              className="w-full rounded-t-md bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-all hover:opacity-80"
+              style={{ height: `${Math.max(2, (d.value_eur / max) * 100)}%` }}
+              title={`${d.month}: ${d.value_eur}`}
+            />
+          </div>
           <span className="text-[9px] text-muted-foreground">{fmt(d.month)}</span>
         </div>
       ))}
