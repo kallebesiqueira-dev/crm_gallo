@@ -97,6 +97,11 @@ class AutomationTrigger(str, enum.Enum):
     deal_won = "deal_won"
     deal_lost = "deal_lost"
     deal_stage_changed = "deal_stage_changed"
+    customer_created = "customer_created"
+    # Time-based but outbox-backed: the worker's daily sweep emits
+    # `task.overdue` once per (task, due_date) — see EventType.
+    task_overdue = "task_overdue"
+    user_invited = "user_invited"
     # Time-based: a lead with no update for N days (config `stale_days`).
     lead_stale = "lead_stale"
 

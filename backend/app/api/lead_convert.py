@@ -293,6 +293,22 @@ async def convert_lead(
             "source": "lead_conversion",
         },
     )
+    # Same parity for the contact: a customer minted by conversion is
+    # as "created" as one typed in by hand — but a REUSED contact must
+    # not fire a second welcome automation.
+    if not customer_existed:
+        await record_event(
+            db,
+            event_type=EventType.customer_created,
+            organization_id=org_id,
+            payload={
+                "customer_id": customer.id,
+                "owner_id": customer.owner_id,
+                "company_id": customer.company_id,
+                "actor_user_id": user.id,
+                "source": "lead_conversion",
+            },
+        )
 
     await db.commit()
     return LeadConvertOut(

@@ -85,6 +85,21 @@ class EventType(str, enum.Enum):
     signature_declined = "signature.declined"
     signature_cancelled = "signature.cancelled"
 
+    # Customer lifecycle. Emitted on creation regardless of origin
+    # (manual create or lead conversion) so "welcome the new customer"
+    # automations fire exactly once per contact.
+    customer_created = "customer.created"
+
+    # Task follow-up discipline. TIME-based like lead_stale, but unlike
+    # it this one DOES ride the outbox: the worker's daily sweep emits
+    # one event per (task, due_date) the first time it sees the task
+    # past due (dedupe against prior outbox rows), so webhooks AND
+    # automation rules both hear about it.
+    task_overdue = "task.overdue"
+
+    # Collaboration: an org admin invited a teammate.
+    user_invited = "user.invited"
+
 
 def _to_jsonable(value: Any) -> Any:
     if isinstance(value, uuid.UUID):

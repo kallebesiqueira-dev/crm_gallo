@@ -35,6 +35,7 @@ from app.config import get_settings
 from app.cookies import issue_csrf_token, set_auth_cookies
 from app.database import get_db
 from app.deps import get_current_membership, get_current_org_id, get_current_user
+from app.events import EventType, record_event
 from app.logging_setup import get_logger
 from app.models import Organization, OrgInvite, OrgMembership, User, UserRole
 from app.rate_limit import limiter
@@ -163,6 +164,21 @@ async def create_invite(
         entity_id=invite.id,
         organization_id=org_id,
         metadata={"email": email, "role": invite.role.value},
+    )
+    # Outbox fan-out: lets "prepare onboarding for the new teammate"
+    # automations and webhook consumers react to the invitation itself
+    # (acceptance is a separate, later signal). owner_id = the inviter,
+    # so notification actions land on the person who can follow up.
+    await record_event(
+        db,
+        event_type=EventType.user_invited,
+        organization_id=org_id,
+        payload={
+            "invite_id": invite.id,
+            "email": email,
+            "role": invite.role.value,
+            "owner_id": user.id,
+        },
     )
     await db.commit()
     await db.refresh(invite)

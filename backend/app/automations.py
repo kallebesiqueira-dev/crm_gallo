@@ -31,7 +31,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.activities import ENTITY_DEAL, ENTITY_LEAD, ActivityType, record_activity
+from app.activities import ENTITY_CUSTOMER, ENTITY_DEAL, ENTITY_LEAD, ActivityType, record_activity
 from app.database import SessionLocal, set_current_org_id
 from app.events import EventType
 from app.models import (
@@ -57,17 +57,21 @@ log = structlog.get_logger(__name__)
 
 # Which outbox EventType drives which automation trigger. `lead_stale`
 # is intentionally absent — it has no event, the cron evaluates it.
+# (`task_overdue` is also time-detected, but its sweep EMITS an outbox
+# event, so it routes through here like any other.)
 EVENT_TRIGGERS: dict[EventType, AutomationTrigger] = {
     EventType.lead_created: AutomationTrigger.lead_created,
     EventType.deal_created: AutomationTrigger.deal_created,
     EventType.deal_won: AutomationTrigger.deal_won,
     EventType.deal_lost: AutomationTrigger.deal_lost,
     EventType.deal_stage_changed: AutomationTrigger.deal_stage_changed,
+    EventType.customer_created: AutomationTrigger.customer_created,
+    EventType.task_overdue: AutomationTrigger.task_overdue,
+    EventType.user_invited: AutomationTrigger.user_invited,
 }
 
-# Which payload key carries the subject entity's id, per trigger, plus
-# the activity/Task entity label. Lead triggers carry `lead_id`; every
-# deal trigger carries `deal_id`.
+# The activity/Task entity label per trigger; the matching payload id
+# key is derived via _ID_KEY_FOR_ENTITY below.
 _ENTITY_FOR_TRIGGER: dict[AutomationTrigger, str] = {
     AutomationTrigger.lead_created: ENTITY_LEAD,
     AutomationTrigger.deal_created: ENTITY_DEAL,
@@ -75,6 +79,18 @@ _ENTITY_FOR_TRIGGER: dict[AutomationTrigger, str] = {
     AutomationTrigger.deal_lost: ENTITY_DEAL,
     AutomationTrigger.deal_stage_changed: ENTITY_DEAL,
     AutomationTrigger.lead_stale: ENTITY_LEAD,
+    AutomationTrigger.customer_created: ENTITY_CUSTOMER,
+    AutomationTrigger.task_overdue: "task",
+    AutomationTrigger.user_invited: "invite",
+}
+
+# Which payload key carries the subject entity's id, per entity label.
+_ID_KEY_FOR_ENTITY: dict[str, str] = {
+    ENTITY_LEAD: "lead_id",
+    ENTITY_DEAL: "deal_id",
+    ENTITY_CUSTOMER: "customer_id",
+    "task": "task_id",
+    "invite": "invite_id",
 }
 
 # Hard cap so a misconfigured stale rule can't spawn thousands of rows in
@@ -131,6 +147,7 @@ async def _execute_action(
             assignee_id=assignee_id,
             lead_id=entity_id if entity_type == ENTITY_LEAD else None,
             deal_id=entity_id if entity_type == ENTITY_DEAL else None,
+            customer_id=entity_id if entity_type == ENTITY_CUSTOMER else None,
         )
         db.add(task)
         await db.flush()
@@ -285,7 +302,7 @@ async def run_event_automations(ctx: EventContext) -> None:
 
     org_id = ctx.organization_id
     entity_type = _ENTITY_FOR_TRIGGER[trigger]
-    id_key = "lead_id" if entity_type == ENTITY_LEAD else "deal_id"
+    id_key = _ID_KEY_FOR_ENTITY[entity_type]
     raw_entity_id = ctx.payload.get(id_key)
     if raw_entity_id is None:
         return

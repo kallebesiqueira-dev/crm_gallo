@@ -41,6 +41,7 @@ from app.worker.jobs import (
     mirror_whatsapp_media,
     process_import,
     prune_expired_invites,
+    scan_overdue_tasks,
     scan_stale_leads,
     score_lead,
     send_email,
@@ -112,6 +113,7 @@ class WorkerSettings:
         dlq_wrap(generate_quote_pdf),
         dlq_wrap(generate_contract_pdf),
         dlq_wrap(process_import),
+        dlq_wrap(scan_overdue_tasks),
         dlq_wrap(scan_stale_leads),
         dlq_wrap(send_whatsapp_message),
         dlq_wrap(mirror_whatsapp_media),
@@ -142,6 +144,19 @@ class WorkerSettings:
             scan_stale_leads,
             name="scan_stale_leads",
             minute={0},
+            run_at_startup=False,
+            unique=True,
+            max_tries=1,
+        ),
+        # task.overdue sweep — daily, early morning (06:07 UTC) so the
+        # "you have an overdue task" signal lands before the workday,
+        # off the :00 thundering-herd. Re-runs are cheap no-ops: the
+        # sweep dedupes per (task, due_date) against prior outbox rows.
+        cron(
+            scan_overdue_tasks,
+            name="scan_overdue_tasks",
+            hour={6},
+            minute={7},
             run_at_startup=False,
             unique=True,
             max_tries=1,

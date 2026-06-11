@@ -28,7 +28,7 @@ from sqlalchemy import delete, select, text
 from app.activities import ENTITY_LEAD, ActivityType, record_activity
 from app.audit import record_audit
 from app.database import set_current_org_id
-from app.events import OUTBOX_MAX_ATTEMPTS
+from app.events import OUTBOX_MAX_ATTEMPTS, EventType, record_event
 from app.events_dispatcher import EventContext, dispatch_event
 from app.models import (
     Contract,
@@ -44,7 +44,10 @@ from app.models import (
     MessageStatus,
     Organization,
     OrgInvite,
+    OutboxEvent,
     Quote,
+    Task,
+    TaskStatus,
     User,
     WebhookDelivery,
     WebhookEndpoint,
@@ -911,6 +914,98 @@ async def scan_stale_leads(ctx: dict) -> dict:
     if attempted:
         log.info("automation.stale_scan", orgs=scanned_orgs, attempted=attempted)
     return {"orgs": scanned_orgs, "attempted": attempted}
+
+
+async def scan_overdue_tasks(ctx: dict) -> dict:
+    """Daily sweep emitting `task.overdue` to the outbox — once per
+    (task, due_date), so webhooks and automation rules hear about a task
+    going past due exactly once, and a re-scheduled task that slips
+    again gets a fresh signal.
+
+    Dedupe rides the outbox itself: prior `task.overdue` rows for the
+    org are the "already emitted" set, so there is no extra marker
+    column or table. Same per-org GUC pattern as `scan_stale_leads`
+    (tasks are RLS'd; organizations is not).
+    """
+    SessionLocal = ctx["SessionLocal"]
+    today = datetime.now(UTC).date()
+
+    async with SessionLocal() as db:
+        org_ids = (await db.execute(select(Organization.id))).scalars().all()
+
+    emitted = 0
+    for org_id in org_ids:
+        set_current_org_id(org_id)
+        async with SessionLocal() as db:
+            emitted += await scan_org_overdue_tasks(db, org_id, today)
+
+    if emitted:
+        log.info("task_overdue.sweep", emitted=emitted)
+    return {"emitted": emitted}
+
+
+async def scan_org_overdue_tasks(db, org_id: uuid.UUID, today) -> int:
+    """One org's overdue-task sweep (caller has set the RLS GUC).
+    Emits + commits; returns the number of events emitted. Split out of
+    the cron loop so tests can target a single org without sweeping a
+    shared dev database."""
+    overdue = (
+        (
+            await db.execute(
+                select(Task).where(
+                    Task.organization_id == org_id,
+                    Task.due_date.is_not(None),
+                    Task.due_date < today,
+                    Task.status != TaskStatus.done,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not overdue:
+        return 0
+
+    seen: set[tuple[str, str]] = set()
+    prior = (
+        (
+            await db.execute(
+                select(OutboxEvent.payload).where(
+                    OutboxEvent.organization_id == org_id,
+                    OutboxEvent.event_type == EventType.task_overdue.value,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for raw in prior:
+        try:
+            data = json.loads(raw or "{}")
+        except json.JSONDecodeError:
+            continue
+        seen.add((str(data.get("task_id")), str(data.get("due_date"))))
+
+    emitted = 0
+    for task in overdue:
+        if (str(task.id), task.due_date.isoformat()) in seen:
+            continue
+        await record_event(
+            db,
+            event_type=EventType.task_overdue,
+            organization_id=org_id,
+            payload={
+                "task_id": task.id,
+                # `owner_id` is the automation convention for "who to
+                # notify" — for a task that's its assignee.
+                "owner_id": task.assignee_id,
+                "due_date": task.due_date,
+                "title": task.title,
+            },
+        )
+        emitted += 1
+    await db.commit()
+    return emitted
 
 
 async def send_whatsapp_message(

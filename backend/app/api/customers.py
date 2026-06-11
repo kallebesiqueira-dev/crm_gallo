@@ -15,11 +15,12 @@ from app.audit import record_audit
 from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
+from app.events import EventType, record_event
+from app.metrics import SEARCH_TRGM_FALLBACK
 from app.models import Customer, Deal, DealStage, Task, TaskStatus, User
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import CustomerCreate, CustomerOut, CustomerUpdate
 from app.services.ai_assistant import summarize_customer
-from app.metrics import SEARCH_TRGM_FALLBACK
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
 
@@ -112,6 +113,17 @@ async def create_customer(
         activity_type=ActivityType.created,
         organization_id=org_id,
         actor=user,
+    )
+    await record_event(
+        db,
+        event_type=EventType.customer_created,
+        organization_id=org_id,
+        payload={
+            "customer_id": customer.id,
+            "owner_id": customer.owner_id,
+            "company_id": customer.company_id,
+            "actor_user_id": user.id,
+        },
     )
     await db.commit()
     await invalidate_dashboard_cache(org_id)
