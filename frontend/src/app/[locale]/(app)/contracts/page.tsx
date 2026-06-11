@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { api, type Contract } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { STATUS_VARIANT } from "./status";
+import { EmptyState } from "@/components/empty-state";
 
 export default function ContractsPage() {
   const t = useTranslations("contracts");
@@ -64,7 +65,7 @@ export default function ContractsPage() {
           {contracts === null ? (
             <div className="p-10 text-center text-sm text-muted-foreground">…</div>
           ) : contracts.length === 0 ? (
-            <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
+            <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/contracts/new`} />
           ) : (
             <ul className="divide-y">
               {contracts.map((c) => (

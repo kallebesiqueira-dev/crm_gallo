@@ -14,6 +14,7 @@ import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
 import { api, type Lead, type LeadStage, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { EmptyState } from "@/components/empty-state";
 
 const STAGE_VARIANT: Record<LeadStage, "default" | "secondary" | "success" | "warning" | "danger"> = {
   new: "secondary",
@@ -183,7 +184,7 @@ export default function LeadsPage() {
 
       <Card className="overflow-hidden">
         {leads.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
+          <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/leads/new`} />
         ) : (
           <div className="overflow-x-auto">
           <table className="w-full min-w-[20rem] text-sm">

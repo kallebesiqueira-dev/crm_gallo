@@ -13,6 +13,7 @@ import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
 import { api, type Customer, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { EmptyState } from "@/components/empty-state";
 
 export default function CustomersPage() {
   const t = useTranslations("customers");
@@ -171,7 +172,7 @@ export default function CustomersPage() {
 
       <Card className="overflow-hidden">
         {items.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
+          <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/customers/new`} />
         ) : (
           <div className="overflow-x-auto">
           <table className="w-full min-w-[20rem] text-sm">
