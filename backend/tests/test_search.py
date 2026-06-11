@@ -81,7 +81,11 @@ def test_search_vector_updates_on_patch(admin_client):
         r["id"] != created["id"] for r in admin_client.get("/api/leads?q=NewCo").json()["items"]
     )
 
-    admin_client.patch(f"/api/leads/{created['id']}", json={"company": "NewCo"}).raise_for_status()
+    admin_client.patch(
+        f"/api/leads/{created['id']}",
+        json={"company": "NewCo"},
+        headers={"If-Match": str(created["version"])},
+    ).raise_for_status()
 
     rows = admin_client.get("/api/leads?q=NewCo").json()["items"]
     assert any(r["id"] == created["id"] for r in rows)

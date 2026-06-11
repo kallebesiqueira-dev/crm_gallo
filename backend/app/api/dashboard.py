@@ -1,4 +1,3 @@
-import json
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -36,6 +35,7 @@ async def invalidate_dashboard_cache(org_id: uuid.UUID) -> None:
         await get_redis().delete(f"dashboard:stats:{org_id}")
     except Exception:
         pass
+
 
 # Rough conversion to EUR for quick pipeline-value approximation.
 # In production, fetch live rates and persist them. Decimal so the

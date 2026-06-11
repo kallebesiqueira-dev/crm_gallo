@@ -29,7 +29,6 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import (
-
     ENTITY_CUSTOMER,
     ENTITY_LEAD,
     ActivityType,
@@ -125,6 +124,7 @@ async def _webhook_ip_guard(request: Request) -> None:
         await r.expire(key, 60)
     if count > 600:
         raise HTTPException(status_code=429, detail="Too Many Requests")
+
 
 # Connecting / disconnecting a number changes the org's messaging identity, so
 # gate account mutations to admin. Reading + sending is any member's job.

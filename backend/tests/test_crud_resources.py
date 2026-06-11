@@ -26,7 +26,7 @@ def _ids(list_json) -> set[str]:
 
 
 def _trash_ids(client: CsrfAwareClient, entity_type: str) -> set[str]:
-    items = client.get("/api/trash").json()
+    items = client.get("/api/trash").json()["items"]
     return {t["id"] for t in items if t["entity_type"] == entity_type}
 
 

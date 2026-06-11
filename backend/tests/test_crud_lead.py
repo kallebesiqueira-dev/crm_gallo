@@ -33,10 +33,20 @@ def test_lead_lifecycle(admin_client: CsrfAwareClient):
     assert r.status_code == 200
     assert r.json()["first_name"] == "Cycle"
 
-    # PATCH — stage transition
+    # PATCH without If-Match → 428 (strict optimistic locking, like
+    # customer/deal/task — see test_crud_lifecycles)
     r = admin_client.patch(f"/api/leads/{lead_id}", json={"stage": "qualified"})
+    assert r.status_code == 428
+
+    # PATCH — stage transition (echoing the version bumps it)
+    r = admin_client.patch(
+        f"/api/leads/{lead_id}",
+        json={"stage": "qualified"},
+        headers={"If-Match": str(lead["version"])},
+    )
     assert r.status_code == 200
     assert r.json()["stage"] == "qualified"
+    assert r.json()["version"] == lead["version"] + 1
 
     # SOFT DELETE
     r = admin_client.delete(f"/api/leads/{lead_id}")
@@ -50,9 +60,9 @@ def test_lead_lifecycle(admin_client: CsrfAwareClient):
     r = admin_client.get(f"/api/leads/{lead_id}")
     assert r.status_code == 404
 
-    # TRASH — must include it (opt-out)
+    # TRASH — must include it (opt-out; paginated envelope)
     r = admin_client.get("/api/trash")
-    assert lead_id in {t["id"] for t in r.json()}
+    assert lead_id in {t["id"] for t in r.json()["items"]}
 
     # RESTORE
     r = admin_client.post(f"/api/trash/lead/{lead_id}/restore")
@@ -71,7 +81,7 @@ def test_lead_lifecycle(admin_client: CsrfAwareClient):
     r = admin_client.get(f"/api/leads/{lead_id}")
     assert r.status_code == 404
     r = admin_client.get("/api/trash")
-    assert lead_id not in {t["id"] for t in r.json()}
+    assert lead_id not in {t["id"] for t in r.json()["items"]}
 
 
 def test_lead_create_strips_organization_id_from_body(admin_client: CsrfAwareClient):

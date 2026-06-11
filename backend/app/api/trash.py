@@ -111,7 +111,13 @@ async def list_trash(
     items.sort(key=lambda t: t.deleted_at, reverse=True)
     total = len(items)
     page = items[offset : offset + limit]
-    return TrashPage(items=page, total=total, offset=offset, limit=limit, has_more=offset + limit < total)
+    return TrashPage(
+        items=page,
+        total=total,
+        offset=offset,
+        limit=limit,
+        has_more=offset + limit < total,
+    )
 
 
 @router.get("/counts", response_model=TrashCounts)

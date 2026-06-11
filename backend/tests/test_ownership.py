@@ -67,7 +67,11 @@ def test_admin_can_mutate_anyone(
     """Admins bypass ownership — required so they can clean up rows
     that the owner no longer cares about."""
     lead = _seed_lead(db, test_org, owner=other_user)
-    r = admin_client.patch(f"/api/leads/{lead.id}", json={"stage": "qualified"})
+    r = admin_client.patch(
+        f"/api/leads/{lead.id}",
+        json={"stage": "qualified"},
+        headers={"If-Match": str(lead.version)},
+    )
     assert r.status_code == 200
 
 

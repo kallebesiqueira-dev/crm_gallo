@@ -66,7 +66,13 @@ from app.cookies import (
 )
 from app.database import engine
 from app.logging_setup import configure_logging, get_logger
-from app.metrics import DLQ_DEPTH, OUTBOX_LAG_SECONDS, OUTBOX_PENDING, PrometheusMiddleware, metrics_response
+from app.metrics import (
+    DLQ_DEPTH,
+    OUTBOX_LAG_SECONDS,
+    OUTBOX_PENDING,
+    PrometheusMiddleware,
+    metrics_response,
+)
 from app.rate_limit import limiter
 from app.sentry_setup import init_sentry
 

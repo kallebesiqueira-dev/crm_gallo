@@ -177,7 +177,7 @@ def test_cross_org_trash_is_404(
     # Not listed in the requesting org's trash.
     r = admin_client.get("/api/trash")
     assert r.status_code == 200
-    assert str(row.id) not in {item["id"] for item in r.json()}
+    assert str(row.id) not in {item["id"] for item in r.json()["items"]}
 
     # Restore + hard-delete of a foreign row look like it doesn't exist.
     assert admin_client.post(f"/api/trash/{entity_type}/{row.id}/restore").status_code == 404

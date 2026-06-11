@@ -75,7 +75,7 @@ def test_customer_lifecycle(admin_client: CsrfAwareClient):
 
     # TRASH sees it (opt-out), RESTORE brings it back
     r = admin_client.get("/api/trash")
-    assert customer_id in {t["id"] for t in r.json()}
+    assert customer_id in {t["id"] for t in r.json()["items"]}
     r = admin_client.post(f"/api/trash/customer/{customer_id}/restore")
     assert r.status_code == 204
     assert admin_client.get(f"/api/customers/{customer_id}").status_code == 200
@@ -86,7 +86,7 @@ def test_customer_lifecycle(admin_client: CsrfAwareClient):
     assert r.status_code == 204
     assert admin_client.get(f"/api/customers/{customer_id}").status_code == 404
     r = admin_client.get("/api/trash")
-    assert customer_id not in {t["id"] for t in r.json()}
+    assert customer_id not in {t["id"] for t in r.json()["items"]}
 
 
 def test_deal_lifecycle(admin_client: CsrfAwareClient):
@@ -138,7 +138,7 @@ def test_deal_lifecycle(admin_client: CsrfAwareClient):
     assert r.status_code == 204
     assert deal_id not in {row["id"] for row in admin_client.get("/api/deals").json()}
     assert admin_client.get(f"/api/deals/{deal_id}").status_code == 404
-    assert deal_id in {t["id"] for t in admin_client.get("/api/trash").json()}
+    assert deal_id in {t["id"] for t in admin_client.get("/api/trash").json()["items"]}
 
     # RESTORE
     r = admin_client.post(f"/api/trash/deal/{deal_id}/restore")
@@ -150,7 +150,7 @@ def test_deal_lifecycle(admin_client: CsrfAwareClient):
     r = admin_client.delete(f"/api/trash/deal/{deal_id}")
     assert r.status_code == 204
     assert admin_client.get(f"/api/deals/{deal_id}").status_code == 404
-    assert deal_id not in {t["id"] for t in admin_client.get("/api/trash").json()}
+    assert deal_id not in {t["id"] for t in admin_client.get("/api/trash").json()["items"]}
 
 
 def test_task_lifecycle(admin_client: CsrfAwareClient):
@@ -184,7 +184,7 @@ def test_task_lifecycle(admin_client: CsrfAwareClient):
     r = admin_client.delete(f"/api/tasks/{task_id}")
     assert r.status_code == 204
     assert task_id not in {row["id"] for row in admin_client.get("/api/tasks").json()}
-    assert task_id in {t["id"] for t in admin_client.get("/api/trash").json()}
+    assert task_id in {t["id"] for t in admin_client.get("/api/trash").json()["items"]}
 
     # RESTORE
     r = admin_client.post(f"/api/trash/task/{task_id}/restore")
@@ -196,7 +196,7 @@ def test_task_lifecycle(admin_client: CsrfAwareClient):
     r = admin_client.delete(f"/api/trash/task/{task_id}")
     assert r.status_code == 204
     assert task_id not in {row["id"] for row in admin_client.get("/api/tasks").json()}
-    assert task_id not in {t["id"] for t in admin_client.get("/api/trash").json()}
+    assert task_id not in {t["id"] for t in admin_client.get("/api/trash").json()["items"]}
 
 
 @pytest.mark.parametrize(
