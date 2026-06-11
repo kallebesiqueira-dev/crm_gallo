@@ -41,6 +41,7 @@ from app.api import (
     notes,
     notifications,
     oauth,
+    onboarding,
     orgs,
     outbox,
     performance,
@@ -366,6 +367,7 @@ app.include_router(public.router)
 app.include_router(leads.router)
 app.include_router(lead_convert.router)
 app.include_router(gdpr.router)
+app.include_router(onboarding.router)
 app.include_router(customers.router)
 app.include_router(companies.router)
 app.include_router(products.router)
