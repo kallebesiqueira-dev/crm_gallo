@@ -17,15 +17,27 @@ import { expect, test, type Page } from "@playwright/test";
 // seats). A fresh stack bootstraps that org empty, so the core test's single
 // register always fits. Re-running against a dirty local DB can hit the 402
 // seat cap — start from a clean stack (or bump the org's plan) when iterating.
+//
+// Founder note: the very first account on a clean stack is the install founder,
+// which the API auto-verifies and logs straight into the dashboard. Every later
+// signup must click an email-verification link we can't follow headless, so
+// these smokes rely on the per-run fresh stack (the CI job tears the DB down and
+// back up) making each test's single register the founder.
 
 const PASSWORD = "PlaywrightPass2026!";
 
-// Register a fresh free-plan account. Registration auto-authenticates and
-// lands on the dashboard. The password-strength label ("Strong") is rendered
-// from React state, so waiting for it proves the page has hydrated — i.e. the
-// form's onSubmit is wired and our click won't drop into a pre-hydration void.
-// We then wait for the email in the app-layout header (rendered only after
-// `me()` resolves) so callers start from a fully interactive dashboard.
+// The "Sign out" button renders only once the authenticated app layout is
+// interactive (i.e. `me()` has resolved). It carries no viewport-specific
+// `hidden` class, so it's a stable hydration signal on any authed page — unlike
+// the header identity, which shows the full name (not the email) and only from
+// the `xl` breakpoint.
+async function expectAppShell(page: Page): Promise<void> {
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible({ timeout: 30_000 });
+}
+
+// Register a fresh account (the founder on a clean stack — see the note above).
+// The password-strength label ("Strong") is rendered from React state, so
+// waiting for it proves the register page has hydrated before we submit.
 async function register(page: Page): Promise<string> {
   const email = `e2e+${Date.now()}@example.com`;
   await page.goto("/en/register");
@@ -36,16 +48,16 @@ async function register(page: Page): Promise<string> {
   await page.locator('input[type="checkbox"]').check(); // accept terms
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL(/\/en\/dashboard/, { timeout: 30_000 });
-  await expect(page.getByText(email)).toBeVisible({ timeout: 30_000 });
+  await expectAppShell(page);
   return email;
 }
 
-// Create a lead and assert we land on its detail page. `email` is the header
-// hydration guard: the form's onSubmit is wired only once the app layout is
-// interactive (header email present).
-async function createLead(page: Page, email: string): Promise<void> {
+// Create a lead and assert we land on its detail page. Waiting for the app
+// shell first proves the layout is interactive (the form's onSubmit is wired)
+// before we fill and submit.
+async function createLead(page: Page): Promise<void> {
   await page.goto("/en/leads/new");
-  await expect(page.getByText(email)).toBeVisible({ timeout: 30_000 });
+  await expectAppShell(page);
   await page.locator("#first_name").fill("Ada");
   await page.locator("#last_name").fill("Lovelace");
   await page.locator("#email").fill(`lead+${Date.now()}@example.com`);
@@ -67,10 +79,10 @@ test("core golden path: register, login, create lead, logout", async ({ page }) 
   await page.locator("#password").fill(PASSWORD);
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL(/\/en\/dashboard/, { timeout: 30_000 });
-  await expect(page.getByText(email)).toBeVisible({ timeout: 30_000 });
+  await expectAppShell(page);
 
   // --- create a lead ---
-  await createLead(page, email);
+  await createLead(page);
 
   // --- final sign out ---
   await page.getByRole("button", { name: "Sign out" }).click();
@@ -86,8 +98,8 @@ test("AI scoring assigns a priority", async ({ page }) => {
   // minute-plus), so give this test its own generous budget.
   test.setTimeout(300_000);
 
-  const email = await register(page);
-  await createLead(page, email);
+  await register(page);
+  await createLead(page);
 
   // The "Priority:" line only renders once a score lands, so it's the signal
   // that scoring succeeded.
