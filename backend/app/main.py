@@ -33,6 +33,7 @@ from app.api import (
     duplicates,
     exports,
     forms,
+    gdpr,
     imports,
     invites,
     lead_convert,
@@ -364,6 +365,7 @@ app.include_router(billing.router)
 app.include_router(public.router)
 app.include_router(leads.router)
 app.include_router(lead_convert.router)
+app.include_router(gdpr.router)
 app.include_router(customers.router)
 app.include_router(companies.router)
 app.include_router(products.router)
