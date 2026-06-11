@@ -202,7 +202,7 @@ async def summarize(
 ) -> Customer:
     customer = await _get_customer_or_404(db, customer_id, org_id)
     ensure_can_mutate(user, customer.owner_id)
-    summary = await summarize_customer(customer)
+    summary = await summarize_customer(customer, user.locale)
     customer.ai_summary = summary
     customer.ai_summary_updated_at = datetime.now(UTC)
     await record_audit(

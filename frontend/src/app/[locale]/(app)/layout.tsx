@@ -146,7 +146,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="mx-auto hidden w-full max-w-xl items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:flex"
+              className="mr-auto hidden w-full max-w-[18rem] items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:flex"
             >
               <Search className="h-4 w-4 shrink-0" />
               <span className="flex-1 truncate">{tSearch("placeholder")}</span>
