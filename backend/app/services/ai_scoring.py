@@ -24,7 +24,11 @@ def _serialize_lead(lead: Lead) -> dict:
         "industry": lead.industry,
         "country": lead.country,
         "company_size": lead.company_size,
-        "budget": lead.budget,
+        # `budget` is a Numeric column → Decimal, which `json.dumps` can't
+        # serialize. Coerce to float so the prompt carries a plain number
+        # (and scoring doesn't crash with TypeError). See `default=str` below
+        # as a backstop for any other non-JSON type that creeps in.
+        "budget": float(lead.budget) if lead.budget is not None else None,
         "source": lead.source,
         "stage": lead.stage.value,
         "notes": lead.notes,
@@ -97,7 +101,7 @@ async def score_lead(lead: Lead) -> dict:
         result["scored_at"] = datetime.now(UTC)
         return result
 
-    prompt = f"Lead data:\n{json.dumps(_serialize_lead(lead))}"
+    prompt = f"Lead data:\n{json.dumps(_serialize_lead(lead), default=str)}"
     try:
         text = await chat_completion(
             messages=[{"role": "user", "content": prompt}],

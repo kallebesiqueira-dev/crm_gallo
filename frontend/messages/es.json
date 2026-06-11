@@ -239,6 +239,7 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "scoreNow": "Evaluar con IA",
+    "scoreEmpty": "Sin puntuación. Evalúa este lead con la IA.",
     "stages": {
       "new": "Nuevo",
       "contacted": "Contactado",
@@ -638,6 +639,7 @@
     "resend": "Nueva versión",
     "generatePdf": "Generar PDF",
     "generating": "Generando…",
+    "pdfPending": "El PDF aún se está generando. Actualiza en un momento.",
     "documents": "Documentos",
     "noDocuments": "Aún no se ha generado ningún PDF.",
     "supersededBy": "Una versión más reciente sustituye a este presupuesto.",
@@ -684,6 +686,7 @@
     "resend": "Nueva versión",
     "generatePdf": "Generar PDF",
     "generating": "Generando…",
+    "pdfPending": "El PDF aún se está generando. Actualiza en un momento.",
     "documents": "Documentos",
     "noDocuments": "Aún no se ha generado ningún PDF.",
     "supersededBy": "Una versión más reciente sustituye a esta.",

@@ -239,6 +239,7 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "scoreNow": "Évaluer avec IA",
+    "scoreEmpty": "Aucun score. Évaluez ce lead avec l'IA.",
     "stages": {
       "new": "Nouveau",
       "contacted": "Contacté",
@@ -638,6 +639,7 @@
     "resend": "Nouvelle version",
     "generatePdf": "Générer le PDF",
     "generating": "Génération…",
+    "pdfPending": "Le PDF est en cours de génération. Actualisez dans un instant.",
     "documents": "Documents",
     "noDocuments": "Aucun PDF généré.",
     "supersededBy": "Une version plus récente remplace ce devis.",
@@ -684,6 +686,7 @@
     "resend": "Nouvelle version",
     "generatePdf": "Générer le PDF",
     "generating": "Génération…",
+    "pdfPending": "Le PDF est en cours de génération. Actualisez dans un instant.",
     "documents": "Documents",
     "noDocuments": "Aucun PDF généré pour le moment.",
     "supersededBy": "Une version plus récente remplace celle-ci.",
