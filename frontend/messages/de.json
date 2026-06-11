@@ -40,8 +40,20 @@
       "gestione": "Verwaltung",
       "sistema": "System"
     },
+    "hoje": "Heute",
     "exports": "Exporte",
     "teams": "Teams"
+  },
+  "hoje": {
+    "title": "Heute",
+    "overdueDeals": "Überfällige Follow-ups",
+    "todayDeals": "Heutige Follow-ups",
+    "noActionDeals": "Keine nächste Aktion",
+    "staleDeals": "Seit 7+ Tagen stillgelegt",
+    "todayTasks": "Heutige Aufgaben",
+    "overdueTasks": "Überfällige Aufgaben",
+    "empty": "Nichts ausstehend. Guten Verkauf!",
+    "pendingCount": "ausstehend"
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -238,6 +250,11 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "scoreNow": "Mit KI bewerten",
+    "convert": "In Deal umwandeln",
+    "convertConfirmTitle": "Lead in Deal umwandeln?",
+    "convertConfirmBody": "Es wird ein Kunde und ein Deal aus diesem Lead erstellt. Bestehende Kunden mit gleicher E-Mail werden wiederverwendet.",
+    "convertSuccess": "Umgewandelt! Kunde und Deal erstellt.",
+    "convertAlready": "Dieser Lead wurde bereits umgewandelt.",
     "stages": {
       "new": "Neu",
       "contacted": "Kontaktiert",
@@ -259,7 +276,9 @@
     "empty": "Noch keine Kunden. Erstellen Sie den ersten.",
     "aiSummary": "KI-Zusammenfassung",
     "summarize": "Zusammenfassen",
-    "noSummary": "Noch keine Zusammenfassung. Klicken Sie auf Zusammenfassen."
+    "noSummary": "Noch keine Zusammenfassung. Klicken Sie auf Zusammenfassen.",
+    "deals": "Deals",
+    "noDeals": "Keine Deals mit diesem Kunden verknüpft."
   },
   "imports": {
     "title": "Importe",
@@ -303,7 +322,10 @@
     "currency": "Währung",
     "probability": "Wahrscheinlichkeit",
     "expectedClose": "Erwartetes Abschlussdatum",
-    "customer": "Kunde"
+    "customer": "Kunde",
+    "stage": "Phase",
+    "nextAction": "Nächste Aktion",
+    "noNextAction": "Kein Follow-up geplant"
   },
   "tasks": {
     "title": "Aufgaben",
@@ -424,6 +446,32 @@
     "expiresOn": "Läuft ab {date}",
     "confirmRevoke": "Schlüssel \"{name}\" widerrufen? Integrationen, die ihn verwenden, funktionieren nicht mehr.",
     "revoke": "Widerrufen"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "adminOnly": "Nur Admins können Webhooks verwalten.",
+    "intro": "Sende HTTP-POST-Events an externe URLs, wenn etwas in deinem CRM passiert. Jede Lieferung ist HMAC-signiert.",
+    "new": "Endpunkt hinzufügen",
+    "urlLabel": "Endpunkt-URL",
+    "descLabel": "Beschreibung (optional)",
+    "descPlaceholder": "Mein Integrationsserver",
+    "eventsLabel": "Events",
+    "eventsHint": "* für alle Events oder kommagetrennte Liste: lead.created, deal.won, …",
+    "create": "Erstellen",
+    "cancel": "Abbrechen",
+    "secretOnce": "Kopiere das Geheimnis jetzt — es wird nicht wieder angezeigt.",
+    "copied": "Kopiert!",
+    "copy": "Kopieren",
+    "dismiss": "Schließen",
+    "paused": "Pausiert",
+    "failures": "{count} Fehler",
+    "lastSuccess": "Letzter Erfolg: {date}",
+    "neverFired": "Noch nie ausgelöst",
+    "pause": "Pausieren",
+    "resume": "Fortsetzen",
+    "delete": "Löschen",
+    "confirmDelete": "Webhook für {url} löschen?",
+    "empty": "Noch keine Webhooks."
   },
   "teams": {
     "title": "Teams",
@@ -546,6 +594,8 @@
     "typeRestored": "Aus dem Papierkorb wiederhergestellt",
     "typeStageChange": "Phase: {from} → {to}",
     "typeAiScored": "KI-Bewertung: {score} ({priority})",
+    "typeNextActionSet": "Nächste Aktion geplant: {type} am {at}",
+    "typeNextActionCleared": "Nächste Aktion entfernt",
     "typeNoteAdded": "Notiz hinzugefügt",
     "typeFileAttached": "Datei angehängt: {name}",
     "typeFileRemoved": "Datei entfernt: {name}",

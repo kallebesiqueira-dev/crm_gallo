@@ -42,6 +42,7 @@ class ActivityType(str, enum.Enum):
     # Lead / Deal specific
     stage_change = "stage_change"
     ai_scored = "ai_scored"
+    next_action_set = "next_action_set"
 
     # Conversational / activity
     note_added = "note_added"

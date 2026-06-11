@@ -40,8 +40,20 @@
       "gestione": "Management",
       "sistema": "System"
     },
+    "hoje": "Oz",
     "exports": "Exports",
     "teams": "Teams"
+  },
+  "hoje": {
+    "title": "Oz",
+    "overdueDeals": "Follow-ups en retard",
+    "todayDeals": "Follow-ups da oz",
+    "noActionDeals": "Senza proxima acziun",
+    "staleDeals": "Stads 7+ dis",
+    "todayTasks": "Incumbensas da oz",
+    "overdueTasks": "Incumbensas en retard",
+    "empty": "Nagut pendent. Buna vendita!",
+    "pendingCount": "pendents"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -238,6 +250,11 @@
     "save": "Memorisar",
     "cancel": "Annullar",
     "scoreNow": "Valutar cun IA",
+    "convert": "Cunvertir en negozi",
+    "convertConfirmTitle": "Cunvertir lead en negozi?",
+    "convertConfirmBody": "Quai creia in Client e in Negozi da quest lead. Clients existents cun la medema adressa email vegnan rimnads.",
+    "convertSuccess": "Cunvertì! Client e negozi creads.",
+    "convertAlready": "Quest lead è gia stà cunvertì.",
     "stages": {
       "new": "Nov",
       "contacted": "Contactà",
@@ -259,7 +276,9 @@
     "empty": "Nagins clients. Crea il emprim.",
     "aiSummary": "Resumaziun IA",
     "summarize": "Resumar",
-    "noSummary": "Nagina resumaziun anc. Cliccai sin Resumar per generar."
+    "noSummary": "Nagina resumaziun anc. Cliccai sin Resumar per generar.",
+    "deals": "Transacziuns",
+    "noDeals": "Naginas transacziuns liadas cun quest client."
   },
   "imports": {
     "title": "Importaziuns",
@@ -303,7 +322,10 @@
     "currency": "Munaida",
     "probability": "Probabilitad",
     "expectedClose": "Serrada speranza",
-    "customer": "Client"
+    "customer": "Client",
+    "stage": "Stadio",
+    "nextAction": "Proxima acziun",
+    "noNextAction": "Nagin follow-up planisà"
   },
   "tasks": {
     "title": "Incumbensas",
@@ -424,6 +446,32 @@
     "expiresOn": "Scada ils {date}",
     "confirmRevoke": "Revocar la clav \"{name}\"? Las integraziuns che la dovran na funcziunan betg pli.",
     "revoke": "Revocar"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "adminOnly": "Mo administraturs pon administrar webhooks.",
+    "intro": "Trametta events HTTP POST ad URLs externas sche insatge capita en il CRM. Mintga consegna è suttascritta cun HMAC cun il secret da l'endpoint.",
+    "new": "Agiuntar endpoint",
+    "urlLabel": "URL endpoint",
+    "descLabel": "Descripziun (opziunal)",
+    "descPlaceholder": "Miu server d'integraziun",
+    "eventsLabel": "Events",
+    "eventsHint": "Dovra * per tuts ils events, u ina glista separada cun virglas: lead.created, deal.won, …",
+    "create": "Crear",
+    "cancel": "Interrumper",
+    "secretOnce": "Copia uss il secret da suttascripziun — el na vegn betg pli musà.",
+    "copied": "Copià!",
+    "copy": "Copiar",
+    "dismiss": "Serrar",
+    "paused": "En pausa",
+    "failures": "{count} errur(s)",
+    "lastSuccess": "Ultima reussida: {date}",
+    "neverFired": "Mai activà",
+    "pause": "Metter en pausa",
+    "resume": "Cuntinuar",
+    "delete": "Stizzar",
+    "confirmDelete": "Stizzar il webhook per {url}?",
+    "empty": "Anc nagins webhooks."
   },
   "teams": {
     "title": "Teams",
@@ -546,6 +594,8 @@
     "typeRestored": "Restituì da la cazetta",
     "typeStageChange": "Stadi: {from} → {to}",
     "typeAiScored": "Punctaziun IA: {score} ({priority})",
+    "typeNextActionSet": "Proxima acziun planisada: {type} ils {at}",
+    "typeNextActionCleared": "Proxima acziun stizzada",
     "typeNoteAdded": "Nota agiuntada",
     "typeFileAttached": "Datoteca agiuntada: {name}",
     "typeFileRemoved": "Datoteca allontanada: {name}",

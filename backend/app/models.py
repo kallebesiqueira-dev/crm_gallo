@@ -58,6 +58,18 @@ class Currency(str, enum.Enum):
     GBP = "GBP"
 
 
+class NextActionType(str, enum.Enum):
+    call = "call"
+    whatsapp = "whatsapp"
+    email = "email"
+    proposal = "proposal"
+    meeting = "meeting"
+    follow_up = "follow_up"
+    contract = "contract"
+    chase = "chase"
+    other = "other"
+
+
 class GoalPeriod(str, enum.Enum):
     month = "month"
     quarter = "quarter"
@@ -725,6 +737,16 @@ class Deal(SoftDeleteMixin, Base):
 
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     owner: Mapped[User | None] = relationship(back_populates="deals")
+
+    next_action_type: Mapped[NextActionType | None] = mapped_column(
+        Enum(
+            "call", "whatsapp", "email", "proposal", "meeting",
+            "follow_up", "contract", "chase", "other",
+            name="nextactiontype", create_type=False,
+        ),
+        nullable=True,
+    )
+    next_action_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

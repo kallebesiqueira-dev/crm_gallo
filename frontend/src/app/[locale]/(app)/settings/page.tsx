@@ -16,6 +16,7 @@ import { DocumentTemplatesCard } from "@/components/document-templates-card";
 import { CustomFieldsCard } from "@/components/custom-fields-card";
 import { TagsCard } from "@/components/tags-card";
 import { ApiKeysCard } from "@/components/api-keys-card";
+import { WebhooksCard } from "@/components/webhooks-card";
 import { api, type User } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { locales, localeLabels, type Locale } from "@/i18n/config";
@@ -263,6 +264,10 @@ export default function SettingsPage() {
           credentials for /api/v1. Admin-only (creation requires admin);
           the card shows a notice + hides actions for non-admins. */}
       <ApiKeysCard canManage={canInvite} />
+
+      {/* Webhook endpoints — HTTP POST delivery to external servers,
+          HMAC-signed per-endpoint. Admin-only creation/deletion. */}
+      <WebhooksCard canManage={canInvite} />
     </div>
   );
 }

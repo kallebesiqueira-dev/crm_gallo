@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import {
   BarChart3,
   Bell,
@@ -33,6 +35,7 @@ import {
   Users2,
   Workflow,
   Zap,
+  CalendarClock,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -73,6 +76,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Lavoro",
     items: [
+      { href: "hoje", label: "hoje", icon: CalendarClock },
       { href: "tasks", label: "tasks", icon: MessagesSquare },
       { href: "calendar", label: "calendar", icon: Calendar },
       { href: "inbox", label: "inbox", icon: WhatsAppIcon },
@@ -120,12 +124,28 @@ export function Sidebar() {
   const tApp = useTranslations("app");
 
   const [collapsed, setCollapsed] = useState(false);
+  const [hojePending, setHojePending] = useState(0);
+
   useEffect(() => {
     try {
       setCollapsed(localStorage.getItem(STORAGE_KEY) === "1");
     } catch {
       /* localStorage unavailable — stay expanded */
     }
+  }, []);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    api.getHoje(token).then((d) => {
+      setHojePending(
+        d.overdue_deals.length +
+          d.today_deals.length +
+          d.no_action_deals.length +
+          d.overdue_tasks.length +
+          d.today_tasks.length,
+      );
+    }).catch(() => {});
   }, []);
 
   function toggle() {
@@ -140,7 +160,7 @@ export function Sidebar() {
     });
   }
 
-  function renderItem({ href, label, icon: Icon }: NavItem) {
+  function renderItem({ href, label, icon: Icon }: NavItem, badge?: number) {
     const full = `/${locale}/${href}`;
     const active = pathname === full || pathname?.startsWith(`${full}/`);
     return (
@@ -162,6 +182,17 @@ export function Sidebar() {
         )}
         <Icon className="h-4 w-4 shrink-0" />
         {!collapsed && <span className="truncate">{tNav(label)}</span>}
+        {badge && badge > 0 ? (
+          collapsed ? (
+            <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+              {badge > 99 ? "99" : badge}
+            </span>
+          ) : (
+            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              {badge > 99 ? "99+" : badge}
+            </span>
+          )
+        ) : null}
         {collapsed && (
           <span
             role="tooltip"
@@ -225,7 +256,7 @@ export function Sidebar() {
                 {tNav(`groups.${group.label.toLowerCase()}`)}
               </div>
             )}
-            {group.items.map(renderItem)}
+            {group.items.map((item) => renderItem(item, item.href === "hoje" ? hojePending : undefined))}
           </div>
         ))}
       </nav>

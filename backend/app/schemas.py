@@ -26,6 +26,7 @@ from app.models import (
     MessageDirection,
     MessageStatus,
     MessageType,
+    NextActionType,
     Plan,
     ProductType,
     QuoteStatus,
@@ -1034,6 +1035,8 @@ class DealBase(BaseModel):
     customer_id: uuid.UUID | None = None
     company_id: uuid.UUID | None = None
     custom_fields: dict[str, Any] = Field(default_factory=dict)
+    next_action_type: NextActionType | None = None
+    next_action_at: datetime | None = None
 
 
 class DealCreate(DealBase):
@@ -1055,6 +1058,8 @@ class DealUpdate(BaseModel):
     team_id: uuid.UUID | None = None
     sort_index: int | None = None
     custom_fields: dict[str, Any] | None = None
+    next_action_type: NextActionType | None = None
+    next_action_at: datetime | None = None
 
 
 class DealOut(DealBase):
@@ -1076,6 +1081,44 @@ class DealOut(DealBase):
 class DealStageMove(BaseModel):
     stage: DealStage
     sort_index: int = 0
+
+
+class NextActionPayload(BaseModel):
+    next_action_type: NextActionType | None = None
+    next_action_at: datetime | None = None
+
+
+class DealTodayItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    title: str
+    value: float
+    currency: str
+    stage: DealStage
+    next_action_type: NextActionType | None
+    next_action_at: datetime | None
+    customer_name: str | None
+    owner_id: uuid.UUID | None
+    version: int
+
+
+class TaskTodayItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    title: str
+    due_date: date | None
+    priority: TaskPriority
+    customer_name: str | None = None
+    version: int
+
+
+class HojeResponse(BaseModel):
+    overdue_deals: list[DealTodayItem]
+    today_deals: list[DealTodayItem]
+    no_action_deals: list[DealTodayItem]
+    stale_deals: list[DealTodayItem]
+    today_tasks: list[TaskTodayItem]
+    overdue_tasks: list[TaskTodayItem]
 
 
 # ---------- Quotes ----------

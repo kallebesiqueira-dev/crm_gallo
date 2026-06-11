@@ -40,8 +40,20 @@
       "gestione": "Gestão",
       "sistema": "Sistema"
     },
+    "hoje": "Hoje",
     "exports": "Exportações",
     "teams": "Equipes"
+  },
+  "hoje": {
+    "title": "Hoje",
+    "overdueDeals": "Follow-ups atrasados",
+    "todayDeals": "Follow-ups de hoje",
+    "noActionDeals": "Sem próxima ação",
+    "staleDeals": "Parados há mais de 7 dias",
+    "todayTasks": "Tarefas de hoje",
+    "overdueTasks": "Tarefas atrasadas",
+    "empty": "Nada pendente. Boa venda!",
+    "pendingCount": "pendentes"
   },
   "inbox": {
     "title": "Caixa de entrada WhatsApp",
@@ -238,6 +250,11 @@
     "save": "Salvar",
     "cancel": "Cancelar",
     "scoreNow": "Avaliar com IA",
+    "convert": "Converter em Negócio",
+    "convertConfirmTitle": "Converter lead em negócio?",
+    "convertConfirmBody": "Isso criará um Cliente e um Negócio a partir deste lead. Clientes existentes com o mesmo email serão reutilizados.",
+    "convertSuccess": "Convertido! Cliente e negócio criados.",
+    "convertAlready": "Este lead já foi convertido.",
     "stages": {
       "new": "Novo",
       "contacted": "Contatado",
@@ -259,7 +276,9 @@
     "empty": "Nenhum cliente. Crie o primeiro.",
     "aiSummary": "Resumo da IA",
     "summarize": "Resumir",
-    "noSummary": "Nenhum resumo ainda. Clique em Resumir para gerar."
+    "noSummary": "Nenhum resumo ainda. Clique em Resumir para gerar.",
+    "deals": "Negócios",
+    "noDeals": "Nenhum negócio vinculado a este cliente."
   },
   "imports": {
     "title": "Importações",
@@ -303,7 +322,10 @@
     "currency": "Moeda",
     "probability": "Probabilidade",
     "expectedClose": "Fechamento previsto",
-    "customer": "Cliente"
+    "customer": "Cliente",
+    "stage": "Fase",
+    "nextAction": "Próxima ação",
+    "noNextAction": "Sem follow-up agendado"
   },
   "tasks": {
     "title": "Tarefas",
@@ -424,6 +446,32 @@
     "expiresOn": "Expira em {date}",
     "confirmRevoke": "Revogar a chave \"{name}\"? As integrações que a usam deixarão de funcionar.",
     "revoke": "Revogar"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "adminOnly": "Somente administradores podem gerenciar webhooks.",
+    "intro": "Envie eventos HTTP POST para URLs externas quando algo acontece no seu CRM. Cada entrega é assinada com HMAC usando o segredo do endpoint.",
+    "new": "Adicionar endpoint",
+    "urlLabel": "URL do endpoint",
+    "descLabel": "Descrição (opcional)",
+    "descPlaceholder": "Meu servidor de integração",
+    "eventsLabel": "Eventos",
+    "eventsHint": "Use * para todos os eventos, ou uma lista separada por vírgula: lead.created, deal.won, …",
+    "create": "Criar",
+    "cancel": "Cancelar",
+    "secretOnce": "Copie o segredo agora — ele não será exibido novamente.",
+    "copied": "Copiado!",
+    "copy": "Copiar",
+    "dismiss": "Fechar",
+    "paused": "Pausado",
+    "failures": "{count} falha(s)",
+    "lastSuccess": "Último sucesso: {date}",
+    "neverFired": "Nunca disparado",
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "delete": "Excluir",
+    "confirmDelete": "Excluir webhook para {url}?",
+    "empty": "Nenhum webhook ainda."
   },
   "teams": {
     "title": "Equipes",
@@ -546,6 +594,8 @@
     "typeRestored": "Restaurado da lixeira",
     "typeStageChange": "Etapa: {from} → {to}",
     "typeAiScored": "Pontuação IA: {score} ({priority})",
+    "typeNextActionSet": "Próxima ação agendada: {type} em {at}",
+    "typeNextActionCleared": "Próxima ação removida",
     "typeNoteAdded": "Nota adicionada",
     "typeFileAttached": "Arquivo anexado: {name}",
     "typeFileRemoved": "Arquivo removido: {name}",

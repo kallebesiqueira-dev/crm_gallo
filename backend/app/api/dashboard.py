@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
@@ -22,7 +22,7 @@ from app.models import (
 )
 from app.money import ZERO, q2
 from app.redis_client import get_redis
-from app.schemas import DashboardStats, FunnelStageStat, MonthValue, QuotesSummary
+from app.schemas import DashboardStats, FunnelStageStat, HojeResponse, MonthValue, QuotesSummary
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -238,3 +238,87 @@ async def stats(
     except Exception:
         pass  # best-effort cache write
     return result
+
+
+def _deal_to_today_item(row: Deal, customer_name: str | None) -> dict:
+    return {
+        "id": row.id,
+        "title": row.title,
+        "value": float(row.value),
+        "currency": row.currency.value if row.currency else "EUR",
+        "stage": row.stage,
+        "next_action_type": row.next_action_type,
+        "next_action_at": row.next_action_at,
+        "customer_name": customer_name,
+        "owner_id": row.owner_id,
+        "version": row.version,
+    }
+
+
+@router.get("/hoje", response_model=HojeResponse)
+async def get_hoje(
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> HojeResponse:
+    now = datetime.now(UTC)
+    today_start = datetime.combine(now.date(), time.min).replace(tzinfo=UTC)
+    today_end = datetime.combine(now.date(), time.max).replace(tzinfo=UTC)
+    stale_cutoff = now - timedelta(days=7)
+    open_stages = [DealStage.won, DealStage.lost]
+
+    base_q = (
+        select(Deal, Customer.first_name, Customer.last_name)
+        .outerjoin(Customer, Deal.customer_id == Customer.id)
+        .where(Deal.organization_id == org_id, Deal.stage.notin_(open_stages))
+    )
+
+    async def _fetch_deals(stmt) -> list[dict]:
+        rows = (await db.execute(stmt.order_by(Deal.next_action_at.asc().nullslast()))).all()
+        result = []
+        for deal, first, last in rows:
+            name = " ".join(filter(None, [first, last])) or None
+            result.append(_deal_to_today_item(deal, name))
+        return result
+
+    overdue_deals = await _fetch_deals(base_q.where(Deal.next_action_at < now))
+    today_deals = await _fetch_deals(
+        base_q.where(Deal.next_action_at.between(today_start, today_end))
+    )
+    no_action_deals = await _fetch_deals(base_q.where(Deal.next_action_at.is_(None)))
+    stale_deals = await _fetch_deals(
+        base_q.where(Deal.next_action_at.is_(None), Deal.updated_at < stale_cutoff)
+    )
+
+    task_base = select(Task).where(
+        Task.organization_id == org_id, Task.status != TaskStatus.done
+    )
+    today_task_rows = (
+        await db.execute(
+            task_base.where(Task.due_date == now.date()).order_by(Task.due_date.asc())
+        )
+    ).scalars().all()
+    overdue_task_rows = (
+        await db.execute(
+            task_base.where(Task.due_date < now.date()).order_by(Task.due_date.asc())
+        )
+    ).scalars().all()
+
+    def _task_item(t: Task) -> dict:
+        return {
+            "id": t.id,
+            "title": t.title,
+            "due_date": t.due_date,
+            "priority": t.priority,
+            "customer_name": None,
+            "version": t.version,
+        }
+
+    return HojeResponse(
+        overdue_deals=overdue_deals,
+        today_deals=today_deals,
+        no_action_deals=no_action_deals,
+        stale_deals=stale_deals,
+        today_tasks=[_task_item(t) for t in today_task_rows],
+        overdue_tasks=[_task_item(t) for t in overdue_task_rows],
+    )

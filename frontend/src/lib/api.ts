@@ -30,6 +30,47 @@ export type Currency = "EUR" | "CHF" | "USD" | "GBP";
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high";
 export type QuoteStatus = "draft" | "sent" | "accepted" | "declined" | "expired";
+export type NextActionType =
+  | "call"
+  | "whatsapp"
+  | "email"
+  | "proposal"
+  | "meeting"
+  | "follow_up"
+  | "contract"
+  | "chase"
+  | "other";
+
+export interface DealTodayItem {
+  id: string;
+  title: string;
+  value: number;
+  currency: string;
+  stage: DealStage;
+  next_action_type: NextActionType | null;
+  next_action_at: string | null;
+  customer_name: string | null;
+  owner_id: string | null;
+  version: number;
+}
+
+export interface TaskTodayItem {
+  id: string;
+  title: string;
+  due_date: string | null;
+  priority: TaskPriority;
+  customer_name: string | null;
+  version: number;
+}
+
+export interface HojeResponse {
+  overdue_deals: DealTodayItem[];
+  today_deals: DealTodayItem[];
+  no_action_deals: DealTodayItem[];
+  stale_deals: DealTodayItem[];
+  today_tasks: TaskTodayItem[];
+  overdue_tasks: TaskTodayItem[];
+}
 
 export interface Lead {
   id: string;
@@ -136,6 +177,8 @@ export interface Deal {
   sort_index: number;
   custom_fields: Record<string, unknown>;
   version: number;
+  next_action_type: NextActionType | null;
+  next_action_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -484,6 +527,35 @@ export interface ApiKeyCreate {
   name: string;
   scopes?: ApiKeyScope[];
   expires_at?: string | null;
+}
+
+export interface WebhookEndpoint {
+  id: string;
+  organization_id: string;
+  url: string;
+  description: string | null;
+  enabled_events: string[];
+  paused_at: string | null;
+  consecutive_failures: number;
+  last_success_at: string | null;
+  last_failure_at: string | null;
+  created_at: string;
+}
+
+export interface WebhookEndpointCreated extends WebhookEndpoint {
+  secret: string;
+}
+
+export interface WebhookEndpointCreate {
+  url: string;
+  description?: string | null;
+  enabled_events?: string[];
+}
+
+export interface WebhookEndpointUpdate {
+  description?: string | null;
+  enabled_events?: string[] | null;
+  paused?: boolean | null;
 }
 
 export interface DashboardStats {
@@ -1535,6 +1607,15 @@ export const api = {
     request<Lead>(`/api/leads/${id}/score`, { method: "POST", token }),
   deleteLead: (token: string, id: string) =>
     request<void>(`/api/leads/${id}`, { method: "DELETE", token }),
+  convertLead: (
+    token: string,
+    id: string,
+    payload: { deal_title?: string; deal_value?: number },
+  ) =>
+    request<{ customer_id: string; company_id: string | null; deal_id: string; customer_existed: boolean; company_existed: boolean }>(
+      `/api/leads/${id}/convert`,
+      { method: "POST", token, body: JSON.stringify(payload) },
+    ),
 
   // Customers
   listCustomers: (token: string, opts?: { q?: string; cursor?: string; limit?: number }) => {
@@ -1787,7 +1868,10 @@ export const api = {
     request<void>(`/api/forms/${id}`, { method: "DELETE", token }),
 
   // Deals
-  listDeals: (token: string) => request<Deal[]>("/api/deals", { token }),
+  listDeals: (token: string, params?: { customer_id?: string; stage?: string; q?: string }) => {
+    const qs = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v != null) as [string, string][]).toString() : "";
+    return request<Deal[]>(`/api/deals${qs ? `?${qs}` : ""}`, { token });
+  },
   createDeal: (token: string, payload: Partial<Deal>) =>
     request<Deal>("/api/deals", { method: "POST", token, body: JSON.stringify(payload) }),
   updateDeal: (token: string, id: string, payload: Partial<Deal>, version?: number) =>
@@ -1813,6 +1897,19 @@ export const api = {
   getDeal: (token: string, id: string) => request<Deal>(`/api/deals/${id}`, { token }),
   deleteDeal: (token: string, id: string) =>
     request<void>(`/api/deals/${id}`, { method: "DELETE", token }),
+  setNextAction: (
+    token: string,
+    id: string,
+    payload: { next_action_type: NextActionType | null; next_action_at: string | null },
+    version?: number,
+  ) =>
+    request<Deal>(`/api/deals/${id}/next-action`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
+    }),
+  getHoje: (token: string) => request<HojeResponse>("/api/dashboard/hoje", { token }),
 
   // Tasks
   listTasks: (token: string, opts?: { status?: TaskStatus; mine?: boolean; limit?: number; offset?: number }) => {
@@ -2190,6 +2287,27 @@ export const api = {
     request<ApiKey>(`/api/api-keys/${encodeURIComponent(id)}`, { token }),
   revokeApiKey: (token: string, id: string) =>
     request<ApiKey>(`/api/api-keys/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      token,
+    }),
+
+  // ── Outgoing webhooks (admin-gated, current-org) ─────────────────
+  listWebhooks: (token: string) =>
+    request<WebhookEndpoint[]>("/api/webhooks", { token }),
+  createWebhook: (token: string, payload: WebhookEndpointCreate) =>
+    request<WebhookEndpointCreated>("/api/webhooks", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  updateWebhook: (token: string, id: string, payload: WebhookEndpointUpdate) =>
+    request<WebhookEndpoint>(`/api/webhooks/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    }),
+  deleteWebhook: (token: string, id: string) =>
+    request<void>(`/api/webhooks/${encodeURIComponent(id)}`, {
       method: "DELETE",
       token,
     }),

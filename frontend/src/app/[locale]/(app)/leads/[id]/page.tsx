@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Sparkles, Trash2, Loader2 } from "lucide-react";
+import { Pencil, Sparkles, Trash2, Loader2, ArrowRightCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +41,35 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const toast = useToast();
   const [lead, setLead] = useState<Lead | null>(null);
   const [scoring, setScoring] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleConvert() {
+    if (!lead) return;
+    const ok = await confirm({
+      title: t("convertConfirmTitle"),
+      description: t("convertConfirmBody"),
+      confirmLabel: t("convert"),
+    });
+    if (!ok) return;
+    const token = getToken();
+    if (!token) return;
+    setConverting(true);
+    try {
+      const result = await api.convertLead(token, lead.id, {});
+      toast(t("convertSuccess"), "success");
+      router.push(`/${locale}/pipeline/${result.deal_id}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Conversion failed";
+      if (msg.includes("already been converted")) {
+        toast(t("convertAlready"), "error");
+      } else {
+        toast(msg, "error");
+      }
+    } finally {
+      setConverting(false);
+    }
+  }
 
   async function handleDelete() {
     if (!lead) return;
@@ -116,6 +144,20 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                     <Pencil className="h-4 w-4" />
                     {tCommon("edit")}
                   </Link>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleConvert}
+                  disabled={converting}
+                >
+                  {converting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowRightCircle className="h-4 w-4" />
+                  )}
+                  {t("convert")}
                 </Button>
                 <Button
                   type="button"

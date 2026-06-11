@@ -40,8 +40,20 @@
       "gestione": "Management",
       "sistema": "System"
     },
+    "hoje": "Today",
     "exports": "Exports",
     "teams": "Teams"
+  },
+  "hoje": {
+    "title": "Today",
+    "overdueDeals": "Overdue follow-ups",
+    "todayDeals": "Today's follow-ups",
+    "noActionDeals": "No next action",
+    "staleDeals": "Stalled for 7+ days",
+    "todayTasks": "Today's tasks",
+    "overdueTasks": "Overdue tasks",
+    "empty": "Nothing pending. Good selling!",
+    "pendingCount": "pending"
   },
   "inbox": {
     "title": "WhatsApp Inbox",
@@ -238,6 +250,11 @@
     "save": "Save",
     "cancel": "Cancel",
     "scoreNow": "Score with AI",
+    "convert": "Convert to Deal",
+    "convertConfirmTitle": "Convert lead to deal?",
+    "convertConfirmBody": "This will create a Customer and a Deal from this lead. Any existing customer with the same email will be reused.",
+    "convertSuccess": "Converted! Customer and deal created.",
+    "convertAlready": "This lead has already been converted.",
     "stages": {
       "new": "New",
       "contacted": "Contacted",
@@ -259,7 +276,9 @@
     "empty": "No customers yet. Create your first one.",
     "aiSummary": "AI summary",
     "summarize": "Summarize",
-    "noSummary": "No summary yet. Click Summarize to generate one."
+    "noSummary": "No summary yet. Click Summarize to generate one.",
+    "deals": "Deals",
+    "noDeals": "No deals linked to this customer."
   },
   "imports": {
     "title": "Imports",
@@ -303,7 +322,10 @@
     "currency": "Currency",
     "probability": "Probability",
     "expectedClose": "Expected close",
-    "customer": "Customer"
+    "customer": "Customer",
+    "stage": "Stage",
+    "nextAction": "Next action",
+    "noNextAction": "No follow-up scheduled"
   },
   "tasks": {
     "title": "Tasks",
@@ -424,6 +446,32 @@
     "expiresOn": "Expires {date}",
     "confirmRevoke": "Revoke key \"{name}\"? Integrations using it will stop working.",
     "revoke": "Revoke"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "adminOnly": "Only admins can manage webhooks.",
+    "intro": "Send HTTP POST events to external URLs when things happen in your CRM. Each delivery is HMAC-signed with your endpoint secret.",
+    "new": "Add endpoint",
+    "urlLabel": "Endpoint URL",
+    "descLabel": "Description (optional)",
+    "descPlaceholder": "My integration server",
+    "eventsLabel": "Events",
+    "eventsHint": "Use * for all events, or a comma-separated list: lead.created, deal.won, …",
+    "create": "Create",
+    "cancel": "Cancel",
+    "secretOnce": "Copy your signing secret now — it won't be shown again.",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "dismiss": "Dismiss",
+    "paused": "Paused",
+    "failures": "{count} failure(s)",
+    "lastSuccess": "Last success: {date}",
+    "neverFired": "Never fired",
+    "pause": "Pause",
+    "resume": "Resume",
+    "delete": "Delete",
+    "confirmDelete": "Delete webhook for {url}?",
+    "empty": "No webhooks yet."
   },
   "teams": {
     "title": "Teams",
@@ -546,6 +594,8 @@
     "typeRestored": "Restored from trash",
     "typeStageChange": "Stage: {from} → {to}",
     "typeAiScored": "AI score: {score} ({priority})",
+    "typeNextActionSet": "Next action scheduled: {type} on {at}",
+    "typeNextActionCleared": "Next action cleared",
     "typeNoteAdded": "Note added",
     "typeFileAttached": "File attached: {name}",
     "typeFileRemoved": "File removed: {name}",
