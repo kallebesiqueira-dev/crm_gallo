@@ -617,6 +617,7 @@
     "notesPlaceholder": "Bedingungen, Umfang, Zahlungskonditionen…",
     "lineItems": "Positionen",
     "addLine": "Position hinzufügen",
+    "addFromCatalog": "Aus Katalog hinzufügen",
     "lineDescription": "Beschreibung",
     "quantity": "Menge",
     "unitPrice": "Einzelpreis",

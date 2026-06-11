@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Currency, Quote, QuoteCreate } from "@/lib/api";
+import { api, type Currency, type Product, type Quote, type QuoteCreate } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 const CURRENCIES: Currency[] = ["EUR", "CHF", "USD", "GBP"];
 
@@ -46,6 +47,20 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
       : [{ description: "", quantity: 1, unit_price: 0 }],
   );
 
+  // Catalog products for the "add from catalog" picker — fills a line's
+  // description + unit price from a saved product so reps don't retype them.
+  const [products, setProducts] = useState<Product[]>([]);
+  useEffect(() => {
+    const tk = getToken();
+    if (!tk) return;
+    api
+      .listProducts(tk, { limit: 100 })
+      .then((p) => setProducts(p.items.filter((x) => x.active)))
+      .catch(() => {
+        /* catalog optional — picker just stays hidden */
+      });
+  }, []);
+
   const totals = useMemo(() => {
     const subtotal = round2(lines.reduce((s, l) => s + round2(l.quantity * l.unit_price), 0));
     const tax = round2((subtotal * taxRate) / 100);
@@ -58,6 +73,16 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
 
   function addLine() {
     setLines((prev) => [...prev, { description: "", quantity: 1, unit_price: 0 }]);
+  }
+
+  // Append a line pre-filled from a catalog product (qty 1, editable after).
+  function addFromProduct(id: string) {
+    const p = products.find((x) => x.id === id);
+    if (!p) return;
+    setLines((prev) => [
+      ...prev,
+      { description: p.name, quantity: 1, unit_price: Number(p.price) || 0 },
+    ]);
   }
 
   function removeLine(i: number) {
@@ -201,10 +226,30 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
               </button>
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" onClick={addLine}>
-            <Plus className="h-4 w-4" />
-            {t("addLine")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={addLine}>
+              <Plus className="h-4 w-4" />
+              {t("addLine")}
+            </Button>
+            {products.length > 0 && (
+              <select
+                aria-label={t("addFromCatalog")}
+                className="h-9 max-w-[14rem] rounded-md border border-input bg-background px-2 text-sm text-muted-foreground"
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) addFromProduct(e.target.value);
+                }}
+              >
+                <option value="">{t("addFromCatalog")}</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.price ? ` · ${currency} ${(Number(p.price) || 0).toFixed(2)}` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
           <div className="ml-auto max-w-xs space-y-1 border-t pt-3 text-sm">
             <div className="flex justify-between">
