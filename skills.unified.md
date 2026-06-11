@@ -122,4 +122,4 @@ Code is clean (no dead code). The bloat is *scope*: 23 nav routes, several not s
 - **AI:** Groq (`api.groq.com/openai/v1`, `openai/gpt-oss-120b`). Local `.env` LLM keys stay EMPTY.
 - **Stripe:** LIVE Swiss account; one account only (dual IT+CH would be a separate feature). Local `.env` Stripe keys stay EMPTY.
 - **Turnstile** (register) + **Microsoft OAuth** (Azure redirect URI EXACTLY `https://api.gallo-crm.com/api/auth/oauth/microsoft/callback`).
-- **Cloudflare Pages:** a landing/site deploy exists and is currently FAILING — needs the project name + build-error log to diagnose (not a GitHub Actions workflow).
+- **Hosting = Railway only (NO Cloudflare Pages).** A leftover CF Pages project `crmgallo` had been auto-building the repo (via Cloudflare's GitHub app, no repo config) and **failing on every push** — it was redundant (the Next.js app runs on Railway) and was **deleted 2026-06-11**. If "Workers Builds: crmgallo" checks or `cloudflare-workers-and-pages[bot]` emails ever reappear, the fix is to delete the project in the Cloudflare dashboard (Workers & Pages → crmgallo → Settings → Delete), not in repo config.
