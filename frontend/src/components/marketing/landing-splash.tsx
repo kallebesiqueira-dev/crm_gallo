@@ -26,10 +26,25 @@ export function LandingSplash() {
 
   useEffect(() => {
     setMounted(true);
-    if (sessionStorage.getItem("gallo-splash-seen")) return;
+    if (sessionStorage.getItem("gallo-splash-seen")) {
+      // Already greeted this session — make sure the pre-paint guard added by
+      // the inline script in the landing page can never linger and hide the page.
+      document.documentElement.classList.remove("gallo-splash-pending");
+      return;
+    }
     sessionStorage.setItem("gallo-splash-seen", "1");
     setShow(true);
     document.body.style.overflow = "hidden";
+
+    // Drop the pre-paint guard (reveal the landing behind the overlay) and start
+    // the fade, so the overlay dissolves INTO the page instead of into a blank.
+    const reveal = () => {
+      document.documentElement.classList.remove("gallo-splash-pending");
+      // Restore scroll here (not only on transitionend) — transitionend never
+      // fires while the tab is hidden, which would leave the page unscrollable.
+      document.body.style.overflow = "";
+      setFading(true);
+    };
 
     let raf = 0;
     let startTs: number | null = null;
@@ -38,12 +53,22 @@ export function LandingSplash() {
       const pct = Math.min(100, ((now - startTs) / DURATION_MS) * 100);
       setProgress(pct);
       if (pct < 100) raf = requestAnimationFrame(tick);
-      else window.setTimeout(() => setFading(true), 350);
+      else window.setTimeout(reveal, 350);
     };
     raf = requestAnimationFrame(tick);
+
+    // Failsafe: requestAnimationFrame is fully paused while the tab is hidden
+    // (e.g. the landing opened in a background tab), which would otherwise leave
+    // the page stuck behind the guard. setTimeout still fires (throttled) in
+    // background tabs, so guarantee the reveal after a hard cap regardless of
+    // animation progress.
+    const failsafe = window.setTimeout(reveal, DURATION_MS + 1200);
+
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(failsafe);
       document.body.style.overflow = "";
+      document.documentElement.classList.remove("gallo-splash-pending");
     };
   }, []);
 

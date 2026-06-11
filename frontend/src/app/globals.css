@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Landing splash: hide the landing until the once-per-session intro has played,
+   so the page never flashes BEFORE the <LandingSplash> overlay mounts. An inline
+   script in the landing page adds `gallo-splash-pending` before first paint;
+   <LandingSplash> removes it when the intro fades. `!important` beats the base
+   body background so the brief pre-overlay frame is the splash's dark colour,
+   not a white flash. */
+html.gallo-splash-pending,
+html.gallo-splash-pending body {
+  background: #0a0612 !important;
+}
+html.gallo-splash-pending body {
+  overflow: hidden;
+}
+.gallo-splash-pending [data-landing-root] {
+  visibility: hidden;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

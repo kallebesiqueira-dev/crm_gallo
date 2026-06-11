@@ -254,6 +254,15 @@ export default function PricingPage() {
 
   return (
     <SmoothScroll>
+    {/* Before first paint: if the splash hasn't played this session, hide the
+        landing + paint the splash's dark bg, so the page never flashes before
+        the <LandingSplash> overlay mounts. Removed when the intro fades. */}
+    <script
+      dangerouslySetInnerHTML={{
+        __html:
+          "try{if(!sessionStorage.getItem('gallo-splash-seen')){document.documentElement.classList.add('gallo-splash-pending')}}catch(e){}",
+      }}
+    />
     <LandingSplash />
     {/* `dark` on the root forces the landing into dark mode regardless of
         the user's theme preference — the rest of the app (auth, dashboard,
@@ -261,7 +270,7 @@ export default function PricingPage() {
         the viewport at z-0 and provides the actual base colour; every other
         page surface stacks above via `relative z-10` so it can't get hidden
         behind the mesh. */}
-    <div className="dark relative min-h-screen overflow-x-clip text-foreground">
+    <div data-landing-root className="dark relative min-h-screen overflow-x-clip text-foreground">
       <Suspense fallback={null}>
         <SearchParamWatcher name="stripe" onValue={setStripeFlag} />
       </Suspense>
