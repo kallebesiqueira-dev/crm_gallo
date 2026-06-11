@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  * stays out of the way on SPA navigations back to the landing. Clear it (or a
  * fresh tab / incognito) to see it again.
  */
-const DURATION_MS = 3000;
+const DURATION_MS = 1300;
 
 export function LandingSplash() {
   const [mounted, setMounted] = useState(false);
@@ -38,7 +38,7 @@ export function LandingSplash() {
       const pct = Math.min(100, ((now - startTs) / DURATION_MS) * 100);
       setProgress(pct);
       if (pct < 100) raf = requestAnimationFrame(tick);
-      else window.setTimeout(() => setFading(true), 450);
+      else window.setTimeout(() => setFading(true), 180);
     };
     raf = requestAnimationFrame(tick);
     return () => {
@@ -56,7 +56,7 @@ export function LandingSplash() {
   return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-[200] grid place-items-center transition-opacity duration-700 ease-out",
+        "fixed inset-0 z-[200] grid place-items-center transition-opacity duration-500 ease-out",
         "bg-[radial-gradient(circle_at_center,#1b0f33_0%,#0a0612_72%)]",
         fading ? "pointer-events-none opacity-0" : "opacity-100",
       )}

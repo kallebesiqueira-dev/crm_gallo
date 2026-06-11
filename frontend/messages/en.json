@@ -239,6 +239,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "scoreNow": "Score with AI",
+    "scoreEmpty": "No score yet. Run an AI evaluation for this lead.",
     "stages": {
       "new": "New",
       "contacted": "Contacted",
@@ -638,6 +639,7 @@
     "resend": "New version",
     "generatePdf": "Generate PDF",
     "generating": "Generating…",
+    "pdfPending": "The PDF is still being generated. Refresh in a moment.",
     "documents": "Documents",
     "noDocuments": "No PDF generated yet.",
     "supersededBy": "A newer version supersedes this one.",
@@ -684,6 +686,7 @@
     "resend": "New version",
     "generatePdf": "Generate PDF",
     "generating": "Generating…",
+    "pdfPending": "The PDF is still being generated. Refresh in a moment.",
     "documents": "Documents",
     "noDocuments": "No PDF generated yet.",
     "supersededBy": "A newer version supersedes this one.",

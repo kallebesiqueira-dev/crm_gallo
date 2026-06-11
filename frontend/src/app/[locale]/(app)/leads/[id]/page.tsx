@@ -86,7 +86,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (error) return <p className="text-sm text-destructive">{error}</p>;
+  // Only a LOAD failure (no lead yet) should replace the page. A scoring or
+  // delete error must not wipe the detail view — it shows inline instead.
+  if (error && !lead) return <p className="text-sm text-destructive">{error}</p>;
   if (!lead) return <p className="text-sm text-muted-foreground">…</p>;
 
   return (
@@ -198,6 +200,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
+            {error && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+            )}
             {lead.ai_score != null ? (
               <>
                 <div className="text-4xl font-semibold">{lead.ai_score}</div>
@@ -231,7 +236,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 )}
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">{t("empty")}</p>
+              <p className="text-sm text-muted-foreground">{t("scoreEmpty")}</p>
             )}
           </CardContent>
         </Card>

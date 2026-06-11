@@ -138,16 +138,23 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
       setGenerating(false);
       return;
     }
-    // The worker renders async (~15s) and attaches the PDF. Poll the
-    // attachments list until a new one shows up, then stop.
+    // Poll the attachments list until the rendered PDF shows up. The worker
+    // render + R2 upload usually lands in well under 30s, but we allow a 60s
+    // window (20 × 3s) so a cold worker or a busy queue doesn't make the
+    // spinner give up before the PDF appears.
     let tries = 0;
     const poll = async () => {
       tries += 1;
-      await loadDocs();
       const current = await api.listAttachments("quote", id);
-      if (current.length > before || tries >= 10) {
+      if (current.length > before) {
         setDocs(current);
         setGenerating(false);
+        return;
+      }
+      if (tries >= 20) {
+        setDocs(current);
+        setGenerating(false);
+        setError(t("pdfPending"));
         return;
       }
       pollTimer.current = setTimeout(poll, 3000);

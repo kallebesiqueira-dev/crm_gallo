@@ -180,7 +180,7 @@ export default function DashboardPage() {
               <div className="text-sm font-semibold">
                 {t("total")} {eur2.format(stats?.revenue_total_eur ?? 0)}
               </div>
-              <PaymentsBars data={stats?.monthly_revenue ?? []} locale={locale} />
+              <PaymentsBars data={stats?.monthly_revenue ?? []} locale={locale} empty={t("noData")} />
             </div>
             <div className="md:border-l md:border-border md:pl-5">
               <div className="text-xs text-muted-foreground">{t("openAmounts")}</div>
@@ -402,8 +402,23 @@ function CardLinkInline({ href, children }: { href: string; children: React.Reac
 
 /* ───────────────────────── charts ───────────────────────── */
 
-function PaymentsBars({ data, locale }: { data: { month: string; value_eur: number }[]; locale: string }) {
+function PaymentsBars({
+  data,
+  locale,
+  empty,
+}: {
+  data: { month: string; value_eur: number }[];
+  locale: string;
+  empty: string;
+}) {
   const max = Math.max(1, ...data.map((d) => d.value_eur));
+  // No closed-won revenue yet → every bar would be an invisible 2% sliver in a
+  // big empty box (reads as "broken"). Show a clean empty state at the same
+  // height instead.
+  const hasData = data.some((d) => d.value_eur > 0);
+  if (!hasData) {
+    return <div className="mt-3 grid h-36 place-items-center text-xs text-muted-foreground">{empty}</div>;
+  }
   const fmt = (m: string) => {
     const d = new Date(`${m}-01T00:00:00`);
     return Number.isNaN(d.getTime()) ? m.slice(5) : d.toLocaleDateString(locale, { month: "short" });

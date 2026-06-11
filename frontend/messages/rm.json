@@ -239,6 +239,7 @@
     "save": "Memorisar",
     "cancel": "Annullar",
     "scoreNow": "Valutar cun IA",
+    "scoreEmpty": "Anc nagin punct. Valutai quest lead cun l'IA.",
     "stages": {
       "new": "Nov",
       "contacted": "Contactà",
@@ -638,6 +639,7 @@
     "resend": "Nova versiun",
     "generatePdf": "Generar PDF",
     "generating": "Generar…",
+    "pdfPending": "Il PDF vegn anc generà. Actualisai en in mument.",
     "documents": "Documents",
     "noDocuments": "Anc nagin PDF generà.",
     "supersededBy": "Ina versiun pli nova remplazza questa offerta.",
@@ -684,6 +686,7 @@
     "resend": "Nova versiun",
     "generatePdf": "Generar PDF",
     "generating": "Generar…",
+    "pdfPending": "Il PDF vegn anc generà. Actualisai en in mument.",
     "documents": "Documents",
     "noDocuments": "Anc nagin PDF generà.",
     "supersededBy": "Ina versiun pli nova remplazza questa.",

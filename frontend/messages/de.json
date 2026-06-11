@@ -239,6 +239,7 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "scoreNow": "Mit KI bewerten",
+    "scoreEmpty": "Noch keine Bewertung. Bewerte diesen Lead mit der KI.",
     "stages": {
       "new": "Neu",
       "contacted": "Kontaktiert",
@@ -638,6 +639,7 @@
     "resend": "Neue Version",
     "generatePdf": "PDF erstellen",
     "generating": "Wird erstellt…",
+    "pdfPending": "Das PDF wird noch erstellt. Bitte gleich aktualisieren.",
     "documents": "Dokumente",
     "noDocuments": "Noch kein PDF erstellt.",
     "supersededBy": "Eine neuere Version ersetzt dieses Angebot.",
@@ -684,6 +686,7 @@
     "resend": "Neue Version",
     "generatePdf": "PDF erstellen",
     "generating": "Wird erstellt…",
+    "pdfPending": "Das PDF wird noch erstellt. Bitte gleich aktualisieren.",
     "documents": "Dokumente",
     "noDocuments": "Noch kein PDF erstellt.",
     "supersededBy": "Eine neuere Version ersetzt diese.",

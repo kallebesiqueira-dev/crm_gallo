@@ -239,6 +239,7 @@
     "save": "Salva",
     "cancel": "Annulla",
     "scoreNow": "Valuta con IA",
+    "scoreEmpty": "Nessun punteggio. Valuta questo lead con l'IA.",
     "stages": {
       "new": "Nuovo",
       "contacted": "Contattato",
@@ -638,6 +639,7 @@
     "resend": "Nuova versione",
     "generatePdf": "Genera PDF",
     "generating": "Generazione…",
+    "pdfPending": "Il PDF è ancora in generazione. Aggiorna tra un istante.",
     "documents": "Documenti",
     "noDocuments": "Nessun PDF generato.",
     "supersededBy": "Una versione più recente sostituisce questo preventivo.",
@@ -684,6 +686,7 @@
     "resend": "Nuova versione",
     "generatePdf": "Genera PDF",
     "generating": "Generazione…",
+    "pdfPending": "Il PDF è ancora in generazione. Aggiorna tra un istante.",
     "documents": "Documenti",
     "noDocuments": "Nessun PDF generato ancora.",
     "supersededBy": "Una versione più recente sostituisce questa.",

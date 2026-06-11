@@ -239,6 +239,7 @@
     "save": "Salvar",
     "cancel": "Cancelar",
     "scoreNow": "Avaliar com IA",
+    "scoreEmpty": "Sem pontuação. Avalie este lead com a IA.",
     "stages": {
       "new": "Novo",
       "contacted": "Contatado",
@@ -638,6 +639,7 @@
     "resend": "Nova versão",
     "generatePdf": "Gerar PDF",
     "generating": "Gerando…",
+    "pdfPending": "O PDF ainda está sendo gerado. Atualize em instantes.",
     "documents": "Documentos",
     "noDocuments": "Nenhum PDF gerado ainda.",
     "supersededBy": "Uma versão mais recente substitui esta.",
@@ -684,6 +686,7 @@
     "resend": "Nova versão",
     "generatePdf": "Gerar PDF",
     "generating": "Gerando…",
+    "pdfPending": "O PDF ainda está sendo gerado. Atualize em instantes.",
     "documents": "Documentos",
     "noDocuments": "Nenhum PDF gerado ainda.",
     "supersededBy": "Uma versão mais recente substitui esta.",
