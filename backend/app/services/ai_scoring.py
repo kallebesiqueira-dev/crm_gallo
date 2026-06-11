@@ -95,7 +95,7 @@ def _validate_score(data: dict) -> dict | None:
     return data
 
 
-async def score_lead(lead: Lead) -> dict:
+async def score_lead(lead: Lead, locale: str = "en") -> dict:
     if not is_configured():
         result = _heuristic_score(lead)
         result["scored_at"] = datetime.now(UTC)
@@ -105,7 +105,10 @@ async def score_lead(lead: Lead) -> dict:
     try:
         text = await chat_completion(
             messages=[{"role": "user", "content": prompt}],
-            system=_SCORING_SYSTEM,
+            system=_SCORING_SYSTEM
+            + f" Write the 'next_action' and 'risk_analysis' text in the user's "
+            f"language (locale code: {locale}); keep the JSON keys and the "
+            f"'priority' value ('low'/'medium'/'high') in English.",
             max_tokens=512,
         )
         parsed = _parse_score_json(text)
