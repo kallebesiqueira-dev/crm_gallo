@@ -1364,7 +1364,10 @@ export const api = {
       `/api/teams/${encodeURIComponent(team_id)}/members/${encodeURIComponent(user_id)}`,
       { method: "DELETE" },
     ),
-  listOrgMembers: () => request<TeamMember[]>("/api/orgs/current/members"),
+  // `token` optional: auth rides the cookie (request() ignores the value);
+  // legacy callers still pass getToken() while teams/page.tsx passes nothing.
+  listOrgMembers: (token?: string | null) =>
+    request<TeamMember[]>("/api/orgs/current/members", { token }),
 
   // Support — report an issue (multipart, cookie + CSRF) → emails the support inbox
   reportIssue: async (data: {
