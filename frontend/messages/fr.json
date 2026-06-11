@@ -617,6 +617,7 @@
     "notesPlaceholder": "Conditions, périmètre, modalités de paiement…",
     "lineItems": "Lignes",
     "addLine": "Ajouter une ligne",
+    "addFromCatalog": "Ajouter du catalogue",
     "lineDescription": "Description",
     "quantity": "Qté",
     "unitPrice": "Prix unit.",

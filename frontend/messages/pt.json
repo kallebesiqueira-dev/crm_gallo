@@ -617,6 +617,7 @@
     "notesPlaceholder": "Termos, escopo, condições de pagamento…",
     "lineItems": "Itens",
     "addLine": "Adicionar item",
+    "addFromCatalog": "Adicionar do catálogo",
     "lineDescription": "Descrição",
     "quantity": "Qtd",
     "unitPrice": "Preço unit.",

@@ -617,6 +617,7 @@
     "notesPlaceholder": "Terms, scope, payment conditions…",
     "lineItems": "Line items",
     "addLine": "Add line",
+    "addFromCatalog": "Add from catalog",
     "lineDescription": "Description",
     "quantity": "Qty",
     "unitPrice": "Unit price",

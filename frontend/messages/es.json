@@ -617,6 +617,7 @@
     "notesPlaceholder": "Términos, alcance, condiciones de pago…",
     "lineItems": "Líneas",
     "addLine": "Añadir línea",
+    "addFromCatalog": "Añadir del catálogo",
     "lineDescription": "Descripción",
     "quantity": "Cant.",
     "unitPrice": "Precio unit.",
