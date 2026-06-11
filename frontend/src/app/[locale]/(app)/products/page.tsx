@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
 import { api, type Product } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { EmptyState } from "@/components/empty-state";
 
 export default function ProductsPage() {
   const t = useTranslations("products");
@@ -119,7 +120,7 @@ export default function ProductsPage() {
 
       <Card className="overflow-hidden">
         {items.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
+          <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/products/new`} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[20rem] text-sm">
