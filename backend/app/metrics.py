@@ -69,6 +69,35 @@ REQUESTS_IN_PROGRESS = Gauge(
     labelnames=("method",),
 )
 
+# ---------- LLM metrics ----------
+
+LLM_REQUESTS = Counter(
+    "llm_requests_total",
+    "LLM calls by provider and outcome (success / error / fallback).",
+    labelnames=("provider", "status"),
+)
+
+LLM_DURATION = Histogram(
+    "llm_request_duration_seconds",
+    "End-to-end latency of LLM batch calls, in seconds.",
+    labelnames=("provider",),
+    buckets=(0.5, 1.0, 2.5, 5.0, 10.0, 20.0, 30.0, 60.0, 120.0, 180.0),
+)
+
+LLM_TOKENS = Counter(
+    "llm_tokens_total",
+    "Token consumption by provider and direction (input / output).",
+    labelnames=("provider", "direction"),
+)
+
+# ---------- Search metrics ----------
+
+SEARCH_TRGM_FALLBACK = Counter(
+    "search_trgm_fallback_total",
+    "FTS→trigram fallback activations by entity type (FTS returned 0 results).",
+    labelnames=("entity_type",),
+)
+
 
 class PrometheusMiddleware:
     """Pure-ASGI middleware: time every HTTP request and increment the

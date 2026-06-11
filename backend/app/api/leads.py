@@ -23,6 +23,7 @@ from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginat
 from app.rate_limit import limiter, user_or_ip_key
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
 from app.services.ai_scoring import score_lead
+from app.metrics import SEARCH_TRGM_FALLBACK
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 settings = get_settings()
@@ -81,6 +82,7 @@ async def list_leads(
         if has_fts:
             stmt = stmt.where(fts_filter)
         else:
+            SEARCH_TRGM_FALLBACK.labels(entity_type="lead").inc()
             stmt = stmt.where(
                 sa.or_(
                     sa.func.similarity(Lead.first_name, q) > 0.3,

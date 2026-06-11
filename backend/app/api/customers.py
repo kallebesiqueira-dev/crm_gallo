@@ -19,6 +19,7 @@ from app.models import Customer, Deal, DealStage, Task, TaskStatus, User
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import CustomerCreate, CustomerOut, CustomerUpdate
 from app.services.ai_assistant import summarize_customer
+from app.metrics import SEARCH_TRGM_FALLBACK
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
 
@@ -65,6 +66,7 @@ async def list_customers(
         if has_fts:
             stmt = stmt.where(fts_filter)
         else:
+            SEARCH_TRGM_FALLBACK.labels(entity_type="customer").inc()
             stmt = stmt.where(
                 sa.or_(
                     sa.func.similarity(Customer.first_name, q) > 0.3,
