@@ -156,7 +156,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((k) => (
           <Panel key={k.label} className="p-5">
             <div className="flex items-start justify-between">
@@ -171,10 +171,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Financial overview + quotes */}
-      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("financial") && "hidden")}>
+      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", hidden.has("financial") && "hidden")}>
         <Panel className="p-5 lg:col-span-2">
           <SectionTitle icon={TrendingUp}>{t("financialOverview")}</SectionTitle>
-          <div className="mt-4 grid gap-6 md:grid-cols-[1.5fr_1fr]">
+          <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-[1.5fr_1fr]">
             <div>
               <div className="text-xs text-muted-foreground">{t("payments")}</div>
               <div className="text-sm font-semibold">
@@ -215,7 +215,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent activity + pipeline funnel + my tasks */}
-      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("activity") && "hidden")}>
+      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", hidden.has("activity") && "hidden")}>
         <Panel className="flex flex-col p-5">
           <SectionTitle icon={CheckCircle2}>{t("recentActivities")}</SectionTitle>
           {recentLeads.length === 0 ? (
@@ -277,7 +277,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent clients + documents */}
-      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("clients") && "hidden")}>
+      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", hidden.has("clients") && "hidden")}>
         <Panel className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
             <SectionTitle icon={Building2}>{t("recentCompanies")}</SectionTitle>
@@ -286,7 +286,7 @@ export default function DashboardPage() {
           {companies.length === 0 ? (
             <div className="grid place-items-center py-8 text-xs text-muted-foreground">{t("noData")}</div>
           ) : (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {companies.slice(0, 4).map((c) => (
                 <Link
                   key={c.id}
