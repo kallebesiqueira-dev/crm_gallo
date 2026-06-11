@@ -199,7 +199,7 @@ export default function DashboardPage() {
           <div className="text-lg font-bold">{eur2.format(q?.total_eur ?? 0)}</div>
           <div className="mt-2 flex items-center gap-4">
             <CitazioniRings q={q} />
-            <div className="flex-1 space-y-2 text-xs">
+            <div className="min-w-0 flex-1 space-y-2 text-xs">
               <LegendRow color="bg-violet-500" label={t("outstanding")} value={eur2.format(q?.outstanding_eur ?? 0)} />
               <LegendRow color="bg-fuchsia-500" label={t("accepted")} value={eur2.format(q?.accepted_eur ?? 0)} />
               <LegendRow color="bg-rose-400" label={t("rejected")} value={eur2.format(q?.rejected_eur ?? 0)} />

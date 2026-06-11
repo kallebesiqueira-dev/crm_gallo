@@ -76,8 +76,16 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Patch base-image OS CVEs (mirrors the backend Dockerfile's apt upgrade) and
-# add a non-root user to run the server.
-RUN apk upgrade --no-cache \
+# add a non-root user to run the server. `apk upgrade --no-cache` fetches a
+# fresh index and pulls patched packages (e.g. openssl/libcrypto3/libssl3
+# 3.5.7-r0 for CVE-2026-45447, PKCS7_verify use-after-free). Bump APK_REFRESH
+# to bust the buildx GHA layer cache when a newly-published base CVE fix needs
+# pulling — otherwise the cached `apk upgrade` layer serves a stale package set
+# and Trivy flags an already-fixed CVE. (Runtime-reachable libs are upgraded,
+# never added to .trivyignore — see that file's policy.)
+ARG APK_REFRESH=2026-06-11
+RUN echo "apk refresh ${APK_REFRESH}" \
+ && apk upgrade --no-cache \
  && addgroup -S app && adduser -S appuser -G app
 
 ENV NODE_ENV=production \
