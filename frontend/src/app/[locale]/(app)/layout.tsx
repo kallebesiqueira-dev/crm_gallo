@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, HelpCircle, Mail, Search, TrendingUp } from "lucide-react";
+import { AlertTriangle, HelpCircle, Mail, Search, Sparkles, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -13,6 +13,7 @@ import { ConfirmProvider } from "@/components/confirm-dialog";
 import { PlanBadge } from "@/components/plan-badge";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { AssistantPanel } from "@/components/assistant-panel";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { SupportDialog } from "@/components/support-dialog";
 import { GlobalSearch } from "@/components/global-search";
@@ -31,12 +32,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
   const tAuth = useTranslations("auth");
   const tBilling = useTranslations("billing");
+  const tNav = useTranslations("nav");
   const tSearch = useTranslations("search");
   const [user, setUser] = useState<User | null>(null);
   const [billing, setBilling] = useState<BillingMe | null>(null);
   const [ready, setReady] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -165,6 +168,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Mail className="h-5 w-5" />
               </Link>
               <NotificationsBell />
+              {/* Assistant slide-out — visible on every width since the page
+                  left the nav (mobile must keep an entry point). */}
+              <button
+                type="button"
+                onClick={() => setAssistantOpen(true)}
+                aria-label={tNav("assistant")}
+                title={tNav("assistant")}
+                className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              >
+                <Sparkles className="h-5 w-5" />
+              </button>
               <button
                 type="button"
                 onClick={() => setSupportOpen(true)}
@@ -206,6 +220,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </ConfirmProvider>
   );
 }

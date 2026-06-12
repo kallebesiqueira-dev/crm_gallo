@@ -645,6 +645,10 @@
     "typeImported": "Imported",
     "typeSystem": "System event"
   },
+  "assistant": {
+    "empty": "Ask the assistant to summarize a customer, draft a follow-up email, or suggest a next step.",
+    "placeholder": "Type a message…"
+  },
   "audit": {
     "title": "Audit log",
     "subtitle": "Immutable record of organization actions",

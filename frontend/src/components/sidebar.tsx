@@ -23,7 +23,6 @@ import {
   PanelLeftOpen,
   ScrollText,
   Settings,
-  Sparkles,
   Target,
   Trash2,
   Upload,
@@ -81,7 +80,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "forms", label: "forms", icon: Inbox },
       { href: "imports", label: "imports", icon: Upload },
       { href: "exports", label: "exports", icon: Download },
-      { href: "assistant", label: "assistant", icon: Sparkles },
     ],
   },
   {

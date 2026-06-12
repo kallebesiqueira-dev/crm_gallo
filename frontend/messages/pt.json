@@ -645,6 +645,10 @@
     "typeImported": "Importado",
     "typeSystem": "Evento de sistema"
   },
+  "assistant": {
+    "empty": "Peça ao assistente para resumir um cliente, redigir um e-mail de follow-up ou sugerir o próximo passo.",
+    "placeholder": "Escreva uma mensagem…"
+  },
   "audit": {
     "title": "Registro de auditoria",
     "subtitle": "Registro imutável das ações da organização",
