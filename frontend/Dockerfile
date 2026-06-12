@@ -59,6 +59,14 @@ ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 # so the bundle builds + runs identically until a key is supplied at build time.
 ARG NEXT_PUBLIC_POSTHOG_KEY=
 ARG NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
+# Sentry source-map upload credentials — BUILD-time only (consumed by
+# withSentryConfig during `next build`; the runner stage never sees them).
+# Empty token ⇒ upload skipped and the build behaves exactly as before.
+# Values come from the deploy environment (Railway service variables),
+# never from the repo.
+ARG SENTRY_AUTH_TOKEN=
+ARG SENTRY_ORG=
+ARG SENTRY_PROJECT=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_DEFAULT_LOCALE=$NEXT_PUBLIC_DEFAULT_LOCALE \
     NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
@@ -67,6 +75,9 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
     NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY \
     NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST \
+    SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN \
+    SENTRY_ORG=$SENTRY_ORG \
+    SENTRY_PROJECT=$SENTRY_PROJECT \
     NEXT_TELEMETRY_DISABLED=1
 
 # node_modules from the deps stage (clean, linux). .dockerignore keeps the
