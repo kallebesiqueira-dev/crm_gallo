@@ -58,6 +58,10 @@
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
+    "channelForms": "Formulare",
+    "formsQueueSubtitle": "Leads aus Ihren Webformularen",
+    "formsQueueEmpty": "Noch keine Formulareinsendungen. Binden Sie ein Formular auf Ihrer Website ein, um Leads zu sammeln.",
+    "manageForms": "Formulare verwalten",
     "subtitle": "Chatte mit deinen Kontakten in Echtzeit über WhatsApp.",
     "loading": "Wird geladen…",
     "conversations": "Unterhaltungen",

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link2, MessageCircle, Send, Target, Users } from "lucide-react";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
+import { FormsQueue } from "@/components/forms-queue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,70 @@ import { getToken } from "@/lib/auth";
 const CONVERSATIONS_POLL_MS = 15000;
 const MESSAGES_POLL_MS = 6000;
 
+type InboxChannel = "whatsapp" | "forms";
+
+/**
+ * Inbox = the communication hub. Channel pills switch between the WhatsApp
+ * threads and the web-form lead queue (skills.md §4 rework: Forms → Inbox).
+ * Deep-linkable via ?tab=forms; the choice persists in localStorage.
+ */
 export default function InboxPage() {
+  const t = useTranslations("inbox");
+  const [channel, setChannel] = useState<InboxChannel>("whatsapp");
+
+  useEffect(() => {
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get("tab");
+      const stored = localStorage.getItem("inbox-channel");
+      const wanted = fromUrl ?? stored;
+      if (wanted === "forms" || wanted === "whatsapp") setChannel(wanted);
+    } catch {
+      /* stay on whatsapp */
+    }
+  }, []);
+
+  function switchChannel(next: InboxChannel) {
+    setChannel(next);
+    try {
+      localStorage.setItem("inbox-channel", next);
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", next);
+      window.history.replaceState(null, "", url.toString());
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-1.5">
+        {(
+          [
+            { key: "whatsapp" as const, label: "WhatsApp" },
+            { key: "forms" as const, label: t("channelForms") },
+          ]
+        ).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => switchChannel(key)}
+            className={cn(
+              "rounded-full px-3 py-1 text-sm font-medium transition",
+              channel === key
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {channel === "forms" ? <FormsQueue /> : <WhatsAppInbox />}
+    </div>
+  );
+}
+
+function WhatsAppInbox() {
   const t = useTranslations("inbox");
   const locale = useLocale();
 

@@ -15,7 +15,6 @@ import {
   FileText,
   Files,
   Gauge,
-  Inbox,
   LayoutDashboard,
   MessagesSquare,
   Package,
@@ -77,7 +76,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Crescita",
     items: [
-      { href: "forms", label: "forms", icon: Inbox },
       { href: "imports", label: "imports", icon: Upload },
       { href: "exports", label: "exports", icon: Download },
     ],

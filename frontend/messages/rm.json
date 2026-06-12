@@ -58,6 +58,10 @@
   },
   "inbox": {
     "title": "Posta WhatsApp",
+    "channelForms": "Formulars",
+    "formsQueueSubtitle": "Leads che arrivan da tes formulars web",
+    "formsQueueEmpty": "Anc nagins formulars tramess. Integrescha in formular sin tia pagina per rimnar leads.",
+    "manageForms": "Administrar formulars",
     "subtitle": "Discurra cun tes contacts via WhatsApp en temp real.",
     "loading": "Chargiar…",
     "conversations": "Conversaziuns",

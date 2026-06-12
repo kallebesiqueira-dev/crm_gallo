@@ -58,6 +58,10 @@
   },
   "inbox": {
     "title": "Bandeja de WhatsApp",
+    "channelForms": "Formularios",
+    "formsQueueSubtitle": "Leads que llegan desde tus formularios web",
+    "formsQueueEmpty": "Aún no hay envíos. Inserta un formulario en tu sitio para captar leads.",
+    "manageForms": "Gestionar formularios",
     "subtitle": "Chatea con tus contactos por WhatsApp en tiempo real.",
     "loading": "Cargando…",
     "conversations": "Conversaciones",

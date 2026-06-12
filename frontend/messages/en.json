@@ -58,6 +58,10 @@
   },
   "inbox": {
     "title": "WhatsApp Inbox",
+    "channelForms": "Forms",
+    "formsQueueSubtitle": "Leads arriving from your web forms",
+    "formsQueueEmpty": "No form submissions yet. Embed a form on your site to start collecting leads.",
+    "manageForms": "Manage forms",
     "subtitle": "Chat with your contacts over WhatsApp in real time.",
     "loading": "Loading…",
     "conversations": "Conversations",
