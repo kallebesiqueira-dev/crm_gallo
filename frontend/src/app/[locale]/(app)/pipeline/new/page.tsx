@@ -33,6 +33,11 @@ export default function NewDealPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
+  // Whether the user explicitly picked a currency. Untouched → the
+  // field is OMITTED from the payload so the backend fills it with
+  // the org's default_currency (plan.md §6); sending the visual
+  // default ("EUR") would override that.
+  const [currencyTouched, setCurrencyTouched] = useState(false);
   const [form, setForm] = useState({
     title: "",
     value: "",
@@ -66,7 +71,7 @@ export default function NewDealPage() {
       const payload = {
         title: form.title,
         value: form.value ? Number(form.value) : 0,
-        currency: form.currency,
+        ...(currencyTouched ? { currency: form.currency } : {}),
         stage: form.stage,
         probability: Number(form.probability),
         expected_close_date: form.expected_close_date || null,
@@ -117,7 +122,10 @@ export default function NewDealPage() {
               id="currency"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={form.currency}
-              onChange={(e) => set("currency", e.target.value as Currency)}
+              onChange={(e) => {
+                setCurrencyTouched(true);
+                set("currency", e.target.value as Currency);
+              }}
             >
               {CURRENCIES.map((c) => (
                 <option key={c} value={c}>

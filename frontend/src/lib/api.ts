@@ -568,6 +568,7 @@ export interface DashboardStats {
   total_customers: number;
   total_deals: number;
   pipeline_value_eur: number;
+  pipeline_value_by_currency?: Record<string, number>;
   open_tasks: number;
   pipeline_funnel?: { stage: string; count: number; value_eur: number }[];
   monthly_revenue?: { month: string; value_eur: number }[];

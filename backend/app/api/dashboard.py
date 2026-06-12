@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
@@ -132,8 +132,15 @@ async def stats(
         )
     ).all()
     pipeline_value = ZERO
+    # Raw per-currency sums alongside the EUR approximation (plan.md §6:
+    # display-only, no conversion) — the widget shows "what you actually
+    # have" when the pipeline spans currencies.
+    pipeline_by_currency: dict[str, Decimal] = {}
     for value, currency in open_deals:
         pipeline_value += (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+        pipeline_by_currency[currency.value] = pipeline_by_currency.get(currency.value, ZERO) + (
+            value or ZERO
+        )
 
     # Pipeline funnel — count + EUR value per stage (lost excluded).
     funnel_rows = (
@@ -227,6 +234,9 @@ async def stats(
         total_customers=total_customers,
         total_deals=total_deals,
         pipeline_value_eur=float(q2(pipeline_value)),
+        pipeline_value_by_currency={
+            k: float(q2(v)) for k, v in sorted(pipeline_by_currency.items())
+        },
         open_tasks=open_tasks,
         pipeline_funnel=pipeline_funnel,
         monthly_revenue=monthly_revenue,
@@ -290,19 +300,25 @@ async def get_hoje(
         base_q.where(Deal.next_action_at.is_(None), Deal.updated_at < stale_cutoff)
     )
 
-    task_base = select(Task).where(
-        Task.organization_id == org_id, Task.status != TaskStatus.done
-    )
+    task_base = select(Task).where(Task.organization_id == org_id, Task.status != TaskStatus.done)
     today_task_rows = (
-        await db.execute(
-            task_base.where(Task.due_date == now.date()).order_by(Task.due_date.asc())
+        (
+            await db.execute(
+                task_base.where(Task.due_date == now.date()).order_by(Task.due_date.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     overdue_task_rows = (
-        await db.execute(
-            task_base.where(Task.due_date < now.date()).order_by(Task.due_date.asc())
+        (
+            await db.execute(
+                task_base.where(Task.due_date < now.date()).order_by(Task.due_date.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     def _task_item(t: Task) -> dict:
         return {

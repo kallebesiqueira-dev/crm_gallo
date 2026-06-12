@@ -750,6 +750,8 @@ class CustomerOut(CustomerBase):
     updated_at: datetime
     contact_consent_at: datetime | None = None
     consent_source: str | None = None
+
+
 class CompanyBase(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=255)]
     industry: str | None = None
@@ -1585,6 +1587,10 @@ class DashboardStats(BaseModel):
     total_customers: int = 0
     total_deals: int = 0
     pipeline_value_eur: float = 0.0
+    # Raw open-pipeline sums per ISO currency (plan.md §6) — display-
+    # only, NO conversion; the _eur field above stays the rough
+    # FX-approximated headline.
+    pipeline_value_by_currency: dict[str, float] = Field(default_factory=dict)
     open_tasks: int = 0
     pipeline_funnel: list[FunnelStageStat] = Field(default_factory=list)
     monthly_revenue: list[MonthValue] = Field(default_factory=list)
