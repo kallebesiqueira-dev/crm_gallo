@@ -342,6 +342,12 @@ class Organization(Base):
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), index=True)
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), index=True)
 
+    # GDPR retention policy (plan.md §5): months of lead inactivity
+    # after which the worker's daily sweep anonymizes the record
+    # (same erasure mechanics as POST /forget — see app/api/gdpr.py).
+    # NULL = retention off, the safe default; admins opt in.
+    retention_months: Mapped[int | None] = mapped_column(Integer)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
