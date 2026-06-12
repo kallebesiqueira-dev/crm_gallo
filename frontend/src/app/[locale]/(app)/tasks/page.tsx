@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Circle, Loader2, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, ClipboardList, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/empty-state";
 import { api, ApiError, type Task, type TaskPriority, type TaskStatus } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -165,7 +166,10 @@ export default function TasksPage() {
               ))}
             </ul>
           ) : tasks.length === 0 ? (
-            <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
+            <EmptyState
+              icon={ClipboardList}
+              title={t("empty")}
+            />
           ) : (
             <ul className="divide-y">
               {tasks.map((task) => (

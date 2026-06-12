@@ -126,10 +126,9 @@ Endpoint: `GET /api/dashboard/today` (complementa o `/api/dashboard/stats` exist
 Um org novo cai num CRM vazio — péssima primeira impressão.
 
 **O que construir:**
-- [x] Checklist de onboarding na primeira sessão (5 passos) — **backend DONE 2026-06-11 (`26ee0f6`)**: `GET /api/onboarding/checklist` computado de dados reais (sem tabela de estado): pipeline_ready / first_lead / next_action_set / teammate_invited / proposal_sent. *(UI do checklist = frontend, pendente)*
-- [x] Templates de pipeline prontos por setor — **backend DONE (mesmo commit)**: `GET /api/onboarding/templates` (7 setores: agency, saas, consulting, construction, real-estate, whatsapp-sales, b2b-simple) + `POST /api/onboarding/templates/{slug}/apply` (cria Pipeline+stages, set_default opcional, re-apply 409). Nomes de stage em EN canônico — wizard localiza a exibição, stages editáveis no editor existente. 6 testes.
-- [ ] Empty-states com CTAs em todas as listas vazias *(frontend)*
-- [ ] Wizard de 3 perguntas → gera pipeline sugerido *(frontend — consome os 2 endpoints acima)*
+- [x] Checklist de onboarding na primeira sessão (5 passos) — **backend DONE 2026-06-11 (`26ee0f6`)**: `GET /api/onboarding/checklist` computado de dados reais (sem tabela de estado): pipeline_ready / first_lead / next_action_set / teammate_invited / proposal_sent. **frontend DONE 2026-06-11**: `components/onboarding-checklist.tsx` (widget no dashboard, desaparece quando tudo feito ou dismissed via localStorage, barra de progresso), 7 locais.
+- [x] Templates de pipeline prontos por setor — **backend DONE (mesmo commit)**: `GET /api/onboarding/templates` (7 setores: agency, saas, consulting, construction, real-estate, whatsapp-sales, b2b-simple) + `POST /api/onboarding/templates/{slug}/apply` (cria Pipeline+stages, set_default opcional, re-apply 409). Nomes de stage em EN canônico — wizard localiza a exibição, stages editáveis no editor existente. 6 testes. **frontend DONE 2026-06-11**: `app/[locale]/(app)/onboarding/page.tsx` — grid de cards com badge de stages, botão apply, toast de sucesso/409.
+- [x] Empty-states com CTAs em todas as listas vazias — **DONE 2026-06-11**: `<EmptyState>` compartilhado (ícone+título+CTA) nas 7 listas principais — leads/customers/tasks (lane paralela) + contracts/quotes/products/companies (`1bf3def`). Tasks sem CTA (criação é inline); trash/notifications/duplicates/imports mantêm texto simples de propósito (vazio ali é normal).
 
 ---
 
@@ -149,11 +148,11 @@ Hoje leads e clientes são entidades separadas sem fluxo de conversão formal.
 Compliance como vantagem de venda, não como tarefa de último minuto. Base já existe (audit log, soft-delete, RLS). O que falta:
 
 **O que construir:**
-- [ ] Campo `contact_consent_at` + `consent_source` em leads/clientes *(precisa de migration em models.py — aguardando a lane de Deal next-action esfriar)*
+- [~] Campo `contact_consent_at` + `consent_source` em leads/clientes — *em voo na lane paralela (migration `b5c6d7e8f9a0` aplicada, WIP uncommitted)*
 - [x] `POST /api/leads/{id}/forget` → anonimiza PII mantendo ID na auditoria — **DONE 2026-06-11 (`f17b047`)**: `app/api/gdpr.py`, leads E customers, admin-only; anonimiza + soft-delete, hard-delete das notas, timeline mantém esqueleto sem conteúdo. Residuais documentados (avatar S3, mensagens WhatsApp, metadata histórica de audit).
 - [x] Exportação de dados por contato (`GET /api/leads/{id}/export`) — DONE (mesmo commit; também `/api/customers/{id}/export` com deals associados). 6 testes.
-- [ ] Policy de retenção configurável por org (ex: deletar leads inativos após 2 anos)
-- [ ] Página de configurações GDPR no painel *(frontend)*
+- [x] Policy de retenção configurável por org — **DONE 2026-06-12 (`2db4f42`+`f2c93f3`)**: `organizations.retention_months` (null=off, 1..120) via `GET/PATCH /api/gdpr/settings` (admin, auditado); sweep diário no worker (04:23 UTC) anonimiza LEADS inativos além do cutoff pelo mesmo core do /forget (cap 200/org/dia; customers de propósito FORA — relação paga exige humano). 4 testes.
+- [x] Página de configurações GDPR no painel — **DONE 2026-06-12 (`a0d74e8`)**: `<GdprCard>` em /settings (admin-gated), edita a janela de retenção (1–120 meses, vazio = off) com copy explicando o sweep; `gdpr.*` nos 7 locales.
 
 ---
 
@@ -162,7 +161,7 @@ Compliance como vantagem de venda, não como tarefa de último minuto. Base já 
 Hoje deals e quotes usam EUR. Para operar em CH/UK obrigatório.
 
 **O que construir:**
-- [~] Adicionar `currency` field em deals com padrão configurável por org — **`deals.currency` JÁ EXISTIA** (enum Currency EUR/CHF/USD/GBP, ADR-015); falta só `org.default_currency` *(migration — aguardando models.py esfriar)*
+- [x] Adicionar `currency` field em deals com padrão configurável por org — `deals.currency` JÁ EXISTIA (ADR-015); **`org.default_currency` DONE 2026-06-12 (`1dabacf`)**: migration `5b6c7d8e9f0a` (backfill EUR), `GET/PATCH /api/orgs/current/settings` (admin, auditado), deal E quote herdam quando o payload omite a moeda (`model_fields_set` — explícito sempre vence, clientes existentes intactos). 4 testes.
 - [x] Suporte a CHF, GBP e BRL nas plans do Stripe — **DONE 2026-06-11 (`bdd0e15`)**: price points posicionados por moeda no catálogo, `resolve_stripe_price_id(plan, cycle, currency)` (EUR mantém env names legados), checkout aceita `currency` (400 amigável p/ não suportada; price id ausente = erro claro, nunca fallback p/ EUR). 4 testes, zero chamadas reais à Stripe.
 - [ ] Seletor de moeda na criação de deal e quote *(frontend)*
 - [ ] Dashboard mostrando valores na moeda de cada deal *(frontend)*
@@ -173,9 +172,9 @@ Hoje deals e quotes usam EUR. Para operar em CH/UK obrigatório.
 
 Backend do catálogo está **completo** (migration `d7e8f9a0b1c2`, CRUD `/api/products`). Falta:
 
-- Página de lista `/produtos` com criar/editar/arquivar
-- Entry no sidebar
-- Seletor de produto nas line items de quotes
+- [x] Página de lista `/produtos` com criar/editar/arquivar — JÁ EXISTIA (`products/page.tsx` + `/new`; o plano estava conservador)
+- [x] Entry no sidebar — JÁ EXISTIA
+- [x] Seletor de produto nas line items de quotes — **DONE 2026-06-11 (`041e003`)**: select compacto "do catálogo" por linha (só produtos ativos, name · sku) que pré-preenche descrição + preço unitário; campos seguem editáveis (line item não tem FK de produto — é fill helper); catálogo vazio = form inalterado. Chave `quotes.fromCatalog` nos 7 locales. **§7 FECHADA.**
 
 ---
 

@@ -644,6 +644,16 @@ class Lead(SoftDeleteMixin, Base):
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     owner: Mapped[User | None] = relationship(back_populates="leads")
 
+    # GDPR consent tracking
+    contact_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    consent_source: Mapped[str | None] = mapped_column(
+        Enum(
+            "web_form", "import", "manual", "whatsapp", "api", "other",
+            name="consentsource", create_type=False,
+        ),
+        nullable=True,
+    )
+
     # Optimistic locking — bumped on every PATCH; clients echo current
     # value as `If-Match: <version>` to detect lost updates.
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -694,6 +704,16 @@ class Customer(SoftDeleteMixin, Base):
 
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     deals: Mapped[list["Deal"]] = relationship(back_populates="customer")
+
+    # GDPR consent tracking
+    contact_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    consent_source: Mapped[str | None] = mapped_column(
+        Enum(
+            "web_form", "import", "manual", "whatsapp", "api", "other",
+            name="consentsource", create_type=False,
+        ),
+        nullable=True,
+    )
 
     # Optimistic locking — see Deal.version. Bumped on every PATCH;
     # clients echo it as `If-Match`. Header optional in v1.

@@ -645,6 +645,8 @@ class LeadBase(BaseModel):
 class LeadCreate(LeadBase):
     owner_id: uuid.UUID | None = None
     team_id: uuid.UUID | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class LeadUpdate(BaseModel):
@@ -664,6 +666,8 @@ class LeadUpdate(BaseModel):
     owner_id: uuid.UUID | None = None
     team_id: uuid.UUID | None = None
     custom_fields: dict[str, Any] | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class LeadOut(LeadBase):
@@ -682,6 +686,8 @@ class LeadOut(LeadBase):
     version: int = 0
     created_at: datetime
     updated_at: datetime
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class LeadScoreOut(BaseModel):
@@ -710,6 +716,8 @@ class CustomerBase(BaseModel):
 
 class CustomerCreate(CustomerBase):
     owner_id: uuid.UUID | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class CustomerUpdate(BaseModel):
@@ -726,6 +734,8 @@ class CustomerUpdate(BaseModel):
     company_id: uuid.UUID | None = None
     owner_id: uuid.UUID | None = None
     custom_fields: dict[str, Any] | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class CustomerOut(CustomerBase):
@@ -738,9 +748,8 @@ class CustomerOut(CustomerBase):
     version: int = 0
     created_at: datetime
     updated_at: datetime
-
-
-# ---------- Companies (B2B accounts) ----------
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 class CompanyBase(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=255)]
     industry: str | None = None

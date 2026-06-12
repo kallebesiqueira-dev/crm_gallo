@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { api, type Company, type DashboardStats, type Lead, type Quote, type Task } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { DashboardCustomize } from "@/components/dashboard-customize";
+import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
 
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
@@ -144,6 +145,9 @@ export default function DashboardPage() {
         </div>
         <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
       </div>
+
+      {/* Onboarding checklist — visible until all 5 steps are done or dismissed */}
+      <OnboardingChecklistWidget locale={locale} />
 
       {/* KPI row */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

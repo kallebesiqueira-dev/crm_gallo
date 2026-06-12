@@ -891,6 +891,33 @@ export interface ImportTemplate {
   headers: string[];
 }
 
+export interface OnboardingStep {
+  key: "pipeline_ready" | "first_lead" | "next_action_set" | "teammate_invited" | "proposal_sent";
+  done: boolean;
+}
+
+export interface OnboardingChecklist {
+  steps: OnboardingStep[];
+  completed: number;
+  total: number;
+  done: boolean;
+}
+
+export interface OnboardingTemplateStage {
+  name: string;
+  slug: string;
+  position: number;
+  probability: number;
+  is_won: boolean;
+  is_lost: boolean;
+}
+
+export interface OnboardingTemplate {
+  slug: string;
+  name: string;
+  stages: OnboardingTemplateStage[];
+}
+
 export interface Note {
   id: string;
   entity_type: "lead" | "customer" | "deal";
@@ -1724,6 +1751,16 @@ export const api = {
     }),
   deleteProduct: (token: string, id: string) =>
     request<void>(`/api/products/${id}`, { method: "DELETE", token }),
+
+  // Onboarding
+  getOnboardingChecklist: () =>
+    request<OnboardingChecklist>("/api/onboarding/checklist"),
+  listOnboardingTemplates: () =>
+    request<OnboardingTemplate[]>("/api/onboarding/templates"),
+  applyOnboardingTemplate: (slug: string) =>
+    request<{ pipeline_id: string; stages_created: number }>(`/api/onboarding/templates/${encodeURIComponent(slug)}/apply`, {
+      method: "POST",
+    }),
 
   // Exports — streamed CSV download (cookie auth, so a direct fetch + blob)
   exportEntity: async (entityType: string): Promise<Blob> => {
