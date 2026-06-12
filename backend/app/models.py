@@ -348,6 +348,17 @@ class Organization(Base):
     # NULL = retention off, the safe default; admins opt in.
     retention_months: Mapped[int | None] = mapped_column(Integer)
 
+    # Default currency for NEW deals/quotes (plan.md §6). Only fills
+    # the gap when the create payload omits the field — an explicitly
+    # sent currency always wins (model_fields_set check in the
+    # endpoints). Display-only across the app: no FX conversion.
+    default_currency: Mapped[Currency] = mapped_column(
+        Enum(Currency),
+        default=Currency.EUR,
+        server_default=Currency.EUR.value,
+        nullable=False,
+    )
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

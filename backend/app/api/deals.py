@@ -14,7 +14,7 @@ from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.logging_setup import get_logger
-from app.models import Deal, DealStage, User
+from app.models import Deal, DealStage, Organization, User
 from app.schemas import DealCreate, DealOut, DealStageMove, DealUpdate, NextActionPayload
 
 router = APIRouter(prefix="/api/deals", tags=["deals"])
@@ -112,6 +112,13 @@ async def create_deal(
     data["custom_fields"] = await validate_custom_fields(
         db, org_id, "deal", data.get("custom_fields"), partial=False
     )
+    # Org default currency (plan.md §6) — only when the payload OMITS
+    # the field (model_fields_set distinguishes omitted from the schema
+    # default); an explicitly sent currency always wins.
+    if "currency" not in payload.model_fields_set:
+        org = await db.get(Organization, org_id)
+        if org is not None:
+            data["currency"] = org.default_currency
 
     # Sort index is org-scoped: a new deal lands at the bottom of its
     # column inside THIS org. Without the org filter we'd peek at every
@@ -352,7 +359,9 @@ async def set_next_action(
         organization_id=org_id,
         metadata={
             "next_action_type": payload.next_action_type,
-            "next_action_at": payload.next_action_at.isoformat() if payload.next_action_at else None,
+            "next_action_at": (
+                payload.next_action_at.isoformat() if payload.next_action_at else None
+            ),
         },
     )
     await record_activity(
@@ -363,8 +372,12 @@ async def set_next_action(
         organization_id=org_id,
         actor=user,
         metadata={
-            "next_action_type": payload.next_action_type.value if payload.next_action_type else None,
-            "next_action_at": payload.next_action_at.isoformat() if payload.next_action_at else None,
+            "next_action_type": (
+                payload.next_action_type.value if payload.next_action_type else None
+            ),
+            "next_action_at": (
+                payload.next_action_at.isoformat() if payload.next_action_at else None
+            ),
         },
     )
     await db.commit()
