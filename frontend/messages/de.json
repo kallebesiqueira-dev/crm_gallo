@@ -150,6 +150,7 @@
     "chooseStartingPlan": "Wählen Sie Ihren Startplan",
     "acceptTerms": "Ich akzeptiere die Nutzungs- und Datenschutzbedingungen.",
     "mustAcceptTerms": "Bitte akzeptieren Sie die Bedingungen.",
+    "captchaUnavailable": "Captcha konnte nicht geladen werden — Sie können fortfahren.",
     "seatLimitReached": "Free-Limit erreicht. Bitte upgraden Sie, um mehr Benutzer hinzuzufügen.",
     "strengthWeak": "Schwach",
     "strengthFair": "Mittel",

@@ -150,6 +150,7 @@
     "chooseStartingPlan": "Elige tu plan inicial",
     "acceptTerms": "Acepto los Términos y la Política de Privacidad.",
     "mustAcceptTerms": "Acepta los términos para continuar.",
+    "captchaUnavailable": "El captcha no se pudo cargar — puedes continuar.",
     "seatLimitReached": "Límite del plan Free alcanzado. Mejora para añadir más usuarios.",
     "strengthWeak": "Débil",
     "strengthFair": "Aceptable",
