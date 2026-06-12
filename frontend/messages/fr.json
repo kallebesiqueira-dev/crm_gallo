@@ -1696,6 +1696,13 @@
   "documents": {
     "title": "Documents",
     "subtitle": "Tous vos devis et contrats au même endroit",
+    "searchPlaceholder": "Rechercher par numéro ou titre…",
+    "group": {
+      "draft": "Brouillons",
+      "waiting": "En attente du client",
+      "closed": "Conclus",
+      "attention": "À surveiller"
+    },
     "loading": "Chargement…",
     "empty": "Aucun document.",
     "filter": {

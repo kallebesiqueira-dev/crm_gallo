@@ -1696,6 +1696,13 @@
   "documents": {
     "title": "Documents",
     "subtitle": "Tut tes preventivs e contracts en in sulet lieu",
+    "searchPlaceholder": "Tschertgar tenor numer u titel…",
+    "group": {
+      "draft": "Sbozs",
+      "waiting": "Spetga sin il client",
+      "closed": "Terminads",
+      "attention": "Attenziun"
+    },
     "loading": "Chargiar…",
     "empty": "Anc nagins documents.",
     "filter": {
