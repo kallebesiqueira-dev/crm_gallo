@@ -15,7 +15,13 @@ updates:
       day: monday
       time: "06:00"
     groups:
+      # Lint/test toolchain rides its OWN PR: a new ruff version means
+      # new rules firing on existing code (39 findings on the first
+      # scan), and that must not block 19 unrelated runtime bumps.
+      python-tooling:
+        patterns: ["ruff", "pytest*"]
       python-minor-patch:
+        exclude-patterns: ["ruff", "pytest*"]
         update-types: [minor, patch]
     open-pull-requests-limit: 5
 
