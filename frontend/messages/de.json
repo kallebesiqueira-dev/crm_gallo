@@ -46,6 +46,7 @@
   },
   "hoje": {
     "title": "Heute",
+    "markDone": "Erledigt",
     "overdueDeals": "Überfällige Follow-ups",
     "todayDeals": "Heutige Follow-ups",
     "noActionDeals": "Keine nächste Aktion",
@@ -342,7 +343,24 @@
     "customer": "Kunde",
     "stage": "Phase",
     "nextAction": "Nächste Aktion",
-    "noNextAction": "Kein Follow-up geplant"
+    "noNextAction": "Kein Follow-up geplant",
+    "created": "Erstellt",
+    "actionType": "Aktionstyp",
+    "scheduledFor": "Geplant für",
+    "saveFollowUp": "Follow-up speichern",
+    "stageUpdated": "Phase aktualisiert",
+    "followUpSaved": "Follow-up gespeichert",
+    "actions": {
+      "call": "Anruf",
+      "whatsapp": "WhatsApp",
+      "email": "E-Mail",
+      "proposal": "Angebot senden",
+      "meeting": "Termin",
+      "follow_up": "Follow-up",
+      "contract": "Vertrag",
+      "chase": "Nachfassen",
+      "other": "Sonstiges"
+    }
   },
   "tasks": {
     "title": "Aufgaben",
@@ -629,6 +647,7 @@
   },
   "audit": {
     "title": "Audit-Log",
+    "subtitle": "Unveränderliches Protokoll der Organisationsaktionen",
     "filterAction": "Aktion enthält",
     "filterEntity": "Entitätstyp",
     "filterSince": "Von",

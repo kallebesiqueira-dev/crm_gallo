@@ -187,16 +187,19 @@ export default function TasksPage() {
           <CardTitle className="text-base">{t("new")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={create} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+          {/* Mobile: stacked. Tablet: title on its own row, controls share one.
+              Desktop: everything inline. */}
+          <form onSubmit={create} className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-[1fr_auto_auto_auto]">
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("placeholder")}
               required
+              className="sm:col-span-3 lg:col-span-1"
             />
             <select
               aria-label="priority"
-              className="flex h-10 rounded-md border border-input bg-background px-3 text-sm"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={priority}
               onChange={(e) => setPriority(e.target.value as TaskPriority)}
             >
@@ -210,7 +213,7 @@ export default function TasksPage() {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="sm:w-44"
+              className="w-full lg:w-44"
             />
             <Button type="submit">
               <Plus className="h-4 w-4" />
@@ -265,7 +268,13 @@ export default function TasksPage() {
                       {task.title}
                     </div>
                     {task.due_date && (
-                      <div className="text-xs text-muted-foreground">
+                      <div
+                        className={
+                          task.status !== "done" && new Date(task.due_date) < new Date()
+                            ? "text-xs font-medium text-red-600 dark:text-red-400"
+                            : "text-xs text-muted-foreground"
+                        }
+                      >
                         {t("due")}: {new Date(task.due_date).toLocaleDateString()}
                       </div>
                     )}

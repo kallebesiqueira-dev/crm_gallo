@@ -1,44 +1,81 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type TrashItem } from "@/lib/api";
+import { api, type TrashCounts, type TrashItem } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 type Tab = "all" | TrashItem["entity_type"];
 
 const TABS: Tab[] = ["all", "lead", "customer", "deal", "task"];
+const PAGE = 50;
 
 export default function TrashPage() {
   const t = useTranslations("trash");
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const confirm = useConfirm();
+  // The backend list is paginated (TrashPage envelope) and mixes entity
+  // types server-side, so tab filtering happens client-side on the loaded
+  // window while tab badges come from /api/trash/counts (always exact).
   const [items, setItems] = useState<TrashItem[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [counts, setCounts] = useState<TrashCounts | null>(null);
   const [tab, setTab] = useState<Tab>("all");
   const [busy, setBusy] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     const token = getToken();
     if (!token) return;
-    const list = await api.listTrash(token);
-    setItems(list);
-  }
+    try {
+      const [page, c] = await Promise.all([
+        api.listTrash(token, { limit: PAGE }),
+        api.trashCounts(token),
+      ]);
+      setItems(page.items);
+      setHasMore(page.has_more);
+      setCounts(c);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+    }
+  }, []);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
-  const filtered = useMemo(
-    () => (tab === "all" ? items : items.filter((i) => i.entity_type === tab)),
-    [items, tab],
-  );
+  async function loadMore() {
+    const token = getToken();
+    if (!token || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await api.listTrash(token, { limit: PAGE, offset: items.length });
+      setItems((prev) => [...prev, ...page.items]);
+      setHasMore(page.has_more);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  const filtered = tab === "all" ? items : items.filter((i) => i.entity_type === tab);
+
+  function dropItem(item: TrashItem) {
+    setItems((prev) =>
+      prev.filter((i) => !(i.id === item.id && i.entity_type === item.entity_type)),
+    );
+    setCounts((prev) =>
+      prev ? { ...prev, [item.entity_type]: Math.max(0, prev[item.entity_type] - 1) } : prev,
+    );
+  }
 
   async function restore(item: TrashItem) {
     const token = getToken();
@@ -46,9 +83,7 @@ export default function TrashPage() {
     setError(null);
     try {
       await api.restoreFromTrash(token, item.entity_type, item.id);
-      setItems((prev) =>
-        prev.filter((i) => !(i.id === item.id && i.entity_type === item.entity_type)),
-      );
+      dropItem(item);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     }
@@ -66,16 +101,14 @@ export default function TrashPage() {
     setError(null);
     try {
       await api.hardDelete(token, item.entity_type, item.id);
-      setItems((prev) =>
-        prev.filter((i) => !(i.id === item.id && i.entity_type === item.entity_type)),
-      );
+      dropItem(item);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     }
   }
 
   async function emptyAll() {
-    if (items.length === 0) return;
+    if (totalCount === 0) return;
     const ok = await confirm({
       title: t("confirmEmpty"),
       tone: "danger",
@@ -89,6 +122,8 @@ export default function TrashPage() {
     try {
       await api.emptyTrash(token);
       setItems([]);
+      setHasMore(false);
+      setCounts({ lead: 0, customer: 0, deal: 0, task: 0 });
     } catch (e) {
       setError(e instanceof Error ? e.message : tCommon("noPermission"));
     } finally {
@@ -96,25 +131,24 @@ export default function TrashPage() {
     }
   }
 
-  const counts: Record<Tab, number> = {
-    all: items.length,
-    lead: items.filter((i) => i.entity_type === "lead").length,
-    customer: items.filter((i) => i.entity_type === "customer").length,
-    deal: items.filter((i) => i.entity_type === "deal").length,
-    task: items.filter((i) => i.entity_type === "task").length,
-  };
+  const totalCount = counts
+    ? counts.lead + counts.customer + counts.deal + counts.task
+    : items.length;
+  const tabCount = (kt: Tab): number =>
+    kt === "all" ? totalCount : (counts ? counts[kt] : items.filter((i) => i.entity_type === kt).length);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button
           variant="destructive"
           onClick={emptyAll}
-          disabled={items.length === 0 || busy}
+          disabled={totalCount === 0 || busy}
+          className="shrink-0"
         >
           <Trash2 className="h-4 w-4" />
           {t("emptyAll")}
@@ -141,7 +175,7 @@ export default function TrashPage() {
             )}
           >
             {t(`tabs.${kt}`)}{" "}
-            <span className="ml-1 text-xs text-muted-foreground">({counts[kt]})</span>
+            <span className="ml-1 text-xs text-muted-foreground">({tabCount(kt)})</span>
           </button>
         ))}
       </div>
@@ -154,40 +188,50 @@ export default function TrashPage() {
             {filtered.map((item) => (
               <li
                 key={`${item.entity_type}-${item.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-muted/30"
               >
-                <span className="rounded bg-muted px-2 py-0.5 text-xs uppercase tracking-wider text-muted-foreground">
+                <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-xs uppercase tracking-wider text-muted-foreground">
                   {t(`tabs.${item.entity_type}`)}
                 </span>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-40">
                   <div className="truncate text-sm font-medium">{item.title}</div>
                   <div className="text-xs text-muted-foreground">
                     {t("deletedAt")}: {new Date(item.deleted_at).toLocaleString(locale)}
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => restore(item)}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  {t("restore")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => hardDelete(item)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t("hardDelete")}
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => restore(item)}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    {t("restore")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => hardDelete(item)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only sm:not-sr-only">{t("hardDelete")}</span>
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </Card>
+
+      {hasMore && tab === "all" && (
+        <div className="flex justify-center">
+          <Button type="button" variant="outline" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("loadMore")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

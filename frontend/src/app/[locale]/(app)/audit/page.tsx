@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Loader2, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, type AuditEntry } from "@/lib/api";
@@ -74,15 +74,20 @@ export default function AuditPage() {
 
   return (
     <div className="space-y-4">
+      {/* Page header outside the card — same pattern as the other screens. */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <ScrollText className="h-5 w-5 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ScrollText className="h-4 w-4" />
-            {t("title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={applyFilters} className="grid grid-cols-1 gap-3 md:grid-cols-5">
+        <CardContent className="space-y-4 pt-6">
+          <form onSubmit={applyFilters} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1.5">
               <Label htmlFor="action">{t("filterAction")}</Label>
               <Input
@@ -144,14 +149,17 @@ export default function AuditPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
+              {/* Graduated column reveal (same pattern as the list tables):
+                  phone = when + action (actor folded under the action),
+                  sm adds the actor column, md the entity, lg the metadata. */}
               <table className="w-full text-sm">
                 <thead className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="py-2 pr-3">{t("colWhen")}</th>
-                    <th className="py-2 pr-3">{t("colActor")}</th>
+                    <th className="hidden py-2 pr-3 sm:table-cell">{t("colActor")}</th>
                     <th className="py-2 pr-3">{t("colAction")}</th>
-                    <th className="py-2 pr-3">{t("colEntity")}</th>
-                    <th className="py-2 pr-3">{t("colMetadata")}</th>
+                    <th className="hidden py-2 pr-3 md:table-cell">{t("colEntity")}</th>
+                    <th className="hidden py-2 pr-3 lg:table-cell">{t("colMetadata")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -160,11 +168,11 @@ export default function AuditPage() {
                       <td className="whitespace-nowrap py-2 pr-3 text-xs text-muted-foreground">
                         {formatWhen(e.created_at)}
                       </td>
-                      <td className="py-2 pr-3">
+                      <td className="hidden py-2 pr-3 sm:table-cell">
                         {e.actor_name ? (
-                          <div>
-                            <div className="font-medium">{e.actor_name}</div>
-                            <div className="text-xs text-muted-foreground">
+                          <div className="min-w-0">
+                            <div className="max-w-[16rem] truncate font-medium">{e.actor_name}</div>
+                            <div className="max-w-[16rem] truncate text-xs text-muted-foreground">
                               {e.actor_email}
                             </div>
                           </div>
@@ -178,8 +186,11 @@ export default function AuditPage() {
                         <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
                           {e.action}
                         </code>
+                        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground sm:hidden">
+                          {e.actor_name ?? t("system")}
+                        </span>
                       </td>
-                      <td className="py-2 pr-3 text-xs">
+                      <td className="hidden py-2 pr-3 text-xs md:table-cell">
                         <span className="text-muted-foreground">{e.entity_type}</span>
                         {e.entity_id && (
                           <span className="block font-mono text-[10px] text-muted-foreground/70">
@@ -187,7 +198,7 @@ export default function AuditPage() {
                           </span>
                         )}
                       </td>
-                      <td className="py-2 pr-3">
+                      <td className="hidden py-2 pr-3 lg:table-cell">
                         {e.metadata_json ? (
                           <code className="block max-w-xs overflow-hidden text-ellipsis whitespace-nowrap rounded bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]">
                             {e.metadata_json}
@@ -203,7 +214,7 @@ export default function AuditPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             <span>
               {t("showingRange", {
                 from: offset + 1,

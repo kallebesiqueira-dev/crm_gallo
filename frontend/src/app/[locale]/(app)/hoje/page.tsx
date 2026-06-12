@@ -65,6 +65,8 @@ function DealRow({ deal }: { deal: DealTodayItem }) {
 }
 
 function TaskRow({ task, locale, onDone }: { task: TaskTodayItem; locale: string; onDone: (id: string) => void }) {
+  const tHoje = useTranslations("hoje");
+  const tPriorities = useTranslations("tasks.priorities");
   const [busy, setBusy] = useState(false);
 
   async function markDone(e: React.MouseEvent) {
@@ -89,7 +91,8 @@ function TaskRow({ task, locale, onDone }: { task: TaskTodayItem; locale: string
         className="h-6 w-6 shrink-0 rounded-full p-0 text-muted-foreground hover:text-green-600"
         onClick={markDone}
         disabled={busy}
-        title="Mark done"
+        title={tHoje("markDone")}
+        aria-label={tHoje("markDone")}
       >
         <CheckCircle2 className="h-4 w-4" />
       </Button>
@@ -103,18 +106,18 @@ function TaskRow({ task, locale, onDone }: { task: TaskTodayItem; locale: string
             <p className="text-xs text-muted-foreground">{task.customer_name}</p>
           )}
         </div>
-        <div className="ml-4 shrink-0">
+        <div className="ml-3 shrink-0">
           <span
             className={cn(
               "rounded px-1.5 py-0.5 text-[10px] font-medium",
               task.priority === "high"
-                ? "bg-red-100 text-red-700"
+                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                 : task.priority === "medium"
-                ? "bg-amber-100 text-amber-700"
-                : "bg-slate-100 text-slate-600",
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
             )}
           >
-            {task.priority}
+            {tPriorities(task.priority)}
           </span>
         </div>
       </Link>

@@ -6,7 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCorners,
   useDroppable,
   useSensor,
@@ -80,7 +81,13 @@ export default function PipelinePage() {
     }
   }
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  // Mouse drags after 6px; touch drags after a 220ms long-press (so normal
+  // page scroll still works on phones — a bare PointerSensor loses the
+  // gesture to scrolling on iOS and the kanban can't be dragged at all).
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
+  );
 
   useEffect(() => {
     const token = getToken();
@@ -274,11 +281,13 @@ function DealCard({
         (dragging || isDragging) && "opacity-60 shadow-lg",
       )}
     >
-      {/* Drag handle covers the whole card except the delete button. */}
+      {/* Drag handle covers the whole card except the delete button.
+          touch-manipulation keeps taps/scroll responsive while letting the
+          TouchSensor's long-press take over the gesture for dragging. */}
       <div
         {...listeners}
         {...attributes}
-        className="cursor-grab active:cursor-grabbing"
+        className="cursor-grab touch-manipulation active:cursor-grabbing"
       >
         <div className="pr-6 text-sm font-medium">
           <a

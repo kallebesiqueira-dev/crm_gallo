@@ -983,6 +983,21 @@ export interface TrashItem {
   deleted_at: string;
 }
 
+export interface TrashPage {
+  items: TrashItem[];
+  total: number;
+  offset: number;
+  limit: number;
+  has_more: boolean;
+}
+
+export interface TrashCounts {
+  lead: number;
+  customer: number;
+  deal: number;
+  task: number;
+}
+
 export type PlanId = "free" | "standard" | "business" | "premium";
 export type BillingCycle = "monthly" | "yearly";
 
@@ -2248,14 +2263,17 @@ export const api = {
       { token },
     ),
 
-  // Trash
-  listTrash: (token: string) =>
-    request<TrashItem[]>("/api/trash", { token }),
+  // Trash — the list is paginated (TrashPage envelope), counts come from
+  // their own endpoint so tab badges stay correct beyond the first page.
+  listTrash: (token: string, opts?: { limit?: number; offset?: number }) => {
+    const params = new URLSearchParams();
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    if (opts?.offset) params.set("offset", String(opts.offset));
+    const qs = params.toString();
+    return request<TrashPage>(`/api/trash${qs ? `?${qs}` : ""}`, { token });
+  },
   trashCounts: (token: string) =>
-    request<{ lead: number; customer: number; deal: number; task: number }>(
-      "/api/trash/counts",
-      { token },
-    ),
+    request<TrashCounts>("/api/trash/counts", { token }),
   restoreFromTrash: (token: string, type: TrashItem["entity_type"], id: string) =>
     request<void>(`/api/trash/${type}/${id}/restore`, { method: "POST", token }),
   hardDelete: (token: string, type: TrashItem["entity_type"], id: string) =>
