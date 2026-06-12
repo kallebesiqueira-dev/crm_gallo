@@ -67,11 +67,20 @@ export default function BillingPage() {
     }
   }, [stripeFlag, t]);
 
-  const moneyFmt = new Intl.NumberFormat(locale, {
+  // Whole monthly prices stay clean ("€19"); fractional yearly per-user prices
+  // show their cents ("€15,20") so the −20% math is exact, never rounded off.
+  const moneyWhole = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,
   });
+  const moneyCents = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const money = (n: number) => (Number.isInteger(n) ? moneyWhole : moneyCents).format(n);
 
   async function startUpgrade(planId: PlanId) {
     const token = getToken();
@@ -228,7 +237,7 @@ export default function BillingPage() {
           </div>
         </CardHeader>
         <CardContent className="relative">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <MetricTile
               icon={<Users className="h-4 w-4" />}
               label={t("seatsUsed")}
@@ -277,13 +286,13 @@ export default function BillingPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {plans.map((plan) => (
                 <UpgradeCard
                   key={plan.id}
                   plan={plan}
                   cycle={cycle}
-                  moneyFmt={moneyFmt}
+                  money={money}
                   current={plan.id === me.plan}
                   busy={busy === plan.id}
                   onChoose={() => (plan.id === "free" ? undefined : startUpgrade(plan.id))}
@@ -391,14 +400,14 @@ function CycleToggle({
 function UpgradeCard({
   plan,
   cycle,
-  moneyFmt,
+  money,
   current,
   busy,
   onChoose,
 }: {
   plan: PlanOut;
   cycle: BillingCycle;
-  moneyFmt: Intl.NumberFormat;
+  money: (n: number) => string;
   current: boolean;
   busy: boolean;
   onChoose: () => void;
@@ -424,10 +433,15 @@ function UpgradeCard({
       <p className="mt-1 text-xs text-muted-foreground">{plan.tagline}</p>
       <div className="mt-4 flex items-baseline gap-1">
         <span className="text-2xl font-semibold">
-          {isFree ? t("free") : moneyFmt.format(price)}
+          {isFree ? t("free") : money(price)}
         </span>
         {!isFree && <span className="text-xs text-muted-foreground">{t("perUserPerMonth")}</span>}
       </div>
+      {!isFree && cycle === "yearly" && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {t("billedYearly", { total: money(plan.yearly_total_eur) })}
+        </p>
+      )}
       <Button
         type="button"
         onClick={onChoose}

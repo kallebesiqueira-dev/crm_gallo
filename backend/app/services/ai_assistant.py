@@ -78,6 +78,7 @@ def _heuristic_summary(customer: Customer) -> str:
 
 async def summarize_customer(
     customer: Customer,
+    locale: str = "en",
     open_deals: list[Any] | None = None,
     open_tasks: list[Any] | None = None,
 ) -> str:
@@ -109,7 +110,8 @@ async def summarize_customer(
             system=(
                 "You write concise CRM customer summaries (2-3 sentences). "
                 "Highlight the relationship status, open pipeline value, and "
-                "the single most useful next action for the sales rep."
+                "the single most useful next action for the sales rep. "
+                f"Write the summary in the user's language (locale code: {locale})."
             ),
             max_tokens=400,
         )

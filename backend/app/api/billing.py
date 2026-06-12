@@ -29,7 +29,7 @@ from app.config import get_settings
 from app.database import get_db
 from app.deps import get_current_org, require_roles
 from app.logging_setup import get_logger
-from app.models import Organization, OrgMembership, Plan, User, UserRole
+from app.models import BillingCycle, Organization, OrgMembership, Plan, User, UserRole
 from app.rate_limit import limiter
 from app.schemas import BillingMe, PlanOut, UpgradeRequest
 from app.services.stripe_service import (
@@ -184,8 +184,9 @@ async def checkout(
 
 class PublicCheckoutRequest(BaseModel):
     # Plan KEY only — the price is resolved + validated server-side. The client
-    # never sends an amount or a Stripe price id.
+    # never sends an amount or a Stripe price id; it may pick the billing cycle.
     plan: str
+    billing_cycle: BillingCycle = BillingCycle.monthly
 
 
 @router.post("/create-checkout-session", response_model=CheckoutResponse)
@@ -208,7 +209,7 @@ async def create_checkout_session_public(
             detail="Unknown or non-payable plan.",
         )
     try:
-        url = await create_public_checkout_session(plan_key)
+        url = await create_public_checkout_session(plan_key, payload.billing_cycle)
     except StripeNotConfigured as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
     except StripeError as e:

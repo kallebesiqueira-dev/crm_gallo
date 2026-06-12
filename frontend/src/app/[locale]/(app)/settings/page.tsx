@@ -124,7 +124,7 @@ export default function SettingsPage() {
   const canManageTemplates = user.role === "admin" || user.role === "manager";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle>{t("profile")}</CardTitle>

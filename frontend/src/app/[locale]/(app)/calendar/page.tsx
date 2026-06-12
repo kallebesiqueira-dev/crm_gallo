@@ -98,7 +98,7 @@ export default function CalendarPage() {
   });
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">

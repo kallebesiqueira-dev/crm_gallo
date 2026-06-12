@@ -7,12 +7,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  ArrowDownUp,
   ArrowRight,
   ArrowUpRight,
   Award,
+  BarChart3,
+  Bot,
+  Brain,
   Check,
+  CheckCheck,
+  Code2,
+  Database,
+  FileSignature,
+  FileText,
+  Gauge,
+  Headset,
+  Mail,
+  Plug,
+  ScrollText,
   ShieldCheck,
   Sparkles,
+  UserCheck,
+  Users,
+  Webhook,
+  Workflow,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +46,7 @@ import { ManifestoSection } from "@/components/marketing/manifesto-section";
 import { ComparisonSection } from "@/components/marketing/comparison-section";
 import { Reveal, RevealGroup } from "@/components/marketing/reveal";
 import { FuturisticBackground } from "@/components/marketing/futuristic-background";
+import { LandingSplash } from "@/components/marketing/landing-splash";
 import { Footer } from "@/components/marketing/footer";
 import { TiltCard } from "@/components/marketing/tilt-card";
 import { Logo } from "@/components/logo";
@@ -50,6 +69,16 @@ const PLAN_GRADIENT: Record<PlanId, string> = {
   standard: "from-primary/20 to-blue-500/0",
   business: "from-violet-500/20 via-blue-500/10 to-violet-500/0",
   premium: "from-amber-500/20 via-fuchsia-500/10 to-pink-500/0",
+};
+
+// Per-feature icons (by plan + position) — a contextual glyph instead of a
+// generic green check, matched to each feature's meaning. Order MUST mirror the
+// FALLBACK_PLANS features arrays / the pricing.plans.<id>.features messages.
+const FEATURE_ICONS: Record<PlanId, Array<typeof Check>> = {
+  free: [Users, Workflow, Gauge, Mail],
+  standard: [Users, CheckCheck, Brain, Bot, FileText, BarChart3, Headset],
+  business: [CheckCheck, FileSignature, ArrowDownUp, Workflow, ScrollText, Webhook],
+  premium: [CheckCheck, Zap, Plug, Database, Code2, UserCheck],
 };
 
 // Static mirror of backend/app/billing/catalog.py. The public marketing page
@@ -173,12 +202,20 @@ export default function PricingPage() {
     }
   }, [stripeFlag, t]);
 
-  const moneyFmt = new Intl.NumberFormat(locale, {
+  // Whole monthly prices stay clean ("€19"); fractional yearly per-user prices
+  // show their cents ("€15,20") so the −20% math is exact, never rounded off.
+  const moneyWhole = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "EUR",
-    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });
+  const moneyCents = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const money = (n: number) => (Number.isInteger(n) ? moneyWhole : moneyCents).format(n);
 
   async function handleChoose(plan: PlanOut) {
     if (!plan.requires_payment) {
@@ -215,7 +252,7 @@ export default function PricingPage() {
     setBusyPlan(plan.id);
     setBanner(null);
     try {
-      const url = await createPublicCheckoutSession(plan.id);
+      const url = await createPublicCheckoutSession(plan.id, cycle);
       window.location.assign(url);
     } catch {
       setBusyPlan(null);
@@ -225,13 +262,23 @@ export default function PricingPage() {
 
   return (
     <SmoothScroll>
+    {/* Before first paint: if the splash hasn't played this session, hide the
+        landing + paint the splash's dark bg, so the page never flashes before
+        the <LandingSplash> overlay mounts. Removed when the intro fades. */}
+    <script
+      dangerouslySetInnerHTML={{
+        __html:
+          "try{if(!sessionStorage.getItem('gallo-splash-seen')){document.documentElement.classList.add('gallo-splash-pending')}}catch(e){}",
+      }}
+    />
+    <LandingSplash />
     {/* `dark` on the root forces the landing into dark mode regardless of
         the user's theme preference — the rest of the app (auth, dashboard,
         etc.) still respects the toggle. <FuturisticBackground> is fixed to
         the viewport at z-0 and provides the actual base colour; every other
         page surface stacks above via `relative z-10` so it can't get hidden
         behind the mesh. */}
-    <div className="dark relative min-h-screen overflow-x-clip text-foreground">
+    <div data-landing-root className="dark relative min-h-screen overflow-x-clip text-foreground">
       <Suspense fallback={null}>
         <SearchParamWatcher name="stripe" onValue={setStripeFlag} />
       </Suspense>
@@ -542,7 +589,7 @@ export default function PricingPage() {
                   <PlanCard
                     plan={plan}
                     cycle={cycle}
-                    moneyFmt={moneyFmt}
+                    money={money}
                     busy={busyPlan === plan.id}
                     onChoose={() => handleChoose(plan)}
                   />
@@ -731,13 +778,13 @@ function CycleTab({
 function PlanCard({
   plan,
   cycle,
-  moneyFmt,
+  money,
   busy,
   onChoose,
 }: {
   plan: PlanOut;
   cycle: BillingCycle;
-  moneyFmt: Intl.NumberFormat;
+  money: (n: number) => string;
   busy: boolean;
   onChoose: () => void;
 }) {
@@ -782,7 +829,7 @@ function PlanCard({
 
         <div className="mt-6 flex items-baseline gap-1">
           <span className="text-5xl font-semibold tracking-tight">
-            {isFree ? t("free") : moneyFmt.format(price)}
+            {isFree ? t("free") : money(price)}
           </span>
           {!isFree && (
             <span className="text-sm text-muted-foreground">{t("perUserPerMonth")}</span>
@@ -792,7 +839,7 @@ function PlanCard({
           {isFree
             ? t("freeCtaSubtext")
             : cycle === "yearly"
-              ? t("billedYearly")
+              ? t("billedYearly", { total: money(plan.yearly_total_eur) })
               : t("billedMonthly")}
         </p>
 
@@ -815,12 +862,15 @@ function PlanCard({
         </Button>
 
         <ul className="mt-7 space-y-2.5 text-sm">
-          {features.map((f) => (
-            <li key={f} className="flex items-start gap-2">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-              <span>{f}</span>
-            </li>
-          ))}
+          {features.map((f, i) => {
+            const Icon = FEATURE_ICONS[plan.id]?.[i] ?? Check;
+            return (
+              <li key={f} className="flex items-start gap-2">
+                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>{f}</span>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

@@ -108,7 +108,7 @@ export default function ImportsPage() {
       <Card className="p-6">
         <h2 className="text-lg font-medium">{t("startTitle")}</h2>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
               <span className="text-sm font-medium">{t("entityType")}</span>
               <select
@@ -181,7 +181,8 @@ export default function ImportsPage() {
         {jobs.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[44rem] text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">{t("colFile")}</th>
@@ -227,6 +228,7 @@ export default function ImportsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
 

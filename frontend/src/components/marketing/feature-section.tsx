@@ -17,6 +17,7 @@ import {
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Reveal, RevealGroup } from "@/components/marketing/reveal";
+import { Flag } from "@/components/flag-icon";
 
 type Feature = {
   id: string;
@@ -236,13 +237,13 @@ function PipelineMockup() {
 
 function IntlMockup() {
   const locales = [
-    { flag: "🇬🇧", label: "English" },
-    { flag: "🇧🇷", label: "Português" },
-    { flag: "🇩🇪", label: "Deutsch" },
-    { flag: "🇫🇷", label: "Français" },
-    { flag: "🇮🇹", label: "Italiano" },
-    { flag: "🇪🇸", label: "Español" },
-    { flag: "🇨🇭", label: "Rumantsch" },
+    { code: "GB", label: "English" },
+    { code: "BR", label: "Português" },
+    { code: "DE", label: "Deutsch" },
+    { code: "FR", label: "Français" },
+    { code: "IT", label: "Italiano" },
+    { code: "ES", label: "Español" },
+    { code: "CH", label: "Rumantsch" },
   ];
   return (
     <div className="space-y-4">
@@ -261,7 +262,7 @@ function IntlMockup() {
             key={l.label}
             className="flex items-center gap-2 rounded-md border bg-background/60 px-2 py-1.5 text-xs"
           >
-            <span className="text-base">{l.flag}</span>
+            <Flag code={l.code} className="h-4 w-6 shrink-0 rounded-sm ring-1 ring-black/10" />
             <span className="font-medium">{l.label}</span>
           </div>
         ))}

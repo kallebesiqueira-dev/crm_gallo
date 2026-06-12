@@ -119,7 +119,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
         </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+        <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field id="first_name" label="First name" required value={form.first_name} onChange={(v) => set("first_name", v)} />
           <Field id="last_name" label="Last name" required value={form.last_name} onChange={(v) => set("last_name", v)} />
           <Field id="email" label="Email" type="email" value={form.email} onChange={(v) => set("email", v)} />

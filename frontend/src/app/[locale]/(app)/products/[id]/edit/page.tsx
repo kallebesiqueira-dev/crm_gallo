@@ -105,7 +105,7 @@ export default function EditProductPage() {
         <CardTitle>{t("edit")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+        <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">{t("name")}</Label>
             <Input id="name" required value={form.name} onChange={(e) => set("name", e.target.value)} />

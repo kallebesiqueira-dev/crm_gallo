@@ -147,15 +147,23 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
       setGenerating(false);
       return;
     }
-    // The worker renders async (~15s) and attaches the PDF. Poll the
-    // attachments list until a new one shows up, then stop.
+    // Poll the attachments list until the rendered PDF shows up. The worker
+    // render + R2 upload usually lands in well under 30s, but we allow a 60s
+    // window (20 × 3s) so a cold worker or a busy queue doesn't make the
+    // spinner give up before the PDF appears.
     let tries = 0;
     const poll = async () => {
       tries += 1;
       const current = await api.listAttachments("contract", id);
-      if (current.length > before || tries >= 10) {
+      if (current.length > before) {
         setDocs(current);
         setGenerating(false);
+        return;
+      }
+      if (tries >= 20) {
+        setDocs(current);
+        setGenerating(false);
+        setError(t("pdfPending"));
         return;
       }
       pollTimer.current = setTimeout(poll, 3000);
@@ -273,7 +281,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
       )}
 
       <Card>
-        <CardContent className="grid gap-x-8 gap-y-3 p-6 text-sm sm:grid-cols-2">
+        <CardContent className="grid grid-cols-1 gap-x-8 gap-y-3 p-6 text-sm sm:grid-cols-2">
           <Field label={t("value")} value={money(contract.value)} />
           <Field label={t("currency")} value={contract.currency} />
           <Field label={t("effectiveDate")} value={fmtDate(contract.effective_date)} />

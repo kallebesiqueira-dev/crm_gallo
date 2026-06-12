@@ -162,6 +162,7 @@
     "chooseStartingPlan": "Choisissez votre plan de départ",
     "acceptTerms": "J'accepte les Conditions et la Politique de confidentialité.",
     "mustAcceptTerms": "Veuillez accepter les conditions pour continuer.",
+    "captchaUnavailable": "Le captcha n'a pas pu se charger — vous pouvez continuer.",
     "seatLimitReached": "Limite du plan Free atteinte. Veuillez passer à un plan supérieur.",
     "strengthWeak": "Faible",
     "strengthFair": "Moyen",
@@ -218,6 +219,7 @@
     "viewAll": "Voir tout",
     "noTasks": "Aucune tâche",
     "customize": "Personnaliser",
+    "newActivity": "Nouvelle tâche",
     "recentActivities": "Activité récente",
     "viewCalendar": "Voir le calendrier",
     "summary": "Résumé",
@@ -256,6 +258,19 @@
     "convertConfirmBody": "Cela créera un Client et une Affaire à partir de ce lead. Les clients existants avec le même e-mail seront réutilisés.",
     "convertSuccess": "Converti ! Client et affaire créés.",
     "convertAlready": "Ce lead a déjà été converti.",
+    "scoreEmpty": "Aucun score. Évaluez ce lead avec l'IA.",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "industry": "Secteur",
+    "country": "Pays",
+    "companySize": "Taille de l'entreprise",
+    "budget": "Budget",
+    "source": "Source",
+    "notes": "Notes",
+    "priority": "Priorité",
+    "conversionProbability": "Probabilité de conversion",
+    "nextAction": "Prochaine action",
+    "riskAnalysis": "Analyse des risques",
     "stages": {
       "new": "Nouveau",
       "contacted": "Contacté",
@@ -666,6 +681,7 @@
     "notesPlaceholder": "Conditions, périmètre, modalités de paiement…",
     "lineItems": "Lignes",
     "addLine": "Ajouter une ligne",
+    "addFromCatalog": "Ajouter du catalogue",
     "lineDescription": "Description",
     "fromCatalog": "Depuis le catalogue…",
     "quantity": "Qté",
@@ -689,6 +705,7 @@
     "resend": "Nouvelle version",
     "generatePdf": "Générer le PDF",
     "generating": "Génération…",
+    "pdfPending": "Le PDF est en cours de génération. Actualisez dans un instant.",
     "documents": "Documents",
     "noDocuments": "Aucun PDF généré.",
     "supersededBy": "Une version plus récente remplace ce devis.",
@@ -735,6 +752,7 @@
     "resend": "Nouvelle version",
     "generatePdf": "Générer le PDF",
     "generating": "Génération…",
+    "pdfPending": "Le PDF est en cours de génération. Actualisez dans un instant.",
     "documents": "Documents",
     "noDocuments": "Aucun PDF généré pour le moment.",
     "supersededBy": "Une version plus récente remplace celle-ci.",
@@ -909,12 +927,12 @@
         "2": {
           "year": "2026",
           "title": "Lancement public",
-          "body": "Open source sous AGPL-3.0, 7 langues natives, intégration Stripe, premières équipes clientes."
+          "body": "Open source sous AGPL-3.0, 7 langues natives, multi-tenant, automatisations et intégration Stripe."
         },
         "3": {
           "year": "Prochaines étapes",
-          "title": "Multi-tenant + automatisations",
-          "body": "Organisations isolées, automatisations visuelles et intégrations email/agenda à venir."
+          "title": "Intégrations et mobile",
+          "body": "Synchronisation e-mail/agenda externes (Gmail, Outlook), canal WhatsApp et application mobile à venir."
         }
       }
     },
@@ -1121,7 +1139,7 @@
     "perUserPerMonth": "/ utilisateur / mois",
     "freeCtaSubtext": "Jusqu'à 2 utilisateurs · pour toujours",
     "billedMonthly": "Facturé mensuellement",
-    "billedYearly": "Facturé annuellement (-20%)",
+    "billedYearly": "Facturé {total}/an (-20%)",
     "trialBadge": "{days} jours d'essai gratuit",
     "startFree": "Commencer gratuitement",
     "choose": "Choisir ce plan",

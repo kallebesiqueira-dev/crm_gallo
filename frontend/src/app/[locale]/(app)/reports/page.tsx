@@ -135,7 +135,7 @@ export default function ReportsPage() {
 
       {/* Summary tiles */}
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label={t("totalLeads")} value={intFmt.format(stats.total_leads)} accent="indigo" />
           <Metric
             label={t("conversionRate")}
@@ -193,7 +193,7 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Leads by stage — vertical bars */}
         <Card>
           <CardHeader>
@@ -307,7 +307,7 @@ export default function ReportsPage() {
             <CardTitle className="text-base">{t("breakdownByCurrency")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {currencyData.map((c) => (
                 <div
                   key={c.name}

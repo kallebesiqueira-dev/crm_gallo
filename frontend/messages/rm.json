@@ -162,6 +162,7 @@
     "chooseStartingPlan": "Tscherna tes plan da partenza",
     "acceptTerms": "Jau accepta las cundiziuns e la politica da privacy.",
     "mustAcceptTerms": "Acceptai gentilmain las cundiziuns.",
+    "captchaUnavailable": "Captcha betg disponibel — ti pos cuntinuar.",
     "seatLimitReached": "Limit dal plan Free cuntanschì. Fa per plaschair upgrade per agiuntar dapli utilisaturs.",
     "strengthWeak": "Flaivel",
     "strengthFair": "Mediocer",
@@ -218,6 +219,7 @@
     "viewAll": "View all",
     "noTasks": "No tasks for now",
     "customize": "Customize",
+    "newActivity": "New task",
     "recentActivities": "Recent activity",
     "viewCalendar": "View calendar",
     "summary": "Summary",
@@ -256,6 +258,19 @@
     "convertConfirmBody": "Quai creia in Client e in Negozi da quest lead. Clients existents cun la medema adressa email vegnan rimnads.",
     "convertSuccess": "Cunvertì! Client e negozi creads.",
     "convertAlready": "Quest lead è gia stà cunvertì.",
+    "scoreEmpty": "Anc nagin punct. Valutai quest lead cun l'IA.",
+    "email": "E-mail",
+    "phone": "Telefon",
+    "industry": "Sectur",
+    "country": "Pajais",
+    "companySize": "Grondezza da l'interpresa",
+    "budget": "Budget",
+    "source": "Funtauna",
+    "notes": "Notizias",
+    "priority": "Prioritad",
+    "conversionProbability": "Probabilitad da conversiun",
+    "nextAction": "Proxima acziun",
+    "riskAnalysis": "Analisa dals ristgs",
     "stages": {
       "new": "Nov",
       "contacted": "Contactà",
@@ -666,6 +681,7 @@
     "notesPlaceholder": "Cundiziuns, dimensiun, modalitads da pajament…",
     "lineItems": "Posiziuns",
     "addLine": "Agiuntar posiziun",
+    "addFromCatalog": "Agiuntar dal catalog",
     "lineDescription": "Descripziun",
     "fromCatalog": "Dal catalog…",
     "quantity": "Quant.",
@@ -689,6 +705,7 @@
     "resend": "Nova versiun",
     "generatePdf": "Generar PDF",
     "generating": "Generar…",
+    "pdfPending": "Il PDF vegn anc generà. Actualisai en in mument.",
     "documents": "Documents",
     "noDocuments": "Anc nagin PDF generà.",
     "supersededBy": "Ina versiun pli nova remplazza questa offerta.",
@@ -735,6 +752,7 @@
     "resend": "Nova versiun",
     "generatePdf": "Generar PDF",
     "generating": "Generar…",
+    "pdfPending": "Il PDF vegn anc generà. Actualisai en in mument.",
     "documents": "Documents",
     "noDocuments": "Anc nagin PDF generà.",
     "supersededBy": "Ina versiun pli nova remplazza questa.",
@@ -909,12 +927,12 @@
         "2": {
           "year": "2026",
           "title": "Lantschada publica",
-          "body": "Open source sut AGPL-3.0, 7 linguas nativas, integraziun Stripe, emprims teams clients."
+          "body": "Open source sut AGPL-3.0, 7 linguas nativas, multi-tenant, automatisaziuns ed integraziun Stripe."
         },
         "3": {
           "year": "Proxims pass",
-          "title": "Multi-tenant + automatisaziuns",
-          "body": "Organisaziuns isoladas, automatisaziuns visualas ed integraziuns e-mail/chalender en vegnida."
+          "title": "Integraziuns e mobil",
+          "body": "Sincronisaziun e-mail/chalender extern (Gmail, Outlook), chanal WhatsApp ed app mobila en vegnida."
         }
       }
     },
@@ -1121,7 +1139,7 @@
     "perUserPerMonth": "/ utilisatur / mais",
     "freeCtaSubtext": "Fin a 2 utilisaturs · per adina",
     "billedMonthly": "Quint meinsil",
-    "billedYearly": "Quint annual (-20%)",
+    "billedYearly": "Quint annual {total} (-20%)",
     "trialBadge": "{days} dis gratuits",
     "startFree": "Cumenzar gratuitamain",
     "choose": "Tscherner plan",

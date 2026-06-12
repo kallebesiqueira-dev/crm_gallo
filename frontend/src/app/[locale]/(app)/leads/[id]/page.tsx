@@ -122,11 +122,13 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (error) return <p className="text-sm text-destructive">{error}</p>;
+  // Only a LOAD failure (no lead yet) should replace the page. A scoring or
+  // delete error must not wipe the detail view — it shows inline instead.
+  if (error && !lead) return <p className="text-sm text-destructive">{error}</p>;
   if (!lead) return <PageSpinner />;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
@@ -171,14 +173,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <Field label="Email" value={lead.email} />
-            <Field label="Phone" value={lead.phone} />
-            <Field label="Industry" value={lead.industry} />
-            <Field label="Country" value={lead.country} />
-            <Field label="Company size" value={lead.company_size?.toString()} />
-            <Field label="Budget" value={lead.budget?.toString()} />
-            <Field label="Source" value={lead.source} />
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label={t("email")} value={lead.email} />
+            <Field label={t("phone")} value={lead.phone} />
+            <Field label={t("industry")} value={lead.industry} />
+            <Field label={t("country")} value={lead.country} />
+            <Field label={t("companySize")} value={lead.company_size?.toString()} />
+            <Field label={t("budget")} value={lead.budget?.toString()} />
+            <Field label={t("source")} value={lead.source} />
             <Field
               label={t("created")}
               value={new Date(lead.created_at).toLocaleString(locale)}
@@ -186,7 +188,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             {lead.notes && (
               <div className="sm:col-span-2">
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Notes
+                  {t("notes")}
                 </div>
                 <p className="mt-1 whitespace-pre-wrap text-sm">{lead.notes}</p>
               </div>
@@ -248,15 +250,18 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
+            {error && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+            )}
             {lead.ai_score != null ? (
               <>
                 <div className="text-4xl font-semibold">{lead.ai_score}</div>
                 <div className="text-sm text-muted-foreground">
-                  Priority:{" "}
+                  {t("priority")}:{" "}
                   <span className="font-medium text-foreground">{lead.ai_priority ?? "—"}</span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Conversion probability:{" "}
+                  {t("conversionProbability")}:{" "}
                   <span className="font-medium text-foreground">
                     {lead.ai_conversion_probability != null
                       ? `${(lead.ai_conversion_probability * 100).toFixed(0)}%`
@@ -266,7 +271,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 {lead.ai_next_action && (
                   <div>
                     <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                      Next action
+                      {t("nextAction")}
                     </div>
                     <p className="mt-1 text-sm">{lead.ai_next_action}</p>
                   </div>
@@ -274,14 +279,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 {lead.ai_risk_analysis && (
                   <div>
                     <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                      Risk analysis
+                      {t("riskAnalysis")}
                     </div>
                     <p className="mt-1 text-sm">{lead.ai_risk_analysis}</p>
                   </div>
                 )}
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">{t("empty")}</p>
+              <p className="text-sm text-muted-foreground">{t("scoreEmpty")}</p>
             )}
           </CardContent>
         </Card>

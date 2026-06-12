@@ -94,11 +94,11 @@ function MarqueeRow({
           "group-hover:[animation-play-state:paused]",
         )}
       >
-        {[...logos, ...logos].map((logo, i) => (
+        {[...logos, ...logos, ...logos, ...logos].map((logo, i) => (
           <div
             key={`${logo.name}-${i}`}
             className={cn(
-              "shrink-0 px-2 text-sm text-foreground/60 transition-colors hover:text-foreground",
+              "shrink-0 px-2 py-3 text-base text-foreground/60 transition-colors hover:text-foreground",
               logo.className,
             )}
           >

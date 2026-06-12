@@ -309,7 +309,7 @@ async def score(
 ) -> Lead:
     lead = await _get_lead_or_404(db, lead_id, org_id)
     ensure_can_mutate(user, lead.owner_id)
-    result = await score_lead(lead)
+    result = await score_lead(lead, user.locale)
     lead.ai_score = result["score"]
     lead.ai_priority = result["priority"]
     lead.ai_next_action = result["next_action"]
@@ -376,6 +376,7 @@ async def score_async(
         "score_lead",
         str(lead.id),
         str(org_id),
+        user.locale,
         dedupe_key=f"score_lead:{lead.id}",
         dedupe_ttl_seconds=300,
     )

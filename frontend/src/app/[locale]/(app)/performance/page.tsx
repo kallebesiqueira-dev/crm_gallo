@@ -184,7 +184,7 @@ export default function PerformancePage() {
       )}
 
       {/* KPI tiles */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map(({ label, value, accent }) => (
           <Card key={label} className="relative overflow-hidden">
             <div aria-hidden className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent}`} />
@@ -202,7 +202,7 @@ export default function PerformancePage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Leaderboard */}
         <Card>
           <CardHeader className="pb-2">
@@ -264,7 +264,7 @@ export default function PerformancePage() {
           <CardTitle className="text-sm font-medium text-muted-foreground">{t("goals")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={handleCreateGoal} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+          <form onSubmit={handleCreateGoal} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
             <div className="space-y-1">
               <Label htmlFor="g-metric">{t("metric")}</Label>
               <select

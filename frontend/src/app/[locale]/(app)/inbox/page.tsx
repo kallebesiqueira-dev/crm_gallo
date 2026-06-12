@@ -421,7 +421,7 @@ function ConnectEmptyState({
                 />
                 <p className="text-xs text-muted-foreground">{t("accessTokenHint")}</p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label htmlFor="wa-phone">{t("displayPhone")}</Label>
                   <Input

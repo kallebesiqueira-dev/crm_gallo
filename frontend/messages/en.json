@@ -162,6 +162,7 @@
     "chooseStartingPlan": "Choose your starting plan",
     "acceptTerms": "I agree to the Terms of Service and Privacy Policy.",
     "mustAcceptTerms": "Please accept the terms to continue.",
+    "captchaUnavailable": "Captcha couldn't load — you can continue.",
     "seatLimitReached": "Free plan limit reached. Please upgrade to add more users.",
     "strengthWeak": "Weak",
     "strengthFair": "Fair",
@@ -218,6 +219,7 @@
     "viewAll": "View all",
     "noTasks": "No tasks for now",
     "customize": "Customize",
+    "newActivity": "New task",
     "recentActivities": "Recent activity",
     "viewCalendar": "View calendar",
     "summary": "Summary",
@@ -256,6 +258,19 @@
     "convertConfirmBody": "This will create a Customer and a Deal from this lead. Any existing customer with the same email will be reused.",
     "convertSuccess": "Converted! Customer and deal created.",
     "convertAlready": "This lead has already been converted.",
+    "scoreEmpty": "No score yet. Run an AI evaluation for this lead.",
+    "email": "Email",
+    "phone": "Phone",
+    "industry": "Industry",
+    "country": "Country",
+    "companySize": "Company size",
+    "budget": "Budget",
+    "source": "Source",
+    "notes": "Notes",
+    "priority": "Priority",
+    "conversionProbability": "Conversion probability",
+    "nextAction": "Next action",
+    "riskAnalysis": "Risk analysis",
     "stages": {
       "new": "New",
       "contacted": "Contacted",
@@ -666,6 +681,7 @@
     "notesPlaceholder": "Terms, scope, payment conditions…",
     "lineItems": "Line items",
     "addLine": "Add line",
+    "addFromCatalog": "Add from catalog",
     "lineDescription": "Description",
     "fromCatalog": "From catalog…",
     "quantity": "Qty",
@@ -689,6 +705,7 @@
     "resend": "New version",
     "generatePdf": "Generate PDF",
     "generating": "Generating…",
+    "pdfPending": "The PDF is still being generated. Refresh in a moment.",
     "documents": "Documents",
     "noDocuments": "No PDF generated yet.",
     "supersededBy": "A newer version supersedes this one.",
@@ -735,6 +752,7 @@
     "resend": "New version",
     "generatePdf": "Generate PDF",
     "generating": "Generating…",
+    "pdfPending": "The PDF is still being generated. Refresh in a moment.",
     "documents": "Documents",
     "noDocuments": "No PDF generated yet.",
     "supersededBy": "A newer version supersedes this one.",
@@ -909,12 +927,12 @@
         "2": {
           "year": "2026",
           "title": "Public launch",
-          "body": "Open sourced under AGPL-3.0, 7 native languages, Stripe billing, first customer teams."
+          "body": "Open sourced under AGPL-3.0, 7 native languages, multi-tenant, automations and Stripe billing."
         },
         "3": {
           "year": "Next",
-          "title": "Multi-tenant + automations",
-          "body": "Isolated organizations, visual automations and email/calendar integrations coming next."
+          "title": "Integrations and mobile",
+          "body": "External email/calendar sync (Gmail, Outlook), a WhatsApp channel and a mobile app coming next."
         }
       }
     },
@@ -1121,7 +1139,7 @@
     "perUserPerMonth": "/ user / month",
     "freeCtaSubtext": "Up to 2 users · forever",
     "billedMonthly": "Billed monthly",
-    "billedYearly": "Billed yearly (-20%)",
+    "billedYearly": "Billed {total}/year (-20%)",
     "trialBadge": "{days}-day free trial",
     "startFree": "Start free",
     "choose": "Choose plan",

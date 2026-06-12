@@ -238,7 +238,8 @@ async def summarize(
     ensure_can_mutate(user, customer.owner_id)
 
     # Enrich the LLM prompt with open deals + pending tasks so the
-    # summary reflects actual pipeline state, not just profile fields.
+    # summary reflects actual pipeline state, not just profile fields;
+    # the user's locale steers the output language (#69).
     open_deals = (
         await db.execute(
             select(Deal.title, Deal.value, Deal.currency, Deal.stage).where(
@@ -260,7 +261,9 @@ async def summarize(
         )
     ).all()
 
-    summary = await summarize_customer(customer, open_deals=open_deals, open_tasks=open_tasks)
+    summary = await summarize_customer(
+        customer, user.locale, open_deals=open_deals, open_tasks=open_tasks
+    )
     customer.ai_summary = summary
     customer.ai_summary_updated_at = datetime.now(UTC)
     await record_audit(

@@ -116,7 +116,7 @@ export default function TeamsPage() {
       {teams.length === 0 ? (
         <Card className="p-10 text-center text-sm text-muted-foreground">{t("noTeams")}</Card>
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {teams.map((team) => {
             const available = members.filter((m) => !team.members.some((tm) => tm.user_id === m.user_id));
             return (

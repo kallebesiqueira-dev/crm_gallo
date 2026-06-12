@@ -10,6 +10,7 @@ import {
   CalendarDays,
   CheckCircle2,
   FileText,
+  Plus,
   Target,
   TrendingUp,
   Users,
@@ -17,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api, type Company, type DashboardStats, type Lead, type Quote, type Task } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
 import { DashboardCustomize } from "@/components/dashboard-customize";
 import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
 
@@ -166,14 +168,22 @@ export default function DashboardPage() {
             <div className="line-clamp-2 text-xs text-muted-foreground">{t("welcome")}</div>
           </div>
         </div>
-        <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" className="gap-1.5">
+            <Link href={`/${locale}/tasks`}>
+              <Plus className="h-4 w-4" />
+              <span>{t("newActivity")}</span>
+            </Link>
+          </Button>
+          <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
+        </div>
       </div>
 
       {/* Onboarding checklist — visible until all 5 steps are done or dismissed */}
       <OnboardingChecklistWidget locale={locale} />
 
       {/* KPI row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((k) => (
           <Panel key={k.label} className="p-5">
             <div className="flex items-start justify-between">
@@ -191,20 +201,26 @@ export default function DashboardPage() {
       </div>
 
       {/* Financial overview + quotes */}
-      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("financial") && "hidden")}>
+      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", hidden.has("financial") && "hidden")}>
         <Panel className="p-5 lg:col-span-2">
           <SectionTitle icon={TrendingUp}>{t("financialOverview")}</SectionTitle>
-          <div className="mt-4 grid gap-6 md:grid-cols-[1.5fr_1fr]">
+          <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-[1.5fr_1fr]">
             <div>
               <div className="text-xs text-muted-foreground">{t("payments")}</div>
               <div className="text-sm font-semibold">
                 {t("total")} {eur2.format(stats?.revenue_total_eur ?? 0)}
               </div>
-              <PaymentsBars data={stats?.monthly_revenue ?? []} locale={locale} />
+              <PaymentsBars data={stats?.monthly_revenue ?? []} locale={locale} empty={t("noData")} />
             </div>
             <div className="md:border-l md:border-border md:pl-5">
               <div className="text-xs text-muted-foreground">{t("openAmounts")}</div>
-              <DonutOpen pct={openPct} />
+              {openTotal > 0 ? (
+                <DonutOpen pct={openPct} />
+              ) : (
+                <div className="grid h-32 place-items-center text-center text-xs text-muted-foreground">
+                  {t("noData")}
+                </div>
+              )}
               <div className="mt-3 space-y-1.5 text-xs">
                 <LegendRow color="bg-violet-500" label={t("openLabel")} value={eur2.format(q?.open_eur ?? 0)} />
                 <LegendRow color="bg-rose-500" label={t("overdue")} value={eur2.format(q?.overdue_eur ?? 0)} />
@@ -219,7 +235,7 @@ export default function DashboardPage() {
           <div className="text-lg font-bold">{eur2.format(q?.total_eur ?? 0)}</div>
           <div className="mt-2 flex items-center gap-4">
             <CitazioniRings q={q} />
-            <div className="flex-1 space-y-2 text-xs">
+            <div className="min-w-0 flex-1 space-y-2 text-xs">
               <LegendRow color="bg-violet-500" label={t("outstanding")} value={eur2.format(q?.outstanding_eur ?? 0)} />
               <LegendRow color="bg-fuchsia-500" label={t("accepted")} value={eur2.format(q?.accepted_eur ?? 0)} />
               <LegendRow color="bg-rose-400" label={t("rejected")} value={eur2.format(q?.rejected_eur ?? 0)} />
@@ -229,7 +245,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent activity + pipeline funnel + my tasks */}
-      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("activity") && "hidden")}>
+      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", hidden.has("activity") && "hidden")}>
         <Panel className="flex flex-col p-5">
           <SectionTitle icon={CheckCircle2}>{t("recentActivities")}</SectionTitle>
           {recentLeads.length === 0 ? (
@@ -276,7 +292,7 @@ export default function DashboardPage() {
               {openTasks.map((task) => (
                 <div key={task.id} className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-accent">
                   <span className="h-4 w-4 shrink-0 rounded-full border-2 border-primary/50" />
-                  <div className="flex-1 truncate text-sm">{task.title}</div>
+                  <div className="min-w-0 flex-1 truncate text-sm">{task.title}</div>
                   {task.due_date && (
                     <div className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                       {new Date(task.due_date).toLocaleDateString(locale)}
@@ -291,7 +307,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent clients + documents */}
-      <div className={cn("grid gap-4 lg:grid-cols-3", hidden.has("clients") && "hidden")}>
+      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", hidden.has("clients") && "hidden")}>
         <Panel className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
             <SectionTitle icon={Building2}>{t("recentCompanies")}</SectionTitle>
@@ -300,7 +316,7 @@ export default function DashboardPage() {
           {companies.length === 0 ? (
             <div className="grid place-items-center py-8 text-xs text-muted-foreground">{t("noData")}</div>
           ) : (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {companies.slice(0, 4).map((c) => (
                 <Link
                   key={c.id}
@@ -371,7 +387,7 @@ function Panel({ className, children }: { className?: string; children: React.Re
       className={cn(
         "rounded-2xl border bg-card shadow-sm",
         "border-border",
-        "dark:border-white/10 dark:bg-white/[0.04] dark:backdrop-blur-xl dark:shadow-[0_8px_40px_-12px_rgba(139,92,246,0.25)]",
+        "dark:border-white/10 dark:bg-[#1d1545] dark:shadow-[0_8px_40px_-12px_rgba(139,92,246,0.25)]",
         className,
       )}
     >
@@ -392,11 +408,11 @@ function SectionTitle({ icon: Icon, children }: { icon: typeof Target; children:
 function LegendRow({ color, label, value }: { color: string; label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="flex items-center gap-2 text-muted-foreground">
-        <span className={cn("h-2.5 w-2.5 rounded-full", color)} />
-        {label}
+      <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
+        <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", color)} />
+        <span className="truncate">{label}</span>
       </span>
-      <span className="font-semibold text-foreground">{value}</span>
+      <span className="shrink-0 whitespace-nowrap font-semibold text-foreground">{value}</span>
     </div>
   );
 }
@@ -422,8 +438,23 @@ function CardLinkInline({ href, children }: { href: string; children: React.Reac
 
 /* ───────────────────────── charts ───────────────────────── */
 
-function PaymentsBars({ data, locale }: { data: { month: string; value_eur: number }[]; locale: string }) {
+function PaymentsBars({
+  data,
+  locale,
+  empty,
+}: {
+  data: { month: string; value_eur: number }[];
+  locale: string;
+  empty: string;
+}) {
   const max = Math.max(1, ...data.map((d) => d.value_eur));
+  // No closed-won revenue yet → every bar would be an invisible 2% sliver in a
+  // big empty box (reads as "broken"). Show a clean empty state at the same
+  // height instead.
+  const hasData = data.some((d) => d.value_eur > 0);
+  if (!hasData) {
+    return <div className="mt-3 grid h-36 place-items-center text-xs text-muted-foreground">{empty}</div>;
+  }
   const fmt = (m: string) => {
     const d = new Date(`${m}-01T00:00:00`);
     return Number.isNaN(d.getTime()) ? m.slice(5) : d.toLocaleDateString(locale, { month: "short" });
@@ -431,12 +462,18 @@ function PaymentsBars({ data, locale }: { data: { month: string; value_eur: numb
   return (
     <div className="mt-3 flex h-36 items-end gap-1.5">
       {data.map((d) => (
-        <div key={d.month} className="flex flex-1 flex-col items-center gap-1">
-          <div
-            className="w-full rounded-t-md bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-all hover:opacity-80"
-            style={{ height: `${Math.max(2, (d.value_eur / max) * 100)}%` }}
-            title={`${d.month}: ${d.value_eur}`}
-          />
+        <div key={d.month} className="flex h-full flex-1 flex-col items-center gap-1">
+          {/* The bar's `height: %` needs a parent with a DEFINITE height, or it
+              collapses to 0 (the bug that left this chart blank). The column is
+              `h-full` and this flex-1 track gives the bar a real height to grow
+              against; the bar aligns to the bottom. */}
+          <div className="flex w-full flex-1 items-end">
+            <div
+              className="w-full rounded-t-md bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-all hover:opacity-80"
+              style={{ height: `${Math.max(2, (d.value_eur / max) * 100)}%` }}
+              title={`${d.month}: ${d.value_eur}`}
+            />
+          </div>
           <span className="text-[9px] text-muted-foreground">{fmt(d.month)}</span>
         </div>
       ))}
@@ -527,9 +564,9 @@ function Funnel({
     <div className="my-4 mb-4 flex flex-col gap-1">
       {funnel.map((s, i) => (
         <div key={s.stage} className="flex items-center gap-2">
-          <div className="flex flex-1 justify-center">
+          <div className="flex min-w-0 flex-1 justify-center">
             <div
-              className="flex h-8 items-center justify-center truncate rounded px-2 text-center text-[11px] font-semibold text-white shadow-sm"
+              className="flex h-8 max-w-full items-center justify-center truncate rounded px-2 text-center text-[11px] font-semibold text-white shadow-sm"
               style={{
                 width: `${widths[i] ?? 44}%`,
                 background: `linear-gradient(135deg, hsl(264 72% ${42 + i * 7}%), hsl(288 70% ${46 + i * 7}%))`,
@@ -538,8 +575,8 @@ function Funnel({
               {tStages(s.stage)}
             </div>
           </div>
-          <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums">{s.count}</span>
-          <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
+          <span className="w-7 shrink-0 text-right text-xs font-semibold tabular-nums">{s.count}</span>
+          <span className="w-20 shrink-0 whitespace-nowrap text-right text-[11px] text-muted-foreground tabular-nums">
             {eur.format(s.value_eur)}
           </span>
         </div>

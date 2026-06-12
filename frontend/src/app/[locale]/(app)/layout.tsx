@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, HelpCircle, Mail, Plus, Search, TrendingUp } from "lucide-react";
+import { AlertTriangle, HelpCircle, Mail, Search, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -146,7 +146,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="mx-auto hidden w-full max-w-xl items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:flex"
+              className="mr-auto hidden w-full max-w-[18rem] items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:flex"
             >
               <Search className="h-4 w-4 shrink-0" />
               <span className="flex-1 truncate">{tSearch("placeholder")}</span>
@@ -157,12 +157,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Right — actions + identity */}
             <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
-              <Button asChild size="sm" className="gap-1.5">
-                <Link href={`/${locale}/tasks`}>
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nuova attività</span>
-                </Link>
-              </Button>
               <Link
                 href={`/${locale}/inbox`}
                 aria-label="Messaggi"

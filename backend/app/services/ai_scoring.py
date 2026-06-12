@@ -24,7 +24,11 @@ def _serialize_lead(lead: Lead) -> dict:
         "industry": lead.industry,
         "country": lead.country,
         "company_size": lead.company_size,
-        "budget": lead.budget,
+        # `budget` is a Numeric column → Decimal, which `json.dumps` can't
+        # serialize. Coerce to float so the prompt carries a plain number
+        # (and scoring doesn't crash with TypeError). See `default=str` below
+        # as a backstop for any other non-JSON type that creeps in.
+        "budget": float(lead.budget) if lead.budget is not None else None,
         "source": lead.source,
         "stage": lead.stage.value,
         "notes": lead.notes,
@@ -91,17 +95,20 @@ def _validate_score(data: dict) -> dict | None:
     return data
 
 
-async def score_lead(lead: Lead) -> dict:
+async def score_lead(lead: Lead, locale: str = "en") -> dict:
     if not is_configured():
         result = _heuristic_score(lead)
         result["scored_at"] = datetime.now(UTC)
         return result
 
-    prompt = f"Lead data:\n{json.dumps(_serialize_lead(lead))}"
+    prompt = f"Lead data:\n{json.dumps(_serialize_lead(lead), default=str)}"
     try:
         text = await chat_completion(
             messages=[{"role": "user", "content": prompt}],
-            system=_SCORING_SYSTEM,
+            system=_SCORING_SYSTEM
+            + f" Write the 'next_action' and 'risk_analysis' text in the user's "
+            f"language (locale code: {locale}); keep the JSON keys and the "
+            f"'priority' value ('low'/'medium'/'high') in English.",
             max_tokens=512,
         )
         parsed = _parse_score_json(text)

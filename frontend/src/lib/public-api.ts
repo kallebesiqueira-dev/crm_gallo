@@ -45,11 +45,14 @@ export async function publicChatbot(
  * plan key — the backend resolves + validates the price, so the amount can't be
  * tampered with. Returns the Checkout URL to redirect to.
  */
-export async function createPublicCheckoutSession(plan: string): Promise<string> {
+export async function createPublicCheckoutSession(
+  plan: string,
+  billingCycle: "monthly" | "yearly" = "monthly",
+): Promise<string> {
   const res = await fetch(`${API_URL}/api/billing/create-checkout-session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify({ plan, billing_cycle: billingCycle }),
   });
   if (!res.ok) {
     throw new Error(`checkout_request_failed_${res.status}`);

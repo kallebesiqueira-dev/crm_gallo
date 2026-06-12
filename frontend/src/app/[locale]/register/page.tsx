@@ -38,6 +38,10 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // If the Turnstile widget can't produce a token (its hostname list doesn't
+  // cover this domain, or its script is blocked) we must not trap the user
+  // behind a permanently-disabled button — see the grace-period effect below.
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
   // When the backend requires email confirmation we swap the form for a
   // "check your inbox" screen instead of logging the user in.
   const [verificationSent, setVerificationSent] = useState(false);
@@ -51,6 +55,16 @@ export default function RegisterPage() {
     const plan = (planParam as PlanId) || "free";
     if (PLAN_OPTIONS.includes(plan)) setSelectedPlan(plan);
   }, [planParam]);
+
+  // Grace period: if no captcha token arrives shortly after mount, treat the
+  // widget as unavailable so the submit button can't stay disabled forever (the
+  // backend then falls back to the per-IP rate limit). onError short-circuits
+  // this the moment the widget reports a failure.
+  useEffect(() => {
+    if (!CAPTCHA_ON || turnstileToken) return;
+    const t = setTimeout(() => setCaptchaUnavailable(true), 6000);
+    return () => clearTimeout(t);
+  }, [turnstileToken]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -289,12 +303,18 @@ export default function RegisterPage() {
           <Turnstile
             onVerify={setTurnstileToken}
             onExpire={() => setTurnstileToken(null)}
+            onError={() => setCaptchaUnavailable(true)}
           />
+          {CAPTCHA_ON && captchaUnavailable && !turnstileToken && (
+            <p className="text-center text-xs text-muted-foreground">
+              {tAuth("captchaUnavailable")}
+            </p>
+          )}
 
           <Button
             type="submit"
             className="group w-full"
-            disabled={busy || (CAPTCHA_ON && !turnstileToken)}
+            disabled={busy || (CAPTCHA_ON && !turnstileToken && !captchaUnavailable)}
             size="lg"
           >
             {busy ? tAuth("creatingAccount") : tAuth("createAccount")}

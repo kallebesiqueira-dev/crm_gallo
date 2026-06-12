@@ -33,7 +33,15 @@ jobs:
       # (no-op), the JWT secret is a non-production placeholder, and
       # ENVIRONMENT=development so startup secret validation stays lenient.
       - name: Seed .env (dev defaults)
-        run: cp .env.example .env
+        # Then override APP_DATABASE_URL with a real (throwaway, non-secret)
+        # password: the crm_app password-rotation migration f0a1b2c3d4e5 aborts
+        # while it still carries the CHANGE_ME placeholder. CI uses an ephemeral
+        # DB, so a fixed non-placeholder value is safe: the migration ALTERs the
+        # crm_app role to match and the API connects with the same URL. The crm
+        # owner (DATABASE_URL / POSTGRES_PASSWORD) stays CHANGE_ME.
+        run: |
+          cp .env.example .env
+          sed -i 's#^APP_DATABASE_URL=.*#APP_DATABASE_URL=postgresql+asyncpg://crm_app:ci_app_pw_not_a_secret@db:5432/crm#' .env
 
       # Build + start only what the core smoke needs (see docker-compose.ci.yml):
       # Postgres, Redis, the API, the web app. No Ollama, no MinIO, no worker.
