@@ -351,6 +351,8 @@
     "placeholder": "Cosa va fatto?",
     "empty": "Nessuna attività.",
     "due": "Scadenza",
+    "viewList": "Elenco",
+    "viewMonth": "Mese",
     "priorities": {
       "low": "Bassa",
       "medium": "Media",

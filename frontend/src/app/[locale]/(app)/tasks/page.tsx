@@ -2,15 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Circle, ClipboardList, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  ClipboardList,
+  List,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { TasksMonthView } from "@/components/tasks-month-view";
 import { api, ApiError, type Task, type TaskPriority, type TaskStatus } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+
+type TasksView = "list" | "month";
 
 const STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
 const PRIORITIES: TaskPriority[] = ["low", "medium", "high"];
@@ -38,7 +51,34 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [view, setView] = useState<TasksView>("list");
   const PAGE = 50;
+
+  // View mode: `?view=month` (the old /calendar deep link) wins, then the
+  // last choice from localStorage. Read in an effect — no useSearchParams,
+  // so the page needs no Suspense boundary.
+  useEffect(() => {
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get("view");
+      const stored = localStorage.getItem("tasks-view");
+      const wanted = fromUrl ?? stored;
+      if (wanted === "month" || wanted === "list") setView(wanted);
+    } catch {
+      /* stay on list */
+    }
+  }, []);
+
+  function switchView(next: TasksView) {
+    setView(next);
+    try {
+      localStorage.setItem("tasks-view", next);
+      const url = new URL(window.location.href);
+      url.searchParams.set("view", next);
+      window.history.replaceState(null, "", url.toString());
+    } catch {
+      /* non-fatal: view still switches in-memory */
+    }
+  }
 
   async function refresh() {
     const token = getToken();
@@ -111,7 +151,34 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <div className="inline-flex rounded-md border p-0.5" role="tablist" aria-label={t("title")}>
+          {(
+            [
+              { key: "list" as const, label: t("viewList"), icon: List },
+              { key: "month" as const, label: t("viewMonth"), icon: CalendarDays },
+            ]
+          ).map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={view === key}
+              onClick={() => switchView(key)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors",
+                view === key
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -153,6 +220,10 @@ export default function TasksPage() {
         </CardContent>
       </Card>
 
+      {view === "month" ? (
+        <TasksMonthView />
+      ) : (
+        <>
       <Card>
         <CardContent className="p-0">
           {loading ? (
@@ -223,6 +294,8 @@ export default function TasksPage() {
             {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("loadMore")}
           </Button>
         </div>
+      )}
+        </>
       )}
     </div>
   );

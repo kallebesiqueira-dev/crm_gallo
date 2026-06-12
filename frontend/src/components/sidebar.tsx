@@ -10,7 +10,6 @@ import { getToken } from "@/lib/auth";
 import {
   BarChart3,
   Building2,
-  Calendar,
   CreditCard,
   Download,
   FileSignature,
@@ -74,7 +73,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "hoje", label: "hoje", icon: CalendarClock },
       { href: "tasks", label: "tasks", icon: MessagesSquare },
-      { href: "calendar", label: "calendar", icon: Calendar },
       { href: "inbox", label: "inbox", icon: WhatsAppIcon },
     ],
   },

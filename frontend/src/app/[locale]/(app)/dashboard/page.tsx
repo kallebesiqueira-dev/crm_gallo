@@ -265,7 +265,7 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-          <CardLink href={`/${locale}/tasks`}>{t("viewCalendar")}</CardLink>
+          <CardLink href={`/${locale}/tasks?view=month`}>{t("viewCalendar")}</CardLink>
         </Panel>
       </div>
 

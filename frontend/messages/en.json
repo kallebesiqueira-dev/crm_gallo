@@ -351,6 +351,8 @@
     "placeholder": "What needs to be done?",
     "empty": "No tasks yet.",
     "due": "Due",
+    "viewList": "List",
+    "viewMonth": "Month",
     "priorities": {
       "low": "Low",
       "medium": "Medium",
