@@ -1696,6 +1696,13 @@
   "documents": {
     "title": "Dokumente",
     "subtitle": "Alle Angebote und Verträge an einem Ort",
+    "searchPlaceholder": "Nach Nummer oder Titel suchen…",
+    "group": {
+      "draft": "Entwürfe",
+      "waiting": "Wartet auf Kunden",
+      "closed": "Abgeschlossen",
+      "attention": "Achtung"
+    },
     "loading": "Wird geladen…",
     "empty": "Noch keine Dokumente.",
     "filter": {

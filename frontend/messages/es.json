@@ -1696,6 +1696,13 @@
   "documents": {
     "title": "Documentos",
     "subtitle": "Todos tus presupuestos y contratos en un solo lugar",
+    "searchPlaceholder": "Buscar por número o título…",
+    "group": {
+      "draft": "Borradores",
+      "waiting": "Esperando al cliente",
+      "closed": "Completados",
+      "attention": "Atención"
+    },
     "loading": "Cargando…",
     "empty": "Aún no hay documentos.",
     "filter": {

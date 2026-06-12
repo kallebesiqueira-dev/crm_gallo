@@ -1696,6 +1696,13 @@
   "documents": {
     "title": "Documents",
     "subtitle": "All your quotes and contracts in one place",
+    "searchPlaceholder": "Search by number or title…",
+    "group": {
+      "draft": "Drafts",
+      "waiting": "Awaiting client",
+      "closed": "Completed",
+      "attention": "Needs attention"
+    },
     "loading": "Loading…",
     "empty": "No documents yet.",
     "filter": {

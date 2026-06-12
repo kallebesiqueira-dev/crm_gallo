@@ -1696,6 +1696,13 @@
   "documents": {
     "title": "Documenti",
     "subtitle": "Tutti i tuoi preventivi e contratti in un unico posto",
+    "searchPlaceholder": "Cerca per numero o titolo…",
+    "group": {
+      "draft": "Bozze",
+      "waiting": "In attesa del cliente",
+      "closed": "Conclusi",
+      "attention": "Attenzione"
+    },
     "loading": "Caricamento…",
     "empty": "Nessun documento.",
     "filter": {
