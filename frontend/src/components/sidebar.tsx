@@ -8,7 +8,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import {
-  BarChart3,
   Building2,
   CreditCard,
   Download,
@@ -88,7 +87,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Gestione",
     items: [
-      { href: "reports", label: "reports", icon: BarChart3 },
       { href: "performance", label: "performance", icon: Gauge },
       { href: "billing", label: "billing", icon: CreditCard },
       { href: "audit", label: "audit", icon: ScrollText },

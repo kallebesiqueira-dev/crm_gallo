@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { ChartTooltip } from "@/components/charts/tooltip";
 import { CHART_COLORS, STAGE_COLORS } from "@/components/charts/palette";
 import { useConfirm } from "@/components/confirm-dialog";
+import { ReportsView } from "@/components/reports-view";
+import { cn } from "@/lib/utils";
 import {
   api,
   type GoalMetric,
@@ -22,6 +24,8 @@ import { getToken } from "@/lib/auth";
 
 const PERIODS: GoalPeriod[] = ["month", "quarter", "year"];
 
+type AnalyticsTab = "performance" | "reports";
+
 function firstOfMonth(): string {
   const d = new Date();
   return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
@@ -30,11 +34,40 @@ function firstOfMonth(): string {
 export default function PerformancePage() {
   const t = useTranslations("performance");
   const tCommon = useTranslations("common");
+  const tNav = useTranslations("nav");
+  const tReports = useTranslations("reports");
   const tStages = useTranslations("leads.stages");
   const locale = useLocale();
   const confirm = useConfirm();
 
+  const [tab, setTab] = useState<AnalyticsTab>("performance");
   const [period, setPeriod] = useState<GoalPeriod>("month");
+
+  // Tab mode: `?tab=reports` (the old /reports deep link) wins, then the last
+  // choice from localStorage. Read in an effect — no useSearchParams, so the
+  // page needs no Suspense boundary.
+  useEffect(() => {
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get("tab");
+      const stored = localStorage.getItem("analytics-tab");
+      const wanted = fromUrl ?? stored;
+      if (wanted === "reports" || wanted === "performance") setTab(wanted);
+    } catch {
+      /* stay on performance */
+    }
+  }, []);
+
+  function switchTab(next: AnalyticsTab) {
+    setTab(next);
+    try {
+      localStorage.setItem("analytics-tab", next);
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", next);
+      window.history.replaceState(null, "", url.toString());
+    } catch {
+      /* non-fatal: tab still switches in-memory */
+    }
+  }
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [goals, setGoals] = useState<SalesGoal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,25 +188,58 @@ export default function PerformancePage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {tab === "reports" ? tReports("title") : t("title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {tab === "reports" ? tReports("subtitle") : t("subtitle")}
+          </p>
         </div>
-        <div className="flex rounded-md border bg-card p-0.5">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPeriod(p)}
-              className={
-                "rounded px-3 py-1 text-sm font-medium transition-colors " +
-                (period === p
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground")
-              }
-            >
-              {t(`period.${p}`)}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Performance | Report — one analytics screen (skills.md §4) */}
+          <div className="inline-flex rounded-md border p-0.5" role="tablist">
+            {(
+              [
+                { key: "performance" as const, label: tNav("performance") },
+                { key: "reports" as const, label: tNav("reports") },
+              ]
+            ).map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={tab === key}
+                onClick={() => switchTab(key)}
+                className={cn(
+                  "rounded px-3 py-1.5 text-sm font-medium transition-colors",
+                  tab === key
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {tab === "performance" && (
+            <div className="flex rounded-md border bg-card p-0.5">
+              {PERIODS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  className={
+                    "rounded px-3 py-1 text-sm font-medium transition-colors " +
+                    (period === p
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground")
+                  }
+                >
+                  {t(`period.${p}`)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -183,6 +249,10 @@ export default function PerformancePage() {
         </div>
       )}
 
+      {tab === "reports" ? (
+        <ReportsView />
+      ) : (
+        <>
       {/* KPI tiles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map(({ label, value, accent }) => (
@@ -363,6 +433,8 @@ export default function PerformancePage() {
           )}
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }
