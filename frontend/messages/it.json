@@ -221,6 +221,7 @@
     "customize": "Personalizza",
     "newActivity": "Nuova attività",
     "recentActivities": "Attività recenti",
+    "pipelineTasks": "Pipeline e attività",
     "viewCalendar": "Vedi calendario",
     "summary": "Riepilogo",
     "recentDocuments": "Ultimi documenti",
@@ -582,6 +583,7 @@
     "title": "Notifiche",
     "empty": "Sei in pari.",
     "markAllRead": "Segna tutte come lette",
+    "viewAll": "Vedi tutte le notifiche",
     "dismiss": "Ignora",
     "all": "Tutte",
     "unread": "Non lette"

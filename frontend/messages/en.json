@@ -221,6 +221,7 @@
     "customize": "Customize",
     "newActivity": "New task",
     "recentActivities": "Recent activity",
+    "pipelineTasks": "Pipeline & tasks",
     "viewCalendar": "View calendar",
     "summary": "Summary",
     "recentDocuments": "Recent documents",
@@ -582,6 +583,7 @@
     "title": "Notifications",
     "empty": "You're all caught up.",
     "markAllRead": "Mark all read",
+    "viewAll": "View all notifications",
     "dismiss": "Dismiss",
     "all": "All",
     "unread": "Unread"

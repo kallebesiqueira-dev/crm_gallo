@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { api, type Company, type DashboardStats, type Lead, type Quote, type Task } from "@/lib/api";
+import { api, type Company, type DashboardStats, type Quote, type Task } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { DashboardCustomize } from "@/components/dashboard-customize";
@@ -25,9 +25,9 @@ import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
  * soft tinted bg. Dark: landing-style purple/black gradient + glassmorphism.
- * KPIs, funnel, financial overview, quotes summary, recent activity, my tasks
- * and recent clients all read live data from `api.stats` / leads / tasks /
- * companies. Never demo numbers — empty widgets show a clean empty state.
+ * KPIs, funnel, financial overview, quotes summary, my tasks and recent
+ * clients all read live data from `api.stats` / tasks / companies. Never
+ * demo numbers — empty widgets show a clean empty state.
  */
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
@@ -35,7 +35,6 @@ export default function DashboardPage() {
   const tApp = useTranslations("app");
   const locale = useLocale();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -45,7 +44,6 @@ export default function DashboardPage() {
     const token = getToken();
     if (!token) return;
     api.stats(token).then(setStats).catch(() => {});
-    api.listAllLeads(token).then(setLeads).catch(() => {});
     api.listTasks(token, { mine: true }).then(setTasks).catch(() => {});
     api
       .listCompanies(token, { limit: 8 })
@@ -90,10 +88,6 @@ export default function DashboardPage() {
   );
   const int = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
-  const recentLeads = useMemo(
-    () => [...leads].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4),
-    [leads],
-  );
   const openTasks = useMemo(() => tasks.filter((task) => task.status !== "done").slice(0, 6), [tasks]);
 
   const q = stats?.quotes;
@@ -136,7 +130,7 @@ export default function DashboardPage() {
 
   const customizeItems = [
     { key: "financial", label: t("financialOverview") },
-    { key: "activity", label: t("recentActivities") },
+    { key: "activity", label: t("pipelineTasks") },
     { key: "clients", label: t("recentCompanies") },
   ];
 
@@ -244,39 +238,8 @@ export default function DashboardPage() {
         </Panel>
       </div>
 
-      {/* Recent activity + pipeline funnel + my tasks */}
-      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", hidden.has("activity") && "hidden")}>
-        <Panel className="flex flex-col p-5">
-          <SectionTitle icon={CheckCircle2}>{t("recentActivities")}</SectionTitle>
-          {recentLeads.length === 0 ? (
-            <div className="grid flex-1 place-items-center py-8 text-xs text-muted-foreground">{t("noData")}</div>
-          ) : (
-            <div className="mt-3 space-y-1">
-              {recentLeads.map((l) => (
-                <Link
-                  key={l.id}
-                  href={`/${locale}/leads/${l.id}`}
-                  className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-accent"
-                >
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                    <Users className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">
-                      {l.first_name} {l.last_name}
-                    </div>
-                    <div className="truncate text-xs text-muted-foreground">{tStages(l.stage)}</div>
-                  </div>
-                  <div className="shrink-0 text-[11px] text-muted-foreground">
-                    {new Date(l.created_at).toLocaleDateString(locale)}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-          <CardLink href={`/${locale}/leads`}>{t("viewAll")}</CardLink>
-        </Panel>
-
+      {/* Pipeline funnel + my tasks ("recent activity" cut — it duplicated the Leads list) */}
+      <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-2", hidden.has("activity") && "hidden")}>
         <Panel className="flex flex-col p-5">
           <SectionTitle icon={Target}>{t("pipeline")}</SectionTitle>
           <Funnel funnel={stats?.pipeline_funnel ?? []} tStages={tStages} eur={eur} empty={t("noData")} />
