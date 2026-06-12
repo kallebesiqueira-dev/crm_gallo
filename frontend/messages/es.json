@@ -351,6 +351,8 @@
     "placeholder": "¿Qué hay que hacer?",
     "empty": "Sin tareas.",
     "due": "Plazo",
+    "viewList": "Lista",
+    "viewMonth": "Mes",
     "priorities": {
       "low": "Baja",
       "medium": "Media",

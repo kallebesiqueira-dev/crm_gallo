@@ -351,6 +351,8 @@
     "placeholder": "Que faut-il faire ?",
     "empty": "Aucune tâche.",
     "due": "Échéance",
+    "viewList": "Liste",
+    "viewMonth": "Mois",
     "priorities": {
       "low": "Basse",
       "medium": "Moyenne",

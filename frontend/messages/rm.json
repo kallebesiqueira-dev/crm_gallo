@@ -351,6 +351,8 @@
     "placeholder": "Tge fa basegn?",
     "empty": "Naginas incumbensas.",
     "due": "Termin",
+    "viewList": "Glista",
+    "viewMonth": "Mais",
     "priorities": {
       "low": "Bassa",
       "medium": "Mediana",

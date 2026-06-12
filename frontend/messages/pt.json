@@ -351,6 +351,8 @@
     "placeholder": "O que precisa ser feito?",
     "empty": "Nenhuma tarefa.",
     "due": "Prazo",
+    "viewList": "Lista",
+    "viewMonth": "Mês",
     "priorities": {
       "low": "Baixa",
       "medium": "Média",

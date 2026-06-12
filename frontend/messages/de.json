@@ -351,6 +351,8 @@
     "placeholder": "Was muss erledigt werden?",
     "empty": "Keine Aufgaben.",
     "due": "Fällig",
+    "viewList": "Liste",
+    "viewMonth": "Monat",
     "priorities": {
       "low": "Niedrig",
       "medium": "Mittel",
