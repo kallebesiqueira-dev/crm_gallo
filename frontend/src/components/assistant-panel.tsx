@@ -17,10 +17,12 @@ interface Msg {
 
 /**
  * Global assistant slide-out (skills.md §4 rework): the old /assistant page
- * as a right-hand panel reachable from the top bar on ANY screen. Always
- * mounted so the conversation survives open/close; portaled to body because
- * the top bar's backdrop-blur would trap a fixed descendant; sized with
- * 100dvh so the composer never hides behind the iOS toolbar.
+ * as a right-hand panel reachable from the top bar on ANY screen. The
+ * component stays mounted (the conversation survives open/close) but the
+ * DOM renders only while open — same pattern as MobileNav — so its submit
+ * button never shadows page forms for generic selectors/assistive tech.
+ * Portaled to body because the top bar's backdrop-blur would trap a fixed
+ * descendant; sized with 100dvh so the composer clears the iOS toolbar.
  */
 export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const tNav = useTranslations("nav");
@@ -140,25 +142,20 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
     }
   }
 
-  if (!mounted) return null;
+  if (!mounted || !open) return null;
 
   return createPortal(
     <>
-      {open && (
-        <div
-          className="fixed inset-0 z-[94] bg-foreground/40 backdrop-blur-sm"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className="fixed inset-0 z-[94] bg-foreground/40 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
       <aside
         role="dialog"
         aria-modal="true"
         aria-label={tNav("assistant")}
-        className={cn(
-          "fixed inset-y-0 right-0 z-[95] flex h-[100dvh] w-full max-w-md flex-col border-l bg-card shadow-xl transition-transform duration-300",
-          open ? "translate-x-0" : "pointer-events-none translate-x-full",
-        )}
+        className="fixed inset-y-0 right-0 z-[95] flex h-[100dvh] w-full max-w-md flex-col border-l bg-card shadow-xl"
       >
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-2">
