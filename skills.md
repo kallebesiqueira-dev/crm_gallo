@@ -100,11 +100,11 @@ Code is clean (no dead code); the bloat was *scope*. Status after the 2026-06-12
 | **Calendario** | Merge → Attività | ✅ DONE #98 (List\|Month toggle on Tasks; `/calendar` redirects) |
 | **Reports** | Merge → Performance | ✅ DONE #99 (Performance\|Report tabs; `/reports` redirects) |
 | **Dashboard financial block** | Slim — move charts into Reports | ✅ DONE #99 (`<FinancialOverview>` lives in the Report tab) |
-| **Forms** | Rework → into Inbox queue | ⏳ PENDING design decision |
-| **Documenti** | Rework → status hub **or drop** | ⏳ PENDING product decision (two opposite directions) |
-| **Assistant** (page) | Rework → slide-out from any entity | ⏳ PENDING design decision |
+| **Forms** | Rework → into Inbox queue | ✅ DONE #107 (Inbox channel pills WhatsApp\|Forms; queue = recent leads with a web-form source; management stays on `/forms`, off the nav) |
+| **Documenti** | Rework → status hub | ✅ DONE #103 (group tiles w/ counts as filters + search + localized status badges; PDFs stay on detail pages) |
+| **Assistant** (page) | Rework → slide-out from any entity | ✅ DONE #106 (global panel from a top-bar ✨ button; `/assistant` redirects; conversation survives open/close) |
 
-**North star:** the dashboard converges into the **Hoje** action screen. Remaining nav slimming comes from the three pending reworks.
+**§4 is fully executed (2026-06-12).** Nav went 27 → 20. **North star:** the dashboard converges into the **Hoje** action screen.
 
 ---
 
