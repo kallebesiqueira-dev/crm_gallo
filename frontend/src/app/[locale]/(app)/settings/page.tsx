@@ -17,6 +17,7 @@ import { CustomFieldsCard } from "@/components/custom-fields-card";
 import { TagsCard } from "@/components/tags-card";
 import { ApiKeysCard } from "@/components/api-keys-card";
 import { WebhooksCard } from "@/components/webhooks-card";
+import { GdprCard } from "@/components/gdpr-card";
 import { api, type User } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { locales, localeLabels, type Locale } from "@/i18n/config";
@@ -268,6 +269,10 @@ export default function SettingsPage() {
       {/* Webhook endpoints — HTTP POST delivery to external servers,
           HMAC-signed per-endpoint. Admin-only creation/deletion. */}
       <WebhooksCard canManage={canInvite} />
+
+      {/* GDPR & data retention — per-org lead-retention policy
+          (anonymize after N months of inactivity). Admin-only. */}
+      <GdprCard canManage={canInvite} />
     </div>
   );
 }

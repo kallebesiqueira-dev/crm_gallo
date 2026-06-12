@@ -1667,6 +1667,15 @@
       "contract": "Contrato"
     }
   },
+  "gdpr": {
+    "title": "RGPD y retención de datos",
+    "description": "Los leads sin actividad más allá de la ventana de abajo se anonimizan automáticamente: campos personales borrados, notas eliminadas, timeline conservada sin contenido. El id del registro permanece en la auditoría.",
+    "retentionLabel": "Ventana de retención (meses)",
+    "retentionHint": "1-120 meses. Déjalo vacío para desactivar la retención automática.",
+    "off": "Desactivado",
+    "adminOnly": "Solo los admins de la organización pueden gestionar la configuración de RGPD.",
+    "save": "Guardar"
+  },
   "onboarding": {
     "title": "Empezar",
     "subtitle": "Completa estos pasos para configurar tu CRM",

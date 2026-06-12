@@ -627,6 +627,10 @@ export interface SalesGoal {
   updated_at: string;
 }
 
+export interface GdprSettings {
+  retention_months: number | null;
+}
+
 export type AutomationTrigger =
   | "lead_created"
   | "deal_created"
@@ -1371,6 +1375,14 @@ export const api = {
   // legacy callers still pass getToken() while teams/page.tsx passes nothing.
   listOrgMembers: (token?: string | null) =>
     request<TeamMember[]>("/api/orgs/current/members", { token }),
+
+  // GDPR & data retention (plan.md §5) — admin-only on the server.
+  getGdprSettings: () => request<GdprSettings>("/api/gdpr/settings"),
+  updateGdprSettings: (payload: GdprSettings) =>
+    request<GdprSettings>("/api/gdpr/settings", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
 
   // Support — report an issue (multipart, cookie + CSRF) → emails the support inbox
   reportIssue: async (data: {

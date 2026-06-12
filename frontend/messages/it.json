@@ -1667,6 +1667,15 @@
       "contract": "Contratto"
     }
   },
+  "gdpr": {
+    "title": "GDPR e conservazione dei dati",
+    "description": "I lead senza attività oltre la finestra sottostante vengono anonimizzati automaticamente: campi personali cancellati, note eliminate, timeline mantenuta senza contenuto. L'id del record resta nell'audit.",
+    "retentionLabel": "Finestra di conservazione (mesi)",
+    "retentionHint": "1-120 mesi. Lascia vuoto per disattivare la conservazione automatica.",
+    "off": "Disattivato",
+    "adminOnly": "Solo gli admin dell'organizzazione possono gestire le impostazioni GDPR.",
+    "save": "Salva"
+  },
   "onboarding": {
     "title": "Inizia",
     "subtitle": "Completa questi passaggi per configurare il tuo CRM",

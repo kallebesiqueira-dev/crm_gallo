@@ -1667,6 +1667,15 @@
       "contract": "Contract"
     }
   },
+  "gdpr": {
+    "title": "GDPR & data retention",
+    "description": "Leads with no activity beyond the window below are automatically anonymized: personal fields erased, notes deleted, the timeline kept without content. The record id stays in the audit trail.",
+    "retentionLabel": "Retention window (months)",
+    "retentionHint": "1-120 months. Leave empty to disable automatic retention.",
+    "off": "Off",
+    "adminOnly": "Only organization admins can manage GDPR settings.",
+    "save": "Save"
+  },
   "onboarding": {
     "title": "Get started",
     "subtitle": "Complete these steps to set up your CRM",

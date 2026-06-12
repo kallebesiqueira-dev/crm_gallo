@@ -1667,6 +1667,15 @@
       "contract": "Contrato"
     }
   },
+  "gdpr": {
+    "title": "GDPR e retenção de dados",
+    "description": "Leads sem atividade além da janela abaixo são anonimizados automaticamente: campos pessoais apagados, notas excluídas, timeline mantida sem conteúdo. O id do registro permanece na auditoria.",
+    "retentionLabel": "Janela de retenção (meses)",
+    "retentionHint": "1-120 meses. Deixe vazio para desativar a retenção automática.",
+    "off": "Desativado",
+    "adminOnly": "Apenas admins da organização podem gerenciar as configurações de GDPR.",
+    "save": "Salvar"
+  },
   "onboarding": {
     "title": "Começar",
     "subtitle": "Conclua estas etapas para configurar seu CRM",

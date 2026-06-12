@@ -1667,6 +1667,15 @@
       "contract": "Contract"
     }
   },
+  "gdpr": {
+    "title": "GDPR e retenziun da datas",
+    "description": "Leads senza activitad sur la fanestra sutvart vegnan anonimisads automaticamain: champs persunals stizzads, notizias allontanadas, timeline mantegnida senza cuntegn. L'id dal register resta en l'audit.",
+    "retentionLabel": "Fanestra da retenziun (mais)",
+    "retentionHint": "1-120 mais. Laschar vid per deactivar la retenziun automatica.",
+    "off": "Deactivà",
+    "adminOnly": "Mo admins da l'organisaziun pon administrar las configuraziuns GDPR.",
+    "save": "Memorisar"
+  },
   "onboarding": {
     "title": "Cumenzar",
     "subtitle": "Completa quests pass per configurar tiu CRM",

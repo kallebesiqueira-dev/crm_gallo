@@ -1667,6 +1667,15 @@
       "contract": "Vertrag"
     }
   },
+  "gdpr": {
+    "title": "DSGVO & Datenaufbewahrung",
+    "description": "Leads ohne Aktivität über das untenstehende Fenster hinaus werden automatisch anonymisiert: persönliche Felder gelöscht, Notizen entfernt, die Timeline ohne Inhalt behalten. Die Datensatz-ID bleibt im Audit-Trail.",
+    "retentionLabel": "Aufbewahrungsfenster (Monate)",
+    "retentionHint": "1-120 Monate. Leer lassen, um die automatische Aufbewahrung zu deaktivieren.",
+    "off": "Aus",
+    "adminOnly": "Nur Organisations-Admins können DSGVO-Einstellungen verwalten.",
+    "save": "Speichern"
+  },
   "onboarding": {
     "title": "Loslegen",
     "subtitle": "Schließen Sie diese Schritte ab, um Ihr CRM einzurichten",

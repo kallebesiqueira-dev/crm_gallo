@@ -1667,6 +1667,15 @@
       "contract": "Contrat"
     }
   },
+  "gdpr": {
+    "title": "RGPD et conservation des données",
+    "description": "Les leads sans activité au-delà de la fenêtre ci-dessous sont anonymisés automatiquement : champs personnels effacés, notes supprimées, timeline conservée sans contenu. L'id de l'enregistrement reste dans l'audit.",
+    "retentionLabel": "Fenêtre de conservation (mois)",
+    "retentionHint": "1-120 mois. Laissez vide pour désactiver la conservation automatique.",
+    "off": "Désactivé",
+    "adminOnly": "Seuls les admins de l'organisation peuvent gérer les paramètres RGPD.",
+    "save": "Enregistrer"
+  },
   "onboarding": {
     "title": "Commencer",
     "subtitle": "Complétez ces étapes pour configurer votre CRM",
