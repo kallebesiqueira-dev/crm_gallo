@@ -19,7 +19,7 @@ Two operations per contact-bearing entity (Lead, Customer), admin-only:
 Known residuals after /forget (documented, follow-ups):
   * S3/R2 avatar objects (only the key is cleared here)
   * WhatsApp message bodies in `messages`
-  * PII embedded in historical audit_logs metadata (TD-33)
+  * PII embedded in historical audit-log metadata (TD-33)
 
 Self-contained module — local helpers, no shared-schema changes — so
 it composes with the in-flight work on models.py/schemas.py.
