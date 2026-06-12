@@ -1,0 +1,50 @@
+# TD-34 — automated dependency updates. Until now every CVE was
+# hand-patched (see the 2026-06-01 security hot-patch round); this
+# turns that reactive sweep into weekly PRs the regular CI gates
+# (pytest / pip-audit / npm audit / Trivy) already know how to judge.
+#
+# Grouping: one PR per ecosystem per week for minor+patch bumps keeps
+# the review load at "skim the lockfile diff, check CI is green".
+# Major bumps stay individual PRs — those are the ones that break.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    groups:
+      python-minor-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

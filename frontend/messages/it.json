@@ -1566,6 +1566,9 @@
       "deal_won": "Trattativa vinta",
       "deal_lost": "Trattativa persa",
       "deal_stage_changed": "Fase della trattativa cambiata",
+      "customer_created": "Cliente creato",
+      "task_overdue": "Attività in ritardo",
+      "user_invited": "Collega invitato",
       "lead_stale": "Lead inattivo"
     },
     "actions": {

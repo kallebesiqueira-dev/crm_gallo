@@ -24,6 +24,9 @@ const TRIGGERS: AutomationTrigger[] = [
   "deal_won",
   "deal_lost",
   "deal_stage_changed",
+  "customer_created",
+  "task_overdue",
+  "user_invited",
   "lead_stale",
 ];
 const ACTIONS: AutomationAction[] = ["create_task", "send_notification", "change_stage"];

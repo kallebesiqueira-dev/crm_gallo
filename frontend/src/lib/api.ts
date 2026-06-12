@@ -633,6 +633,9 @@ export type AutomationTrigger =
   | "deal_won"
   | "deal_lost"
   | "deal_stage_changed"
+  | "customer_created"
+  | "task_overdue"
+  | "user_invited"
   | "lead_stale";
 export type AutomationAction = "create_task" | "send_notification" | "change_stage";
 

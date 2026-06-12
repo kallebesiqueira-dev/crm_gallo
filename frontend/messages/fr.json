@@ -1566,6 +1566,9 @@
       "deal_won": "Affaire gagnée",
       "deal_lost": "Affaire perdue",
       "deal_stage_changed": "Étape de l'affaire modifiée",
+      "customer_created": "Client créé",
+      "task_overdue": "Tâche en retard",
+      "user_invited": "Collègue invité",
       "lead_stale": "Lead inactif"
     },
     "actions": {

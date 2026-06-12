@@ -1566,6 +1566,9 @@
       "deal_won": "Affar gudagnà",
       "deal_lost": "Affar pers",
       "deal_stage_changed": "Stadi da l'affar midà",
+      "customer_created": "Client creà",
+      "task_overdue": "Incumbensa surpassada",
+      "user_invited": "Collega envidà",
       "lead_stale": "Lead inactiv"
     },
     "actions": {

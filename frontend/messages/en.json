@@ -1566,6 +1566,9 @@
       "deal_won": "Deal won",
       "deal_lost": "Deal lost",
       "deal_stage_changed": "Deal stage changed",
+      "customer_created": "Customer created",
+      "task_overdue": "Task overdue",
+      "user_invited": "Teammate invited",
       "lead_stale": "Lead goes stale"
     },
     "actions": {
