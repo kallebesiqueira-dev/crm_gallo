@@ -58,6 +58,10 @@
   },
   "inbox": {
     "title": "Posta WhatsApp",
+    "channelForms": "Moduli",
+    "formsQueueSubtitle": "Lead in arrivo dai tuoi moduli web",
+    "formsQueueEmpty": "Ancora nessun invio. Incorpora un modulo sul tuo sito per raccogliere lead.",
+    "manageForms": "Gestisci moduli",
     "subtitle": "Chatta con i tuoi contatti su WhatsApp in tempo reale.",
     "loading": "Caricamento…",
     "conversations": "Conversazioni",

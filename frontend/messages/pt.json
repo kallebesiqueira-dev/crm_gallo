@@ -58,6 +58,10 @@
   },
   "inbox": {
     "title": "Caixa de entrada WhatsApp",
+    "channelForms": "Formulários",
+    "formsQueueSubtitle": "Leads chegando dos seus formulários web",
+    "formsQueueEmpty": "Nenhum envio de formulário ainda. Incorpore um formulário no seu site para captar leads.",
+    "manageForms": "Gerenciar formulários",
     "subtitle": "Converse com seus contatos pelo WhatsApp em tempo real.",
     "loading": "Carregando…",
     "conversations": "Conversas",
