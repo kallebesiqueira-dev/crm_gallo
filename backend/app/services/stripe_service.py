@@ -176,7 +176,8 @@ def _public_price_id(plan_key: str, cycle: BillingCycle = BillingCycle.monthly) 
         # Yearly has no landing-alias env vars — resolve the per-plan yearly id
         # so a logged-out visitor who picked "annual" is billed annually, not
         # the monthly price.
-        canonical = {"starter": "standard", "pro": "business", "enterprise": "premium"}.get(key, key)
+        aliases = {"starter": "standard", "pro": "business", "enterprise": "premium"}
+        canonical = aliases.get(key, key)
         try:
             return resolve_stripe_price_id(Plan(canonical), BillingCycle.yearly)
         except ValueError:
