@@ -916,6 +916,36 @@ async def scan_stale_leads(ctx: dict) -> dict:
     return {"orgs": scanned_orgs, "attempted": attempted}
 
 
+async def enforce_retention(ctx: dict) -> dict:
+    """Daily GDPR retention sweep (plan.md §5): for every org that set
+    `retention_months`, anonymize leads idle past the cutoff through
+    the same erasure core as POST /forget. Lazy import — gdpr is an
+    API module; pulling it at worker import time would drag the
+    FastAPI app graph in (same pattern as scan_stale_leads)."""
+    from app.api.gdpr import enforce_org_retention
+
+    SessionLocal = ctx["SessionLocal"]
+
+    async with SessionLocal() as db:
+        policies = (
+            await db.execute(
+                select(Organization.id, Organization.retention_months).where(
+                    Organization.retention_months.is_not(None)
+                )
+            )
+        ).all()
+
+    anonymized = 0
+    for org_id, months in policies:
+        set_current_org_id(org_id)
+        async with SessionLocal() as db:
+            anonymized += await enforce_org_retention(db, org_id, months)
+
+    if anonymized:
+        log.info("gdpr.retention_sweep", orgs=len(policies), anonymized=anonymized)
+    return {"orgs": len(policies), "anonymized": anonymized}
+
+
 async def scan_overdue_tasks(ctx: dict) -> dict:
     """Daily sweep emitting `task.overdue` to the outbox — once per
     (task, due_date), so webhooks and automation rules hear about a task

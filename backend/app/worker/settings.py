@@ -34,6 +34,7 @@ from app.worker.dlq import dlq_wrap
 from app.worker.jobs import (
     deliver_webhook,
     drain_outbox,
+    enforce_retention,
     generate_contract_pdf,
     generate_deal_pdf,
     generate_quote_pdf,
@@ -112,6 +113,7 @@ class WorkerSettings:
         dlq_wrap(generate_deal_pdf),
         dlq_wrap(generate_quote_pdf),
         dlq_wrap(generate_contract_pdf),
+        dlq_wrap(enforce_retention),
         dlq_wrap(process_import),
         dlq_wrap(scan_overdue_tasks),
         dlq_wrap(scan_stale_leads),
@@ -144,6 +146,18 @@ class WorkerSettings:
             scan_stale_leads,
             name="scan_stale_leads",
             minute={0},
+            run_at_startup=False,
+            unique=True,
+            max_tries=1,
+        ),
+        # GDPR retention sweep — daily 04:23 UTC (off-peak, off the :00
+        # herd). Per-org cap of 200 leads/day inside the sweep keeps a
+        # freshly-enabled policy from one giant anonymization storm.
+        cron(
+            enforce_retention,
+            name="enforce_retention",
+            hour={4},
+            minute={23},
             run_at_startup=False,
             unique=True,
             max_tries=1,

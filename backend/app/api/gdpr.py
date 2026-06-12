@@ -29,17 +29,18 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import get_current_org_id, require_roles
-from app.models import Activity, Customer, Deal, Lead, Note, User, UserRole
+from app.models import Activity, Customer, Deal, Lead, Note, Organization, User, UserRole
 
 router = APIRouter(prefix="/api", tags=["gdpr"])
 
@@ -96,7 +97,9 @@ async def _forget(
     wipe_fields: tuple[str, ...],
     entity_id: uuid.UUID,
     org_id: uuid.UUID,
-    user: User,
+    # None when the retention sweep (no human actor) drives the erasure.
+    user: User | None,
+    via: str = "api",
 ) -> dict[str, Any]:
     row = await _get_or_404(db, model, entity_id, org_id)
 
@@ -134,7 +137,8 @@ async def _forget(
         .values(content=None, metadata_json=None)
     )
 
-    # Metadata intentionally PII-free: ids only.
+    # Metadata intentionally PII-free: just how the erasure was driven
+    # ("api" = an admin clicked, "retention" = the daily policy sweep).
     await record_audit(
         db,
         actor=user,
@@ -142,6 +146,7 @@ async def _forget(
         entity_type=entity_str,
         entity_id=entity_id,
         organization_id=org_id,
+        metadata={"via": via},
     )
     await db.commit()
     return {"status": "forgotten", "id": str(entity_id)}
@@ -361,3 +366,97 @@ async def export_customer(
         org_id=org_id,
         user=user,
     )
+
+
+# ---------- Retention policy (plan.md §5, second half) ----------
+
+
+class GdprSettingsOut(BaseModel):
+    retention_months: int | None
+
+
+class GdprSettingsIn(BaseModel):
+    # 1..120 months; null switches retention off. The floor guards the
+    # footgun of a 0/negative value silently anonymizing everything.
+    retention_months: int | None = Field(default=None, ge=1, le=120)
+
+
+@router.get("/gdpr/settings", response_model=GdprSettingsOut)
+async def get_gdpr_settings(
+    _: User = Depends(require_roles(UserRole.admin)),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> GdprSettingsOut:
+    org = await db.get(Organization, org_id)
+    return GdprSettingsOut(retention_months=org.retention_months if org else None)
+
+
+@router.patch("/gdpr/settings", response_model=GdprSettingsOut)
+async def update_gdpr_settings(
+    payload: GdprSettingsIn,
+    user: User = Depends(require_roles(UserRole.admin)),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> GdprSettingsOut:
+    org = await db.get(Organization, org_id)
+    if org is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    previous = org.retention_months
+    org.retention_months = payload.retention_months
+    await record_audit(
+        db,
+        actor=user,
+        action="org.gdpr_settings_update",
+        entity_type="organization",
+        entity_id=org_id,
+        organization_id=org_id,
+        metadata={"retention_months": payload.retention_months, "previous": previous},
+    )
+    await db.commit()
+    return GdprSettingsOut(retention_months=org.retention_months)
+
+
+# Hard cap per org per sweep — a freshly-enabled 2-year policy on a
+# 50k-lead org anonymizes in daily 200-lead bites instead of one
+# multi-minute transaction storm.
+RETENTION_SWEEP_LIMIT = 200
+
+
+async def enforce_org_retention(
+    db: AsyncSession,
+    org_id: uuid.UUID,
+    months: int,
+    limit: int = RETENTION_SWEEP_LIMIT,
+) -> int:
+    """Anonymize this org's LEADS idle past the policy cutoff, via the
+    same `_forget` core as POST /forget (notes purged, timeline
+    stripped, audit row `lead.gdpr_forget` via=retention). Leads only
+    by design: customers are paying relationships — auto-erasing them
+    needs a human. Caller (the worker) has set the RLS GUC. Returns
+    the number anonymized; already-forgotten rows are naturally
+    excluded by the soft-delete filter."""
+    cutoff = datetime.now(UTC) - timedelta(days=months * 30)
+    lead_ids = (
+        (
+            await db.execute(
+                select(Lead.id)
+                .where(Lead.organization_id == org_id, Lead.updated_at < cutoff)
+                .order_by(Lead.updated_at)
+                .limit(limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for lead_id in lead_ids:
+        await _forget(
+            db,
+            model=Lead,
+            entity_str="lead",
+            wipe_fields=_LEAD_WIPE,
+            entity_id=lead_id,
+            org_id=org_id,
+            user=None,
+            via="retention",
+        )
+    return len(lead_ids)

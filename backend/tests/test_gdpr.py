@@ -4,13 +4,20 @@ the audit anchor; notes hard-deleted; timeline content stripped."""
 
 from __future__ import annotations
 
+import json
 import uuid
 
+import pytest
 from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
+from app.database import register_org_guc, set_current_org_id
 from app.models import Activity, AuditLog, Lead, Note, Organization
 from tests.conftest import CsrfAwareClient
+
+settings = get_settings()
 
 
 def _make_lead(client: CsrfAwareClient, **overrides) -> dict:
@@ -73,7 +80,7 @@ def test_forget_anonymizes_lead_and_purges_notes(
     assert acts, "timeline skeleton must survive"
     assert all(a.content is None and a.metadata_json is None for a in acts)
 
-    # Audit row, with NO PII in metadata.
+    # Audit row, with NO PII in metadata — only how it was driven.
     audit = (
         db.execute(
             select(AuditLog).where(
@@ -83,7 +90,8 @@ def test_forget_anonymizes_lead_and_purges_notes(
         .scalars()
         .first()
     )
-    assert audit is not None and audit.metadata_json is None
+    assert audit is not None
+    assert json.loads(audit.metadata_json) == {"via": "api"}
 
 
 def test_forget_is_idempotent(admin_client: CsrfAwareClient):
@@ -147,6 +155,95 @@ def test_forget_requires_admin(other_client: CsrfAwareClient, db: Session, test_
     db.commit()
     assert other_client.post(f"/api/leads/{row}/forget").status_code == 403
     assert other_client.get(f"/api/leads/{row}/export").status_code == 403
+
+
+# ---------- Retention policy (settings + sweep) ----------
+
+
+def test_gdpr_settings_roundtrip(admin_client: CsrfAwareClient):
+    assert admin_client.get("/api/gdpr/settings").json() == {"retention_months": None}
+
+    r = admin_client.patch("/api/gdpr/settings", json={"retention_months": 24})
+    assert r.status_code == 200, r.text
+    assert r.json() == {"retention_months": 24}
+    assert admin_client.get("/api/gdpr/settings").json() == {"retention_months": 24}
+
+    # Null switches it back off.
+    r = admin_client.patch("/api/gdpr/settings", json={"retention_months": None})
+    assert r.json() == {"retention_months": None}
+
+    # Out-of-range guarded by the schema (0 would anonymize everything).
+    assert admin_client.patch("/api/gdpr/settings", json={"retention_months": 0}).status_code == 422
+    assert (
+        admin_client.patch("/api/gdpr/settings", json={"retention_months": 999}).status_code == 422
+    )
+
+
+def test_gdpr_settings_admin_only(other_client: CsrfAwareClient):
+    assert other_client.get("/api/gdpr/settings").status_code == 403
+    assert (
+        other_client.patch("/api/gdpr/settings", json={"retention_months": 12}).status_code == 403
+    )
+
+
+@pytest.fixture
+async def worker_session():
+    """Async crm_app sessionmaker on the test loop (RLS + org GUC) —
+    same pattern as test_event_types/test_automations."""
+    engine = create_async_engine(settings.runtime_database_url, future=True)
+    register_org_guc(engine)
+    SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    try:
+        yield SessionLocal
+    finally:
+        await engine.dispose()
+
+
+async def test_retention_sweep_anonymizes_only_stale_leads(
+    worker_session, admin_client: CsrfAwareClient, db: Session, test_org: Organization
+):
+    from app.api.gdpr import enforce_org_retention
+
+    stale = _make_lead(admin_client, email="pytest-gdpr-stale@example.com")
+    fresh = _make_lead(admin_client, email="pytest-gdpr-fresh@example.com")
+    # Age one lead past a 24-month cutoff (~730d > 720d).
+    db.execute(
+        text("UPDATE leads SET updated_at = now() - interval '800 days' WHERE id = :id"),
+        {"id": stale["id"]},
+    )
+    db.commit()
+
+    set_current_org_id(test_org.id)
+    async with worker_session() as wdb:
+        n = await enforce_org_retention(wdb, test_org.id, months=24)
+    assert n == 1
+
+    anonymized = db.get(Lead, uuid.UUID(stale["id"]), execution_options={"include_deleted": True})
+    assert anonymized.first_name == "Anonymized"
+    assert anonymized.email is None
+    assert anonymized.deleted_at is not None
+    # Audit attributes the erasure to the policy, with no human actor.
+    audit = (
+        db.execute(
+            select(AuditLog).where(
+                AuditLog.action == "lead.gdpr_forget", AuditLog.entity_id == stale["id"]
+            )
+        )
+        .scalars()
+        .first()
+    )
+    assert audit is not None and audit.actor_id is None
+    assert json.loads(audit.metadata_json) == {"via": "retention"}
+
+    untouched = db.get(Lead, uuid.UUID(fresh["id"]))
+    assert untouched.email == "pytest-gdpr-fresh@example.com"
+    assert untouched.deleted_at is None
+
+    # Idempotent: the anonymized lead is soft-deleted, so a second
+    # sweep finds nothing.
+    set_current_org_id(test_org.id)
+    async with worker_session() as wdb:
+        assert await enforce_org_retention(wdb, test_org.id, months=24) == 0
 
 
 def test_forget_cross_org_is_404(
