@@ -10,11 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.activities import ENTITY_CUSTOMER, ActivityType, record_activity
 from app.api._concurrency import check_if_match
 from app.api._errors import raise_for_duplicate_email
+from app.api.dashboard import invalidate_dashboard_cache
 from app.audit import record_audit
 from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
-from app.models import Customer, User
+from app.events import EventType, record_event
+from app.metrics import SEARCH_TRGM_FALLBACK
+from app.models import Customer, Deal, DealStage, Task, TaskStatus, User
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import CustomerCreate, CustomerOut, CustomerUpdate
 from app.services.ai_assistant import summarize_customer
@@ -51,11 +54,26 @@ async def list_customers(
     stmt = select(Customer).where(Customer.organization_id == org_id)
     if q:
         # FTS via the stored search_vector column + GIN index
-        # (migration 062fbc7b628d). Same pattern as leads — see
-        # the comment there.
-        stmt = stmt.where(
-            sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
-        )
+        # (migration 062fbc7b628d). Falls back to trigram similarity
+        # when FTS returns no hits (handles typos).
+        fts_filter = sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
+        has_fts = (
+            await db.execute(
+                select(sa.literal(1)).where(Customer.organization_id == org_id, fts_filter).limit(1)
+            )
+        ).first() is not None
+        if has_fts:
+            stmt = stmt.where(fts_filter)
+        else:
+            SEARCH_TRGM_FALLBACK.labels(entity_type="customer").inc()
+            stmt = stmt.where(
+                sa.or_(
+                    sa.func.similarity(Customer.first_name, q) > 0.3,
+                    sa.func.similarity(Customer.last_name, q) > 0.3,
+                    sa.func.similarity(Customer.email, q) > 0.3,
+                    sa.func.similarity(Customer.company, q) > 0.3,
+                )
+            )
     return await paginate(db, stmt, Customer, limit=limit, cursor=cursor)
 
 
@@ -94,7 +112,19 @@ async def create_customer(
         organization_id=org_id,
         actor=user,
     )
+    await record_event(
+        db,
+        event_type=EventType.customer_created,
+        organization_id=org_id,
+        payload={
+            "customer_id": customer.id,
+            "owner_id": customer.owner_id,
+            "company_id": customer.company_id,
+            "actor_user_id": user.id,
+        },
+    )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(customer)
     return customer
 
@@ -168,6 +198,7 @@ async def update_customer(
         metadata={"fields": list(changes.keys())},
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(customer)
     return customer
 
@@ -191,6 +222,7 @@ async def delete_customer(
         organization_id=org_id,
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
 
 
 @router.post("/{customer_id}/summarize", response_model=CustomerOut)
@@ -202,7 +234,37 @@ async def summarize(
 ) -> Customer:
     customer = await _get_customer_or_404(db, customer_id, org_id)
     ensure_can_mutate(user, customer.owner_id)
-    summary = await summarize_customer(customer, user.locale)
+
+    # Enrich the LLM prompt with open deals + pending tasks so the
+    # summary reflects actual pipeline state, not just profile fields;
+    # the user's locale steers the output language (#69).
+    open_deals = (
+        await db.execute(
+            select(Deal.title, Deal.value, Deal.currency, Deal.stage).where(
+                Deal.customer_id == customer.id,
+                Deal.organization_id == org_id,
+                Deal.stage.notin_([DealStage.won, DealStage.lost]),
+                Deal.deleted_at.is_(None),
+            )
+        )
+    ).all()
+    open_tasks = (
+        await db.execute(
+            select(Task.title, Task.due_date, Task.priority)
+            .where(
+                Task.customer_id == customer.id,
+                Task.organization_id == org_id,
+                Task.status != TaskStatus.done,
+                Task.deleted_at.is_(None),
+            )
+            .order_by(Task.due_date.asc().nullslast())
+            .limit(5)
+        )
+    ).all()
+
+    summary = await summarize_customer(
+        customer, user.locale, open_deals=open_deals, open_tasks=open_tasks
+    )
     customer.ai_summary = summary
     customer.ai_summary_updated_at = datetime.now(UTC)
     await record_audit(

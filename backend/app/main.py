@@ -33,12 +33,15 @@ from app.api import (
     duplicates,
     exports,
     forms,
+    gdpr,
     imports,
     invites,
+    lead_convert,
     leads,
     notes,
     notifications,
     oauth,
+    onboarding,
     orgs,
     outbox,
     performance,
@@ -66,7 +69,13 @@ from app.cookies import (
 )
 from app.database import engine
 from app.logging_setup import configure_logging, get_logger
-from app.metrics import PrometheusMiddleware, metrics_response
+from app.metrics import (
+    DLQ_DEPTH,
+    OUTBOX_LAG_SECONDS,
+    OUTBOX_PENDING,
+    PrometheusMiddleware,
+    metrics_response,
+)
 from app.rate_limit import limiter
 from app.sentry_setup import init_sentry
 
@@ -356,6 +365,9 @@ app.include_router(billing.router)
 # Public, unauthenticated marketing surface (landing chatbot). Rate-limited.
 app.include_router(public.router)
 app.include_router(leads.router)
+app.include_router(lead_convert.router)
+app.include_router(gdpr.router)
+app.include_router(onboarding.router)
 app.include_router(customers.router)
 app.include_router(companies.router)
 app.include_router(products.router)
@@ -427,6 +439,40 @@ async def metrics(request: Request):
         provided = request.headers.get("authorization", "")
         if not expected or not _consteq(provided, f"Bearer {expected}"):
             raise HTTPException(status_code=404)
+    # Refresh the outbox-pending gauge on every scrape so the
+    # OutboxDrainBacklog alert has a live value without requiring a
+    # separate worker-side metrics server. COUNT on (processed_at IS NULL)
+    # is a fast index scan (partial index covers this column).
+    try:
+        async with engine.connect() as conn:
+            row = (
+                await conn.execute(
+                    text(
+                        """
+                        SELECT
+                            COUNT(*) AS pending,
+                            COALESCE(
+                                EXTRACT(EPOCH FROM (now() - MIN(occurred_at))),
+                                0
+                            ) AS oldest_age_s
+                        FROM outbox_events
+                        WHERE processed_at IS NULL
+                        """
+                    )
+                )
+            ).one()
+        OUTBOX_PENDING.set(row.pending)
+        OUTBOX_LAG_SECONDS.set(row.oldest_age_s)
+    except Exception:
+        pass  # stale gauges are better than a broken /metrics
+    # DLQ depth: count entries in the Redis arq:dead list. O(1) via LLEN.
+    try:
+        from app.redis_client import get_redis
+        from app.worker.dlq import DLQ_KEY
+
+        DLQ_DEPTH.set(await get_redis().llen(DLQ_KEY))
+    except Exception:
+        pass
     return metrics_response()
 
 

@@ -226,7 +226,11 @@ def test_update_merges_custom_fields(admin_client):
         },
     ).json()
     # Patch only f1 — f2 must survive (merge, not replace).
-    r = admin_client.patch(f"/api/leads/{lead['id']}", json={"custom_fields": {"f1": "changed"}})
+    r = admin_client.patch(
+        f"/api/leads/{lead['id']}",
+        json={"custom_fields": {"f1": "changed"}},
+        headers={"If-Match": str(lead["version"])},
+    )
     assert r.status_code == 200, r.text
     cf = r.json()["custom_fields"]
     assert cf == {"f1": "changed", "f2": "two"}
@@ -238,6 +242,10 @@ def test_update_clears_value_with_empty_string(admin_client):
         "/api/leads",
         json={"first_name": "A", "last_name": "B", "custom_fields": {"f1": "one"}},
     ).json()
-    r = admin_client.patch(f"/api/leads/{lead['id']}", json={"custom_fields": {"f1": ""}})
+    r = admin_client.patch(
+        f"/api/leads/{lead['id']}",
+        json={"custom_fields": {"f1": ""}},
+        headers={"If-Match": str(lead["version"])},
+    )
     assert r.status_code == 200
     assert "f1" not in r.json()["custom_fields"]

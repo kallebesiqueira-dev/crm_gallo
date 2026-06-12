@@ -184,12 +184,34 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = ""
 
     # Price IDs — create one per (plan, cycle) in your Stripe dashboard.
+    # The bare names are EUR (legacy, zero-change for existing deploys);
+    # CHF/GBP/BRL variants append the currency code (plan.md §6). Unset =
+    # that currency isn't offered for that plan yet — checkout 503s with
+    # a clear message instead of silently falling back to EUR.
     stripe_price_standard_monthly: str = ""
     stripe_price_standard_yearly: str = ""
     stripe_price_business_monthly: str = ""
     stripe_price_business_yearly: str = ""
     stripe_price_premium_monthly: str = ""
     stripe_price_premium_yearly: str = ""
+    stripe_price_standard_monthly_chf: str = ""
+    stripe_price_standard_yearly_chf: str = ""
+    stripe_price_business_monthly_chf: str = ""
+    stripe_price_business_yearly_chf: str = ""
+    stripe_price_premium_monthly_chf: str = ""
+    stripe_price_premium_yearly_chf: str = ""
+    stripe_price_standard_monthly_gbp: str = ""
+    stripe_price_standard_yearly_gbp: str = ""
+    stripe_price_business_monthly_gbp: str = ""
+    stripe_price_business_yearly_gbp: str = ""
+    stripe_price_premium_monthly_gbp: str = ""
+    stripe_price_premium_yearly_gbp: str = ""
+    stripe_price_standard_monthly_brl: str = ""
+    stripe_price_standard_yearly_brl: str = ""
+    stripe_price_business_monthly_brl: str = ""
+    stripe_price_business_yearly_brl: str = ""
+    stripe_price_premium_monthly_brl: str = ""
+    stripe_price_premium_yearly_brl: str = ""
 
     # Landing-checkout price aliases. The public landing CTA addresses the three
     # paid tiers by simple names (starter→Standard, pro→Business, enterprise→
@@ -306,6 +328,10 @@ class Settings(BaseSettings):
 
     def validate_for_runtime(self) -> None:
         """Refuse to start with insecure defaults in production."""
+        import logging as _logging
+
+        _log = _logging.getLogger(__name__)
+
         if self.jwt_secret in _DEFAULT_SECRETS or len(self.jwt_secret) < 32:
             msg = (
                 f"Insecure JWT_SECRET (length={len(self.jwt_secret)}). "
@@ -313,9 +339,15 @@ class Settings(BaseSettings):
             )
             if self.is_production:
                 raise RuntimeError(msg)
-            import logging
+            _log.warning("SECURITY: %s", msg)
 
-            logging.getLogger(__name__).warning("SECURITY: %s", msg)
+        if self.is_production and not self.mfa_required_for_privileged:
+            _log.warning(
+                "SECURITY: MFA_REQUIRED_FOR_PRIVILEGED is off. "
+                "Admin/manager accounts are not required to enroll in TOTP MFA. "
+                "Set MFA_REQUIRED_FOR_PRIVILEGED=true before going live with "
+                "real user data."
+            )
 
 
 @lru_cache

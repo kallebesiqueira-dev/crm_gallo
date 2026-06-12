@@ -29,7 +29,11 @@ FROM deps AS dev
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup -S app && adduser -S appuser -G app
 COPY . .
-RUN chown -R appuser:app /app
+# .next must exist (and be appuser-owned) IN the image: compose mounts an
+# anonymous volume at /app/.next, and Docker takes the mountpoint's ownership
+# from the image — without this, the volume comes up root-owned and `next dev`
+# crash-loops on EACCES.
+RUN mkdir -p /app/.next && chown -R appuser:app /app
 USER appuser
 EXPOSE 3000
 CMD ["npm", "run", "dev"]

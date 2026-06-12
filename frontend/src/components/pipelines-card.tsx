@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Check,
@@ -65,7 +65,7 @@ export function PipelinesCard({ canManage }: Props) {
   const [drafts, setDrafts] = useState<PipelineStageDraft[]>([]);
   const [saving, setSaving] = useState(false);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setPipelines(await api.listPipelines());
       setError(null);
@@ -78,12 +78,11 @@ export function PipelinesCard({ canManage }: Props) {
         setError(e instanceof Error ? e.message : "Load failed");
       }
     }
-  }
+  }, []);
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   function startEdit(p: Pipeline) {
     setEditing(p.id);

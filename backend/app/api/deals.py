@@ -7,14 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.activities import ENTITY_DEAL, ActivityType, record_activity
 from app.api._concurrency import check_if_match
+from app.api.dashboard import invalidate_dashboard_cache
 from app.audit import record_audit
 from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.logging_setup import get_logger
-from app.models import Deal, DealStage, User
-from app.schemas import DealCreate, DealOut, DealStageMove, DealUpdate
+from app.models import Deal, DealStage, Organization, User
+from app.schemas import DealCreate, DealOut, DealStageMove, DealUpdate, NextActionPayload
 
 router = APIRouter(prefix="/api/deals", tags=["deals"])
 log = get_logger(__name__)
@@ -73,7 +74,9 @@ async def generate_deal_pdf_endpoint(
 @router.get("", response_model=list[DealOut])
 async def list_deals(
     stage: DealStage | None = None,
+    q: str | None = Query(default=None, description="search by title"),
     team_id: uuid.UUID | None = Query(default=None, description="filter by team_id"),
+    customer_id: uuid.UUID | None = Query(default=None, description="filter by customer_id"),
     limit: int = Query(default=200, ge=1, le=500),
     _: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
@@ -82,13 +85,17 @@ async def list_deals(
     stmt = (
         select(Deal)
         .where(Deal.organization_id == org_id)
-        .order_by(Deal.stage, Deal.sort_index, Deal.created_at.desc())
+        .order_by(Deal.stage, Deal.sort_index, Deal.created_at.desc(), Deal.id.desc())
         .limit(limit)
     )
     if stage:
         stmt = stmt.where(Deal.stage == stage)
+    if q:
+        stmt = stmt.where(Deal.title.ilike(f"%{q}%"))
     if team_id is not None:
         stmt = stmt.where(Deal.team_id == team_id)
+    if customer_id is not None:
+        stmt = stmt.where(Deal.customer_id == customer_id)
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
@@ -105,6 +112,13 @@ async def create_deal(
     data["custom_fields"] = await validate_custom_fields(
         db, org_id, "deal", data.get("custom_fields"), partial=False
     )
+    # Org default currency (plan.md §6) — only when the payload OMITS
+    # the field (model_fields_set distinguishes omitted from the schema
+    # default); an explicitly sent currency always wins.
+    if "currency" not in payload.model_fields_set:
+        org = await db.get(Organization, org_id)
+        if org is not None:
+            data["currency"] = org.default_currency
 
     # Sort index is org-scoped: a new deal lands at the bottom of its
     # column inside THIS org. Without the org filter we'd peek at every
@@ -156,6 +170,7 @@ async def create_deal(
         },
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(deal)
     return deal
 
@@ -215,6 +230,7 @@ async def update_deal(
         metadata={"fields": list(changes.keys())},
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(deal)
     return deal
 
@@ -287,6 +303,7 @@ async def move_deal(
                 payload=event_payload,
             )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(deal)
     return deal
 
@@ -310,3 +327,60 @@ async def delete_deal(
         organization_id=org_id,
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
+
+
+@router.patch("/{deal_id}/next-action", response_model=DealOut)
+async def set_next_action(
+    deal_id: uuid.UUID,
+    payload: NextActionPayload,
+    user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+    if_match: str | None = Header(default=None, alias="If-Match"),
+) -> Deal:
+    deal = await _get_deal_or_404(db, deal_id, org_id)
+    ensure_can_mutate(user, deal.owner_id)
+    check_if_match(
+        entity="deal",
+        entity_id=deal.id,
+        current_version=deal.version,
+        if_match=if_match,
+    )
+    deal.next_action_type = payload.next_action_type
+    deal.next_action_at = payload.next_action_at
+    deal.version = deal.version + 1
+    await record_audit(
+        db,
+        actor=user,
+        action="deal.next_action_set",
+        entity_type="deal",
+        entity_id=deal.id,
+        organization_id=org_id,
+        metadata={
+            "next_action_type": payload.next_action_type,
+            "next_action_at": (
+                payload.next_action_at.isoformat() if payload.next_action_at else None
+            ),
+        },
+    )
+    await record_activity(
+        db,
+        entity_type=ENTITY_DEAL,
+        entity_id=deal.id,
+        activity_type=ActivityType.next_action_set,
+        organization_id=org_id,
+        actor=user,
+        metadata={
+            "next_action_type": (
+                payload.next_action_type.value if payload.next_action_type else None
+            ),
+            "next_action_at": (
+                payload.next_action_at.isoformat() if payload.next_action_at else None
+            ),
+        },
+    )
+    await db.commit()
+    await invalidate_dashboard_cache(org_id)
+    await db.refresh(deal)
+    return deal

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, FileText, Loader2, Plus, ShieldAlert, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export function DocumentTemplatesCard({ canManage }: Props) {
   const [error, setError] = useState<string | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     try {
@@ -50,15 +50,14 @@ export function DocumentTemplatesCard({ canManage }: Props) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
     }
-  }
+  }, []);
 
   useEffect(() => {
     const token = getToken();
     if (!token) return;
     refresh();
     api.listMergeFields(token).then(setFields).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   function startCreate() {
     setError(null);

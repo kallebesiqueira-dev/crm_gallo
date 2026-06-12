@@ -7,10 +7,10 @@ import { Plus, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
 import { api, type Contract } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { STATUS_VARIANT } from "./status";
-import { EmptyState } from "@/components/empty-state";
 
 export default function ContractsPage() {
   const t = useTranslations("contracts");
@@ -65,7 +65,12 @@ export default function ContractsPage() {
           {contracts === null ? (
             <div className="p-10 text-center text-sm text-muted-foreground">…</div>
           ) : contracts.length === 0 ? (
-            <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/contracts/new`} />
+            <EmptyState
+              icon={ScrollText}
+              title={t("empty")}
+              actionLabel={t("new")}
+              actionHref={`/${locale}/contracts/new`}
+            />
           ) : (
             <ul className="divide-y">
               {contracts.map((c) => (

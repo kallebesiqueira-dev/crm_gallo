@@ -19,7 +19,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import record_audit
-from app.billing.catalog import FREE_SEAT_LIMIT, get_plan, list_plans
+from app.billing.catalog import (
+    FREE_SEAT_LIMIT,
+    SUPPORTED_CURRENCIES,
+    get_plan,
+    list_plans,
+)
 from app.config import get_settings
 from app.database import get_db
 from app.deps import get_current_org, require_roles
@@ -41,11 +46,36 @@ from app.services.stripe_service import (
 log = get_logger(__name__)
 settings = get_settings()
 
+
+async def _stripe_webhook_ip_guard(request: Request) -> None:
+    """600 req/min per IP on the unauthenticated Stripe webhook path.
+    Stripe sends at most a few events/second under peak load; this cap
+    stops DDoS without touching the HMAC-verified happy path."""
+    from app.redis_client import get_redis
+
+    ip = (request.client.host if request.client else None) or "unknown"
+    r = get_redis()
+    key = f"stripe_wh_ip:{ip}"
+    count = await r.incr(key)
+    if count == 1:
+        await r.expire(key, 60)
+    if count > 600:
+        raise HTTPException(status_code=429, detail="Too Many Requests")
+
+
 router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 
 class CheckoutResponse(BaseModel):
     url: str
+
+
+class CheckoutRequest(UpgradeRequest):
+    """UpgradeRequest + currency (plan.md §6). Local subclass so the
+    shared schemas module stays untouched; defaults to EUR so existing
+    frontend calls keep working unchanged."""
+
+    currency: str = "eur"
 
 
 class PortalRequest(BaseModel):
@@ -116,7 +146,7 @@ async def my_billing(
 
 @router.post("/checkout", response_model=CheckoutResponse)
 async def checkout(
-    payload: UpgradeRequest,
+    payload: CheckoutRequest,
     user: User = Depends(require_roles(UserRole.admin)),
     org: Organization = Depends(get_current_org),
     db: AsyncSession = Depends(get_db),
@@ -127,9 +157,23 @@ async def checkout(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Free plan does not require checkout.",
         )
+    currency = payload.currency.lower()
+    if currency not in SUPPORTED_CURRENCIES:
+        # Friendly 400 over a pydantic 422 — the supported set is product
+        # config, not request grammar.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported currency '{payload.currency}'."
+            f" Supported: {', '.join(SUPPORTED_CURRENCIES)}.",
+        )
     try:
         url = await create_checkout_session(
-            org=org, actor=user, plan=payload.plan, cycle=payload.billing_cycle, db=db
+            org=org,
+            actor=user,
+            plan=payload.plan,
+            cycle=payload.billing_cycle,
+            db=db,
+            currency=currency,
         )
     except StripeNotConfigured as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)) from e
@@ -196,6 +240,7 @@ async def webhook(
     request: Request,
     stripe_signature: str | None = Header(default=None, alias="Stripe-Signature"),
     db: AsyncSession = Depends(get_db),
+    _rl: None = Depends(_stripe_webhook_ip_guard),
 ) -> None:
     """Stripe-signed webhook receiver. Idempotent by event id.
 

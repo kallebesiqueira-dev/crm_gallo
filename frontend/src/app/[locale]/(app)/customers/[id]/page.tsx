@@ -4,8 +4,9 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Sparkles, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ActivityTimeline } from "@/components/activity-timeline";
@@ -13,8 +14,14 @@ import { AttachmentsPanel } from "@/components/attachments-panel";
 import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
-import { api, type Customer } from "@/lib/api";
+import { PageSpinner } from "@/components/page-spinner";
+import { useToast } from "@/components/toast-provider";
+import { api, type Customer, type Deal } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+
+function formatMoney(value: number, currency: string) {
+  return new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
+}
 
 export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -24,7 +31,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
+  const toast = useToast();
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +41,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     const token = getToken();
     if (!token) return;
     api.getCustomer(token, id).then(setCustomer).catch((e) => setError(String(e)));
+    api.listDeals(token, { customer_id: id }).then(setDeals).catch(() => {});
   }, [id]);
 
   async function summarize() {
@@ -41,8 +51,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     try {
       const updated = await api.summarizeCustomer(token, customer.id);
       setCustomer(updated);
+      toast("Summary updated", "success");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      toast(e instanceof Error ? e.message : "Failed", "error");
     } finally {
       setBusy(false);
     }
@@ -67,7 +78,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   }
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
-  if (!customer) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!customer) return <PageSpinner />;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -137,13 +148,45 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       <div className="space-y-6">
+        {/* Linked deals */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{t("deals")}</CardTitle>
+              <Badge variant="secondary">{deals.length}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {deals.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("noDeals")}</p>
+            ) : (
+              <ul className="space-y-2">
+                {deals.map((d) => (
+                  <li key={d.id}>
+                    <Link
+                      href={`/${locale}/pipeline/${d.id}`}
+                      className="flex items-center justify-between rounded-md p-2 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="truncate text-sm font-medium">{d.title}</span>
+                      <span className="ml-3 shrink-0 text-xs text-muted-foreground">
+                        {formatMoney(d.value, d.currency)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* AI summary */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">{t("aiSummary")}</CardTitle>
               <Button size="sm" onClick={summarize} disabled={busy}>
                 <Sparkles className="h-4 w-4" />
-                {busy ? "…" : t("summarize")}
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("summarize")}
               </Button>
             </div>
           </CardHeader>

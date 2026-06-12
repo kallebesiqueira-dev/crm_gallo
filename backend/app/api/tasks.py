@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api._concurrency import check_if_match
+from app.api.dashboard import invalidate_dashboard_cache
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
@@ -31,6 +32,7 @@ async def list_tasks(
     status_filter: TaskStatus | None = Query(default=None, alias="status"),
     mine: bool = False,
     limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),
     org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_db),
@@ -39,6 +41,7 @@ async def list_tasks(
         select(Task)
         .where(Task.organization_id == org_id)
         .order_by(Task.due_date.asc().nullslast(), Task.created_at.desc())
+        .offset(offset)
         .limit(limit)
     )
     if status_filter:
@@ -86,6 +89,7 @@ async def create_task(
             metadata={"task_id": str(task.id), "priority": task.priority.value},
         )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(task)
     return task
 
@@ -143,6 +147,7 @@ async def update_task(
             metadata={"task_id": str(task.id)},
         )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)
     await db.refresh(task)
     return task
 
@@ -166,3 +171,4 @@ async def delete_task(
         organization_id=org_id,
     )
     await db.commit()
+    await invalidate_dashboard_cache(org_id)

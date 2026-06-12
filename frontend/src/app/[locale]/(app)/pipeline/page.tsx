@@ -24,6 +24,18 @@ import { api, ApiError, type Deal, type DealStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
+const NEXT_ACTION_ICONS: Record<string, string> = {
+  call: "📞",
+  whatsapp: "💬",
+  email: "✉️",
+  proposal: "📄",
+  meeting: "📅",
+  follow_up: "🔁",
+  contract: "📝",
+  chase: "⚡",
+  other: "•",
+};
+
 const STAGES: DealStage[] = [
   "new",
   "qualified",
@@ -245,6 +257,7 @@ function DealCard({
   onDelete?: (deal: Deal) => void;
   deleteLabel?: string;
 }) {
+  const locale = useLocale();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
   });
@@ -267,7 +280,16 @@ function DealCard({
         {...attributes}
         className="cursor-grab active:cursor-grabbing"
       >
-        <div className="pr-6 text-sm font-medium">{deal.title}</div>
+        <div className="pr-6 text-sm font-medium">
+          <a
+            href={`/${locale}/pipeline/${deal.id}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            className="hover:underline"
+          >
+            {deal.title}
+          </a>
+        </div>
         <div className="mt-1 flex items-center justify-between text-xs">
           <span className="font-mono text-muted-foreground">
             {formatMoney(deal.value, deal.currency)}
@@ -279,6 +301,23 @@ function DealCard({
         {deal.expected_close_date && (
           <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
             {new Date(deal.expected_close_date).toLocaleDateString()}
+          </div>
+        )}
+        {deal.next_action_at ? (
+          <div className={cn(
+            "mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px]",
+            new Date(deal.next_action_at) < new Date()
+              ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              : new Date(deal.next_action_at).toDateString() === new Date().toDateString()
+              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+          )}>
+            <span>{deal.next_action_type ? NEXT_ACTION_ICONS[deal.next_action_type] ?? "•" : "•"}</span>
+            <span>{new Date(deal.next_action_at).toLocaleDateString()}</span>
+          </div>
+        ) : (
+          <div className="mt-1.5 text-[10px] italic text-muted-foreground/40">
+            no follow-up
           </div>
         )}
       </div>

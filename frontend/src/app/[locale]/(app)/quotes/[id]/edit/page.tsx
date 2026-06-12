@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { QuoteForm } from "@/components/quote-form";
+import { PageSpinner } from "@/components/page-spinner";
 import { api, type Quote, type QuoteCreate } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -37,7 +38,7 @@ export default function EditQuotePage({ params }: { params: Promise<{ id: string
   }
 
   if (error && !quote) return <p className="text-sm text-destructive">{error}</p>;
-  if (!quote) return <p className="text-sm text-muted-foreground">…</p>;
+  if (!quote) return <PageSpinner />;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">

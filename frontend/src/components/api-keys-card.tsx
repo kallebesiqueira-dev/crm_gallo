@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Check, Copy, KeyRound, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export function ApiKeysCard({ canManage }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     try {
@@ -51,12 +51,11 @@ export function ApiKeysCard({ canManage }: Props) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
     }
-  }
+  }, []);
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   function startCreate() {
     setError(null);

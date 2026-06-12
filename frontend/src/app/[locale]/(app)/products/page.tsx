@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Package, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
+import { EmptyState } from "@/components/empty-state";
 import { api, type Product } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { EmptyState } from "@/components/empty-state";
 
 export default function ProductsPage() {
   const t = useTranslations("products");
@@ -120,16 +120,21 @@ export default function ProductsPage() {
 
       <Card className="overflow-hidden">
         {items.length === 0 ? (
-          <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/products/new`} />
+          <EmptyState
+            icon={Package}
+            title={t("empty")}
+            actionLabel={t("new")}
+            actionHref={`/${locale}/products/new`}
+          />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[20rem] text-sm">
+            <table className="w-full min-w-[40rem] text-sm">
               <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                  <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{t("sku")}</th>
-                  <th className="hidden px-4 py-3 text-left font-medium md:table-cell">{t("type")}</th>
-                  <th className="hidden px-4 py-3 text-right font-medium sm:table-cell">{t("price")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("sku")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("type")}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t("price")}</th>
                   <th className="px-4 py-3 text-left font-medium">{t("status")}</th>
                   <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
                 </tr>
@@ -146,11 +151,11 @@ export default function ProductsPage() {
                       </Link>
                       {p.unit && <div className="text-xs text-muted-foreground">/ {p.unit}</div>}
                     </td>
-                    <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">{p.sku ?? "—"}</td>
-                    <td className="hidden px-4 py-3 md:table-cell">
+                    <td className="px-4 py-3 text-muted-foreground">{p.sku ?? "—"}</td>
+                    <td className="px-4 py-3">
                       {p.type === "service" ? t("typeService") : t("typeProduct")}
                     </td>
-                    <td className="hidden px-4 py-3 text-right tabular-nums sm:table-cell">{fmtPrice(p)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{fmtPrice(p)}</td>
                     <td className="px-4 py-3">
                       <span
                         className={

@@ -26,6 +26,7 @@ from app.models import (
     MessageDirection,
     MessageStatus,
     MessageType,
+    NextActionType,
     Plan,
     ProductType,
     QuoteStatus,
@@ -644,6 +645,8 @@ class LeadBase(BaseModel):
 class LeadCreate(LeadBase):
     owner_id: uuid.UUID | None = None
     team_id: uuid.UUID | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class LeadUpdate(BaseModel):
@@ -663,6 +666,8 @@ class LeadUpdate(BaseModel):
     owner_id: uuid.UUID | None = None
     team_id: uuid.UUID | None = None
     custom_fields: dict[str, Any] | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class LeadOut(LeadBase):
@@ -678,8 +683,11 @@ class LeadOut(LeadBase):
     ai_conversion_probability: float | None
     ai_risk_analysis: str | None
     ai_scored_at: datetime | None
+    version: int = 0
     created_at: datetime
     updated_at: datetime
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class LeadScoreOut(BaseModel):
@@ -708,6 +716,8 @@ class CustomerBase(BaseModel):
 
 class CustomerCreate(CustomerBase):
     owner_id: uuid.UUID | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class CustomerUpdate(BaseModel):
@@ -724,6 +734,8 @@ class CustomerUpdate(BaseModel):
     company_id: uuid.UUID | None = None
     owner_id: uuid.UUID | None = None
     custom_fields: dict[str, Any] | None = None
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
 class CustomerOut(CustomerBase):
@@ -736,9 +748,10 @@ class CustomerOut(CustomerBase):
     version: int = 0
     created_at: datetime
     updated_at: datetime
+    contact_consent_at: datetime | None = None
+    consent_source: str | None = None
 
 
-# ---------- Companies (B2B accounts) ----------
 class CompanyBase(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=255)]
     industry: str | None = None
@@ -1033,6 +1046,8 @@ class DealBase(BaseModel):
     customer_id: uuid.UUID | None = None
     company_id: uuid.UUID | None = None
     custom_fields: dict[str, Any] = Field(default_factory=dict)
+    next_action_type: NextActionType | None = None
+    next_action_at: datetime | None = None
 
 
 class DealCreate(DealBase):
@@ -1054,6 +1069,8 @@ class DealUpdate(BaseModel):
     team_id: uuid.UUID | None = None
     sort_index: int | None = None
     custom_fields: dict[str, Any] | None = None
+    next_action_type: NextActionType | None = None
+    next_action_at: datetime | None = None
 
 
 class DealOut(DealBase):
@@ -1075,6 +1092,44 @@ class DealOut(DealBase):
 class DealStageMove(BaseModel):
     stage: DealStage
     sort_index: int = 0
+
+
+class NextActionPayload(BaseModel):
+    next_action_type: NextActionType | None = None
+    next_action_at: datetime | None = None
+
+
+class DealTodayItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    title: str
+    value: float
+    currency: str
+    stage: DealStage
+    next_action_type: NextActionType | None
+    next_action_at: datetime | None
+    customer_name: str | None
+    owner_id: uuid.UUID | None
+    version: int
+
+
+class TaskTodayItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    title: str
+    due_date: date | None
+    priority: TaskPriority
+    customer_name: str | None = None
+    version: int
+
+
+class HojeResponse(BaseModel):
+    overdue_deals: list[DealTodayItem]
+    today_deals: list[DealTodayItem]
+    no_action_deals: list[DealTodayItem]
+    stale_deals: list[DealTodayItem]
+    today_tasks: list[TaskTodayItem]
+    overdue_tasks: list[TaskTodayItem]
 
 
 # ---------- Quotes ----------
@@ -1495,6 +1550,12 @@ class InviteAcceptRequest(BaseModel):
     locale: str = "en"
 
 
+class InviteTokenRequest(BaseModel):
+    """Body for POST /api/auth/accept-invite (logged-in user accepts)."""
+
+    token: str
+
+
 # ---------- Dashboard ----------
 class FunnelStageStat(BaseModel):
     stage: str
@@ -1526,6 +1587,10 @@ class DashboardStats(BaseModel):
     total_customers: int = 0
     total_deals: int = 0
     pipeline_value_eur: float = 0.0
+    # Raw open-pipeline sums per ISO currency (plan.md §6) — display-
+    # only, NO conversion; the _eur field above stays the rough
+    # FX-approximated headline.
+    pipeline_value_by_currency: dict[str, float] = Field(default_factory=dict)
     open_tasks: int = 0
     pipeline_funnel: list[FunnelStageStat] = Field(default_factory=list)
     monthly_revenue: list[MonthValue] = Field(default_factory=list)

@@ -58,6 +58,18 @@ class Currency(str, enum.Enum):
     GBP = "GBP"
 
 
+class NextActionType(str, enum.Enum):
+    call = "call"
+    whatsapp = "whatsapp"
+    email = "email"
+    proposal = "proposal"
+    meeting = "meeting"
+    follow_up = "follow_up"
+    contract = "contract"
+    chase = "chase"
+    other = "other"
+
+
 class GoalPeriod(str, enum.Enum):
     month = "month"
     quarter = "quarter"
@@ -85,6 +97,11 @@ class AutomationTrigger(str, enum.Enum):
     deal_won = "deal_won"
     deal_lost = "deal_lost"
     deal_stage_changed = "deal_stage_changed"
+    customer_created = "customer_created"
+    # Time-based but outbox-backed: the worker's daily sweep emits
+    # `task.overdue` once per (task, due_date) — see EventType.
+    task_overdue = "task_overdue"
+    user_invited = "user_invited"
     # Time-based: a lead with no update for N days (config `stale_days`).
     lead_stale = "lead_stale"
 
@@ -324,6 +341,23 @@ class Organization(Base):
 
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), index=True)
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), index=True)
+
+    # GDPR retention policy (plan.md §5): months of lead inactivity
+    # after which the worker's daily sweep anonymizes the record
+    # (same erasure mechanics as POST /forget — see app/api/gdpr.py).
+    # NULL = retention off, the safe default; admins opt in.
+    retention_months: Mapped[int | None] = mapped_column(Integer)
+
+    # Default currency for NEW deals/quotes (plan.md §6). Only fills
+    # the gap when the create payload omits the field — an explicitly
+    # sent currency always wins (model_fields_set check in the
+    # endpoints). Display-only across the app: no FX conversion.
+    default_currency: Mapped[Currency] = mapped_column(
+        Enum(Currency),
+        default=Currency.EUR,
+        server_default=Currency.EUR.value,
+        nullable=False,
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -610,6 +644,28 @@ class Lead(SoftDeleteMixin, Base):
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     owner: Mapped[User | None] = relationship(back_populates="leads")
 
+    # GDPR consent tracking
+    contact_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    consent_source: Mapped[str | None] = mapped_column(
+        Enum(
+            "web_form",
+            "import",
+            "manual",
+            "whatsapp",
+            "api",
+            "other",
+            name="consentsource",
+            create_type=False,
+        ),
+        nullable=True,
+    )
+
+    # Optimistic locking — bumped on every PATCH; clients echo current
+    # value as `If-Match: <version>` to detect lost updates.
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -656,6 +712,24 @@ class Customer(SoftDeleteMixin, Base):
 
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     deals: Mapped[list["Deal"]] = relationship(back_populates="customer")
+
+    # GDPR consent tracking
+    contact_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    consent_source: Mapped[str | None] = mapped_column(
+        Enum(
+            "web_form",
+            "import",
+            "manual",
+            "whatsapp",
+            "api",
+            "other",
+            name="consentsource",
+            create_type=False,
+        ),
+        nullable=True,
+    )
 
     # Optimistic locking — see Deal.version. Bumped on every PATCH;
     # clients echo it as `If-Match`. Header optional in v1.
@@ -721,6 +795,24 @@ class Deal(SoftDeleteMixin, Base):
 
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     owner: Mapped[User | None] = relationship(back_populates="deals")
+
+    next_action_type: Mapped[NextActionType | None] = mapped_column(
+        Enum(
+            "call",
+            "whatsapp",
+            "email",
+            "proposal",
+            "meeting",
+            "follow_up",
+            "contract",
+            "chase",
+            "other",
+            name="nextactiontype",
+            create_type=False,
+        ),
+        nullable=True,
+    )
+    next_action_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -1729,6 +1821,13 @@ class Activity(Base):
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
+    # Plain INSERT, never INSERT...RETURNING: Postgres re-checks a RETURNING
+    # row against the table's SELECT policy, and the strict audit policy
+    # (migration 9f8e7d6c5b4a) makes org-scoped rows invisible to unscoped
+    # sessions (register, login, org switch, Stripe webhooks) — their own
+    # audit insert would fail. The id is client-generated and record_audit
+    # never reads the row back, so RETURNING buys nothing here.
+    __table_args__ = ({"implicit_returning": False},)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     # Nullable: platform-level events (a user logging in before they've

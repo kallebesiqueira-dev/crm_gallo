@@ -45,7 +45,11 @@ def test_audit_row_on_lead_patch(admin_client: CsrfAwareClient, db: Session, adm
     )
     lead_id = r.json()["id"]
 
-    r = admin_client.patch(f"/api/leads/{lead_id}", json={"stage": "qualified"})
+    r = admin_client.patch(
+        f"/api/leads/{lead_id}",
+        json={"stage": "qualified"},
+        headers={"If-Match": str(r.json()["version"])},
+    )
     assert r.status_code == 200
 
     result = db.execute(

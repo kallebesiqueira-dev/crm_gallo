@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
-import { api } from "@/lib/api";
+import { api, type TeamMember } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 export default function NewLeadPage() {
@@ -18,6 +18,7 @@ export default function NewLeadPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -30,7 +31,14 @@ export default function NewLeadPage() {
     budget: "",
     source: "",
     notes: "",
+    owner_id: "",
   });
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    api.listOrgMembers().then(setMembers).catch(() => {});
+  }, []);
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((s) => ({ ...s, [k]: v }));
@@ -55,6 +63,7 @@ export default function NewLeadPage() {
         budget: form.budget ? Number(form.budget) : null,
         source: form.source || null,
         notes: form.notes || null,
+        owner_id: form.owner_id || null,
         custom_fields: customFields,
       };
       const lead = await api.createLead(token, payload);
@@ -158,6 +167,24 @@ export default function NewLeadPage() {
               onChange={(e) => set("source", e.target.value)}
             />
           </div>
+          {members.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="owner_id">{t("owner")}</Label>
+              <select
+                id="owner_id"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={form.owner_id}
+                onChange={(e) => set("owner_id", e.target.value)}
+              >
+                <option value="">— {t("unassigned")} —</option>
+                {members.map((m) => (
+                  <option key={String(m.user_id)} value={String(m.user_id)}>
+                    {m.full_name} ({m.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="notes">Notes</Label>
             <textarea

@@ -1,21 +1,30 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import bcrypt
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.config import get_settings
 
 settings = get_settings()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+_ph = PasswordHasher()
 
 
 def hash_password(plain: str) -> str:
-    return pwd_context.hash(plain)
+    return _ph.hash(plain)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    # Legacy bcrypt hashes start with $2b$ or $2a$
+    if hashed.startswith(("$2b$", "$2a$")):
+        return bcrypt.checkpw(plain.encode(), hashed.encode())
+    try:
+        return _ph.verify(hashed, plain)
+    except VerifyMismatchError:
+        return False
 
 
 def create_access_token(subject: str, role: str, expires_minutes: int | None = None) -> str:

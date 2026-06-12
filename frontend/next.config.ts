@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -27,4 +28,22 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+// Sentry source-map upload (observability follow-up): un-minified prod
+// stack traces. Strictly inert without credentials — when
+// SENTRY_AUTH_TOKEN is absent (local dev, CI) the wrapper skips the
+// upload and the build behaves exactly as before. Set SENTRY_AUTH_TOKEN
+// + SENTRY_ORG + SENTRY_PROJECT in the PRODUCTION build environment
+// (Railway) to activate.
+const sentryEnabled = !!process.env.SENTRY_AUTH_TOKEN;
+
+export default withSentryConfig(withNextIntl(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !sentryEnabled, // no upload-skipped noise on every local build
+  sourcemaps: { disable: !sentryEnabled },
+  // Upload only — the runtime SDK init stays in src/sentry/init.ts,
+  // dynamically imported and gated on NEXT_PUBLIC_SENTRY_DSN.
+  autoInstrumentServerFunctions: false,
+  widenClientFileUpload: true,
+});

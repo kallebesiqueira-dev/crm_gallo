@@ -22,6 +22,12 @@ FREE_SEAT_LIMIT = 2
 YEARLY_DISCOUNT = Decimal("0.20")  # 20% off when paying annually
 TRIAL_DAYS_PREMIUM = 14  # Premium ships with a 14-day trial
 
+# Multi-currency (plan.md §6). These are POSITIONED price points per
+# market, not FX conversions — round numbers a CH/UK/BR buyer expects
+# to see, set once per pricing review. EUR stays the canonical price;
+# Stripe enforces whatever the per-currency Price ID actually says.
+SUPPORTED_CURRENCIES = ("eur", "chf", "gbp", "brl")
+
 
 @dataclass(frozen=True)
 class PlanDescriptor:
@@ -34,6 +40,9 @@ class PlanDescriptor:
     highlighted: bool = False
     requires_payment: bool = False
     trial_days: int = 0
+    # Positioned monthly price per non-EUR currency ("chf"/"gbp"/"brl").
+    # EUR lives in `monthly_eur`; absent key = currency not offered.
+    monthly_prices: dict[str, Decimal] = field(default_factory=dict)
 
     @property
     def yearly_eur_per_user(self) -> Decimal:
@@ -43,6 +52,17 @@ class PlanDescriptor:
     @property
     def yearly_total_eur(self) -> Decimal:
         return q2(self.yearly_eur_per_user * 12)
+
+    def monthly_price(self, currency: str = "eur") -> Decimal:
+        """Monthly price point in `currency`. KeyError on a currency this
+        plan doesn't list — callers validate against SUPPORTED_CURRENCIES
+        first, so a KeyError here means a catalog gap, not user error."""
+        if currency == "eur":
+            return self.monthly_eur
+        return self.monthly_prices[currency]
+
+    def yearly_price_per_user(self, currency: str = "eur") -> Decimal:
+        return q2(self.monthly_price(currency) * (1 - YEARLY_DISCOUNT))
 
 
 CATALOG: dict[Plan, PlanDescriptor] = {
@@ -64,6 +84,11 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         name="Standard",
         tagline="For growing sales teams.",
         monthly_eur=Decimal("19.00"),
+        monthly_prices={
+            "chf": Decimal("19.00"),
+            "gbp": Decimal("17.00"),
+            "brl": Decimal("99.00"),
+        },
         seat_limit=None,
         features=[
             "Unlimited users",
@@ -82,6 +107,11 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         name="Business",
         tagline="For teams closing deals end-to-end.",
         monthly_eur=Decimal("39.00"),
+        monthly_prices={
+            "chf": Decimal("39.00"),
+            "gbp": Decimal("34.00"),
+            "brl": Decimal("199.00"),
+        },
         seat_limit=None,
         features=[
             "Everything in Standard",
@@ -98,6 +128,11 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         name="Premium",
         tagline="For teams that scale with automation.",
         monthly_eur=Decimal("59.00"),
+        monthly_prices={
+            "chf": Decimal("59.00"),
+            "gbp": Decimal("49.00"),
+            "brl": Decimal("299.00"),
+        },
         seat_limit=None,
         features=[
             "Everything in Business",
@@ -121,12 +156,18 @@ def list_plans() -> list[PlanDescriptor]:
     return [CATALOG[p] for p in (Plan.free, Plan.standard, Plan.business, Plan.premium)]
 
 
-def resolve_stripe_price_id(plan: Plan, cycle: BillingCycle) -> str | None:
-    """Look up the Stripe Price ID for (plan, billing cycle).
+def resolve_stripe_price_id(plan: Plan, cycle: BillingCycle, currency: str = "eur") -> str | None:
+    """Look up the Stripe Price ID for (plan, billing cycle, currency).
 
-    Returns None when not configured — the caller decides whether that's
-    a hard error (production) or graceful skip (dev without keys).
+    EUR keeps the legacy `STRIPE_PRICE_{PLAN}_{CYCLE}` env names so
+    existing deployments need zero changes; other currencies append the
+    code (`..._CHF` / `..._GBP` / `..._BRL`). Returns None when not
+    configured — the caller decides whether that's a hard error
+    (production) or graceful skip (dev without keys / currency not yet
+    provisioned in Stripe).
     """
     settings = get_settings()
     key = f"stripe_price_{plan.value}_{cycle.value}"
+    if currency != "eur":
+        key = f"{key}_{currency}"
     return getattr(settings, key, "") or None

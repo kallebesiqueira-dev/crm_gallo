@@ -42,6 +42,7 @@ class ActivityType(str, enum.Enum):
     # Lead / Deal specific
     stage_change = "stage_change"
     ai_scored = "ai_scored"
+    next_action_set = "next_action_set"
 
     # Conversational / activity
     note_added = "note_added"
@@ -56,6 +57,10 @@ class ActivityType(str, enum.Enum):
     task_completed = "task_completed"
     imported = "imported"
     system = "system"
+    # Lead → Customer/Company/Deal conversion (plan.md §4). Recorded on
+    # BOTH the source lead and the resulting customer timeline; doubles
+    # as the "already converted" guard in app/api/lead_convert.py.
+    lead_converted = "lead_converted"
 
 
 # Entity strings used in `activities.entity_type`. Kept as plain

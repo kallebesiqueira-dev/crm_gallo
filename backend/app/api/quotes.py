@@ -27,7 +27,7 @@ from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
 from app.logging_setup import get_logger
-from app.models import Quote, QuoteLineItem, QuoteStatus, User
+from app.models import Organization, Quote, QuoteLineItem, QuoteStatus, User
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import QuoteCreate, QuoteOut, QuoteUpdate
 from app.services.quotes import next_quote_number, recompute_totals
@@ -99,6 +99,12 @@ async def create_quote(
 
     data = payload.model_dump(exclude={"line_items"})
     data["owner_id"] = data.get("owner_id") or user.id
+    # Org default currency (plan.md §6) — same omitted-vs-explicit rule
+    # as POST /api/deals.
+    if "currency" not in payload.model_fields_set:
+        org = await db.get(Organization, org_id)
+        if org is not None:
+            data["currency"] = org.default_currency
     quote = Quote(
         **data,
         organization_id=org_id,

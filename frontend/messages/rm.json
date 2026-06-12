@@ -40,8 +40,20 @@
       "gestione": "Management",
       "sistema": "System"
     },
+    "hoje": "Oz",
     "exports": "Exports",
     "teams": "Teams"
+  },
+  "hoje": {
+    "title": "Oz",
+    "overdueDeals": "Follow-ups en retard",
+    "todayDeals": "Follow-ups da oz",
+    "noActionDeals": "Senza proxima acziun",
+    "staleDeals": "Stads 7+ dis",
+    "todayTasks": "Incumbensas da oz",
+    "overdueTasks": "Incumbensas en retard",
+    "empty": "Nagut pendent. Buna vendita!",
+    "pendingCount": "pendents"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -235,11 +247,17 @@
     "stage": "Stadi",
     "score": "Score IA",
     "owner": "Responsabel",
+    "unassigned": "Betg attribuì",
     "created": "Creà",
     "empty": "Nagins leads. Crea il emprim.",
     "save": "Memorisar",
     "cancel": "Annullar",
     "scoreNow": "Valutar cun IA",
+    "convert": "Cunvertir en negozi",
+    "convertConfirmTitle": "Cunvertir lead en negozi?",
+    "convertConfirmBody": "Quai creia in Client e in Negozi da quest lead. Clients existents cun la medema adressa email vegnan rimnads.",
+    "convertSuccess": "Cunvertì! Client e negozi creads.",
+    "convertAlready": "Quest lead è gia stà cunvertì.",
     "scoreEmpty": "Anc nagin punct. Valutai quest lead cun l'IA.",
     "email": "E-mail",
     "phone": "Telefon",
@@ -274,7 +292,9 @@
     "empty": "Nagins clients. Crea il emprim.",
     "aiSummary": "Resumaziun IA",
     "summarize": "Resumar",
-    "noSummary": "Nagina resumaziun anc. Cliccai sin Resumar per generar."
+    "noSummary": "Nagina resumaziun anc. Cliccai sin Resumar per generar.",
+    "deals": "Transacziuns",
+    "noDeals": "Naginas transacziuns liadas cun quest client."
   },
   "imports": {
     "title": "Importaziuns",
@@ -318,7 +338,10 @@
     "currency": "Munaida",
     "probability": "Probabilitad",
     "expectedClose": "Serrada speranza",
-    "customer": "Client"
+    "customer": "Client",
+    "stage": "Stadio",
+    "nextAction": "Proxima acziun",
+    "noNextAction": "Nagin follow-up planisà"
   },
   "tasks": {
     "title": "Incumbensas",
@@ -439,6 +462,32 @@
     "expiresOn": "Scada ils {date}",
     "confirmRevoke": "Revocar la clav \"{name}\"? Las integraziuns che la dovran na funcziunan betg pli.",
     "revoke": "Revocar"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "adminOnly": "Mo administraturs pon administrar webhooks.",
+    "intro": "Trametta events HTTP POST ad URLs externas sche insatge capita en il CRM. Mintga consegna è suttascritta cun HMAC cun il secret da l'endpoint.",
+    "new": "Agiuntar endpoint",
+    "urlLabel": "URL endpoint",
+    "descLabel": "Descripziun (opziunal)",
+    "descPlaceholder": "Miu server d'integraziun",
+    "eventsLabel": "Events",
+    "eventsHint": "Dovra * per tuts ils events, u ina glista separada cun virglas: lead.created, deal.won, …",
+    "create": "Crear",
+    "cancel": "Interrumper",
+    "secretOnce": "Copia uss il secret da suttascripziun — el na vegn betg pli musà.",
+    "copied": "Copià!",
+    "copy": "Copiar",
+    "dismiss": "Serrar",
+    "paused": "En pausa",
+    "failures": "{count} errur(s)",
+    "lastSuccess": "Ultima reussida: {date}",
+    "neverFired": "Mai activà",
+    "pause": "Metter en pausa",
+    "resume": "Cuntinuar",
+    "delete": "Stizzar",
+    "confirmDelete": "Stizzar il webhook per {url}?",
+    "empty": "Anc nagins webhooks."
   },
   "teams": {
     "title": "Teams",
@@ -561,6 +610,8 @@
     "typeRestored": "Restituì da la cazetta",
     "typeStageChange": "Stadi: {from} → {to}",
     "typeAiScored": "Punctaziun IA: {score} ({priority})",
+    "typeNextActionSet": "Proxima acziun planisada: {type} ils {at}",
+    "typeNextActionCleared": "Proxima acziun stizzada",
     "typeNoteAdded": "Nota agiuntada",
     "typeFileAttached": "Datoteca agiuntada: {name}",
     "typeFileRemoved": "Datoteca allontanada: {name}",
@@ -632,6 +683,7 @@
     "addLine": "Agiuntar posiziun",
     "addFromCatalog": "Agiuntar dal catalog",
     "lineDescription": "Descripziun",
+    "fromCatalog": "Dal catalog…",
     "quantity": "Quant.",
     "unitPrice": "Pretsch sing.",
     "lineTotal": "Total",
@@ -1532,6 +1584,9 @@
       "deal_won": "Affar gudagnà",
       "deal_lost": "Affar pers",
       "deal_stage_changed": "Stadi da l'affar midà",
+      "customer_created": "Client creà",
+      "task_overdue": "Incumbensa surpassada",
+      "user_invited": "Collega envidà",
       "lead_stale": "Lead inactiv"
     },
     "actions": {
@@ -1628,6 +1683,53 @@
     "kind": {
       "quote": "Preventiv",
       "contract": "Contract"
+    }
+  },
+  "gdpr": {
+    "title": "GDPR e retenziun da datas",
+    "description": "Leads senza activitad sur la fanestra sutvart vegnan anonimisads automaticamain: champs persunals stizzads, notizias allontanadas, timeline mantegnida senza cuntegn. L'id dal register resta en l'audit.",
+    "retentionLabel": "Fanestra da retenziun (mais)",
+    "retentionHint": "1-120 mais. Laschar vid per deactivar la retenziun automatica.",
+    "off": "Deactivà",
+    "adminOnly": "Mo admins da l'organisaziun pon administrar las configuraziuns GDPR.",
+    "save": "Memorisar"
+  },
+  "onboarding": {
+    "title": "Cumenzar",
+    "subtitle": "Completa quests pass per configurar tiu CRM",
+    "dismiss": "Serra",
+    "completed": "{completed} da {total} fatgs",
+    "allDone": "Tut pront! Pronts per serrar transacziuns.",
+    "steps": {
+      "pipeline_ready": "Configurar tia pipeline",
+      "first_lead": "Agiuntar tia primara lead",
+      "next_action_set": "Fixar in'acziun proxima per in affar",
+      "teammate_invited": "Invitar in collavuratur",
+      "proposal_sent": "Trametter tia primara proposta"
+    },
+    "stepHints": {
+      "pipeline_ready": "Tscherna in model da pipeline per tiu sectur",
+      "first_lead": "Importa u crea tia primara contact",
+      "next_action_set": "Na perder mai il fil d'in suandament",
+      "teammate_invited": "Collavura cun tia equipa da vendita",
+      "proposal_sent": "Crea in preventiv e merca'l sco tramess"
+    },
+    "wizard": {
+      "title": "Tscherna tia pipeline",
+      "subtitle": "Selecziunescha il model che correspunda meglier a tia interpresa",
+      "apply": "Utilisar quest model",
+      "applied": "Model applitgà!",
+      "alreadyApplied": "Exista gia ina pipeline per quest model.",
+      "stages": "Fases",
+      "sectors": {
+        "agency": "Agentura",
+        "saas": "SaaS / Software",
+        "consulting": "Consultaziun",
+        "construction": "Construcziun",
+        "real-estate": "Bains immobigls",
+        "whatsapp-sales": "Vendita via WhatsApp",
+        "b2b-simple": "B2B simpel"
+      }
     }
   }
 }

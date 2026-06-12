@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Building2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -11,9 +11,9 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { TagChipList } from "@/components/entity-tags";
 import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
+import { EmptyState } from "@/components/empty-state";
 import { api, type Company, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { EmptyState } from "@/components/empty-state";
 
 export default function CompaniesPage() {
   const t = useTranslations("companies");
@@ -30,7 +30,7 @@ export default function CompaniesPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadTags(ids: string[]) {
+  const loadTags = useCallback(async (ids: string[]) => {
     const token = getToken();
     if (!token || ids.length === 0) return;
     try {
@@ -43,7 +43,7 @@ export default function CompaniesPage() {
     } catch {
       /* chips are non-critical — ignore */
     }
-  }
+  }, []);
 
   useEffect(() => {
     const token = getToken();
@@ -66,8 +66,7 @@ export default function CompaniesPage() {
         });
     }, 200);
     return () => clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, loadTags]);
 
   async function loadMore() {
     const token = getToken();
@@ -164,10 +163,15 @@ export default function CompaniesPage() {
 
       <Card className="overflow-hidden">
         {items.length === 0 ? (
-          <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/companies/new`} />
+          <EmptyState
+            icon={Building2}
+            title={t("empty")}
+            actionLabel={t("new")}
+            actionHref={`/${locale}/companies/new`}
+          />
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[20rem] text-sm">
+          <table className="w-full min-w-[40rem] text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="w-10 px-4 py-3 text-left font-medium">
@@ -180,10 +184,10 @@ export default function CompaniesPage() {
                   />
                 </th>
                 <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium md:table-cell">{t("industry")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">{t("country")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{tTags("title")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{t("created")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("industry")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("country")}</th>
+                <th className="px-4 py-3 text-left font-medium">{tTags("title")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
                 <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
               </tr>
             </thead>
@@ -208,12 +212,12 @@ export default function CompaniesPage() {
                     </Link>
                     {c.website && <div className="text-xs text-muted-foreground">{c.website}</div>}
                   </td>
-                  <td className="hidden px-4 py-3 md:table-cell">{c.industry ?? "—"}</td>
-                  <td className="hidden px-4 py-3 sm:table-cell">{c.country ?? "—"}</td>
-                  <td className="hidden px-4 py-3 lg:table-cell">
+                  <td className="px-4 py-3">{c.industry ?? "—"}</td>
+                  <td className="px-4 py-3">{c.country ?? "—"}</td>
+                  <td className="px-4 py-3">
                     <TagChipList tags={tagMap[c.id] ?? []} />
                   </td>
-                  <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {new Date(c.created_at).toLocaleDateString(locale)}
                   </td>
                   <td className="px-4 py-3">

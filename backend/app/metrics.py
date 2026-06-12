@@ -24,6 +24,7 @@ from prometheus_client import (
     CONTENT_TYPE_LATEST,
     REGISTRY,
     Counter,
+    Gauge,
     Histogram,
     generate_latest,
 )
@@ -43,6 +44,58 @@ REQUEST_LATENCY = Histogram(
     # Buckets chosen for a typical CRUD API: sub-10ms = good, 100ms
     # is the eyebrow-raiser, anything >1s = paging the operator.
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+)
+
+
+OUTBOX_PENDING = Gauge(
+    "outbox_events_pending_total",
+    "Number of outbox_events rows not yet processed (processed_at IS NULL).",
+)
+
+OUTBOX_LAG_SECONDS = Gauge(
+    "outbox_oldest_pending_age_seconds",
+    "Age in seconds of the oldest unprocessed outbox event eligible for delivery. "
+    "0 when the queue is empty.",
+)
+
+DLQ_DEPTH = Gauge(
+    "arq_dead_queue_depth",
+    "Number of entries in the arq dead-letter queue (arq:dead Redis list).",
+)
+
+REQUESTS_IN_PROGRESS = Gauge(
+    "http_requests_in_progress",
+    "Number of HTTP requests currently being processed.",
+    labelnames=("method",),
+)
+
+# ---------- LLM metrics ----------
+
+LLM_REQUESTS = Counter(
+    "llm_requests_total",
+    "LLM calls by provider and outcome (success / error / fallback).",
+    labelnames=("provider", "status"),
+)
+
+LLM_DURATION = Histogram(
+    "llm_request_duration_seconds",
+    "End-to-end latency of LLM batch calls, in seconds.",
+    labelnames=("provider",),
+    buckets=(0.5, 1.0, 2.5, 5.0, 10.0, 20.0, 30.0, 60.0, 120.0, 180.0),
+)
+
+LLM_TOKENS = Counter(
+    "llm_tokens_total",
+    "Token consumption by provider and direction (input / output).",
+    labelnames=("provider", "direction"),
+)
+
+# ---------- Search metrics ----------
+
+SEARCH_TRGM_FALLBACK = Counter(
+    "search_trgm_fallback_total",
+    "FTS→trigram fallback activations by entity type (FTS returned 0 results).",
+    labelnames=("entity_type",),
 )
 
 
@@ -77,6 +130,7 @@ class PrometheusMiddleware:
         method = scope["method"]
         start = time.perf_counter()
         status_holder = {"status": 500}
+        REQUESTS_IN_PROGRESS.labels(method=method).inc()
 
         async def send_wrapper(message):
             if message["type"] == "http.response.start":
@@ -86,6 +140,7 @@ class PrometheusMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         finally:
+            REQUESTS_IN_PROGRESS.labels(method=method).dec()
             elapsed = time.perf_counter() - start
             # Prefer the matched route template; fall back to the raw
             # path if routing didn't run (e.g. middleware short-

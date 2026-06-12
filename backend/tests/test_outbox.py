@@ -63,7 +63,11 @@ def test_stage_change_emits_outbox_event(admin_client, admin_user: User, db: Ses
     create = admin_client.post(
         "/api/leads", json={"first_name": "Stage", "last_name": "Probe"}
     ).json()
-    admin_client.patch(f"/api/leads/{create['id']}", json={"stage": "qualified"}).raise_for_status()
+    admin_client.patch(
+        f"/api/leads/{create['id']}",
+        json={"stage": "qualified"},
+        headers={"If-Match": str(create["version"])},
+    ).raise_for_status()
 
     row = db.execute(
         text(

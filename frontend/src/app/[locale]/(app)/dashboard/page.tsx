@@ -20,6 +20,7 @@ import { api, type Company, type DashboardStats, type Lead, type Quote, type Tas
 import { getToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { DashboardCustomize } from "@/components/dashboard-customize";
+import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
 
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
@@ -99,10 +100,33 @@ export default function DashboardPage() {
   const openTotal = (q?.open_eur ?? 0) + (q?.overdue_eur ?? 0);
   const openPct = openTotal > 0 ? Math.round(((q?.open_eur ?? 0) / openTotal) * 100) : 0;
 
+  // Per-currency breakdown under the EUR headline when the open
+  // pipeline spans 2+ currencies (plan.md §6: display-only, no FX) —
+  // e.g. "€10,000 · CHF 3,200". Single-currency orgs see no change.
+  const currencyBreakdown = useMemo(() => {
+    const byCurrency = stats?.pipeline_value_by_currency ?? {};
+    const entries = Object.entries(byCurrency);
+    if (entries.length < 2) return null;
+    return entries
+      .map(([code, amount]) =>
+        new Intl.NumberFormat(locale, {
+          style: "currency",
+          currency: code,
+          maximumFractionDigits: 0,
+        }).format(amount),
+      )
+      .join(" · ");
+  }, [stats, locale]);
+
   const kpis = [
     { label: t("totalLeads"), value: stats ? int.format(stats.total_leads) : "—", icon: Users },
     { label: t("totalDeals"), value: stats ? int.format(stats.total_deals) : "—", icon: Target },
-    { label: t("pipelineValue"), value: stats ? eur.format(stats.pipeline_value_eur || 0) : "—", icon: TrendingUp },
+    {
+      label: t("pipelineValue"),
+      value: stats ? eur.format(stats.pipeline_value_eur || 0) : "—",
+      icon: TrendingUp,
+      sub: currencyBreakdown,
+    },
     {
       label: t("conversionRate"),
       value: stats ? `${(stats.conversion_rate * 100).toFixed(1)}%` : "—",
@@ -155,6 +179,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Onboarding checklist — visible until all 5 steps are done or dismissed */}
+      <OnboardingChecklistWidget locale={locale} />
+
       {/* KPI row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((k) => (
@@ -166,6 +193,9 @@ export default function DashboardPage() {
               </span>
             </div>
             <div className="mt-3 text-3xl font-bold tracking-tight">{k.value}</div>
+            {"sub" in k && k.sub ? (
+              <div className="mt-1 text-xs text-muted-foreground">{k.sub}</div>
+            ) : null}
           </Panel>
         ))}
       </div>

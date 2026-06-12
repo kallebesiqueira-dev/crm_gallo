@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
-import { api, type Currency, type Customer, type DealStage } from "@/lib/api";
+import { api, type Currency, type Customer, type DealStage, type TeamMember } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 const STAGES: DealStage[] = [
@@ -29,9 +29,15 @@ export default function NewDealPage() {
   const router = useRouter();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
+  // Whether the user explicitly picked a currency. Untouched → the
+  // field is OMITTED from the payload so the backend fills it with
+  // the org's default_currency (plan.md §6); sending the visual
+  // default ("EUR") would override that.
+  const [currencyTouched, setCurrencyTouched] = useState(false);
   const [form, setForm] = useState({
     title: "",
     value: "",
@@ -40,6 +46,7 @@ export default function NewDealPage() {
     probability: "10",
     expected_close_date: "",
     customer_id: "",
+    owner_id: "",
     notes: "",
   });
 
@@ -47,6 +54,7 @@ export default function NewDealPage() {
     const token = getToken();
     if (!token) return;
     api.listAllCustomers(token).then(setCustomers).catch(() => setCustomers([]));
+    api.listOrgMembers().then(setMembers).catch(() => setMembers([]));
   }, []);
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
@@ -63,11 +71,12 @@ export default function NewDealPage() {
       const payload = {
         title: form.title,
         value: form.value ? Number(form.value) : 0,
-        currency: form.currency,
+        ...(currencyTouched ? { currency: form.currency } : {}),
         stage: form.stage,
         probability: Number(form.probability),
         expected_close_date: form.expected_close_date || null,
         customer_id: form.customer_id || null,
+        owner_id: form.owner_id || null,
         notes: form.notes || null,
         custom_fields: customFields,
       };
@@ -113,7 +122,10 @@ export default function NewDealPage() {
               id="currency"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={form.currency}
-              onChange={(e) => set("currency", e.target.value as Currency)}
+              onChange={(e) => {
+                setCurrencyTouched(true);
+                set("currency", e.target.value as Currency);
+              }}
             >
               {CURRENCIES.map((c) => (
                 <option key={c} value={c}>
@@ -174,6 +186,24 @@ export default function NewDealPage() {
               ))}
             </select>
           </div>
+          {members.length > 0 && (
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="owner_id">{tLeads("owner")}</Label>
+              <select
+                id="owner_id"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={form.owner_id}
+                onChange={(e) => set("owner_id", e.target.value)}
+              >
+                <option value="">— {tLeads("unassigned")} —</option>
+                {members.map((m) => (
+                  <option key={String(m.user_id)} value={String(m.user_id)}>
+                    {m.full_name} ({m.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="notes">Notes</Label>
             <textarea

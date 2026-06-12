@@ -40,8 +40,20 @@
       "gestione": "Verwaltung",
       "sistema": "System"
     },
+    "hoje": "Heute",
     "exports": "Exporte",
     "teams": "Teams"
+  },
+  "hoje": {
+    "title": "Heute",
+    "overdueDeals": "Überfällige Follow-ups",
+    "todayDeals": "Heutige Follow-ups",
+    "noActionDeals": "Keine nächste Aktion",
+    "staleDeals": "Seit 7+ Tagen stillgelegt",
+    "todayTasks": "Heutige Aufgaben",
+    "overdueTasks": "Überfällige Aufgaben",
+    "empty": "Nichts ausstehend. Guten Verkauf!",
+    "pendingCount": "ausstehend"
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -235,11 +247,17 @@
     "stage": "Phase",
     "score": "KI-Score",
     "owner": "Verantwortlich",
+    "unassigned": "Nicht zugewiesen",
     "created": "Erstellt",
     "empty": "Noch keine Leads. Erstellen Sie Ihren ersten.",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "scoreNow": "Mit KI bewerten",
+    "convert": "In Deal umwandeln",
+    "convertConfirmTitle": "Lead in Deal umwandeln?",
+    "convertConfirmBody": "Es wird ein Kunde und ein Deal aus diesem Lead erstellt. Bestehende Kunden mit gleicher E-Mail werden wiederverwendet.",
+    "convertSuccess": "Umgewandelt! Kunde und Deal erstellt.",
+    "convertAlready": "Dieser Lead wurde bereits umgewandelt.",
     "scoreEmpty": "Noch keine Bewertung. Bewerte diesen Lead mit der KI.",
     "email": "E-Mail",
     "phone": "Telefon",
@@ -274,7 +292,9 @@
     "empty": "Noch keine Kunden. Erstellen Sie den ersten.",
     "aiSummary": "KI-Zusammenfassung",
     "summarize": "Zusammenfassen",
-    "noSummary": "Noch keine Zusammenfassung. Klicken Sie auf Zusammenfassen."
+    "noSummary": "Noch keine Zusammenfassung. Klicken Sie auf Zusammenfassen.",
+    "deals": "Deals",
+    "noDeals": "Keine Deals mit diesem Kunden verknüpft."
   },
   "imports": {
     "title": "Importe",
@@ -318,7 +338,10 @@
     "currency": "Währung",
     "probability": "Wahrscheinlichkeit",
     "expectedClose": "Erwartetes Abschlussdatum",
-    "customer": "Kunde"
+    "customer": "Kunde",
+    "stage": "Phase",
+    "nextAction": "Nächste Aktion",
+    "noNextAction": "Kein Follow-up geplant"
   },
   "tasks": {
     "title": "Aufgaben",
@@ -439,6 +462,32 @@
     "expiresOn": "Läuft ab {date}",
     "confirmRevoke": "Schlüssel \"{name}\" widerrufen? Integrationen, die ihn verwenden, funktionieren nicht mehr.",
     "revoke": "Widerrufen"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "adminOnly": "Nur Admins können Webhooks verwalten.",
+    "intro": "Sende HTTP-POST-Events an externe URLs, wenn etwas in deinem CRM passiert. Jede Lieferung ist HMAC-signiert.",
+    "new": "Endpunkt hinzufügen",
+    "urlLabel": "Endpunkt-URL",
+    "descLabel": "Beschreibung (optional)",
+    "descPlaceholder": "Mein Integrationsserver",
+    "eventsLabel": "Events",
+    "eventsHint": "* für alle Events oder kommagetrennte Liste: lead.created, deal.won, …",
+    "create": "Erstellen",
+    "cancel": "Abbrechen",
+    "secretOnce": "Kopiere das Geheimnis jetzt — es wird nicht wieder angezeigt.",
+    "copied": "Kopiert!",
+    "copy": "Kopieren",
+    "dismiss": "Schließen",
+    "paused": "Pausiert",
+    "failures": "{count} Fehler",
+    "lastSuccess": "Letzter Erfolg: {date}",
+    "neverFired": "Noch nie ausgelöst",
+    "pause": "Pausieren",
+    "resume": "Fortsetzen",
+    "delete": "Löschen",
+    "confirmDelete": "Webhook für {url} löschen?",
+    "empty": "Noch keine Webhooks."
   },
   "teams": {
     "title": "Teams",
@@ -561,6 +610,8 @@
     "typeRestored": "Aus dem Papierkorb wiederhergestellt",
     "typeStageChange": "Phase: {from} → {to}",
     "typeAiScored": "KI-Bewertung: {score} ({priority})",
+    "typeNextActionSet": "Nächste Aktion geplant: {type} am {at}",
+    "typeNextActionCleared": "Nächste Aktion entfernt",
     "typeNoteAdded": "Notiz hinzugefügt",
     "typeFileAttached": "Datei angehängt: {name}",
     "typeFileRemoved": "Datei entfernt: {name}",
@@ -632,6 +683,7 @@
     "addLine": "Position hinzufügen",
     "addFromCatalog": "Aus Katalog hinzufügen",
     "lineDescription": "Beschreibung",
+    "fromCatalog": "Aus dem Katalog…",
     "quantity": "Menge",
     "unitPrice": "Einzelpreis",
     "lineTotal": "Summe",
@@ -1532,6 +1584,9 @@
       "deal_won": "Deal gewonnen",
       "deal_lost": "Deal verloren",
       "deal_stage_changed": "Deal-Phase geändert",
+      "customer_created": "Kunde erstellt",
+      "task_overdue": "Aufgabe überfällig",
+      "user_invited": "Teammitglied eingeladen",
       "lead_stale": "Lead wird inaktiv"
     },
     "actions": {
@@ -1628,6 +1683,53 @@
     "kind": {
       "quote": "Angebot",
       "contract": "Vertrag"
+    }
+  },
+  "gdpr": {
+    "title": "DSGVO & Datenaufbewahrung",
+    "description": "Leads ohne Aktivität über das untenstehende Fenster hinaus werden automatisch anonymisiert: persönliche Felder gelöscht, Notizen entfernt, die Timeline ohne Inhalt behalten. Die Datensatz-ID bleibt im Audit-Trail.",
+    "retentionLabel": "Aufbewahrungsfenster (Monate)",
+    "retentionHint": "1-120 Monate. Leer lassen, um die automatische Aufbewahrung zu deaktivieren.",
+    "off": "Aus",
+    "adminOnly": "Nur Organisations-Admins können DSGVO-Einstellungen verwalten.",
+    "save": "Speichern"
+  },
+  "onboarding": {
+    "title": "Loslegen",
+    "subtitle": "Schließen Sie diese Schritte ab, um Ihr CRM einzurichten",
+    "dismiss": "Schließen",
+    "completed": "{completed} von {total} erledigt",
+    "allDone": "Alles bereit! Viel Erfolg beim Abschluss.",
+    "steps": {
+      "pipeline_ready": "Pipeline einrichten",
+      "first_lead": "Ersten Lead hinzufügen",
+      "next_action_set": "Nächste Aktion für einen Deal festlegen",
+      "teammate_invited": "Teammitglied einladen",
+      "proposal_sent": "Erstes Angebot versenden"
+    },
+    "stepHints": {
+      "pipeline_ready": "Wählen Sie eine Pipeline-Vorlage für Ihre Branche",
+      "first_lead": "Importieren oder erstellen Sie Ihren ersten Kontakt",
+      "next_action_set": "Keine Follow-ups mehr vergessen",
+      "teammate_invited": "Arbeiten Sie mit Ihrem Vertriebsteam zusammen",
+      "proposal_sent": "Erstellen Sie ein Angebot und markieren Sie es als gesendet"
+    },
+    "wizard": {
+      "title": "Pipeline auswählen",
+      "subtitle": "Wählen Sie die Vorlage, die am besten zu Ihrem Unternehmen passt",
+      "apply": "Diese Vorlage verwenden",
+      "applied": "Vorlage angewendet!",
+      "alreadyApplied": "Für diese Vorlage existiert bereits eine Pipeline.",
+      "stages": "Phasen",
+      "sectors": {
+        "agency": "Agentur",
+        "saas": "SaaS / Software",
+        "consulting": "Beratung",
+        "construction": "Bauwesen",
+        "real-estate": "Immobilien",
+        "whatsapp-sales": "WhatsApp-Vertrieb",
+        "b2b-simple": "Einfaches B2B"
+      }
     }
   }
 }

@@ -40,8 +40,20 @@
       "gestione": "Gestione",
       "sistema": "Sistema"
     },
+    "hoje": "Oggi",
     "exports": "Esportazioni",
     "teams": "Team"
+  },
+  "hoje": {
+    "title": "Oggi",
+    "overdueDeals": "Follow-up in ritardo",
+    "todayDeals": "Follow-up di oggi",
+    "noActionDeals": "Senza prossima azione",
+    "staleDeals": "Fermi da più di 7 giorni",
+    "todayTasks": "Attività di oggi",
+    "overdueTasks": "Attività in ritardo",
+    "empty": "Niente in sospeso. Buona vendita!",
+    "pendingCount": "in sospeso"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -235,11 +247,17 @@
     "stage": "Fase",
     "score": "Punteggio IA",
     "owner": "Responsabile",
+    "unassigned": "Non assegnato",
     "created": "Creato",
     "empty": "Nessun lead. Crea il primo.",
     "save": "Salva",
     "cancel": "Annulla",
     "scoreNow": "Valuta con IA",
+    "convert": "Converti in trattativa",
+    "convertConfirmTitle": "Convertire il lead in trattativa?",
+    "convertConfirmBody": "Verrà creato un Cliente e una Trattativa da questo lead. I clienti esistenti con la stessa email saranno riutilizzati.",
+    "convertSuccess": "Convertito! Cliente e trattativa creati.",
+    "convertAlready": "Questo lead è già stato convertito.",
     "scoreEmpty": "Nessun punteggio. Valuta questo lead con l'IA.",
     "email": "Email",
     "phone": "Telefono",
@@ -274,7 +292,9 @@
     "empty": "Nessun cliente. Crea il primo.",
     "aiSummary": "Riassunto IA",
     "summarize": "Riassumi",
-    "noSummary": "Nessun riassunto. Clicca Riassumi per generarne uno."
+    "noSummary": "Nessun riassunto. Clicca Riassumi per generarne uno.",
+    "deals": "Trattative",
+    "noDeals": "Nessuna trattativa collegata a questo cliente."
   },
   "imports": {
     "title": "Importazioni",
@@ -318,7 +338,10 @@
     "currency": "Valuta",
     "probability": "Probabilità",
     "expectedClose": "Chiusura prevista",
-    "customer": "Cliente"
+    "customer": "Cliente",
+    "stage": "Fase",
+    "nextAction": "Prossima azione",
+    "noNextAction": "Nessun follow-up pianificato"
   },
   "tasks": {
     "title": "Attività",
@@ -439,6 +462,32 @@
     "expiresOn": "Scade il {date}",
     "confirmRevoke": "Revocare la chiave \"{name}\"? Le integrazioni che la usano smetteranno di funzionare.",
     "revoke": "Revoca"
+  },
+  "webhooks": {
+    "title": "Webhook",
+    "adminOnly": "Solo gli admin possono gestire i webhook.",
+    "intro": "Invia eventi HTTP POST a URL esterni quando accade qualcosa nel CRM. Ogni consegna è firmata con HMAC usando il segreto dell'endpoint.",
+    "new": "Aggiungi endpoint",
+    "urlLabel": "URL endpoint",
+    "descLabel": "Descrizione (opzionale)",
+    "descPlaceholder": "Il mio server di integrazione",
+    "eventsLabel": "Eventi",
+    "eventsHint": "Usa * per tutti gli eventi, o un elenco separato da virgole: lead.created, deal.won, …",
+    "create": "Crea",
+    "cancel": "Annulla",
+    "secretOnce": "Copia subito il segreto di firma — non verrà mostrato di nuovo.",
+    "copied": "Copiato!",
+    "copy": "Copia",
+    "dismiss": "Chiudi",
+    "paused": "In pausa",
+    "failures": "{count} errore/i",
+    "lastSuccess": "Ultimo successo: {date}",
+    "neverFired": "Mai attivato",
+    "pause": "Metti in pausa",
+    "resume": "Riprendi",
+    "delete": "Elimina",
+    "confirmDelete": "Eliminare il webhook per {url}?",
+    "empty": "Nessun webhook ancora."
   },
   "teams": {
     "title": "Team",
@@ -561,6 +610,8 @@
     "typeRestored": "Ripristinato dal cestino",
     "typeStageChange": "Fase: {from} → {to}",
     "typeAiScored": "Punteggio AI: {score} ({priority})",
+    "typeNextActionSet": "Prossima azione programmata: {type} il {at}",
+    "typeNextActionCleared": "Prossima azione rimossa",
     "typeNoteAdded": "Nota aggiunta",
     "typeFileAttached": "File allegato: {name}",
     "typeFileRemoved": "File rimosso: {name}",
@@ -632,6 +683,7 @@
     "addLine": "Aggiungi voce",
     "addFromCatalog": "Aggiungi dal catalogo",
     "lineDescription": "Descrizione",
+    "fromCatalog": "Dal catalogo…",
     "quantity": "Qtà",
     "unitPrice": "Prezzo unit.",
     "lineTotal": "Totale",
@@ -1532,6 +1584,9 @@
       "deal_won": "Trattativa vinta",
       "deal_lost": "Trattativa persa",
       "deal_stage_changed": "Fase della trattativa cambiata",
+      "customer_created": "Cliente creato",
+      "task_overdue": "Attività in ritardo",
+      "user_invited": "Collega invitato",
       "lead_stale": "Lead inattivo"
     },
     "actions": {
@@ -1628,6 +1683,53 @@
     "kind": {
       "quote": "Preventivo",
       "contract": "Contratto"
+    }
+  },
+  "gdpr": {
+    "title": "GDPR e conservazione dei dati",
+    "description": "I lead senza attività oltre la finestra sottostante vengono anonimizzati automaticamente: campi personali cancellati, note eliminate, timeline mantenuta senza contenuto. L'id del record resta nell'audit.",
+    "retentionLabel": "Finestra di conservazione (mesi)",
+    "retentionHint": "1-120 mesi. Lascia vuoto per disattivare la conservazione automatica.",
+    "off": "Disattivato",
+    "adminOnly": "Solo gli admin dell'organizzazione possono gestire le impostazioni GDPR.",
+    "save": "Salva"
+  },
+  "onboarding": {
+    "title": "Inizia",
+    "subtitle": "Completa questi passaggi per configurare il tuo CRM",
+    "dismiss": "Ignora",
+    "completed": "{completed} di {total} completati",
+    "allDone": "Tutto pronto! Pronto a chiudere affari.",
+    "steps": {
+      "pipeline_ready": "Configura la tua pipeline",
+      "first_lead": "Aggiungi il tuo primo lead",
+      "next_action_set": "Imposta una prossima azione su un affare",
+      "teammate_invited": "Invita un collega",
+      "proposal_sent": "Invia la tua prima proposta"
+    },
+    "stepHints": {
+      "pipeline_ready": "Scegli un modello di pipeline per il tuo settore",
+      "first_lead": "Importa o crea il tuo primo contatto",
+      "next_action_set": "Non perdere mai il filo di un follow-up",
+      "teammate_invited": "Collabora con il tuo team di vendita",
+      "proposal_sent": "Crea un preventivo e contrassegnalo come inviato"
+    },
+    "wizard": {
+      "title": "Scegli la tua pipeline",
+      "subtitle": "Seleziona il modello più adatto alla tua attività",
+      "apply": "Usa questo modello",
+      "applied": "Modello applicato!",
+      "alreadyApplied": "Una pipeline per questo modello esiste già.",
+      "stages": "Fasi",
+      "sectors": {
+        "agency": "Agenzia",
+        "saas": "SaaS / Software",
+        "consulting": "Consulenza",
+        "construction": "Edilizia",
+        "real-estate": "Immobiliare",
+        "whatsapp-sales": "Vendite WhatsApp",
+        "b2b-simple": "B2B semplice"
+      }
     }
   }
 }

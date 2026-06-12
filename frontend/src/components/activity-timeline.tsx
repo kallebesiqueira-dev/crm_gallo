@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   Activity as ActivityIcon,
   ArrowRight,
+  CalendarClock,
   CheckCircle2,
   FileEdit,
   Mail,
@@ -48,6 +49,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   restored: Sparkles,
   stage_change: ArrowRight,
   ai_scored: Sparkles,
+  next_action_set: CalendarClock,
   note_added: MessageSquare,
   file_attached: Paperclip,
   file_removed: Paperclip,
@@ -162,6 +164,13 @@ function labelFor(
         score: String(meta?.score ?? "?"),
         priority: String(meta?.priority ?? ""),
       });
+    case "next_action_set": {
+      const type = String(meta?.next_action_type ?? "");
+      const at = meta?.next_action_at
+        ? new Date(String(meta.next_action_at)).toLocaleString()
+        : null;
+      return at ? t("typeNextActionSet", { type, at }) : t("typeNextActionCleared");
+    }
     case "note_added":
       return entry.content || t("typeNoteAdded");
     case "file_attached":

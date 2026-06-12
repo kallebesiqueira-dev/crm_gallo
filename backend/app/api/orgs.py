@@ -17,13 +17,14 @@ import re
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import record_audit
 from app.database import get_db
-from app.deps import get_current_org_id, get_current_user
-from app.models import Organization, OrgMembership, User, UserRole
+from app.deps import get_current_org_id, get_current_user, require_roles
+from app.models import Currency, Organization, OrgMembership, User, UserRole
 from app.schemas import (
     MembershipOut,
     OrgCreate,
@@ -86,6 +87,57 @@ async def list_my_memberships(
         )
         for m, org in result.all()
     ]
+
+
+class OrgSettingsOut(BaseModel):
+    default_currency: Currency
+
+
+class OrgSettingsIn(BaseModel):
+    default_currency: Currency | None = None
+
+
+@router.get("/current/settings", response_model=OrgSettingsOut)
+async def get_org_settings(
+    _: User = Depends(require_roles(UserRole.admin)),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> OrgSettingsOut:
+    org = await db.get(Organization, org_id)
+    if org is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    return OrgSettingsOut(default_currency=org.default_currency)
+
+
+@router.patch("/current/settings", response_model=OrgSettingsOut)
+async def update_org_settings(
+    payload: OrgSettingsIn,
+    user: User = Depends(require_roles(UserRole.admin)),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> OrgSettingsOut:
+    """Org-level product settings (plan.md §6 — today just the default
+    currency for new deals/quotes; display-only, no FX conversion)."""
+    org = await db.get(Organization, org_id)
+    if org is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    if payload.default_currency is not None and payload.default_currency != org.default_currency:
+        previous = org.default_currency
+        org.default_currency = payload.default_currency
+        await record_audit(
+            db,
+            actor=user,
+            action="org.settings_update",
+            entity_type="organization",
+            entity_id=org_id,
+            organization_id=org_id,
+            metadata={
+                "default_currency": payload.default_currency.value,
+                "previous": previous.value,
+            },
+        )
+        await db.commit()
+    return OrgSettingsOut(default_currency=org.default_currency)
 
 
 @router.post("/me/switch", response_model=UserOut)

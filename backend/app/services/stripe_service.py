@@ -99,6 +99,7 @@ async def create_checkout_session(
     plan: Plan,
     cycle: BillingCycle,
     db: AsyncSession,
+    currency: str = "eur",
 ) -> str:
     """Returns a Stripe Checkout URL the frontend should redirect to."""
     _ensure_configured()
@@ -106,10 +107,13 @@ async def create_checkout_session(
     if plan == Plan.free:
         raise StripeError("Free plan does not require Stripe checkout.")
 
-    price_id = resolve_stripe_price_id(plan, cycle)
+    price_id = resolve_stripe_price_id(plan, cycle, currency)
     if not price_id:
+        # Deliberately NOT falling back to the EUR price — charging a
+        # CH/UK/BR buyer in the wrong currency is worse than a clear
+        # "not available yet".
         raise StripeError(
-            f"No Stripe Price ID configured for {plan.value}/{cycle.value}. "
+            f"No Stripe Price ID configured for {plan.value}/{cycle.value}/{currency}. "
             "Set STRIPE_PRICE_* env vars."
         )
 
@@ -126,6 +130,7 @@ async def create_checkout_session(
                 "organization_id": str(org.id),
                 "started_by": str(actor.id),
                 "plan": plan.value,
+                "currency": currency,
             },
         }
         if descriptor.trial_days > 0:
@@ -145,6 +150,7 @@ async def create_checkout_session(
                 "started_by": str(actor.id),
                 "plan": plan.value,
                 "cycle": cycle.value,
+                "currency": currency,
             },
         )
 
@@ -160,7 +166,12 @@ async def create_checkout_session(
         entity_type="billing",
         entity_id=org.id,
         organization_id=org.id,
-        metadata={"plan": plan.value, "cycle": cycle.value, "session_id": session.id},
+        metadata={
+            "plan": plan.value,
+            "cycle": cycle.value,
+            "currency": currency,
+            "session_id": session.id,
+        },
     )
     await db.commit()
     return session.url

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Download, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Download, Pencil, Plus, Search, Target, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,10 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { TagChipList } from "@/components/entity-tags";
 import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/empty-state";
 import { api, type Lead, type LeadStage, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { EmptyState } from "@/components/empty-state";
 
 const STAGE_VARIANT: Record<LeadStage, "default" | "secondary" | "success" | "warning" | "danger"> = {
   new: "secondary",
@@ -39,10 +40,11 @@ export default function LeadsPage() {
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadTags(ids: string[]) {
+  const loadTags = useCallback(async (ids: string[]) => {
     const token = getToken();
     if (!token || ids.length === 0) return;
     try {
@@ -55,7 +57,7 @@ export default function LeadsPage() {
     } catch {
       /* chips are non-critical — ignore */
     }
-  }
+  }, []);
 
   useEffect(() => {
     const token = getToken();
@@ -68,6 +70,7 @@ export default function LeadsPage() {
           setCursor(page.next_cursor);
           setHasMore(page.has_more);
           setTagMap({});
+          setLoading(false);
           setSelected(new Set());
           loadTags(page.items.map((l) => l.id));
         })
@@ -75,11 +78,11 @@ export default function LeadsPage() {
           setLeads([]);
           setCursor(null);
           setHasMore(false);
+          setLoading(false);
         });
     }, 200);
     return () => clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, loadTags]);
 
   async function loadMore() {
     const token = getToken();
@@ -183,11 +186,29 @@ export default function LeadsPage() {
       )}
 
       <Card className="overflow-hidden">
-        {leads.length === 0 ? (
-          <EmptyState title={t("empty")} ctaLabel={t("new")} ctaHref={`/${locale}/leads/new`} />
+        {loading ? (
+          <div className="space-y-0 divide-y">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <Skeleton className="h-4 w-4 shrink-0 rounded" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="ml-auto h-4 w-24" />
+              </div>
+            ))}
+          </div>
+        ) : leads.length === 0 ? (
+          <EmptyState
+            icon={Target}
+            title={t("empty")}
+            actionLabel={t("new")}
+            actionHref={`/${locale}/leads/new`}
+          />
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[20rem] text-sm">
+          <table className="w-full min-w-[40rem] text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="w-10 px-4 py-3 text-left font-medium">
@@ -200,11 +221,11 @@ export default function LeadsPage() {
                   />
                 </th>
                 <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium md:table-cell">{t("company")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("company")}</th>
                 <th className="px-4 py-3 text-left font-medium">{t("stage")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{tTags("title")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">{t("score")}</th>
-                <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">{t("created")}</th>
+                <th className="px-4 py-3 text-left font-medium">{tTags("title")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("score")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
                 <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
               </tr>
             </thead>
@@ -231,21 +252,21 @@ export default function LeadsPage() {
                       <div className="text-xs text-muted-foreground">{lead.email}</div>
                     )}
                   </td>
-                  <td className="hidden px-4 py-3 md:table-cell">{lead.company ?? "—"}</td>
+                  <td className="px-4 py-3">{lead.company ?? "—"}</td>
                   <td className="px-4 py-3">
                     <Badge variant={STAGE_VARIANT[lead.stage]}>{tStages(lead.stage)}</Badge>
                   </td>
-                  <td className="hidden px-4 py-3 lg:table-cell">
+                  <td className="px-4 py-3">
                     <TagChipList tags={tagMap[lead.id] ?? []} />
                   </td>
-                  <td className="hidden px-4 py-3 sm:table-cell">
+                  <td className="px-4 py-3">
                     {lead.ai_score != null ? (
                       <span className="font-mono">{lead.ai_score}</span>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {new Date(lead.created_at).toLocaleDateString(locale)}
                   </td>
                   <td className="px-4 py-3">

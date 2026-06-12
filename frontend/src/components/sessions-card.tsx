@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, LogOut, Monitor, Smartphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,19 +23,18 @@ export function SessionsCard() {
   const [revokingOthers, setRevokingOthers] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setSessions(await api.listSessions());
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
     }
-  }
+  }, []);
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   async function revokeOne(s: SessionInfo) {
     if (s.current) return;

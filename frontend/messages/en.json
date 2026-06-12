@@ -40,8 +40,20 @@
       "gestione": "Management",
       "sistema": "System"
     },
+    "hoje": "Today",
     "exports": "Exports",
     "teams": "Teams"
+  },
+  "hoje": {
+    "title": "Today",
+    "overdueDeals": "Overdue follow-ups",
+    "todayDeals": "Today's follow-ups",
+    "noActionDeals": "No next action",
+    "staleDeals": "Stalled for 7+ days",
+    "todayTasks": "Today's tasks",
+    "overdueTasks": "Overdue tasks",
+    "empty": "Nothing pending. Good selling!",
+    "pendingCount": "pending"
   },
   "inbox": {
     "title": "WhatsApp Inbox",
@@ -235,11 +247,17 @@
     "stage": "Stage",
     "score": "AI Score",
     "owner": "Owner",
+    "unassigned": "Unassigned",
     "created": "Created",
     "empty": "No leads yet. Create your first one.",
     "save": "Save",
     "cancel": "Cancel",
     "scoreNow": "Score with AI",
+    "convert": "Convert to Deal",
+    "convertConfirmTitle": "Convert lead to deal?",
+    "convertConfirmBody": "This will create a Customer and a Deal from this lead. Any existing customer with the same email will be reused.",
+    "convertSuccess": "Converted! Customer and deal created.",
+    "convertAlready": "This lead has already been converted.",
     "scoreEmpty": "No score yet. Run an AI evaluation for this lead.",
     "email": "Email",
     "phone": "Phone",
@@ -274,7 +292,9 @@
     "empty": "No customers yet. Create your first one.",
     "aiSummary": "AI summary",
     "summarize": "Summarize",
-    "noSummary": "No summary yet. Click Summarize to generate one."
+    "noSummary": "No summary yet. Click Summarize to generate one.",
+    "deals": "Deals",
+    "noDeals": "No deals linked to this customer."
   },
   "imports": {
     "title": "Imports",
@@ -318,7 +338,10 @@
     "currency": "Currency",
     "probability": "Probability",
     "expectedClose": "Expected close",
-    "customer": "Customer"
+    "customer": "Customer",
+    "stage": "Stage",
+    "nextAction": "Next action",
+    "noNextAction": "No follow-up scheduled"
   },
   "tasks": {
     "title": "Tasks",
@@ -439,6 +462,32 @@
     "expiresOn": "Expires {date}",
     "confirmRevoke": "Revoke key \"{name}\"? Integrations using it will stop working.",
     "revoke": "Revoke"
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "adminOnly": "Only admins can manage webhooks.",
+    "intro": "Send HTTP POST events to external URLs when things happen in your CRM. Each delivery is HMAC-signed with your endpoint secret.",
+    "new": "Add endpoint",
+    "urlLabel": "Endpoint URL",
+    "descLabel": "Description (optional)",
+    "descPlaceholder": "My integration server",
+    "eventsLabel": "Events",
+    "eventsHint": "Use * for all events, or a comma-separated list: lead.created, deal.won, …",
+    "create": "Create",
+    "cancel": "Cancel",
+    "secretOnce": "Copy your signing secret now — it won't be shown again.",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "dismiss": "Dismiss",
+    "paused": "Paused",
+    "failures": "{count} failure(s)",
+    "lastSuccess": "Last success: {date}",
+    "neverFired": "Never fired",
+    "pause": "Pause",
+    "resume": "Resume",
+    "delete": "Delete",
+    "confirmDelete": "Delete webhook for {url}?",
+    "empty": "No webhooks yet."
   },
   "teams": {
     "title": "Teams",
@@ -561,6 +610,8 @@
     "typeRestored": "Restored from trash",
     "typeStageChange": "Stage: {from} → {to}",
     "typeAiScored": "AI score: {score} ({priority})",
+    "typeNextActionSet": "Next action scheduled: {type} on {at}",
+    "typeNextActionCleared": "Next action cleared",
     "typeNoteAdded": "Note added",
     "typeFileAttached": "File attached: {name}",
     "typeFileRemoved": "File removed: {name}",
@@ -632,6 +683,7 @@
     "addLine": "Add line",
     "addFromCatalog": "Add from catalog",
     "lineDescription": "Description",
+    "fromCatalog": "From catalog…",
     "quantity": "Qty",
     "unitPrice": "Unit price",
     "lineTotal": "Total",
@@ -1532,6 +1584,9 @@
       "deal_won": "Deal won",
       "deal_lost": "Deal lost",
       "deal_stage_changed": "Deal stage changed",
+      "customer_created": "Customer created",
+      "task_overdue": "Task overdue",
+      "user_invited": "Teammate invited",
       "lead_stale": "Lead goes stale"
     },
     "actions": {
@@ -1628,6 +1683,53 @@
     "kind": {
       "quote": "Quote",
       "contract": "Contract"
+    }
+  },
+  "gdpr": {
+    "title": "GDPR & data retention",
+    "description": "Leads with no activity beyond the window below are automatically anonymized: personal fields erased, notes deleted, the timeline kept without content. The record id stays in the audit trail.",
+    "retentionLabel": "Retention window (months)",
+    "retentionHint": "1-120 months. Leave empty to disable automatic retention.",
+    "off": "Off",
+    "adminOnly": "Only organization admins can manage GDPR settings.",
+    "save": "Save"
+  },
+  "onboarding": {
+    "title": "Get started",
+    "subtitle": "Complete these steps to set up your CRM",
+    "dismiss": "Dismiss",
+    "completed": "{completed} of {total} done",
+    "allDone": "You're all set! Ready to close deals.",
+    "steps": {
+      "pipeline_ready": "Set up your pipeline",
+      "first_lead": "Add your first lead",
+      "next_action_set": "Set a next action on a deal",
+      "teammate_invited": "Invite a teammate",
+      "proposal_sent": "Send your first proposal"
+    },
+    "stepHints": {
+      "pipeline_ready": "Choose a pipeline template for your industry",
+      "first_lead": "Import or create your first contact",
+      "next_action_set": "Never lose track of a follow-up",
+      "teammate_invited": "Collaborate with your sales team",
+      "proposal_sent": "Create a quote and mark it as sent"
+    },
+    "wizard": {
+      "title": "Choose your pipeline",
+      "subtitle": "Pick the template that best matches your business",
+      "apply": "Use this template",
+      "applied": "Template applied!",
+      "alreadyApplied": "A pipeline for this template already exists.",
+      "stages": "Stages",
+      "sectors": {
+        "agency": "Agency",
+        "saas": "SaaS / Software",
+        "consulting": "Consulting",
+        "construction": "Construction",
+        "real-estate": "Real estate",
+        "whatsapp-sales": "WhatsApp sales",
+        "b2b-simple": "Simple B2B"
+      }
     }
   }
 }
