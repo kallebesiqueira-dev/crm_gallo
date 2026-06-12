@@ -148,7 +148,7 @@ Hoje leads e clientes são entidades separadas sem fluxo de conversão formal.
 Compliance como vantagem de venda, não como tarefa de último minuto. Base já existe (audit log, soft-delete, RLS). O que falta:
 
 **O que construir:**
-- [~] Campo `contact_consent_at` + `consent_source` em leads/clientes — *em voo na lane paralela (migration `b5c6d7e8f9a0` aplicada, WIP uncommitted)*
+- [x] Campo `contact_consent_at` + `consent_source` em leads/clientes — **DONE 2026-06-12 (`31d7a42`)**: migration `b5c6d7e8f9a0`, enum consentsource (web_form/import/manual/whatsapp/api/other), models+schemas em lead E customer. **§5 FECHADA.**
 - [x] `POST /api/leads/{id}/forget` → anonimiza PII mantendo ID na auditoria — **DONE 2026-06-11 (`f17b047`)**: `app/api/gdpr.py`, leads E customers, admin-only; anonimiza + soft-delete, hard-delete das notas, timeline mantém esqueleto sem conteúdo. Residuais documentados (avatar S3, mensagens WhatsApp, metadata histórica de audit).
 - [x] Exportação de dados por contato (`GET /api/leads/{id}/export`) — DONE (mesmo commit; também `/api/customers/{id}/export` com deals associados). 6 testes.
 - [x] Policy de retenção configurável por org — **DONE 2026-06-12 (`2db4f42`+`f2c93f3`)**: `organizations.retention_months` (null=off, 1..120) via `GET/PATCH /api/gdpr/settings` (admin, auditado); sweep diário no worker (04:23 UTC) anonimiza LEADS inativos além do cutoff pelo mesmo core do /forget (cap 200/org/dia; customers de propósito FORA — relação paga exige humano). 4 testes.
@@ -163,8 +163,8 @@ Hoje deals e quotes usam EUR. Para operar em CH/UK obrigatório.
 **O que construir:**
 - [x] Adicionar `currency` field em deals com padrão configurável por org — `deals.currency` JÁ EXISTIA (ADR-015); **`org.default_currency` DONE 2026-06-12 (`1dabacf`)**: migration `5b6c7d8e9f0a` (backfill EUR), `GET/PATCH /api/orgs/current/settings` (admin, auditado), deal E quote herdam quando o payload omite a moeda (`model_fields_set` — explícito sempre vence, clientes existentes intactos). 4 testes.
 - [x] Suporte a CHF, GBP e BRL nas plans do Stripe — **DONE 2026-06-11 (`bdd0e15`)**: price points posicionados por moeda no catálogo, `resolve_stripe_price_id(plan, cycle, currency)` (EUR mantém env names legados), checkout aceita `currency` (400 amigável p/ não suportada; price id ausente = erro claro, nunca fallback p/ EUR). 4 testes, zero chamadas reais à Stripe.
-- [ ] Seletor de moeda na criação de deal e quote *(frontend)*
-- [ ] Dashboard mostrando valores na moeda de cada deal *(frontend)*
+- [x] Seletor de moeda na criação de deal e quote — JÁ EXISTIA nos dois forms; **fix 2026-06-12 (`9d6443b`)**: o form de deal enviava sempre "EUR" e atropelava o default do org — select não-tocado agora OMITE o campo (backend herda), escolha explícita vence.
+- [x] Dashboard mostrando valores na moeda de cada deal — **DONE 2026-06-12 (`9d6443b`)**: `pipeline_value_by_currency` (somas brutas por ISO, sem conversão) no stats; KPI mostra o breakdown como sub-linha só quando o pipeline aberto tem 2+ moedas. **§6 FECHADA — plan.md 100% COMPLETO.**
 
 ---
 
