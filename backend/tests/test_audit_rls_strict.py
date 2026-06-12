@@ -118,9 +118,7 @@ def test_unscoped_org_scoped_insert_still_works(runtime_engine, db: Session, tes
             {"org": str(test_org.id), "et": PROBE_ENTITY},
         )
     written = (
-        db.execute(
-            select(AuditLog).where(AuditLog.action == "pytest.rls.unscoped-write")
-        )
+        db.execute(select(AuditLog).where(AuditLog.action == "pytest.rls.unscoped-write"))
         .scalars()
         .all()
     )
@@ -137,9 +135,7 @@ def test_switch_org_endpoint_audits_under_strict_policy(
     audits user.switch_org WITH an organization_id. Under the old strict
     policy this 500'd via the RETURNING re-check; with plain INSERTs it
     must succeed and the audit row must land."""
-    r = admin_client.post(
-        "/api/orgs/me/switch", json={"organization_id": str(test_org.id)}
-    )
+    r = admin_client.post("/api/orgs/me/switch", json={"organization_id": str(test_org.id)})
     assert r.status_code == 200, r.text
 
     row = (

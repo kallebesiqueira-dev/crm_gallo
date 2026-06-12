@@ -645,11 +645,19 @@ class Lead(SoftDeleteMixin, Base):
     owner: Mapped[User | None] = relationship(back_populates="leads")
 
     # GDPR consent tracking
-    contact_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    contact_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     consent_source: Mapped[str | None] = mapped_column(
         Enum(
-            "web_form", "import", "manual", "whatsapp", "api", "other",
-            name="consentsource", create_type=False,
+            "web_form",
+            "import",
+            "manual",
+            "whatsapp",
+            "api",
+            "other",
+            name="consentsource",
+            create_type=False,
         ),
         nullable=True,
     )
@@ -706,11 +714,19 @@ class Customer(SoftDeleteMixin, Base):
     deals: Mapped[list["Deal"]] = relationship(back_populates="customer")
 
     # GDPR consent tracking
-    contact_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    contact_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     consent_source: Mapped[str | None] = mapped_column(
         Enum(
-            "web_form", "import", "manual", "whatsapp", "api", "other",
-            name="consentsource", create_type=False,
+            "web_form",
+            "import",
+            "manual",
+            "whatsapp",
+            "api",
+            "other",
+            name="consentsource",
+            create_type=False,
         ),
         nullable=True,
     )
@@ -782,9 +798,17 @@ class Deal(SoftDeleteMixin, Base):
 
     next_action_type: Mapped[NextActionType | None] = mapped_column(
         Enum(
-            "call", "whatsapp", "email", "proposal", "meeting",
-            "follow_up", "contract", "chase", "other",
-            name="nextactiontype", create_type=False,
+            "call",
+            "whatsapp",
+            "email",
+            "proposal",
+            "meeting",
+            "follow_up",
+            "contract",
+            "chase",
+            "other",
+            name="nextactiontype",
+            create_type=False,
         ),
         nullable=True,
     )

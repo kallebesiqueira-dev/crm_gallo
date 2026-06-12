@@ -95,12 +95,21 @@ async def summarize_customer(
     }
     if open_deals:
         payload["open_deals"] = [
-            {"title": d.title, "value": float(d.value or 0), "currency": d.currency.value, "stage": d.stage.value}
+            {
+                "title": d.title,
+                "value": float(d.value or 0),
+                "currency": d.currency.value,
+                "stage": d.stage.value,
+            }
             for d in open_deals
         ]
     if open_tasks:
         payload["pending_tasks"] = [
-            {"title": t.title, "due_date": str(t.due_date) if t.due_date else None, "priority": t.priority.value}
+            {
+                "title": t.title,
+                "due_date": str(t.due_date) if t.due_date else None,
+                "priority": t.priority.value,
+            }
             for t in open_tasks
         ]
 

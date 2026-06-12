@@ -59,9 +59,7 @@ async def list_customers(
         fts_filter = sa.text("search_vector @@ websearch_to_tsquery('simple', :q)").bindparams(q=q)
         has_fts = (
             await db.execute(
-                select(sa.literal(1))
-                .where(Customer.organization_id == org_id, fts_filter)
-                .limit(1)
+                select(sa.literal(1)).where(Customer.organization_id == org_id, fts_filter).limit(1)
             )
         ).first() is not None
         if has_fts:
@@ -252,12 +250,15 @@ async def summarize(
     ).all()
     open_tasks = (
         await db.execute(
-            select(Task.title, Task.due_date, Task.priority).where(
+            select(Task.title, Task.due_date, Task.priority)
+            .where(
                 Task.customer_id == customer.id,
                 Task.organization_id == org_id,
                 Task.status != TaskStatus.done,
                 Task.deleted_at.is_(None),
-            ).order_by(Task.due_date.asc().nullslast()).limit(5)
+            )
+            .order_by(Task.due_date.asc().nullslast())
+            .limit(5)
         )
     ).all()
 

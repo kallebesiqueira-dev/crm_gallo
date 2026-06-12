@@ -17,13 +17,13 @@ from app.custom_fields import validate_custom_fields
 from app.database import get_db
 from app.deps import ensure_can_mutate, get_current_org_id, get_current_user
 from app.events import EventType, record_event
+from app.metrics import SEARCH_TRGM_FALLBACK
 from app.models import Lead, LeadStage, User
 from app.notifications import NotificationType, notify
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.rate_limit import limiter, user_or_ip_key
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
 from app.services.ai_scoring import score_lead
-from app.metrics import SEARCH_TRGM_FALLBACK
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 settings = get_settings()

@@ -76,9 +76,7 @@ async def _chat_ollama(messages: list[Message], system: str | None, max_tokens: 
     content = data.get("message", {}).get("content", "")
     if not content:
         raise LLMError(f"Ollama returned empty content: {data}")
-    LLM_TOKENS.labels(provider="ollama", direction="input").inc(
-        data.get("prompt_eval_count", 0)
-    )
+    LLM_TOKENS.labels(provider="ollama", direction="input").inc(data.get("prompt_eval_count", 0))
     LLM_TOKENS.labels(provider="ollama", direction="output").inc(data.get("eval_count", 0))
     return content.strip()
 
@@ -133,6 +131,7 @@ async def _chat_openai_compatible(
 
 
 # ---------- Streaming variants ----------
+
 
 async def _stream_anthropic(
     messages: list[Message], system: str | None, max_tokens: int
