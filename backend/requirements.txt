@@ -1,29 +1,29 @@
-fastapi==0.120.4
+fastapi==0.136.3
 starlette==0.49.3
-uvicorn[standard]==0.32.0
-sqlalchemy[asyncio]==2.0.35
-asyncpg==0.29.0
-psycopg2-binary==2.9.9
-alembic==1.13.3
-pydantic==2.9.2
-pydantic-settings==2.5.2
+uvicorn[standard]==0.49.0
+sqlalchemy[asyncio]==2.0.50
+asyncpg==0.31.0
+psycopg2-binary==2.9.12
+alembic==1.18.4
+pydantic==2.13.4
+pydantic-settings==2.14.1
 python-jose[cryptography]==3.5.0
 argon2-cffi==23.1.0
 # bcrypt kept for verifying legacy hashes during migration (remove after all
 # users have re-authenticated once and hashes are fully rotated to argon2).
 bcrypt==4.0.1
-python-multipart==0.0.30
-email-validator==2.2.0
+python-multipart==0.0.32
+email-validator==2.3.0
 redis==5.1.1
-anthropic==0.39.0
-httpx==0.27.2
-pgvector==0.3.4
+anthropic==0.109.1
+httpx==0.28.1
+pgvector==0.4.2
 slowapi==0.1.9
 pyotp==2.9.0
-prometheus-client==0.21.0
-sentry-sdk[fastapi]==2.18.0
-boto3==1.35.60
-arq==0.26.3
+prometheus-client==0.25.0
+sentry-sdk[fastapi]==2.62.0
+boto3==1.43.28
+arq==0.28.0
 jinja2==3.1.6
 # XLSX parsing for bulk imports (ADR-016 imports slice). Pure-Python,
 # read_only mode streams rows so a large sheet doesn't load fully into
@@ -44,10 +44,10 @@ asgi-lifespan==2.1.0
 # Dev / CI tooling — installed in the same image because we run them
 # in container during `docker compose exec backend ruff check`. Pinned
 # so a transitive update doesn't quietly fail CI.
-ruff==0.7.4
-pip-audit==2.7.3
+ruff==0.15.17
+pip-audit==2.10.1
 structlog==24.4.0
 stripe==11.4.1
 # Server-side product analytics (PostHog). Same project key as the frontend's
 # NEXT_PUBLIC_POSTHOG_KEY; gated on POSTHOG_API_KEY (empty -> analytics off).
-posthog==7.18.0
+posthog==7.18.3
