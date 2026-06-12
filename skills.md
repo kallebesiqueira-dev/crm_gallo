@@ -1,20 +1,21 @@
 # Gallo CRM — Single Source of Truth
 
-> **One plan for every agent.** This file unifies the old `plan.md` (product) and
-> `skills.md` (engineering) into a single living document. Read it first; update it
-> when work changes state. When this lands, `plan.md` is removed and this file
-> becomes `skills.md`.
-> **Unified:** 2026-06-11.
+> **One plan for every agent.** This file replaces the old `plan.md` (product plan —
+> **100% executed, all 7 gaps closed 2026-06-12**, see git history for the line-item log)
+> and the old 800-line `skills.md` (engineering backlog — its full verification history
+> lives in git). Read this first; update it when work changes state.
+> **Unified:** 2026-06-12.
 
 ---
 
 ## 0. Coordination protocol — READ FIRST (multiple agents share this repo)
 
 - **Repo is PUBLIC** (`github.com/kallebesiqueira-dev/crm_gallo`). Never commit secrets; never re-paste a leaked value.
-- **Isolation:** work from a fresh clone or a `git worktree` off `origin/main`. Commit ONLY your own files, squash-merge via PR. **Never `git checkout main` in a tree another agent shares**, and don't `git worktree remove --force` a tree that has another agent's `node_modules` junction inside it (the recursive delete follows the junction and wipes the real `node_modules`).
+- **Isolation:** work from a fresh clone (preferred while other sessions are active) or a `git worktree` off `origin/main`. Commit ONLY your own files, squash-merge via PR. **Never `git checkout main` in a tree another agent shares**, and never junction/symlink `node_modules` into a worktree another agent may `worktree remove --force` (the recursive delete follows the junction and wipes the real `node_modules`). Commit+push early.
+- **Git gotcha that bit us:** `git mv` moves the INDEX entry (the old blob) — if you rewrote the file on disk without `git add`, the commit ships the OLD content. After any scripted/file-tool write followed by `git mv`/commit, run `git add <file>` and check `git diff --cached` before committing.
 - **Alembic heads:** every new migration revises the *current* head. If two agents branch a migration off the same head you get **two heads** → prod `alembic upgrade head` fails. Whoever merges second runs `alembic merge -m "merge" <headA> <headB>`.
 - **Shared hot files — announce before editing, expect conflicts:** `backend/app/models.py`, `backend/app/schemas.py`, `frontend/src/lib/api.ts`, `frontend/messages/*.json` (all 7), `frontend/src/components/sidebar.tsx`, and **this document**.
-- **Deploy:** Railway does NOT auto-deploy on git push. After merging to `main`, ship with `railway redeploy -s <frontend|crm_gallo|worker> --from-source -y`. A `NEXT_PUBLIC_*` var only reaches the browser bundle if `frontend/Dockerfile` declares an `ARG`+`ENV` for it (build-arg, baked at build).
+- **Deploy:** Railway does NOT auto-deploy on git push. After merging to `main`, ship with `railway redeploy -s <frontend|crm_gallo|worker> --from-source -y`. A `NEXT_PUBLIC_*` var only reaches the browser bundle if `frontend/Dockerfile` declares an `ARG`+`ENV` for it (build-arg, baked at build) — verify by grepping the live JS chunks.
 
 ---
 
@@ -35,91 +36,98 @@
 
 ## 2. Current state — LIVE in production
 
-The technical core is complete and in production (Railway). The gaps in §3 are product, not infrastructure.
+The technical core AND the product plan (old `plan.md`, 7 gaps) are complete and in production (Railway).
 
-- **Multi-tenant:** Organizations + Postgres RLS (ENABLE+FORCE+GUC, transaction-scoped via ContextVar), memberships, invites (create/accept/resend/prune), per-org seat enforcement, billing migrated to Org.
-- **Auth:** JWT in httpOnly cookies + double-submit CSRF; refresh-token rotation + reuse-detection; MFA TOTP (mandatory for admin/manager, secret Fernet-encrypted at rest); password reset; sessions page; **Microsoft OAuth login** (existing accounts); Cloudflare Turnstile on register; constant-time login. (`/api/auth/login` exempt from CSRF — fixed the stale-cookie lockout.)
-- **Leads / Customers / Companies:** full CRUD, cursor pagination, full-text search + `pg_trgm` fallback, AI scoring (leads) + AI summary (customers).
-- **Deals/Opportunities:** kanban drag-drop, stages, optimistic locking (`If-Match`), FX-approx pipeline value.
-- **Tasks · Calendar (internal) · Activity timeline · Notes · Notifications** (bell + page).
-- **Quotes & Contracts:** full lifecycle quote→contract→e-signature→PDF (WeasyPrint in the worker); `Documents` list; merge-field templates. **Quote line items can be filled from the Products catalog.**
-- **Products/Services catalog:** backend + list/new/edit pages + "add from catalog" in the quote form.
-- **Imports/Exports:** CSV/XLSX, row validation, dedup, streaming export.
-- **WhatsApp omnichannel:** Cloud API, webhook, inbox UI, conversations/messages, read receipts.
-- **AI (one provider):** lead scoring, customer summary, assistant chat, and the public landing chatbot all call **one Groq** endpoint (`LLM_PROVIDER=openai_compat`, `openai/gpt-oss-120b`) via `app/services/llm.py`. No separate keys.
-- **Billing:** Stripe LIVE (Swiss account), Free/Standard/Premium monthly+yearly, seats, 14-day trial, webhook = source of truth.
-- **Public API + keys · Outgoing webhooks** (HMAC, outbox pattern, retry, auto-pause) · **Automations** (no-code trigger→condition→action) · **Reports + Performance** (analytics + sales goals) · **Audit log** (RLS-strict, UI).
-- **Observability:** Prometheus, Grafana dashboard JSON, Sentry (FE+BE, EU), Arq DLQ + admin endpoint, alert rules; **PostHog** product analytics (EU).
-- **i18n:** 7 locales (EN/PT/DE/FR/IT/RM/ES); CI audits key parity.
-- **Onboarding (partial):** `GET /api/onboarding/checklist` + sector pipeline templates (`/api/onboarding/templates` ×7 + apply) — backend done; checklist widget + templates page on the frontend.
-- **CI/CD (GitHub Actions):** backend (ruff/pytest/pip-audit/alembic), frontend (tsc/eslint/vitest), docker (Trivy gate), e2e (Playwright), security, db-backup.
-- **Prod infra:** Railway (frontend / crm_gallo / worker / Postgres / Redis), **Cloudflare R2** (EU, GDPR) for file storage, **Resend** transactional email (`gallo-crm.com`), **Groq** LLM, **Turnstile**, **Microsoft OAuth**, **Cloudflare Pages** (a landing/site deploy — currently failing, see §3).
+- **Follow-up engine (the pitch):** `deals.next_action_type/_at` + `PATCH /api/deals/{id}/next-action`, follow-up states (no-action/today/overdue/future/done) on kanban cards; **"Hoje" action center** at `/hoje` (`GET /api/dashboard/today`: overdue + today's follow-ups, no-next-action, stalled >7d, today's/overdue tasks) with sidebar badge.
+- **Multi-tenant:** Organizations + Postgres RLS (ENABLE+FORCE+GUC, transaction-scoped via ContextVar) on every tenant table **including strict audit SELECT**; memberships, invites (create/accept/accept-while-logged-in/resend/prune), per-org seat enforcement.
+- **Auth:** JWT in httpOnly cookies + double-submit CSRF (`/login` + `/mfa/verify` CSRF-exempt — stale-cookie lockout fix); refresh rotation + reuse-detection; MFA TOTP (mandatory admin/manager, secret Fernet-encrypted); password reset; sessions page; **Microsoft OAuth** (existing accounts; email read from the **id_token**); Turnstile on register (fails open if the provider errors); rate limits on register/assistant/score/imports/webhook-receiver.
+- **Leads / Customers / Companies:** full CRUD, cursor pagination (stable sort), FTS + **pg_trgm typo fallback**, AI scoring + AI summary, **owner assignment**, optimistic locking (Deal/Task/Customer/Lead), **Lead → Customer/Company/Deal conversion** (atomic, dedup-aware, Convert button + timeline events).
+- **Deals:** kanban drag-drop + **deal detail page** (`/pipeline/[id]`: notes/attachments/activity, next-action scheduler, stage switcher), per-deal `currency` inheriting `org.default_currency`; dashboard KPI shows per-currency breakdown (no fake FX).
+- **Tasks (list + month view) · Activity timeline · Notes · Notifications** (header bell with view-all; the standalone calendar and notifications pages left the nav).
+- **Quotes & Contracts:** quote→contract→e-signature→PDF (WeasyPrint in worker); merge-field templates; **line items pre-fillable from the Products catalog**.
+- **Products/Services catalog:** backend + list/new/edit pages + sidebar + quote picker.
+- **Imports/Exports:** CSV/XLSX, row validation, dedup, streaming export; the Duplicati tool is reached from the Imports page.
+- **WhatsApp omnichannel:** Cloud API, webhook, inbox UI, read receipts.
+- **AI (one provider, locale-aware):** lead scoring, customer summary (context: open deals + recent tasks/notes), assistant chat (**SSE streaming + conversation history**), public landing chatbot — all through **one Groq** endpoint via `app/services/llm.py`. **Every LLM call site takes a `locale` and answers in it.**
+- **GDPR:** `contact_consent_at`+`consent_source` on leads/customers; `POST /{leads|customers}/{id}/forget` (anonymize-in-place, audit anchor survives) + `GET .../export`; per-org retention (`organizations.retention_months`, daily worker sweep, leads only); GDPR settings card in `/settings`.
+- **Onboarding:** computed checklist widget + 7 sector pipeline templates (browse/apply page) + empty-states-with-CTA on every list.
+- **Billing:** Stripe LIVE (Swiss account), Standard/Business/Premium monthly+yearly (yearly = exact −20%, totals shown), public checkout honors cycle + currency price points (CHF/GBP/BRL positioned), seats, trial, webhook = source of truth.
+- **Public API + keys · Outgoing webhooks** (HMAC, outbox, retry, auto-pause, settings UI) · **Automations** (trigger→condition→action; triggers incl. customer.created/task.overdue/user.invited; URL-only while it lacks run history) · **Performance screen with a Report tab** (analytics + sales goals + the financial block) · **Audit log** (RLS-strict, UI).
+- **Observability:** Sentry FE+BE (EU; **source-map upload wired, inert until `SENTRY_AUTH_TOKEN` is set**), PostHog (EU), Prometheus metrics + `/ready` probes in-code, Arq DLQ (`arq:dead` + depth gauge) + outbox lag gauge. (Standalone `monitoring/` Grafana/alert artifacts were removed — no Prometheus server in prod.)
+- **Frontend platform:** toast system, list skeletons, responsive-first (every grid has base `grid-cols-1`), 7 locales with CI key-parity audit.
+- **CI/CD:** backend (ruff/pytest/pip-audit/alembic), frontend (tsc/eslint/vitest/i18n-parity), docker (Trivy gate), e2e (Playwright smoke), security (gitleaks/trufflehog), db-backup, Dependabot. All green on `main`.
 
 ---
 
 ## 3. Roadmap — open work
 
-Priority: **P1** = pitch blocker · **P2** = pre-scale · **P3** = later.
+**The product plan is closed.** What remains is engineering quality + user-side actions. Priority: **P2** = pre-scale · **P3** = later.
 
-### P1 — the heart of the pitch
-1. **Next-action fields on Deals** *(in progress — parallel session)* — `deals.next_action_type` (enum: call/whatsapp/email/proposal/meeting/follow-up/contract/collect/other) + `deals.next_action_at`; `PATCH /api/deals/{id}/next-action`; follow-up states (no-action / today / overdue / future / done); kanban card shows status + due.
-2. **"Hoje" / action center** *(in progress — parallel session)* — route `/hoje` (overdue follow-ups, today's follow-ups, deals with no next action, stalled >7d, today's tasks, overdue tasks) backed by `GET /api/dashboard/today`. **This becomes the salesperson's landing screen** (see §4 — the dashboard should converge here).
+### Needs the USER (not code)
+- Set `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` in Railway frontend build env (un-minified prod stack traces).
+- **Romansh (rm)** plan-card copy is machine-translated — needs native review.
+- Legal pages (privacy/security/terms) are templates — need lawyer/DPO review.
+- Footer Instagram link is a `#` placeholder — provide URL or drop it.
+- The three §4 **reworks** (Forms→Inbox, Documenti, Assistant slide-out) need a design decision before coding.
 
-### P2 — before scaling past one customer
-3. **Onboarding < 30 min** *(backend + checklist/templates FE done; remaining:* empty-states-with-CTAs on every empty list, and the 3-question wizard → suggested pipeline*)*.
-4. **Lead → Customer/Company/Deal conversion** *(in progress — parallel session, `lead_convert.py`)* — `POST /api/leads/{id}/convert` (atomic) + "Convert" button + `lead_converted` timeline event.
-5. **GDPR native** *(not started; DEFERRED until the parallel session lands its models/schemas)* — `contact_consent_at` + `consent_source` on leads/customers; `POST /api/leads/{id}/forget` (anonymize PII, keep id for audit); `GET /api/leads/{id}/export`; configurable retention; GDPR settings page.
-6. **Multi-currency** — `currency` on deals with `org.default_currency`; CHF/GBP/BRL in Stripe; currency selector on deal/quote; **replace the hardcoded `FX_TO_EUR` in `api/dashboard.py`** (display per-deal currency, no conversion).
-7. **Products in the frontend** *(DONE — catalog pages + quote line-item picker).* 
+### P2 — engineering
+- **TanStack Query** (kill the ~12 `useEffect`+`setState` fetch patterns) + **openapi-typescript** (kill FE/BE type drift).
+- Pagination UI on lists (backend cursors are ready); replace `…` placeholders with spinners; fix `react-hooks/exhaustive-deps`.
+- ICU pluralization (`{count, plural, …}`) in messages.
+- Webhook follow-ups: `POST /{id}/rotate-secret`, `POST /{id}/test`, delivery metrics, 90d delivery retention prune.
+- **Staging env + post-deploy smoke** (host TBD).
 
-### Open engineering items (genuinely not done)
-- **e2e CI is red** — backend won't boot in CI: the crm_app password-rotation migration's guard fires because CI copies `.env.example` (placeholder password). *(parallel session's area.)*
-- Optimistic locking on **Task + Customer** (Deal done); flip `If-Match` to strict once the FE always echoes `version`.
-- **Frontend data layer:** adopt **TanStack Query** (kill ~12 `useEffect(()=>api.x().then(setX),[])`) + **openapi-typescript** (kill FE/BE type drift); toast system; pagination UI; loading skeletons; fix `react-hooks/exhaustive-deps`.
-- Cache `GET /api/dashboard/stats` in Redis (60s TTL, invalidate on mutation); trash-list pagination; N+1 eager-loads.
-- **Staging env + post-deploy smoke** (host TBD); Sentry source-map upload.
-- v2 follow-ups: Notes (markdown/@mentions), Notifications (SSE push, retention prune), Team (round-robin, user-picker UI), Search (typo tolerance, deals search).
+### P3 — later
+- LLM token-usage tracking per org/user; per-use-case temperature.
+- Note v2: markdown rendering, @-mentions; "Add note" entry on the timeline; deal `score` activity.
+- ts_rank relevance sort; per-locale FTS dictionary; dedicated search engine only past ~1M rows.
+
+### Out of scope until paying customers
+Gmail/Outlook/Calendar sync · RAG/pgvector document search · Instagram/Messenger · mobile app.
 
 ---
 
-## 4. Scope decisions — keep it action-first (what to cut / merge)
+## 4. Scope decisions — keep it action-first
 
-Code is clean (no dead code). The bloat is *scope*: 23 nav routes, several not serving the next-action goal. Recommended (decide before executing — they touch the sidebar/nav/routes):
+Code is clean (no dead code); the bloat was *scope*. Status after the 2026-06-12 execution round (PRs #95/#98/#99 — nav 27 → 22 entries):
 
-| Item | Decision | Why |
+| Item | Decision | Status |
 |---|---|---|
-| **Duplicati** (page + API) | **Cut → P3** | Data housekeeping, not sales execution. Fold dedup into import. |
-| **Automazioni** | **Cut / defer** | Half-built, no run history/audit — reps won't trust an unobservable engine. Prefer task templates + a prominent next-action. |
-| **"Attività recenti"** dashboard widget | **Cut / rename** | Mislabeled — renders recent *leads*, which the Leads page already shows. |
-| **Reports** | **Merge → Performance** | Both are analytics; make them tabs of one screen. |
-| **Calendario** | **Merge → Attività** | Calendar is view-only (can't complete a task from it); Tasks is actionable. Offer a "month view" toggle on Tasks instead. |
-| **Dashboard financial block** (Importi aperti + Preventivi) | **Slim** | Overlapping + empty on young orgs. Dashboard should be **KPIs + "what to do today"** (= the Hoje screen). Move the charts into Reports. |
-| Forms · Documenti · Notifiche (page) · Assistant (page) | **Rework** | Forms→into Inbox queue; Documenti→status hub or drop (Quotes/Contracts already do CRUD); Notifiche→header bell only; Assistant→slide-out from any entity, not a nav page. |
+| **Duplicati** (page + API) | Cut from nav → reach it from Imports | ✅ DONE #95 (button on the Imports header) |
+| **Automazioni** | Defer from nav (no run history/audit yet) | ✅ DONE #95 (route stays URL-reachable) |
+| **"Attività recenti"** dashboard widget | Cut (mislabeled — rendered recent leads) | ✅ DONE #95 (one fewer API call on mount) |
+| **Notifiche** (page) | Header bell only | ✅ DONE #95 (bell gained a view-all link; page off the nav) |
+| **Calendario** | Merge → Attività | ✅ DONE #98 (List\|Month toggle on Tasks; `/calendar` redirects) |
+| **Reports** | Merge → Performance | ✅ DONE #99 (Performance\|Report tabs; `/reports` redirects) |
+| **Dashboard financial block** | Slim — move charts into Reports | ✅ DONE #99 (`<FinancialOverview>` lives in the Report tab) |
+| **Forms** | Rework → into Inbox queue | ⏳ PENDING design decision |
+| **Documenti** | Rework → status hub **or drop** | ⏳ PENDING product decision (two opposite directions) |
+| **Assistant** (page) | Rework → slide-out from any entity | ⏳ PENDING design decision |
 
-**North star:** the dashboard converges into the **Hoje** action screen; cutting/merging the above takes nav from ~23 → ~12 and redirects effort to "what do I do in the next hour?".
+**North star:** the dashboard converges into the **Hoje** action screen. Remaining nav slimming comes from the three pending reworks.
 
 ---
 
 ## 5. Architecture decisions (ADRs — one-liners)
 
-1. Permissive ownership (any auth reads; owner/admin/manager mutates). 2. Stateless JWT (+ Redis refresh revocation). 3. ~~create_all~~ → Alembic owns schema (ADR-012). 4. Audit log best-effort, not transactional. 5. One LLM via `openai_compat` (was Ollama+Anthropic fallback). 6. Background jobs via **Arq** (not Celery). 7. **Outbox** pattern for events (`FOR UPDATE SKIP LOCKED` + backoff + DLQ cap). 8. Postgres FTS first; dedicated engine only past ~1M rows. 9. **Multi-tenant = shared schema + RLS** defense-in-depth; two DB roles (`crm` owner/Alembic, `crm_app` NOBYPASSRLS runtime). 10. Cursor pagination. 11. Stripe webhook = source of truth. 13. Org via `OrgMembership` junction + `User.last_active_org_id`. 14. AI data residency: redact/localize PII before it leaves the tenant. 15. **Money = integer minor units / Decimal, never float.** 16. E-signature via a qualified EU/CH provider. 17. Transactional email = provider-abstracted worker workstream (Resend).
+1. Permissive ownership (any auth reads; owner/admin/manager mutates). 2. Stateless JWT (+ Redis refresh revocation). 3. Alembic owns schema (no create_all). 4. Audit log best-effort, not transactional. 5. One LLM via `openai_compat`. 6. Background jobs via **Arq**. 7. **Outbox** pattern for events (`FOR UPDATE SKIP LOCKED` + backoff + DLQ). 8. Postgres FTS (+pg_trgm) first; engine only past ~1M rows. 9. **Multi-tenant = shared schema + RLS** defense-in-depth; two DB roles (`crm` owner/Alembic, `crm_app` NOBYPASSRLS runtime). 10. Cursor pagination. 11. Stripe webhook = source of truth. 13. Org via `OrgMembership` + `User.last_active_org_id`. 14. AI data residency: redact/localize PII before it leaves the tenant. 15. **Money = integer minor units / Decimal, never float.** 16. E-signature via a qualified EU/CH provider. 17. Transactional email = provider-abstracted worker workstream (Resend).
 
 ---
 
 ## 6. Conventions & where to find things
 
-- **Backend** `backend/app/`: `api/` (routers, one per resource) · `models.py` · `schemas.py` (Pydantic) · `services/` (llm, ai_scoring, ai_assistant, stripe, chatbot) · `worker/` (Arq jobs/settings) · `database.py` (RLS GUC) · `deps.py` (auth/org deps) · `billing/catalog.py` (plan prices). Ruff (line 100, py312); money as Decimal; set the RLS GUC for any tenant query.
-- **Frontend** `frontend/src/`: `app/[locale]/(app)/<route>/page.tsx` (authed pages) · `app/[locale]/(pricing|login|register|...)` (public) · `components/` · `lib/api.ts` (typed client, `credentials:include`, CSRF mirror, single-flight 401 refresh) · `lib/auth.ts` · `messages/<locale>.json` (i18n, 7 locales, parity-checked in CI). Strict TS; responsive-first (every grid needs a base `grid-cols-1`; flag/icon UIs use SVG, never emoji on Windows).
-- **Workflows:** `docker compose up` (db/redis/backend/worker/minio/ollama). After a model change: edit `models.py` → `alembic revision --autogenerate` → review → applied on container restart. CI runs ruff/tsc/eslint/pytest/vitest/trivy/playwright.
+- **Backend** `backend/app/`: `api/` (routers, one per resource) · `models.py` · `schemas.py` · `services/` (llm, ai_scoring, ai_assistant, stripe, chatbot) · `worker/` (Arq jobs/settings) · `database.py` (RLS GUC) · `deps.py` · `billing/catalog.py`. Ruff (line 100, py312); money as Decimal; set the RLS GUC for any tenant query. **Every new AI/LLM feature MUST take a `locale` and instruct the model to answer in it.**
+- **Frontend** `frontend/src/`: `app/[locale]/(app)/<route>/page.tsx` (authed) · `app/[locale]/(pricing|login|register|...)` (public; `/` re-exports `pricing`) · `components/` · `lib/api.ts` (typed client, `credentials:include`, CSRF mirror, single-flight 401 refresh) · `messages/<locale>.json` (7 locales, CI parity). Strict TS; **responsive-first** (base `grid-cols-1` on every multi-col grid; `min-w-0` beside any `flex-1 truncate`; full-screen overlays center in `h-[100dvh]`, portal out of `backdrop-blur` parents); SVG flags/icons, never emoji.
+- **Workflows:** `docker compose up` (db/redis/backend/worker/minio/ollama). Model change: edit `models.py` → `alembic revision --autogenerate` → review → applies on restart. CI runs ruff/tsc/eslint/pytest/vitest/trivy/playwright/i18n-parity.
 
 ---
 
 ## 7. Production infra (live facts)
 
-- **Railway** project `zonal-surprise` / env `production`: services `frontend`, `crm_gallo` (API), `worker`, `Postgres`, `Redis`. Reach prod DB from outside via `DATABASE_PUBLIC_URL` + local psql.
-- **Storage:** Cloudflare R2 (EU jurisdiction, GDPR), bucket `crm-gallo-attachments`, on both `crm_gallo` and `worker` (endpoint MUST be `https://`, `.eu.r2.cloudflarestorage.com`).
+- **Railway** project `zonal-surprise` / env `production`: `frontend` (app.gallo-crm.com), `crm_gallo` (api.gallo-crm.com), `worker`, `Postgres`, `Redis`. Reach prod DB from outside via the Postgres service's `DATABASE_PUBLIC_URL` + local psql (e.g. through `docker exec crm_gallo_db psql …`).
+- **Storage:** Cloudflare R2 (EU jurisdiction, GDPR), bucket `crm-gallo-attachments`, on both `crm_gallo` and `worker` (endpoint MUST be `https://…eu.r2.cloudflarestorage.com`).
 - **Email:** Resend on `gallo-crm.com` (`no-reply@`), DKIM/SPF/MX/DMARC verified.
 - **AI:** Groq (`api.groq.com/openai/v1`, `openai/gpt-oss-120b`). Local `.env` LLM keys stay EMPTY.
-- **Stripe:** LIVE Swiss account; one account only (dual IT+CH would be a separate feature). Local `.env` Stripe keys stay EMPTY.
+- **Stripe:** LIVE Swiss account, one account only; 6 plan prices (monthly + yearly −20%) + non-EUR price points; local `.env` Stripe keys stay EMPTY (never live).
 - **Turnstile** (register) + **Microsoft OAuth** (Azure redirect URI EXACTLY `https://api.gallo-crm.com/api/auth/oauth/microsoft/callback`).
-- **Hosting = Railway only (NO Cloudflare Pages).** A leftover CF Pages project `crmgallo` had been auto-building the repo (via Cloudflare's GitHub app, no repo config) and **failing on every push** — it was redundant (the Next.js app runs on Railway) and was **deleted 2026-06-11**. If "Workers Builds: crmgallo" checks or `cloudflare-workers-and-pages[bot]` emails ever reappear, the fix is to delete the project in the Cloudflare dashboard (Workers & Pages → crmgallo → Settings → Delete), not in repo config.
+- **Hosting = Railway only (NO Cloudflare Pages).** The orphan CF Pages project was deleted 2026-06-11; if `cloudflare-workers-and-pages[bot]` checks/emails reappear, delete the project in the Cloudflare dashboard — there is no CF config in this repo.
