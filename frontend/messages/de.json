@@ -645,6 +645,10 @@
     "typeImported": "Importiert",
     "typeSystem": "Systemereignis"
   },
+  "assistant": {
+    "empty": "Bitten Sie den Assistenten, einen Kunden zusammenzufassen, eine Follow-up-E-Mail zu entwerfen oder den nächsten Schritt vorzuschlagen.",
+    "placeholder": "Nachricht eingeben…"
+  },
   "audit": {
     "title": "Audit-Log",
     "subtitle": "Unveränderliches Protokoll der Organisationsaktionen",

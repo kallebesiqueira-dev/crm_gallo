@@ -645,6 +645,10 @@
     "typeImported": "Importé",
     "typeSystem": "Événement système"
   },
+  "assistant": {
+    "empty": "Demandez à l'assistant de résumer un client, de rédiger un e-mail de suivi ou de suggérer la prochaine étape.",
+    "placeholder": "Écrivez un message…"
+  },
   "audit": {
     "title": "Journal d'audit",
     "subtitle": "Journal immuable des actions de l'organisation",

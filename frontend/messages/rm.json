@@ -645,6 +645,10 @@
     "typeImported": "Importà",
     "typeSystem": "Eveniment dal sistem"
   },
+  "assistant": {
+    "empty": "Dumonda l'assistent da resumar in client, da scriver in e-mail da follow-up u da proponer il proxim pass.",
+    "placeholder": "Scriva in messadi…"
+  },
   "audit": {
     "title": "Protocol d'audit",
     "subtitle": "Register immutabel da las acziuns da l'organisaziun",
