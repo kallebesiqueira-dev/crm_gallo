@@ -170,7 +170,17 @@ async def create_checkout_session(
 # frontend only ever sends the *plan name*; the price is resolved here so a
 # tampered request can never pick its own amount. starter/pro/enterprise are
 # accepted as aliases of standard/business/premium for template parity.
-def _public_price_id(plan_key: str) -> str | None:
+def _public_price_id(plan_key: str, cycle: BillingCycle = BillingCycle.monthly) -> str | None:
+    key = plan_key.strip().lower()
+    if cycle is BillingCycle.yearly:
+        # Yearly has no landing-alias env vars — resolve the per-plan yearly id
+        # so a logged-out visitor who picked "annual" is billed annually, not
+        # the monthly price.
+        canonical = {"starter": "standard", "pro": "business", "enterprise": "premium"}.get(key, key)
+        try:
+            return resolve_stripe_price_id(Plan(canonical), BillingCycle.yearly)
+        except ValueError:
+            return None
     mapping = {
         "standard": settings.stripe_starter_price_id or settings.stripe_price_standard_monthly,
         "business": settings.stripe_pro_price_id or settings.stripe_price_business_monthly,
@@ -179,13 +189,15 @@ def _public_price_id(plan_key: str) -> str | None:
         "pro": settings.stripe_pro_price_id or settings.stripe_price_business_monthly,
         "enterprise": settings.stripe_enterprise_price_id or settings.stripe_price_premium_monthly,
     }
-    return mapping.get(plan_key.strip().lower()) or None
+    return mapping.get(key) or None
 
 
 PUBLIC_PLAN_KEYS = ("standard", "business", "premium", "starter", "pro", "enterprise")
 
 
-async def create_public_checkout_session(plan_key: str) -> str:
+async def create_public_checkout_session(
+    plan_key: str, cycle: BillingCycle = BillingCycle.monthly
+) -> str:
     """Unauthenticated landing checkout. No Organization exists yet, so Stripe
     collects the email and creates the Customer; the buyer is reconciled to an
     org when they create/link an account (webhook + future onboarding). Returns
@@ -193,7 +205,7 @@ async def create_public_checkout_session(plan_key: str) -> str:
     the client."""
     _ensure_configured()
 
-    price_id = _public_price_id(plan_key)
+    price_id = _public_price_id(plan_key, cycle)
     if not price_id:
         raise StripeError(
             f"No Stripe Price ID configured for plan '{plan_key}'. "
@@ -213,8 +225,10 @@ async def create_public_checkout_session(plan_key: str) -> str:
             billing_address_collection="auto",
             success_url=settings.stripe_success_url,
             cancel_url=settings.stripe_cancel_url,
-            metadata={"plan": plan_norm, "source": "landing"},
-            subscription_data={"metadata": {"plan": plan_norm, "source": "landing"}},
+            metadata={"plan": plan_norm, "source": "landing", "cycle": cycle.value},
+            subscription_data={
+                "metadata": {"plan": plan_norm, "source": "landing", "cycle": cycle.value}
+            },
         )
 
     try:

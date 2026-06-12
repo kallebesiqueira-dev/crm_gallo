@@ -252,7 +252,7 @@ export default function PricingPage() {
     setBusyPlan(plan.id);
     setBanner(null);
     try {
-      const url = await createPublicCheckoutSession(plan.id);
+      const url = await createPublicCheckoutSession(plan.id, cycle);
       window.location.assign(url);
     } catch {
       setBusyPlan(null);
