@@ -9,10 +9,8 @@ import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import {
   BarChart3,
-  Bell,
   Building2,
   Calendar,
-  CopyCheck,
   CreditCard,
   Download,
   FileSignature,
@@ -34,7 +32,6 @@ import {
   Users,
   Users2,
   Workflow,
-  Zap,
   CalendarClock,
   type LucideIcon,
 } from "lucide-react";
@@ -70,7 +67,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "customers", label: "customers", icon: Users },
       { href: "companies", label: "companies", icon: Building2 },
-      { href: "duplicates", label: "duplicates", icon: CopyCheck },
     ],
   },
   {
@@ -80,7 +76,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "tasks", label: "tasks", icon: MessagesSquare },
       { href: "calendar", label: "calendar", icon: Calendar },
       { href: "inbox", label: "inbox", icon: WhatsAppIcon },
-      { href: "notifications", label: "notifications", icon: Bell },
     ],
   },
   {
@@ -89,7 +84,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "forms", label: "forms", icon: Inbox },
       { href: "imports", label: "imports", icon: Upload },
       { href: "exports", label: "exports", icon: Download },
-      { href: "automations", label: "automations", icon: Zap },
       { href: "assistant", label: "assistant", icon: Sparkles },
     ],
   },

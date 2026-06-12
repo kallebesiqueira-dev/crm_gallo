@@ -221,6 +221,7 @@
     "customize": "Personalizar",
     "newActivity": "Nueva tarea",
     "recentActivities": "Actividad reciente",
+    "pipelineTasks": "Pipeline y tareas",
     "viewCalendar": "Ver calendario",
     "summary": "Resumen",
     "recentDocuments": "Documentos recientes",
@@ -582,6 +583,7 @@
     "title": "Notificaciones",
     "empty": "Estás al día.",
     "markAllRead": "Marcar todo como leído",
+    "viewAll": "Ver todas las notificaciones",
     "dismiss": "Descartar",
     "all": "Todas",
     "unread": "No leídas"

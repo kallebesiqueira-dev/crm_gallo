@@ -221,6 +221,7 @@
     "customize": "Customize",
     "newActivity": "New task",
     "recentActivities": "Recent activity",
+    "pipelineTasks": "Pipeline ed incumbensas",
     "viewCalendar": "View calendar",
     "summary": "Summary",
     "recentDocuments": "Recent documents",
@@ -582,6 +583,7 @@
     "title": "Notificaziuns",
     "empty": "Tut è en urden.",
     "markAllRead": "Marcar tut sco legì",
+    "viewAll": "Mussar tut las notificaziuns",
     "dismiss": "Allontanar",
     "all": "All",
     "unread": "Unread"

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Download, FileUp, Loader2, Upload } from "lucide-react";
+import { CopyCheck, Download, FileUp, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -28,6 +29,7 @@ function isTerminal(status: ImportStatus): boolean {
 
 export default function ImportsPage() {
   const t = useTranslations("imports");
+  const tNav = useTranslations("nav");
   const locale = useLocale();
 
   const [entityType, setEntityType] = useState<ImportEntityType>("lead");
@@ -100,9 +102,18 @@ export default function ImportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        {/* Dedup lives here since it left the nav: import is where duplicates enter. */}
+        <Button asChild size="sm" variant="outline" className="gap-1.5">
+          <Link href={`/${locale}/duplicates`}>
+            <CopyCheck className="h-4 w-4" />
+            <span>{tNav("duplicates")}</span>
+          </Link>
+        </Button>
       </div>
 
       <Card className="p-6">

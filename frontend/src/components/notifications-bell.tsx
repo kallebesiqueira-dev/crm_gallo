@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -223,6 +224,15 @@ export function NotificationsBell() {
               ))}
             </ul>
           )}
+          <div className="border-t px-3 py-2">
+            <Link
+              href={`/${locale}/notifications`}
+              onClick={() => setOpen(false)}
+              className="block text-center text-xs font-medium text-primary hover:underline"
+            >
+              {t("viewAll")}
+            </Link>
+          </div>
         </div>
       )}
     </div>
