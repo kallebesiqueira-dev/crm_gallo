@@ -46,6 +46,7 @@
   },
   "hoje": {
     "title": "Hoy",
+    "markDone": "Completar",
     "overdueDeals": "Seguimientos atrasados",
     "todayDeals": "Seguimientos de hoy",
     "noActionDeals": "Sin próxima acción",
@@ -342,7 +343,24 @@
     "customer": "Cliente",
     "stage": "Fase",
     "nextAction": "Próxima acción",
-    "noNextAction": "Sin seguimiento planificado"
+    "noNextAction": "Sin seguimiento planificado",
+    "created": "Creado",
+    "actionType": "Tipo de acción",
+    "scheduledFor": "Programada para",
+    "saveFollowUp": "Guardar seguimiento",
+    "stageUpdated": "Fase actualizada",
+    "followUpSaved": "Seguimiento guardado",
+    "actions": {
+      "call": "Llamada",
+      "whatsapp": "WhatsApp",
+      "email": "Correo",
+      "proposal": "Enviar propuesta",
+      "meeting": "Reunión",
+      "follow_up": "Seguimiento",
+      "contract": "Contrato",
+      "chase": "Reclamar respuesta",
+      "other": "Otro"
+    }
   },
   "tasks": {
     "title": "Tareas",
@@ -629,6 +647,7 @@
   },
   "audit": {
     "title": "Registro de auditoría",
+    "subtitle": "Registro inmutable de las acciones de la organización",
     "filterAction": "La acción contiene",
     "filterEntity": "Tipo de entidad",
     "filterSince": "Desde",

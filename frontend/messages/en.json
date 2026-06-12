@@ -46,6 +46,7 @@
   },
   "hoje": {
     "title": "Today",
+    "markDone": "Mark done",
     "overdueDeals": "Overdue follow-ups",
     "todayDeals": "Today's follow-ups",
     "noActionDeals": "No next action",
@@ -342,7 +343,24 @@
     "customer": "Customer",
     "stage": "Stage",
     "nextAction": "Next action",
-    "noNextAction": "No follow-up scheduled"
+    "noNextAction": "No follow-up scheduled",
+    "created": "Created",
+    "actionType": "Action type",
+    "scheduledFor": "Scheduled for",
+    "saveFollowUp": "Save follow-up",
+    "stageUpdated": "Stage updated",
+    "followUpSaved": "Follow-up saved",
+    "actions": {
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "proposal": "Send proposal",
+      "meeting": "Meeting",
+      "follow_up": "Follow-up",
+      "contract": "Contract",
+      "chase": "Chase response",
+      "other": "Other"
+    }
   },
   "tasks": {
     "title": "Tasks",
@@ -629,6 +647,7 @@
   },
   "audit": {
     "title": "Audit log",
+    "subtitle": "Immutable record of organization actions",
     "filterAction": "Action contains",
     "filterEntity": "Entity type",
     "filterSince": "From",

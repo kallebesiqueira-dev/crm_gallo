@@ -30,17 +30,17 @@ const STAGES: DealStage[] = [
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", CHF: "CHF ", USD: "$", GBP: "£" };
 
-const NEXT_ACTION_LABELS: Record<string, string> = {
-  call: "Call",
-  whatsapp: "WhatsApp",
-  email: "Email",
-  proposal: "Send proposal",
-  meeting: "Meeting",
-  follow_up: "Follow-up",
-  contract: "Contract",
-  chase: "Chase response",
-  other: "Other",
-};
+const NEXT_ACTION_TYPES = [
+  "call",
+  "whatsapp",
+  "email",
+  "proposal",
+  "meeting",
+  "follow_up",
+  "contract",
+  "chase",
+  "other",
+] as const;
 
 const NEXT_ACTION_ICONS: Record<string, string> = {
   call: "📞",
@@ -62,8 +62,10 @@ function formatMoney(value: number, currency: string) {
 export default function DealDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations("pipeline");
+  const tActions = useTranslations("pipeline.actions");
   const tStages = useTranslations("leads.stages");
   const tCommon = useTranslations("common");
+  const tNotes = useTranslations("notes");
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
@@ -93,9 +95,9 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
     try {
       const updated = await api.updateDeal(token, deal.id, { stage }, deal.version);
       setDeal(updated);
-      toast("Stage updated", "success");
+      toast(t("stageUpdated"), "success");
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Failed to update stage", "error");
+      toast(e instanceof Error ? e.message : String(e), "error");
     }
   }
 
@@ -115,9 +117,9 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
         deal.version,
       );
       setDeal(updated);
-      toast("Follow-up saved", "success");
+      toast(t("followUpSaved"), "success");
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Failed", "error");
+      toast(e instanceof Error ? e.message : String(e), "error");
     } finally {
       setNaBusy(false);
     }
@@ -151,21 +153,22 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
     new Date(deal.next_action_at).toDateString() === new Date().toDateString();
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
-        {/* Hero card */}
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="min-w-0 space-y-6 lg:col-span-2">
+        {/* Hero card — actions wrap under the title on narrow screens
+            instead of squeezing it (they were shrink-0 beside it). */}
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <CardTitle className="text-2xl">{deal.title}</CardTitle>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="break-words text-2xl">{deal.title}</CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {formatMoney(deal.value, deal.currency)}
                   {" · "}
                   {deal.probability}%
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Badge>{tStages(deal.stage)}</Badge>
                 <Button asChild size="sm">
                   <Link href={`/${locale}/pipeline/${deal.id}/edit`}>
@@ -180,9 +183,9 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label={t("value")} value={formatMoney(deal.value, deal.currency)} />
-            <Field label="Probability" value={`${deal.probability}%`} />
+            <Field label={t("probability")} value={`${deal.probability}%`} />
             <Field
               label={t("expectedClose")}
               value={
@@ -191,7 +194,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                   : null
               }
             />
-            <Field label="Created" value={new Date(deal.created_at).toLocaleDateString(locale)} />
+            <Field label={t("created")} value={new Date(deal.created_at).toLocaleDateString(locale)} />
             {deal.next_action_type && (
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -207,7 +210,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                   }
                 >
                   {NEXT_ACTION_ICONS[deal.next_action_type] ?? "•"}{" "}
-                  {NEXT_ACTION_LABELS[deal.next_action_type] ?? deal.next_action_type}
+                  {tActions(deal.next_action_type)}
                   {deal.next_action_at && (
                     <span className="ml-2 text-xs text-muted-foreground">
                       {new Date(deal.next_action_at).toLocaleString(locale, {
@@ -223,8 +226,10 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
             )}
             {deal.notes && (
               <div className="sm:col-span-2">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Notes</div>
-                <p className="mt-1 whitespace-pre-wrap text-sm">{deal.notes}</p>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {tNotes("title")}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap break-words text-sm">{deal.notes}</p>
               </div>
             )}
           </CardContent>
@@ -271,7 +276,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
             )}
             <form onSubmit={saveNextAction} className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="na-type">Action type</Label>
+                <Label htmlFor="na-type">{t("actionType")}</Label>
                 <select
                   id="na-type"
                   value={naType}
@@ -279,15 +284,15 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="">—</option>
-                  {Object.entries(NEXT_ACTION_LABELS).map(([k, v]) => (
+                  {NEXT_ACTION_TYPES.map((k) => (
                     <option key={k} value={k}>
-                      {NEXT_ACTION_ICONS[k]} {v}
+                      {NEXT_ACTION_ICONS[k]} {tActions(k)}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="na-at">Scheduled for</Label>
+                <Label htmlFor="na-at">{t("scheduledFor")}</Label>
                 <Input
                   id="na-at"
                   type="datetime-local"
@@ -296,7 +301,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                 />
               </div>
               <Button type="submit" size="sm" disabled={naBusy} className="w-full">
-                {naBusy ? "Saving…" : "Save follow-up"}
+                {naBusy ? tCommon("loading") : t("saveFollowUp")}
               </Button>
             </form>
           </CardContent>

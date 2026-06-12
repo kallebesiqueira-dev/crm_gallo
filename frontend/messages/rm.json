@@ -46,6 +46,7 @@
   },
   "hoje": {
     "title": "Oz",
+    "markDone": "Finir",
     "overdueDeals": "Follow-ups en retard",
     "todayDeals": "Follow-ups da oz",
     "noActionDeals": "Senza proxima acziun",
@@ -342,7 +343,24 @@
     "customer": "Client",
     "stage": "Stadio",
     "nextAction": "Proxima acziun",
-    "noNextAction": "Nagin follow-up planisà"
+    "noNextAction": "Nagin follow-up planisà",
+    "created": "Creà",
+    "actionType": "Tip d'acziun",
+    "scheduledFor": "Planisà per",
+    "saveFollowUp": "Memorisar il follow-up",
+    "stageUpdated": "Fasa actualisada",
+    "followUpSaved": "Follow-up memorisà",
+    "actions": {
+      "call": "Clom",
+      "whatsapp": "WhatsApp",
+      "email": "E-mail",
+      "proposal": "Trametter la proposta",
+      "meeting": "Sesida",
+      "follow_up": "Follow-up",
+      "contract": "Contract",
+      "chase": "Suandar",
+      "other": "Auter"
+    }
   },
   "tasks": {
     "title": "Incumbensas",
@@ -629,6 +647,7 @@
   },
   "audit": {
     "title": "Protocol d'audit",
+    "subtitle": "Register immutabel da las acziuns da l'organisaziun",
     "filterAction": "L'acziun cuntegna",
     "filterEntity": "Tip d'entitad",
     "filterSince": "Dapi",
