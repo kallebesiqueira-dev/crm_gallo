@@ -27,15 +27,19 @@ declare global {
 export function Turnstile({
   onVerify,
   onExpire,
+  onError,
 }: {
   onVerify: (token: string) => void;
   onExpire?: () => void;
+  onError?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const onVerifyRef = useRef(onVerify);
   const onExpireRef = useRef(onExpire);
+  const onErrorRef = useRef(onError);
   onVerifyRef.current = onVerify;
   onExpireRef.current = onExpire;
+  onErrorRef.current = onError;
 
   useEffect(() => {
     if (!SITE_KEY) return;
@@ -49,7 +53,10 @@ export function Turnstile({
         theme: "auto",
         callback: (token: string) => onVerifyRef.current(token),
         "expired-callback": () => onExpireRef.current?.(),
-        "error-callback": () => onExpireRef.current?.(),
+        "error-callback": () => {
+          onExpireRef.current?.();
+          onErrorRef.current?.();
+        },
       });
     }
 

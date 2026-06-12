@@ -150,6 +150,7 @@
     "chooseStartingPlan": "Choose your starting plan",
     "acceptTerms": "I agree to the Terms of Service and Privacy Policy.",
     "mustAcceptTerms": "Please accept the terms to continue.",
+    "captchaUnavailable": "Captcha couldn't load — you can continue.",
     "seatLimitReached": "Free plan limit reached. Please upgrade to add more users.",
     "strengthWeak": "Weak",
     "strengthFair": "Fair",
