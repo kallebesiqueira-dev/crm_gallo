@@ -61,14 +61,35 @@ The technical core AND the product plan (old `plan.md`, 7 gaps) are complete and
 
 ## 3. Roadmap — open work
 
-**The product plan is closed.** What remains is engineering quality + user-side actions. Priority: **P2** = pre-scale · **P3** = later.
+**The original product plan is closed.** Work is now driven by the **launch-readiness roadmap below** (user-prioritized, 2026-06-14) plus the standing engineering backlog. Priority order: 🚀 **launch-readiness** → **P2** (pre-scale) → **P3** (later).
+
+### 🚀 LAUNCH-READINESS ROADMAP — PRIORITY (user, 2026-06-14)
+
+Goal: take Gallo CRM to a polished, **Enterprise-grade**, commercial-launch product. Cross-referenced against §2 — **shipped items are compacted, only the delta is new**. Tags: 🆕 new · 🟡 partial · ✅ shipped.
+
+1. **Multi-currency display layer** 🟡 — *shipped:* per-entity `currency` (deal ← `org.default_currency`), Stripe price points (CHF/GBP/BRL), per-currency dashboard breakdown with **no FX** (ADR #15). *New:* user-selectable **display currency** (EUR/CHF/USD/GBP), persisted per user, applied across reports/invoices/customers/stats/dashboards, extensible. ⚠️ **Needs an FX layer** — this reverses the "no fake FX" ADR: pick a rate source + cache + as-of stamping (or convert for display only) and replace the hardcoded FX in `dashboard.py`.
+2. **Onboarding & in-app tutorial** 🟡 — *shipped:* onboarding checklist + 7 sector pipeline templates + empty-states-with-CTA. *New:* interactive first-run guided tour, contextual tooltips app-wide, integrated help center, step-by-step guides (customers/leads/pipeline/reports/finance/settings).
+3. **Landing-page audit** 🆕 — every advertised feature must exist; clear value prop; screenshots/copy match the current UI; SEO; conversion-focused; fully responsive.
+4. **Demo video** 🆕 (marketing, not code) — full + short-marketing + social cuts; cover dashboard, customers, pipeline, reports, multi-currency, automations, differentiators.
+5. **Public README & living docs** 🆕 — polished GitHub README (screenshots/GIFs/video, install + deploy guides, API docs, detailed changelog); refresh docs after each feature. (`skills.md` stays the internal plan.)
+6. **Frontend finalization** 🟡 — *shipped:* responsive-first (base `grid-cols-1`), toasts, skeletons, empty-states, 7-locale CI parity. *New:* sweep incomplete screens / broken components, form validation, error handling, a11y, perf. **Absorbs the P2 "pagination UI + `exhaustive-deps`" item below.**
+7. **Backend finalization** ✅-mostly — APIs/RLS/auth/MFA/authz/audit/rate-limits/Arq-DLQ/observability/db-backup/pytest+e2e are live & mature (§2). *New:* a final hardening + perf + integration-coverage audit only.
+8. **Keyboard shortcuts** 🆕 — `⌘/Ctrl+K` global search (extend the top-bar search into a command palette), `+N` new customer, `+L` new lead, `+S` save, `+D` dashboard, `?` overlay + a dedicated shortcuts page.
+9. **Customer photos** ✅ shipped (PR #38) — `avatar_key` on user/customer/company, presigned R2 GET + image-only multipart POST, `<AvatarUpload>` in edit headers + top-bar chip, default avatar. *New (enhancement only):* drag-&-drop + client-side crop/resize.
+10. **Enterprise UI redesign** 🆕 (major) — squarer/cleaner/denser, cut heavy rounding, standardize spacing/type/cards/tables/forms/buttons, formal **Design System**, stronger hierarchy + info density. Refs: Salesforce/HubSpot/Monday/Pipedrive/Notion/Linear. ⚠️ App-wide — sequence carefully; verify on mobile (responsive-first). Pairs with #11.
+11. **UX/UI audit** 🆕 — full-app pass for inconsistencies, confusing flows, redundant components, missing feedback, nav friction → feeds #10.
+12. **Final QA** 🆕 — pre-launch FE/BE/mobile/responsive/cross-browser/perf tests, security + UX audit, deploy + DB validation; zero critical bugs / incomplete features.
+
+**A. AI Assistant — Gemini-in-Gmail redesign** 🔁 (redesign of the existing assistant, PR #106) — replace the global slide-out with a **smart AI card on the Dashboard** (AI icon + "Como posso ajudar você hoje?" + simplified input + quick-action chips: Analisar Pipeline / Criar Proposta / Gerar Relatório / Resumir Clientes / Criar E-mail) that opens a **bottom-sheet** (mobile 70–85% height, dashboard visible behind + soft blur, rounded top, drag-down to dismiss) / **floating panel** (desktop, centered/anchored, not full-screen). Route-aware context (dashboard→insights, customers→summarize, leads→conversion), SSE streaming (already wired), `Enter` send / `Shift+Enter` newline, contextual suggestion chips. **NOT** a chatbot / standalone page / generic modal. ⚠️ **Awaiting the reference screenshot** (mentioned, not attached).
+
+> **Mission:** audit the *whole* project beyond this list (FE/BE/DB/APIs/auth/flows/landing/docs/infra/deploy/perf/security) and execute the plan to reach Enterprise-grade, commercial-launch quality.
 
 ### Needs the USER (not code)
 - Set `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` in Railway frontend build env (un-minified prod stack traces).
 - **Romansh (rm)** plan-card copy is machine-translated — needs native review.
 - Legal pages (privacy/security/terms) are templates — need lawyer/DPO review.
 - Footer Instagram link is a `#` placeholder — provide URL or drop it.
-- The three §4 **reworks** (Forms→Inbox, Documenti, Assistant slide-out) need a design decision before coding.
+- **AI-assistant Gemini-in-Gmail redesign** (§3 priority **A**) needs the **reference screenshot** + a design sign-off before coding. *(The earlier §4 reworks — Forms→Inbox, Documenti, Assistant slide-out — all shipped: #103/#106/#107.)*
 
 ### P2 — engineering
 - **TanStack Query** (kill the ~12 `useEffect`+`setState` fetch patterns) + **openapi-typescript** (kill FE/BE type drift).
@@ -102,7 +123,7 @@ Code is clean (no dead code); the bloat was *scope*. Status after the 2026-06-12
 | **Dashboard financial block** | Slim — move charts into Reports | ✅ DONE #99 (`<FinancialOverview>` lives in the Report tab) |
 | **Forms** | Rework → into Inbox queue | ✅ DONE #107 (Inbox channel pills WhatsApp\|Forms; queue = recent leads with a web-form source; management stays on `/forms`, off the nav) |
 | **Documenti** | Rework → status hub | ✅ DONE #103 (group tiles w/ counts as filters + search + localized status badges; PDFs stay on detail pages) |
-| **Assistant** (page) | Rework → slide-out from any entity | ✅ DONE #106 (global panel from a top-bar ✨ button; `/assistant` redirects; conversation survives open/close) |
+| **Assistant** (page) | Rework → slide-out from any entity | ✅ DONE #106 (global slide-out from a top-bar ✨); **🔁 redesign requested 2026-06-14** → Gemini-in-Gmail dashboard card + bottom-sheet (see §3 priority **A**) |
 
 **§4 is fully executed (2026-06-12).** Nav went 27 → 20. **North star:** the dashboard converges into the **Hoje** action screen.
 
