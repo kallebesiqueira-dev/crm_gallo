@@ -1669,3 +1669,31 @@ async def prune_expired_invites(ctx: dict) -> dict:
     pruned = result.rowcount
     log.info("invites.pruned", count=pruned)
     return {"pruned": pruned}
+
+
+_WEBHOOK_DELIVERY_RETENTION_DAYS = 90
+
+
+async def prune_webhook_deliveries(ctx: dict) -> dict:
+    """Daily sweep: delete `webhook_deliveries` rows older than 90 days.
+
+    Delivery rows are a triage/audit trail ("did my webhook fire for
+    that lead?"); past a quarter they're noise that only grows the
+    table. The endpoint's own `last_success_at` / `last_failure_at` and
+    `consecutive_failures` live on `webhook_endpoints` and are untouched,
+    so pruning history doesn't blind the auto-pause logic.
+
+    Cut on `scheduled_for` (set at enqueue, always present) rather than
+    `finished_at` (null for rows whose job never ran). `webhook_deliveries`
+    is NOT RLS'd — the worker drains cross-org — so no tenant GUC here.
+    """
+    SessionLocal = ctx["SessionLocal"]
+    cutoff = datetime.now(UTC) - timedelta(days=_WEBHOOK_DELIVERY_RETENTION_DAYS)
+    async with SessionLocal() as db:
+        result = await db.execute(
+            delete(WebhookDelivery).where(WebhookDelivery.scheduled_for < cutoff)
+        )
+        await db.commit()
+    pruned = result.rowcount
+    log.info("webhook_deliveries.pruned", count=pruned)
+    return {"pruned": pruned}

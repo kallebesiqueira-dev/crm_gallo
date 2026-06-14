@@ -489,6 +489,12 @@
     "revoke": "Revocar"
   },
   "webhooks": {
+    "test": "Trametter test",
+    "rotate": "Rotar il secret",
+    "confirmRotate": "Generar in nov secret da signatura per {url}? Il secret actual na funcziuna betg pli immediatamain.",
+    "testOk": "Test consegnà: HTTP {code} en {ms} ms",
+    "testFail": "Test betg reussì: {detail}",
+    "metrics": "{rate}% success · {count} consegnas · p95 {p95} ms",
     "title": "Webhooks",
     "adminOnly": "Mo administraturs pon administrar webhooks.",
     "intro": "Trametta events HTTP POST ad URLs externas sche insatge capita en il CRM. Mintga consegna è suttascritta cun HMAC cun il secret da l'endpoint.",

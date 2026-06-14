@@ -74,7 +74,7 @@ The technical core AND the product plan (old `plan.md`, 7 gaps) are complete and
 - **TanStack Query** (kill the ~12 `useEffect`+`setState` fetch patterns) + **openapi-typescript** (kill FE/BE type drift).
 - Pagination UI on lists (backend cursors are ready); replace `…` placeholders with spinners; fix `react-hooks/exhaustive-deps`.
 - ICU pluralization (`{count, plural, …}`) in messages.
-- Webhook follow-ups: `POST /{id}/rotate-secret`, `POST /{id}/test`, delivery metrics, 90d delivery retention prune.
+- ~~Webhook follow-ups: `POST /{id}/rotate-secret`, `POST /{id}/test`, delivery metrics, 90d delivery retention prune.~~ ✅ DONE — rotate-secret (one-time secret, audited), synchronous `/test` ping (records a `webhook.test` delivery row, never touches auto-pause, works while paused), `GET /{id}/metrics` (windowed counts + success rate + p50/p95 latency), and the `prune_webhook_deliveries` daily cron (03:41 UTC, 90d cutoff). Settings card gained Test + Rotate buttons and a per-endpoint metrics line.
 - **Staging env + post-deploy smoke** (host TBD).
 
 ### P3 — later

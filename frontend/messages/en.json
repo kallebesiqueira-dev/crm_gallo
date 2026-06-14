@@ -489,6 +489,12 @@
     "revoke": "Revoke"
   },
   "webhooks": {
+    "test": "Send test",
+    "rotate": "Rotate secret",
+    "confirmRotate": "Generate a new signing secret for {url}? The current secret stops working immediately.",
+    "testOk": "Test delivered: HTTP {code} in {ms} ms",
+    "testFail": "Test failed: {detail}",
+    "metrics": "{rate}% success · {count} deliveries · p95 {p95} ms",
     "title": "Webhooks",
     "adminOnly": "Only admins can manage webhooks.",
     "intro": "Send HTTP POST events to external URLs when things happen in your CRM. Each delivery is HMAC-signed with your endpoint secret.",

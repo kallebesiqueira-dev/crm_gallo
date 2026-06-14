@@ -6,10 +6,12 @@ import {
   AlertTriangle,
   Check,
   Copy,
+  KeyRound,
   Loader2,
   Pause,
   Play,
   Plus,
+  Send,
   ShieldAlert,
   Trash2,
   Webhook,
@@ -18,7 +20,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api, type WebhookEndpoint, type WebhookEndpointCreated } from "@/lib/api";
+import { useToast } from "@/components/toast-provider";
+import {
+  api,
+  type WebhookDeliveryStats,
+  type WebhookEndpoint,
+  type WebhookEndpointCreated,
+} from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -37,19 +45,35 @@ const EMPTY: Draft = { url: "", description: "", events: "*" };
 export function WebhooksCard({ canManage }: Props) {
   const t = useTranslations("webhooks");
   const format = useFormatter();
+  const toast = useToast();
   const [endpoints, setEndpoints] = useState<WebhookEndpoint[] | null>(null);
+  const [stats, setStats] = useState<Record<string, WebhookDeliveryStats>>({});
   const [draft, setDraft] = useState<Draft | null>(null);
   const [created, setCreated] = useState<WebhookEndpointCreated | null>(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  // id of the endpoint currently running a test / rotate, to disable its row.
+  const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     try {
-      setEndpoints(await api.listWebhooks(token));
+      const eps = await api.listWebhooks(token);
+      setEndpoints(eps);
       setError(null);
+      // Best-effort delivery metrics per endpoint — never blocks the list.
+      const pairs = await Promise.all(
+        eps.map(async (ep) => {
+          try {
+            return [ep.id, await api.getWebhookMetrics(token, ep.id)] as const;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      setStats(Object.fromEntries(pairs.filter((p): p is NonNullable<typeof p> => p !== null)));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
     }
@@ -104,6 +128,43 @@ export function WebhooksCard({ canManage }: Props) {
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Update failed");
+    }
+  }
+
+  async function runTest(ep: WebhookEndpoint) {
+    const token = getToken();
+    if (!token) return;
+    setActionId(ep.id);
+    try {
+      const res = await api.testWebhook(token, ep.id);
+      if (res.delivered) {
+        toast(t("testOk", { code: res.response_code ?? 0, ms: res.latency_ms ?? 0 }), "success");
+      } else {
+        toast(t("testFail", { detail: res.error ?? String(res.response_code ?? "") }), "error");
+      }
+      await refresh();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("testFail", { detail: "" }), "error");
+    } finally {
+      setActionId(null);
+    }
+  }
+
+  async function rotate(ep: WebhookEndpoint) {
+    if (!confirm(t("confirmRotate", { url: ep.url }))) return;
+    const token = getToken();
+    if (!token) return;
+    setActionId(ep.id);
+    setError(null);
+    try {
+      const result = await api.rotateWebhookSecret(token, ep.id);
+      setCreated(result); // reuse the one-time secret banner
+      setCopied(false);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Rotate failed");
+    } finally {
+      setActionId(null);
     }
   }
 
@@ -266,9 +327,42 @@ export function WebhooksCard({ canManage }: Props) {
                           ? t("lastSuccess", { date: fmtDate(ep.last_success_at)! })
                           : t("neverFired")}
                       </p>
+                      {stats[ep.id] && stats[ep.id].total > 0 && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {t("metrics", {
+                            rate: Math.round((stats[ep.id].success_rate ?? 0) * 100),
+                            count: stats[ep.id].total,
+                            p95: stats[ep.id].p95_latency_ms ?? 0,
+                          })}
+                        </p>
+                      )}
                     </div>
                     {canManage && (
                       <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => runTest(ep)}
+                          disabled={actionId === ep.id}
+                          aria-label={t("test")}
+                          title={t("test")}
+                          className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-border hover:bg-muted disabled:opacity-50"
+                        >
+                          {actionId === ep.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => rotate(ep)}
+                          disabled={actionId === ep.id}
+                          aria-label={t("rotate")}
+                          title={t("rotate")}
+                          className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-border hover:bg-muted disabled:opacity-50"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => togglePause(ep)}

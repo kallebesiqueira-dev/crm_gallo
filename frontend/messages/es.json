@@ -489,6 +489,12 @@
     "revoke": "Revocar"
   },
   "webhooks": {
+    "test": "Enviar prueba",
+    "rotate": "Rotar secreto",
+    "confirmRotate": "¿Generar un nuevo secreto de firma para {url}? El secreto actual dejará de funcionar de inmediato.",
+    "testOk": "Prueba entregada: HTTP {code} en {ms} ms",
+    "testFail": "Prueba fallida: {detail}",
+    "metrics": "{rate}% de éxito · {count} entregas · p95 {p95} ms",
     "title": "Webhooks",
     "adminOnly": "Solo los administradores pueden gestionar webhooks.",
     "intro": "Envía eventos HTTP POST a URLs externas cuando ocurra algo en tu CRM. Cada entrega está firmada con HMAC usando el secreto del endpoint.",

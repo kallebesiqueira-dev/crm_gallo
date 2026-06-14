@@ -21,13 +21,15 @@ from __future__ import annotations
 import ipaddress
 import json
 import socket
+import time
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from urllib.parse import urlparse
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import record_audit
@@ -37,12 +39,19 @@ from app.events import EventType
 from app.models import User, UserRole, WebhookDelivery, WebhookEndpoint
 from app.schemas import (
     WebhookDeliveryOut,
+    WebhookDeliveryStats,
     WebhookEndpointCreate,
     WebhookEndpointCreated,
     WebhookEndpointOut,
     WebhookEndpointUpdate,
+    WebhookTestResult,
 )
-from app.webhook_sign import generate_secret
+from app.webhook_sign import SIGNATURE_HEADER, generate_secret, sign_payload
+
+# Inline test-ping tunables — kept local to the request path so we don't
+# import the worker module (and its heavy deps) just to send one POST.
+_TEST_HTTP_TIMEOUT_S = 10.0
+_TEST_RESPONSE_EXCERPT_BYTES = 2048
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
@@ -297,3 +306,190 @@ async def list_deliveries(
         )
         for d in rows
     ]
+
+
+@router.post("/{webhook_id}/rotate-secret", response_model=WebhookEndpointCreated)
+async def rotate_secret(
+    webhook_id: uuid.UUID,
+    user: User = Depends(require_roles(UserRole.admin)),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> WebhookEndpointCreated:
+    """Mint a fresh signing secret for an existing endpoint.
+
+    Dedicated route (not folded into PATCH) so rotation is always an
+    explicit, intentional act — never a side effect of a generic update.
+    Returns the new plaintext secret ONCE, exactly like create; the old
+    secret stops signing immediately, so the receiver must be updated in
+    lockstep (deliveries signed with the old secret will fail to verify).
+    """
+    ep = await _get_or_404(db, webhook_id, org_id)
+    secret = generate_secret()
+    ep.secret = secret
+    await record_audit(
+        db,
+        actor=user,
+        action="webhook.rotate_secret",
+        entity_type="webhook_endpoint",
+        entity_id=ep.id,
+        organization_id=org_id,
+        metadata={"url": ep.url},
+    )
+    await db.commit()
+    await db.refresh(ep)
+    base = _to_out(ep)
+    return WebhookEndpointCreated(**base.model_dump(), secret=secret)
+
+
+@router.post("/{webhook_id}/test", response_model=WebhookTestResult)
+async def test_webhook(
+    webhook_id: uuid.UUID,
+    user: User = Depends(require_roles(UserRole.admin)),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> WebhookTestResult:
+    """Send a synthetic `webhook.test` event to the endpoint, inline.
+
+    Unlike a real delivery (worker, retries, auto-pause), the test ping
+    is a one-shot synchronous POST so the admin sees the receiver's HTTP
+    status right away. It records a `WebhookDelivery` row for the history
+    table but does NOT mutate `consecutive_failures` / `last_*_at` — a
+    test must not nudge a healthy endpoint toward auto-pause. Works even
+    while the endpoint is paused (that's the point: verify before
+    unpausing).
+    """
+    ep = await _get_or_404(db, webhook_id, org_id)
+
+    event_id = uuid.uuid4()
+    body = json.dumps(
+        {
+            "event_id": str(event_id),
+            "event_type": "webhook.test",
+            "organization_id": str(org_id),
+            "payload": {
+                "message": "Test delivery from Gallo CRM",
+                "test": True,
+            },
+        },
+        sort_keys=True,
+    ).encode("utf-8")
+    signature = sign_payload(ep.secret, body)
+
+    delivery = WebhookDelivery(
+        endpoint_id=ep.id,
+        event_id=event_id,
+        event_type="webhook.test",
+        attempt=1,
+    )
+
+    started = time.perf_counter()
+    response_code: int | None = None
+    excerpt: str | None = None
+    err: str | None = None
+    succeeded = False
+    try:
+        async with httpx.AsyncClient(timeout=_TEST_HTTP_TIMEOUT_S) as client:
+            r = await client.post(
+                ep.url,
+                content=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "CRM-Gallo-Webhook/1.0",
+                    SIGNATURE_HEADER: signature,
+                    "X-CRM-Event-Id": str(event_id),
+                    "X-CRM-Event-Type": "webhook.test",
+                },
+            )
+        response_code = r.status_code
+        excerpt = r.text[:_TEST_RESPONSE_EXCERPT_BYTES] or None
+        succeeded = 200 <= r.status_code < 300
+        if not succeeded:
+            err = f"HTTP {r.status_code}"
+    except httpx.HTTPError as e:
+        err = f"{type(e).__name__}: {e}"
+
+    delivery.latency_ms = int((time.perf_counter() - started) * 1000)
+    delivery.response_code = response_code
+    delivery.response_body_excerpt = excerpt
+    delivery.error = err
+    delivery.status = "success" if succeeded else "failed"
+    delivery.finished_at = datetime.now(UTC)
+    db.add(delivery)
+
+    await record_audit(
+        db,
+        actor=user,
+        action="webhook.test",
+        entity_type="webhook_endpoint",
+        entity_id=ep.id,
+        organization_id=org_id,
+        metadata={"url": ep.url, "delivered": succeeded, "response_code": response_code},
+    )
+    await db.commit()
+    await db.refresh(delivery)
+
+    return WebhookTestResult(
+        delivered=succeeded,
+        response_code=response_code,
+        latency_ms=delivery.latency_ms,
+        error=err,
+        delivery_id=delivery.id,
+    )
+
+
+@router.get("/{webhook_id}/metrics", response_model=WebhookDeliveryStats)
+async def webhook_metrics(
+    webhook_id: uuid.UUID,
+    _: User = Depends(require_roles(UserRole.admin, UserRole.manager)),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+    window_days: Annotated[int, Query(ge=1, le=90)] = 7,
+) -> WebhookDeliveryStats:
+    """Aggregate delivery health for one endpoint over the last
+    `window_days` (default 7). Counts + latency percentiles come from
+    `webhook_deliveries`; `success_rate` is over terminal attempts only.
+    """
+    await _get_or_404(db, webhook_id, org_id)
+    cutoff = datetime.now(UTC) - timedelta(days=window_days)
+
+    succeeded_col = func.count().filter(WebhookDelivery.status == "success")
+    failed_col = func.count().filter(WebhookDelivery.status == "failed")
+    pending_col = func.count().filter(WebhookDelivery.status == "pending")
+    row = (
+        await db.execute(
+            select(
+                func.count().label("total"),
+                succeeded_col.label("succeeded"),
+                failed_col.label("failed"),
+                pending_col.label("pending"),
+                func.avg(WebhookDelivery.latency_ms).label("avg_latency"),
+                func.percentile_cont(0.5)
+                .within_group(WebhookDelivery.latency_ms.asc())
+                .label("p50"),
+                func.percentile_cont(0.95)
+                .within_group(WebhookDelivery.latency_ms.asc())
+                .label("p95"),
+            ).where(
+                WebhookDelivery.endpoint_id == webhook_id,
+                WebhookDelivery.scheduled_for >= cutoff,
+            )
+        )
+    ).one()
+
+    terminal = (row.succeeded or 0) + (row.failed or 0)
+    success_rate = (row.succeeded / terminal) if terminal else None
+
+    def _ms(v: float | None) -> int | None:
+        return int(round(v)) if v is not None else None
+
+    return WebhookDeliveryStats(
+        window_days=window_days,
+        total=row.total or 0,
+        succeeded=row.succeeded or 0,
+        failed=row.failed or 0,
+        pending=row.pending or 0,
+        success_rate=round(success_rate, 4) if success_rate is not None else None,
+        avg_latency_ms=_ms(row.avg_latency),
+        p50_latency_ms=_ms(row.p50),
+        p95_latency_ms=_ms(row.p95),
+    )
