@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dashboard import FX_TO_EUR
 from app.audit import record_audit
 from app.database import get_db
 from app.deps import get_current_org_id, get_current_user, require_roles
@@ -31,6 +30,7 @@ from app.schemas import (
     SalesGoalOut,
     SalesGoalUpdate,
 )
+from app.services import fx
 
 router = APIRouter(prefix="/api/performance", tags=["performance"])
 
@@ -73,8 +73,8 @@ def _median(xs: list[float]) -> float | None:
     return s[mid] if n % 2 else (s[mid - 1] + s[mid]) / 2
 
 
-def _value_eur(value: Decimal | None, currency) -> Decimal:
-    return (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+def _value_eur(value: Decimal | None, currency, mult: dict[str, Decimal]) -> Decimal:
+    return (value or ZERO) * mult.get(currency.value, Decimal("1"))
 
 
 # ----- summary ---------------------------------------------------------------
@@ -118,12 +118,13 @@ async def summary(
         )
     ).scalar_one()
 
+    fx_mult = (await fx.get_snapshot(db)).to_eur_multipliers()
     won_value = ZERO
     won_count = len(won_rows)
     days: list[float] = []
     per_owner: dict[uuid.UUID | None, list[Decimal | int]] = {}
     for value, currency, owner_id, created_at, updated_at in won_rows:
-        eur = _value_eur(value, currency)
+        eur = _value_eur(value, currency, fx_mult)
         won_value += eur
         if created_at is not None and updated_at is not None:
             days.append(max((updated_at - created_at).total_seconds() / 86400.0, 0.0))
@@ -210,7 +211,8 @@ async def _attainment(db: AsyncSession, org_id: uuid.UUID, goal: SalesGoal) -> t
         stmt = stmt.where(Deal.team_id == goal.team_id)
     rows = (await db.execute(stmt)).all()
     if goal.metric == GoalMetric.revenue:
-        achieved = float(q2(sum((_value_eur(v, c) for v, c in rows), ZERO)))
+        fx_mult = (await fx.get_snapshot(db)).to_eur_multipliers()
+        achieved = float(q2(sum((_value_eur(v, c, fx_mult) for v, c in rows), ZERO)))
     else:
         achieved = float(len(rows))
     target = float(goal.target)

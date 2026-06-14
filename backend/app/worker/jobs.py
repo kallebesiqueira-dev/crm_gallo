@@ -18,7 +18,8 @@ import asyncio
 import json
 import time
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 
 import httpx
 import structlog
@@ -35,6 +36,7 @@ from app.models import (
     Conversation,
     Customer,
     Deal,
+    FxRate,
     ImportEntityType,
     ImportJob,
     ImportMode,
@@ -1697,3 +1699,67 @@ async def prune_webhook_deliveries(ctx: dict) -> dict:
     pruned = result.rowcount
     log.info("webhook_deliveries.pruned", count=pruned)
     return {"pruned": pruned}
+
+
+# EUR-based quotes we refresh. Covers the Currency enum (EUR/CHF/USD/GBP)
+# plus BRL (Stripe price point). EUR is the base, so it isn't fetched.
+_FX_QUOTES = ("CHF", "USD", "GBP", "BRL")
+_FX_FEED_URL = "https://api.frankfurter.app/latest"
+_FX_HTTP_TIMEOUT_S = 15.0
+
+
+async def refresh_fx_rates(ctx: dict) -> dict:
+    """Pull EUR-based FX rates from the ECB feed (frankfurter.app) and UPSERT
+    them into `fx_rates`. Powers `app.services.fx` / the dashboard's display
+    conversion (launch roadmap #1) — replaces the old hardcoded FX dict.
+
+    Best-effort: on any feed/HTTP error we log and leave the existing rows in
+    place (last-good wins; an empty table just means the service uses its
+    static fallback). `fx_rates` is global reference data, NOT RLS'd — no
+    tenant GUC. Idempotent: one row per (base, quote), UPSERTed in place.
+    """
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+    SessionLocal = ctx["SessionLocal"]
+    try:
+        async with httpx.AsyncClient(timeout=_FX_HTTP_TIMEOUT_S) as client:
+            r = await client.get(
+                _FX_FEED_URL, params={"from": "EUR", "to": ",".join(_FX_QUOTES)}
+            )
+            r.raise_for_status()
+            data = r.json()
+    except (httpx.HTTPError, ValueError) as e:
+        log.warning("fx.refresh_failed", error=f"{type(e).__name__}: {e}")
+        return {"status": "error", "updated": 0}
+
+    as_of = date.fromisoformat(data["date"])  # ECB publication date
+    rates = data.get("rates", {})
+    now = datetime.now(UTC)
+    updated = 0
+    async with SessionLocal() as db:
+        for quote, value in rates.items():
+            stmt = (
+                pg_insert(FxRate)
+                .values(
+                    base="EUR",
+                    quote=quote,
+                    rate=Decimal(str(value)),
+                    as_of=as_of,
+                    source="frankfurter",
+                    fetched_at=now,
+                )
+                .on_conflict_do_update(
+                    index_elements=["base", "quote"],
+                    set_={
+                        "rate": Decimal(str(value)),
+                        "as_of": as_of,
+                        "source": "frankfurter",
+                        "fetched_at": now,
+                    },
+                )
+            )
+            await db.execute(stmt)
+            updated += 1
+        await db.commit()
+    log.info("fx.refreshed", updated=updated, as_of=str(as_of))
+    return {"status": "ok", "updated": updated, "as_of": str(as_of)}

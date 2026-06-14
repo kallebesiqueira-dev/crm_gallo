@@ -11,6 +11,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -51,6 +52,15 @@ def _seed_deal(
 
 
 def test_summary_aggregates(db: Session, admin_client, test_org, admin_user):
+    # Pin a known USD rate so the EUR rollup is deterministic regardless of
+    # the live/fallback FX rates: 1 EUR = 1.25 USD → 1 USD = 0.80 EUR.
+    db.execute(text("DELETE FROM fx_rates"))
+    db.execute(
+        text(
+            "INSERT INTO fx_rates (base, quote, rate, as_of, source, fetched_at) "
+            "VALUES ('EUR', 'USD', 1.25, '2026-06-13', 'frankfurter', now())"
+        )
+    )
     # Two won deals (EUR + USD) + one lost + one open, all in the current month.
     _seed_deal(db, test_org.id, stage=DealStage.won, value="1000", owner_id=admin_user.id)
     _seed_deal(
@@ -72,9 +82,11 @@ def test_summary_aggregates(db: Session, admin_client, test_org, admin_user):
     body = r.json()
     assert body["won_count"] == 2
     assert body["lost_count"] == 1
-    # 1000 EUR + 1000 USD * 0.93 = 1930.0
-    assert body["won_value_eur"] == 1930.0
+    # 1000 EUR + 1000 USD * 0.80 = 1800.0
+    assert body["won_value_eur"] == 1800.0
     assert body["win_rate"] == round(2 / 3, 4)
+    db.execute(text("DELETE FROM fx_rates"))  # don't leak the seeded rate
+    db.commit()
     # Leaderboard credits the owner with both won deals.
     assert len(body["leaderboard"]) == 1
     assert body["leaderboard"][0]["won_count"] == 2

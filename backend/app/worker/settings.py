@@ -43,6 +43,7 @@ from app.worker.jobs import (
     process_import,
     prune_expired_invites,
     prune_webhook_deliveries,
+    refresh_fx_rates,
     scan_overdue_tasks,
     scan_stale_leads,
     score_lead,
@@ -121,6 +122,7 @@ class WorkerSettings:
         dlq_wrap(send_whatsapp_message),
         dlq_wrap(mirror_whatsapp_media),
         dlq_wrap(mark_whatsapp_read),
+        dlq_wrap(refresh_fx_rates),
     ]
     # Cron set: fires every 5 seconds. Outbox publishers commit
     # synchronously in the request path, so events appear under 1
@@ -198,6 +200,20 @@ class WorkerSettings:
             run_at_startup=False,
             unique=True,
             max_tries=1,
+        ),
+        # Refresh FX rates from the ECB feed. Daily at 05:11 UTC — the ECB
+        # publishes ~16:00 CET on business days, so the prior day's rates are
+        # always available by morning. `run_at_startup=True` so a fresh deploy
+        # populates `fx_rates` immediately instead of waiting on the static
+        # fallback until the next tick. unique so two nodes don't double-fetch.
+        cron(
+            refresh_fx_rates,
+            name="refresh_fx_rates",
+            hour={5},
+            minute={11},
+            run_at_startup=True,
+            unique=True,
+            max_tries=3,
         ),
     ]
     redis_settings = _redis_settings_from_url()

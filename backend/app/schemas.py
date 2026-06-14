@@ -1630,6 +1630,26 @@ class DashboardStats(BaseModel):
     monthly_revenue: list[MonthValue] = Field(default_factory=list)
     revenue_total_eur: float = 0.0
     quotes: QuotesSummary = Field(default_factory=QuotesSummary)
+    # FX provenance for the *_eur headline conversions: the EUR-based rate
+    # set used (1 EUR = rate[ccy]), the ECB publication date the rates are
+    # from (null when the static fallback is in play), and the source. Lets
+    # the frontend show "rates as of <date>" and build a display-currency
+    # selector by multiplying the EUR figures client-side.
+    fx_rates: dict[str, float] = Field(default_factory=dict)
+    fx_as_of: date | None = None
+    fx_source: str = "static-fallback"
+
+
+class FxRatesOut(BaseModel):
+    """Current EUR-based FX rates for the display-currency layer (roadmap #1).
+
+    `rates` is "1 EUR = rate[ccy]" (e.g. USD ≈ 1.08), always including EUR:1.
+    `as_of` is the ECB publication date (null for the static fallback)."""
+
+    base: str = "EUR"
+    rates: dict[str, float]
+    as_of: date | None = None
+    source: str
 
 
 # ---------- Performance / KPI ----------
