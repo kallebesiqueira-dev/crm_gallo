@@ -1082,7 +1082,7 @@
       "ai": {
         "eyebrow": "Copilot IA",
         "title": "In'IA che conuscha tes pipeline aschi bain sco ti.",
-        "body": "Punctuescha mintga lead, redatga e-mails da follow-up e mussa la proxima meglra acziun — alimentà da Claude e basà sin tias datas CRM.",
+        "body": "Punctuescha mintga lead, redatga e-mails da follow-up e mussa la proxima meglra acziun — alimentà da IA avanzada e basà sin tias datas CRM.",
         "bullet": {
           "1": "Lead scoring cun probabilitad da conversiun ed analisa da ristga",
           "2": "E-mails da follow-up en in clic en la lingua dal client",
@@ -1200,7 +1200,7 @@
       "upTo": "Fin a {n}",
       "unlimited": "Illimità",
       "coreCrm": "Leads, clients, affars, pipeline",
-      "aiScoringPro": "Scoring IA avanzà (Claude)",
+      "aiScoringPro": "Scoring IA avanzà",
       "aiAssistant": "Assistent IA illimità",
       "reports": "Rapports e grafics",
       "automations": "Automatisaziuns da workflow",
@@ -1238,7 +1238,7 @@
       },
       "6": {
         "q": "Co funcziuna l'AI scoring?",
-        "a": "Mintga lead retschaiva ina nota 0-100 basada sin ils champs emplenids, las activitads registradas ed il context historic. Nus utilisain Claude Sonnet per il raschunament cun in fallback euristic sch'il provider è offline. Transparent: ti vesas adina qual model ha respundì e sin tge datas."
+        "a": "Mintga lead retschaiva ina nota 0-100 basada sin ils champs emplenids, las activitads registradas ed il context historic. Nus utilisain in model d'IA avanzà per il raschunament cun in fallback euristic sch'il provider è offline. Transparent: ti vesas adina qual model ha respundì e sin tge datas."
       },
       "7": {
         "q": "Poss jau self-hostar Gallo CRM?",
@@ -1280,7 +1280,7 @@
         "features": [
           "Utilisaders illimitads",
           "Tut da Free",
-          "Scoring IA avanzà (Claude Sonnet)",
+          "Scoring IA avanzà",
           "Assistent IA illimità",
           "Offertas e propostas PDF",
           "Rapports e grafics",
@@ -1307,8 +1307,7 @@
         "features": [
           "Tut da Business",
           "Automatisaziuns da workflow",
-          "Integraziuns e-mail, chalender e WhatsApp",
-          "RAG: assistent cun base da savair",
+          "Integraziun WhatsApp",
           "API publica + clavs API",
           "Manager da conto dedicà"
         ]

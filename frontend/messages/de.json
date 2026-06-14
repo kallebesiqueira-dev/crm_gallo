@@ -1082,7 +1082,7 @@
       "ai": {
         "eyebrow": "KI-Copilot",
         "title": "Eine KI, die Ihre Pipeline so gut kennt wie Sie.",
-        "body": "Bewerten Sie jeden Lead, formulieren Sie Follow-up-E-Mails und sehen Sie die nächste beste Aktion — angetrieben von Claude und basierend auf Ihren CRM-Daten.",
+        "body": "Bewerten Sie jeden Lead, formulieren Sie Follow-up-E-Mails und sehen Sie die nächste beste Aktion — angetrieben von fortschrittlicher KI und basierend auf Ihren CRM-Daten.",
         "bullet": {
           "1": "Lead-Scoring mit Konvertierungswahrscheinlichkeit und Risikoanalyse",
           "2": "Follow-up-E-Mails per Klick in der Sprache des Kunden",
@@ -1200,7 +1200,7 @@
       "upTo": "Bis zu {n}",
       "unlimited": "Unbegrenzt",
       "coreCrm": "Leads, Kunden, Deals, Pipeline",
-      "aiScoringPro": "Erweitertes KI-Scoring (Claude)",
+      "aiScoringPro": "Erweitertes KI-Scoring",
       "aiAssistant": "Unbegrenzter KI-Assistent",
       "reports": "Berichte und Charts",
       "automations": "Workflow-Automatisierungen",
@@ -1238,7 +1238,7 @@
       },
       "6": {
         "q": "Wie funktioniert das KI-Scoring?",
-        "a": "Jeder Lead erhält einen Score 0-100 basierend auf ausgefüllten Feldern, protokollierten Aktivitäten und historischem Kontext. Wir nutzen Claude Sonnet für die Argumentation, mit heuristischem Fallback wenn der Provider offline ist. Transparent: Sie sehen immer, welches Modell geantwortet hat und auf welchen Daten."
+        "a": "Jeder Lead erhält einen Score 0-100 basierend auf ausgefüllten Feldern, protokollierten Aktivitäten und historischem Kontext. Wir nutzen ein fortschrittliches KI-Modell für die Argumentation, mit heuristischem Fallback wenn der Provider offline ist. Transparent: Sie sehen immer, welches Modell geantwortet hat und auf welchen Daten."
       },
       "7": {
         "q": "Kann ich Gallo CRM selbst hosten?",
@@ -1280,7 +1280,7 @@
         "features": [
           "Unbegrenzte Nutzer",
           "Alles aus Free",
-          "Erweitertes KI-Scoring (Claude Sonnet)",
+          "Erweitertes KI-Scoring",
           "Unbegrenzter KI-Assistent",
           "Angebote & PDF-Vorschläge",
           "Berichte und Charts",
@@ -1307,8 +1307,7 @@
         "features": [
           "Alles aus Business",
           "Workflow-Automatisierungen",
-          "E-Mail-, Kalender- und WhatsApp-Integrationen",
-          "RAG: Assistent mit Wissensdatenbank",
+          "WhatsApp-Integration",
           "Öffentliche API + API-Schlüssel",
           "Dedizierter Account-Manager"
         ]
