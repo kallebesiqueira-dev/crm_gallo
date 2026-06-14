@@ -276,14 +276,22 @@ async def create_portal_session(*, org: Organization, return_url: str, db: Async
 
 
 def verify_webhook(payload: bytes, signature: str) -> dict[str, Any]:
-    """Construct and verify a Stripe event from raw body + signature."""
+    """Verify a Stripe event from raw body + signature, returning a plain dict.
+
+    We use the SDK only to validate the signature (it raises on a bad one),
+    then parse the raw payload ourselves. Since stripe-python v15, StripeObject
+    no longer subclasses dict — `.get()`/`.items()` were removed — so returning
+    the SDK event object would break the `.get()`-based handlers below. Parsing
+    the bytes keeps the handlers working and decouples them from the SDK's
+    object model.
+    """
     if not settings.stripe_webhook_secret:
         raise StripeNotConfigured("STRIPE_WEBHOOK_SECRET is not configured.")
     try:
-        event = stripe.Webhook.construct_event(payload, signature, settings.stripe_webhook_secret)
+        stripe.Webhook.construct_event(payload, signature, settings.stripe_webhook_secret)
     except (stripe.SignatureVerificationError, ValueError) as e:
         raise StripeError(f"Invalid webhook signature: {e}") from e
-    return event
+    return json.loads(payload)
 
 
 async def process_event(event: dict[str, Any], db: AsyncSession) -> None:
