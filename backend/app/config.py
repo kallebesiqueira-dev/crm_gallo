@@ -332,6 +332,19 @@ class Settings(BaseSettings):
 
         _log = _logging.getLogger(__name__)
 
+        # Visibility + fail-fast on a misconfigured ENVIRONMENT: is_production is
+        # derived ONLY from this value, so a typo ("prodction", a trailing space)
+        # silently evaluates is_production=False and boots with Secure cookies,
+        # HSTS and /metrics auth all OFF. Log the resolved value (never silent)
+        # and refuse to start on an unrecognized one.
+        known_envs = {"development", "local", "ci", "test", "staging", "production", "prod"}
+        _log.info("runtime environment=%r is_production=%s", self.environment, self.is_production)
+        if self.environment.strip().lower() not in known_envs:
+            raise RuntimeError(
+                f"ENVIRONMENT={self.environment!r} is not recognized. Set it explicitly "
+                f"to one of: {', '.join(sorted(known_envs))}."
+            )
+
         if self.jwt_secret in _DEFAULT_SECRETS or len(self.jwt_secret) < 32:
             msg = (
                 f"Insecure JWT_SECRET (length={len(self.jwt_secret)}). "
