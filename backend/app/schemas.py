@@ -494,6 +494,40 @@ class WebhookDeliveryOut(BaseModel):
     finished_at: datetime | None = None
 
 
+class WebhookTestResult(BaseModel):
+    """Outcome of a synchronous `POST /api/webhooks/{id}/test` ping.
+
+    A test ping is delivered inline (not via the worker) so the admin
+    sees the receiver's HTTP status immediately. It records a
+    `WebhookDelivery` row (event_type `webhook.test`) for the history
+    table but intentionally does NOT touch `consecutive_failures` /
+    auto-pause — a failed test must not pause a real endpoint."""
+
+    delivered: bool
+    response_code: int | None = None
+    latency_ms: int | None = None
+    error: str | None = None
+    delivery_id: uuid.UUID
+
+
+class WebhookDeliveryStats(BaseModel):
+    """Aggregate delivery health for one endpoint over a recent window,
+    surfaced on the webhook detail/settings card. Counts come from the
+    `webhook_deliveries` rows whose `scheduled_for` falls in the window;
+    `success_rate` is over terminal (success+failed) attempts only so a
+    burst of still-pending rows doesn't skew it."""
+
+    window_days: int
+    total: int
+    succeeded: int
+    failed: int
+    pending: int
+    success_rate: float | None = None
+    avg_latency_ms: int | None = None
+    p50_latency_ms: int | None = None
+    p95_latency_ms: int | None = None
+
+
 class OutboxEventOut(BaseModel):
     """One outbox row, surfaced via the admin /api/outbox endpoint.
     `payload` ships as the raw JSON string (already serialised by

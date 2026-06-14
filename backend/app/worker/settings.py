@@ -42,6 +42,7 @@ from app.worker.jobs import (
     mirror_whatsapp_media,
     process_import,
     prune_expired_invites,
+    prune_webhook_deliveries,
     scan_overdue_tasks,
     scan_stale_leads,
     score_lead,
@@ -182,6 +183,18 @@ class WorkerSettings:
             name="prune_expired_invites",
             hour={3},
             minute={17},
+            run_at_startup=False,
+            unique=True,
+            max_tries=1,
+        ),
+        # Prune webhook_deliveries older than 90 days. Daily at 03:41
+        # (off-peak, distinct minute from the other prunes so two
+        # sweeps don't contend on the same node tick).
+        cron(
+            prune_webhook_deliveries,
+            name="prune_webhook_deliveries",
+            hour={3},
+            minute={41},
             run_at_startup=False,
             unique=True,
             max_tries=1,

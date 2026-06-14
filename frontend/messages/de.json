@@ -489,6 +489,12 @@
     "revoke": "Widerrufen"
   },
   "webhooks": {
+    "test": "Test senden",
+    "rotate": "Secret rotieren",
+    "confirmRotate": "Neues Signatur-Secret für {url} erzeugen? Das aktuelle Secret wird sofort ungültig.",
+    "testOk": "Test zugestellt: HTTP {code} in {ms} ms",
+    "testFail": "Test fehlgeschlagen: {detail}",
+    "metrics": "{rate}% Erfolg · {count} Zustellungen · p95 {p95} ms",
     "title": "Webhooks",
     "adminOnly": "Nur Admins können Webhooks verwalten.",
     "intro": "Sende HTTP-POST-Events an externe URLs, wenn etwas in deinem CRM passiert. Jede Lieferung ist HMAC-signiert.",

@@ -558,6 +558,26 @@ export interface WebhookEndpointUpdate {
   paused?: boolean | null;
 }
 
+export interface WebhookTestResult {
+  delivered: boolean;
+  response_code: number | null;
+  latency_ms: number | null;
+  error: string | null;
+  delivery_id: string;
+}
+
+export interface WebhookDeliveryStats {
+  window_days: number;
+  total: number;
+  succeeded: number;
+  failed: number;
+  pending: number;
+  success_rate: number | null;
+  avg_latency_ms: number | null;
+  p50_latency_ms: number | null;
+  p95_latency_ms: number | null;
+}
+
 export interface DashboardStats {
   total_leads: number;
   leads_by_stage: Record<string, number>;
@@ -2385,6 +2405,21 @@ export const api = {
       method: "DELETE",
       token,
     }),
+  rotateWebhookSecret: (token: string, id: string) =>
+    request<WebhookEndpointCreated>(
+      `/api/webhooks/${encodeURIComponent(id)}/rotate-secret`,
+      { method: "POST", token },
+    ),
+  testWebhook: (token: string, id: string) =>
+    request<WebhookTestResult>(`/api/webhooks/${encodeURIComponent(id)}/test`, {
+      method: "POST",
+      token,
+    }),
+  getWebhookMetrics: (token: string, id: string, windowDays = 7) =>
+    request<WebhookDeliveryStats>(
+      `/api/webhooks/${encodeURIComponent(id)}/metrics?window_days=${windowDays}`,
+      { token },
+    ),
 
   // ── WhatsApp inbox (omnichannel, phase 1) ───────────────────────
   // Accounts are admin-gated on the backend (connect/update/delete);
