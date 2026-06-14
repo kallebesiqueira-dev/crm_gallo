@@ -1723,9 +1723,7 @@ async def refresh_fx_rates(ctx: dict) -> dict:
     SessionLocal = ctx["SessionLocal"]
     try:
         async with httpx.AsyncClient(timeout=_FX_HTTP_TIMEOUT_S) as client:
-            r = await client.get(
-                _FX_FEED_URL, params={"from": "EUR", "to": ",".join(_FX_QUOTES)}
-            )
+            r = await client.get(_FX_FEED_URL, params={"from": "EUR", "to": ",".join(_FX_QUOTES)})
             r.raise_for_status()
             data = r.json()
     except (httpx.HTTPError, ValueError) as e:
