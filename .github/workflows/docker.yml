@@ -64,7 +64,7 @@ jobs:
         # Skip on PRs — no credentials to push, and the build below
         # uses `push: false` for PRs anyway.
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
