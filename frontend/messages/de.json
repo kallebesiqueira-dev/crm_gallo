@@ -251,6 +251,10 @@
     "customizeHint": "Sichtbare Bereiche"
   },
   "leads": {
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "website": "Website",
+    "address": "Adresse",
     "title": "Leads",
     "new": "Neuer Lead",
     "search": "Nach Name, E-Mail, Firma suchen...",

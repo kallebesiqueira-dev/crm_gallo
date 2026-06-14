@@ -120,16 +120,16 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field id="first_name" label="First name" required value={form.first_name} onChange={(v) => set("first_name", v)} />
-          <Field id="last_name" label="Last name" required value={form.last_name} onChange={(v) => set("last_name", v)} />
-          <Field id="email" label="Email" type="email" value={form.email} onChange={(v) => set("email", v)} />
-          <Field id="phone" label="Phone" value={form.phone} onChange={(v) => set("phone", v)} />
+          <Field id="first_name" label={t("firstName")} required value={form.first_name} onChange={(v) => set("first_name", v)} />
+          <Field id="last_name" label={t("lastName")} required value={form.last_name} onChange={(v) => set("last_name", v)} />
+          <Field id="email" label={t("email")} type="email" value={form.email} onChange={(v) => set("email", v)} />
+          <Field id="phone" label={t("phone")} value={form.phone} onChange={(v) => set("phone", v)} />
           <Field id="company" label={t("company")} value={form.company} onChange={(v) => set("company", v)} />
-          <Field id="industry" label="Industry" value={form.industry} onChange={(v) => set("industry", v)} />
-          <Field id="country" label="Country (ISO-2)" maxLength={2} value={form.country} onChange={(v) => set("country", v.toUpperCase())} />
-          <Field id="company_size" label="Company size" type="number" value={form.company_size} onChange={(v) => set("company_size", v)} />
-          <Field id="budget" label="Budget" type="number" value={form.budget} onChange={(v) => set("budget", v)} />
-          <Field id="source" label="Source" value={form.source} onChange={(v) => set("source", v)} />
+          <Field id="industry" label={t("industry")} value={form.industry} onChange={(v) => set("industry", v)} />
+          <Field id="country" label={t("country")} maxLength={2} value={form.country} onChange={(v) => set("country", v.toUpperCase())} />
+          <Field id="company_size" label={t("companySize")} type="number" value={form.company_size} onChange={(v) => set("company_size", v)} />
+          <Field id="budget" label={t("budget")} type="number" value={form.budget} onChange={(v) => set("budget", v)} />
+          <Field id="source" label={t("source")} value={form.source} onChange={(v) => set("source", v)} />
           <div className="space-y-2">
             <Label htmlFor="stage">{t("stage")}</Label>
             <select
@@ -144,7 +144,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
             </select>
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{t("notes")}</Label>
             <textarea
               id="notes"
               className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
