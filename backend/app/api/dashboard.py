@@ -23,6 +23,7 @@ from app.models import (
 from app.money import ZERO, q2
 from app.redis_client import get_redis
 from app.schemas import DashboardStats, FunnelStageStat, HojeResponse, MonthValue, QuotesSummary
+from app.services import fx
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -37,16 +38,10 @@ async def invalidate_dashboard_cache(org_id: uuid.UUID) -> None:
         pass
 
 
-# Rough conversion to EUR for quick pipeline-value approximation.
-# In production, fetch live rates and persist them. Decimal so the
-# Numeric deal values (also Decimal) multiply without a float mix.
-FX_TO_EUR = {
-    "EUR": Decimal("1"),
-    "CHF": Decimal("1.04"),
-    "USD": Decimal("0.93"),
-    "GBP": Decimal("1.17"),
-}
-
+# EUR conversion now comes from `app.services.fx` (live ECB rates, refreshed
+# by the `refresh_fx_rates` worker cron, with a static fallback when the
+# table is empty). The headline aggregates stay EUR-canonical; the response
+# also carries the rate set + as-of date so the frontend can display-convert.
 CLOSED_DEAL_STAGES = {DealStage.won, DealStage.lost}
 
 # Funnel stages shown on the dashboard (ordered; lost excluded).
@@ -75,6 +70,11 @@ async def stats(
             return DashboardStats.model_validate_json(cached)
     except Exception:
         pass  # Redis miss or error — fall through to DB
+
+    # Live EUR conversion multipliers (amount-in-ccy → EUR), plus provenance
+    # for the response. One snapshot reused across every aggregate below.
+    fx_snap = await fx.get_snapshot(db)
+    fx_mult = fx_snap.to_eur_multipliers()
 
     # Every aggregate filters by the current org — without it the dashboard
     # would leak counts across tenants (a tiny but real existence leak:
@@ -137,7 +137,7 @@ async def stats(
     # have" when the pipeline spans currencies.
     pipeline_by_currency: dict[str, Decimal] = {}
     for value, currency in open_deals:
-        pipeline_value += (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+        pipeline_value += (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
         pipeline_by_currency[currency.value] = pipeline_by_currency.get(currency.value, ZERO) + (
             value or ZERO
         )
@@ -155,7 +155,7 @@ async def stats(
     funnel_value: dict[DealStage, Decimal] = {s: ZERO for s in FUNNEL_STAGES}
     for stage, value, currency in funnel_rows:
         funnel_count[stage] += 1
-        funnel_value[stage] += (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+        funnel_value[stage] += (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
     pipeline_funnel = [
         FunnelStageStat(stage=s.value, count=funnel_count[s], value_eur=float(q2(funnel_value[s])))
         for s in FUNNEL_STAGES
@@ -182,7 +182,7 @@ async def stats(
     rev_by_month: dict[str, Decimal] = {k: ZERO for k in month_keys}
     revenue_total = ZERO
     for value, currency, updated in won_rows:
-        eur_val = (value or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+        eur_val = (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
         revenue_total += eur_val
         key = f"{updated.year:04d}-{updated.month:02d}"
         if key in rev_by_month:
@@ -202,7 +202,7 @@ async def stats(
     today = now.date()
     q_total = q_out = q_acc = q_rej = q_open = q_overdue = ZERO
     for status, total, currency, valid_until in quote_rows:
-        eur_val = (total or ZERO) * FX_TO_EUR.get(currency.value, Decimal("1"))
+        eur_val = (total or ZERO) * fx_mult.get(currency.value, Decimal("1"))
         q_total += eur_val
         if status in (QuoteStatus.draft, QuoteStatus.sent):
             q_out += eur_val
@@ -242,6 +242,9 @@ async def stats(
         monthly_revenue=monthly_revenue,
         revenue_total_eur=float(q2(revenue_total)),
         quotes=quotes_summary,
+        fx_rates={k: float(v) for k, v in fx_snap.rates.items()},
+        fx_as_of=fx_snap.as_of,
+        fx_source=fx_snap.source,
     )
     try:
         await r.set(cache_key, result.model_dump_json(), ex=_CACHE_TTL)

@@ -2494,3 +2494,31 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     conversation: Mapped["Conversation"] = relationship(back_populates="messages")
+
+
+class FxRate(Base):
+    """Reference FX rates, EUR-based (1 EUR = ``rate`` units of ``quote``).
+
+    Global, NOT tenant-scoped — a rate is identical for every org, so no
+    RLS and no ``organization_id`` (same posture as ``outbox_events`` /
+    ``webhook_deliveries``). Refreshed daily by the ``refresh_fx_rates``
+    worker cron from the ECB feed (frankfurter.app). One row per quote
+    currency; the worker UPSERTs in place and stamps ``as_of`` (the ECB
+    publication date) so the dashboard can honestly say "converted at ECB
+    rates as of <date>" instead of shipping silent, stale fake FX.
+
+    Convention matches the ECB / frankfurter feed: ``rate`` = how many
+    units of ``quote`` you get for 1 EUR (e.g. EUR→USD ≈ 1.08). To turn an
+    amount in ``quote`` into EUR, divide by ``rate``.
+    """
+
+    __tablename__ = "fx_rates"
+
+    base: Mapped[str] = mapped_column(String(3), primary_key=True, default="EUR")
+    quote: Mapped[str] = mapped_column(String(3), primary_key=True)
+    rate: Mapped[Decimal] = mapped_column(Numeric(18, 8), nullable=False)
+    as_of: Mapped[date] = mapped_column(Date, nullable=False)
+    source: Mapped[str] = mapped_column(String(40), nullable=False, default="frankfurter")
+    fetched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

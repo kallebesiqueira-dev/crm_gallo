@@ -33,6 +33,7 @@ from app.api import (
     duplicates,
     exports,
     forms,
+    fx,
     gdpr,
     imports,
     invites,
@@ -383,6 +384,7 @@ app.include_router(document_templates.router)
 app.include_router(signatures.router)
 app.include_router(tasks.router)
 app.include_router(dashboard.router)
+app.include_router(fx.router)
 app.include_router(performance.router)
 app.include_router(automations.router)
 app.include_router(assistant.router)
