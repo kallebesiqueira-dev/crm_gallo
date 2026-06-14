@@ -21,10 +21,20 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-# Tables that carry organization_id but are intentionally NOT RLS'd — see the
-# ca1013e5bde6 migration docstring: membership/invite rows need cross-org or
-# token-based visibility from unscoped/public (pre-auth) paths.
-RLS_EXEMPT = {"org_memberships", "org_invites"}
+# Tables that carry organization_id but are intentionally NOT RLS'd. The first
+# two are documented in the ca1013e5bde6 migration; the rest are accessed
+# CROSS-ORG by the worker (system processing) or PRE-AUTH, so a tenant_isolation
+# policy cannot apply and app-layer `WHERE organization_id` is the enforcement.
+# Any NEW addition here must come with a reason — that conscious step is the
+# point of this test (it refuses to let a tenant table skip RLS silently).
+RLS_EXEMPT = {
+    "org_memberships",  # cross-org "my orgs" listing (ca1013e5bde6)
+    "org_invites",  # token-based, queried pre-auth with no GUC (ca1013e5bde6)
+    "automation_runs",  # worker writes runs across orgs (see api/automations.py)
+    "outbox_events",  # drain_outbox claims rows cross-org via FOR UPDATE SKIP LOCKED
+    "webhook_endpoints",  # resolved cross-org during outbox webhook delivery
+    "whatsapp_accounts",  # inbound webhook resolves the org FROM the account, pre-GUC
+}
 
 # Tenant tables scoped via a parent FK rather than a direct organization_id
 # column (so the organization_id schema scan below cannot find them).
