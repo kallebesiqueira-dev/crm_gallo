@@ -638,7 +638,7 @@ function ReportsScene({ theme }: { theme: Theme }) {
 function AssistantScene({ theme }: { theme: Theme }) {
   return (
     <SceneShell theme={theme}>
-      <PageHeader theme={theme} greeting="Claude Sonnet · grounded on your CRM" title="AI Assistant" rightTag="Premium" />
+      <PageHeader theme={theme} greeting="advanced AI · grounded on your CRM" title="AI Assistant" rightTag="Premium" />
       <div className="grid gap-3 p-5 lg:grid-cols-3">
         {/* Conversation */}
         <div className="space-y-3 rounded-lg border border-white/5 bg-slate-900/40 p-3 lg:col-span-2">

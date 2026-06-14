@@ -36,10 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { DashboardVideo } from "@/components/marketing/dashboard-video";
-import { LogosBand } from "@/components/marketing/logos-band";
-import { StatsCounter } from "@/components/marketing/stats-counter";
 import { FeatureSections } from "@/components/marketing/feature-section";
-import { Testimonials } from "@/components/marketing/testimonials";
 import { AboutSection } from "@/components/marketing/about-section";
 import { ValuesSection } from "@/components/marketing/values-section";
 import { ManifestoSection } from "@/components/marketing/manifesto-section";
@@ -117,7 +114,7 @@ const FALLBACK_PLANS: PlanOut[] = [
       // the /plans API serves) so this offline fallback matches production.
       "Unlimited users",
       "Everything in Free",
-      "Advanced AI scoring (Claude Sonnet)",
+      "Advanced AI scoring",
       "Unlimited AI assistant",
       "Quotes & PDF proposals",
       "Reports and visual charts",
@@ -158,8 +155,7 @@ const FALLBACK_PLANS: PlanOut[] = [
     features: [
       "Everything in Business",
       "Workflow automations",
-      "Email and calendar integrations",
-      "RAG: assistant with knowledge base",
+      "WhatsApp integration",
       "Public API + API keys",
       "Dedicated account manager",
     ],
@@ -504,16 +500,8 @@ export default function PricingPage() {
         </Reveal>
       </section>
 
-      {/* ============================== LOGOS ============================== */}
-      <LogosBand />
-
       {/* ============================== ABOUT / CHI SIAMO ============================== */}
       <AboutSection />
-
-      {/* ============================== STATS ============================== */}
-      <div data-reveal="fade-up">
-        <StatsCounter />
-      </div>
 
       {/* ============================== VALUES / I NOSTRI VALORI ============================== */}
       <ValuesSection />
@@ -522,9 +510,6 @@ export default function PricingPage() {
       <div id="features">
         <FeatureSections />
       </div>
-
-      {/* ============================== TESTIMONIALS ============================== */}
-      <Testimonials />
 
       {/* ============================== PRICING ============================== */}
       <section id="pricing" className="relative overflow-hidden">
@@ -915,8 +900,6 @@ function buildMatrix(
     { label: t("matrix.contracts"), cells: plans.map((p) => p.id === "business" || p.id === "premium") },
     { label: t("matrix.audit"), cells: plans.map((p) => p.id === "business" || p.id === "premium") },
     { label: t("matrix.automations"), cells: plans.map((p) => p.id === "premium") },
-    { label: t("matrix.integrations"), cells: plans.map((p) => p.id === "premium") },
-    { label: t("matrix.rag"), cells: plans.map((p) => p.id === "premium") },
     { label: t("matrix.api"), cells: plans.map((p) => p.id === "premium") },
     {
       label: t("matrix.support"),

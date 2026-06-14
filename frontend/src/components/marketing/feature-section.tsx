@@ -143,7 +143,7 @@ function AiMockup() {
         </div>
         <div>
           <div className="text-sm font-semibold">AI Sales Assistant</div>
-          <div className="text-[10px] text-muted-foreground">Powered by Claude Sonnet</div>
+          <div className="text-[10px] text-muted-foreground">Powered by advanced AI</div>
         </div>
       </div>
 

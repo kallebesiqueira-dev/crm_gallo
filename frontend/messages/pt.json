@@ -1082,7 +1082,7 @@
       "ai": {
         "eyebrow": "Copiloto IA",
         "title": "Uma IA que conhece seu pipeline tão bem quanto você.",
-        "body": "Pontue cada lead, escreva e-mails de follow-up e descubra a próxima melhor ação — alimentado por Claude e baseado nos seus dados de CRM.",
+        "body": "Pontue cada lead, escreva e-mails de follow-up e descubra a próxima melhor ação — alimentado por IA avançada e baseado nos seus dados de CRM.",
         "bullet": {
           "1": "Lead scoring com probabilidade de conversão e análise de risco",
           "2": "E-mails de follow-up em um clique no idioma do cliente",
@@ -1200,7 +1200,7 @@
       "upTo": "Até {n}",
       "unlimited": "Ilimitado",
       "coreCrm": "Leads, clientes, negócios, pipeline",
-      "aiScoringPro": "AI scoring avançado (Claude)",
+      "aiScoringPro": "AI scoring avançado",
       "aiAssistant": "Assistente IA ilimitado",
       "reports": "Relatórios e gráficos",
       "automations": "Automações de workflow",
@@ -1238,7 +1238,7 @@
       },
       "6": {
         "q": "Como funciona o AI scoring?",
-        "a": "Cada lead recebe um score 0-100 baseado nos campos preenchidos, atividades registradas e contexto histórico. Usamos Claude Sonnet para o raciocínio e um fallback heurístico se o provider estiver offline. Transparente: você sempre vê qual modelo respondeu e em quais dados."
+        "a": "Cada lead recebe um score 0-100 baseado nos campos preenchidos, atividades registradas e contexto histórico. Usamos um modelo de IA avançado para o raciocínio e um fallback heurístico se o provider estiver offline. Transparente: você sempre vê qual modelo respondeu e em quais dados."
       },
       "7": {
         "q": "Posso self-hostar o Gallo CRM?",
@@ -1280,7 +1280,7 @@
         "features": [
           "Utilizadores ilimitados",
           "Tudo do Free",
-          "AI scoring avançado (Claude Sonnet)",
+          "AI scoring avançado",
           "Assistente IA ilimitado",
           "Orçamentos e propostas em PDF",
           "Relatórios e gráficos",
@@ -1307,8 +1307,7 @@
         "features": [
           "Tudo do Business",
           "Automações de workflow",
-          "Integrações de e-mail, calendário e WhatsApp",
-          "RAG: assistente com base de conhecimento",
+          "Integração WhatsApp",
           "API pública + chaves de API",
           "Gestor de conta dedicado"
         ]

@@ -93,7 +93,7 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         features=[
             "Unlimited users",
             "Everything in Free",
-            "Advanced AI scoring (Claude Sonnet)",
+            "Advanced AI scoring",
             "Unlimited AI assistant",
             "Quotes & PDF proposals",
             "Reports and visual charts",
@@ -137,8 +137,7 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         features=[
             "Everything in Business",
             "Workflow automations",
-            "Email and calendar integrations",
-            "RAG: assistant with knowledge base",
+            "WhatsApp integration",
             "Public API + API keys",
             "Dedicated account manager",
         ],

@@ -1082,7 +1082,7 @@
       "ai": {
         "eyebrow": "Copilote IA",
         "title": "Une IA qui connaît votre pipeline aussi bien que vous.",
-        "body": "Notez chaque prospect, rédigez des e-mails de relance et faites apparaître la prochaine meilleure action — propulsé par Claude et ancré sur vos données CRM.",
+        "body": "Notez chaque prospect, rédigez des e-mails de relance et faites apparaître la prochaine meilleure action — propulsé par une IA avancée et ancré sur vos données CRM.",
         "bullet": {
           "1": "Scoring de prospect avec probabilité de conversion et analyse de risque",
           "2": "E-mails de relance en un clic dans la langue du client",
@@ -1200,7 +1200,7 @@
       "upTo": "Jusqu'à {n}",
       "unlimited": "Illimité",
       "coreCrm": "Prospects, clients, affaires, pipeline",
-      "aiScoringPro": "Scoring IA avancé (Claude)",
+      "aiScoringPro": "Scoring IA avancé",
       "aiAssistant": "Assistant IA illimité",
       "reports": "Rapports et graphiques",
       "automations": "Automatisations de workflow",
@@ -1238,7 +1238,7 @@
       },
       "6": {
         "q": "Comment fonctionne le scoring IA ?",
-        "a": "Chaque lead reçoit un score 0-100 basé sur les champs remplis, les activités enregistrées et le contexte historique. Nous utilisons Claude Sonnet pour le raisonnement avec un fallback heuristique si le provider est hors-ligne. Transparent : vous voyez toujours quel modèle a répondu et sur quelles données."
+        "a": "Chaque lead reçoit un score 0-100 basé sur les champs remplis, les activités enregistrées et le contexte historique. Nous utilisons un modèle d'IA avancé pour le raisonnement avec un fallback heuristique si le provider est hors-ligne. Transparent : vous voyez toujours quel modèle a répondu et sur quelles données."
       },
       "7": {
         "q": "Puis-je auto-héberger Gallo CRM ?",
@@ -1280,7 +1280,7 @@
         "features": [
           "Utilisateurs illimités",
           "Tout de Free",
-          "Scoring IA avancé (Claude Sonnet)",
+          "Scoring IA avancé",
           "Assistant IA illimité",
           "Devis et propositions PDF",
           "Rapports et graphiques",
@@ -1307,8 +1307,7 @@
         "features": [
           "Tout de Business",
           "Automatisations de workflow",
-          "Intégrations e-mail, calendrier et WhatsApp",
-          "RAG : assistant avec base de connaissances",
+          "Intégration WhatsApp",
           "API publique + clés API",
           "Gestionnaire de compte dédié"
         ]

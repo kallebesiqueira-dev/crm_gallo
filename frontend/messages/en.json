@@ -1082,7 +1082,7 @@
       "ai": {
         "eyebrow": "AI Copilot",
         "title": "An AI that knows your pipeline as well as you do.",
-        "body": "Score every lead, draft follow-up emails, and surface the next best action — powered by Claude and grounded on your CRM data.",
+        "body": "Score every lead, draft follow-up emails, and surface the next best action — powered by advanced AI and grounded on your CRM data.",
         "bullet": {
           "1": "Lead scoring with conversion probability and risk analysis",
           "2": "One-click follow-up emails in the customer's language",
@@ -1200,7 +1200,7 @@
       "upTo": "Up to {n}",
       "unlimited": "Unlimited",
       "coreCrm": "Leads, customers, deals, pipeline",
-      "aiScoringPro": "Advanced AI scoring (Claude)",
+      "aiScoringPro": "Advanced AI scoring",
       "aiAssistant": "Unlimited AI assistant",
       "reports": "Reports and charts",
       "automations": "Workflow automations",
@@ -1238,7 +1238,7 @@
       },
       "6": {
         "q": "How does the AI scoring work?",
-        "a": "Each lead gets a 0-100 score based on filled fields, logged activities and historical context. We use Claude Sonnet for reasoning with a heuristic fallback if the provider is offline. Fully transparent: you always see which model answered and on what data."
+        "a": "Each lead gets a 0-100 score based on filled fields, logged activities and historical context. We use an advanced AI model for reasoning with a heuristic fallback if the provider is offline. Fully transparent: you always see which model answered and on what data."
       },
       "7": {
         "q": "Can I self-host Gallo CRM?",
@@ -1280,7 +1280,7 @@
         "features": [
           "Unlimited users",
           "Everything in Free",
-          "Advanced AI scoring (Claude Sonnet)",
+          "Advanced AI scoring",
           "Unlimited AI assistant",
           "Quotes & PDF proposals",
           "Reports and visual charts",
@@ -1307,8 +1307,7 @@
         "features": [
           "Everything in Business",
           "Workflow automations",
-          "Email, calendar and WhatsApp integrations",
-          "RAG: assistant with knowledge base",
+          "WhatsApp integration",
           "Public API + API keys",
           "Dedicated account manager"
         ]
