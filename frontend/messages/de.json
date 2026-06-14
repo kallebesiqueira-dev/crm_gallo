@@ -1,4 +1,10 @@
 {
+  "errorBoundary": {
+    "title": "Etwas ist schiefgelaufen",
+    "message": "Ein unerwarteter Fehler ist aufgetreten. Versuchen Sie es erneut oder kehren Sie zum Dashboard zurück.",
+    "retry": "Erneut versuchen",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
   "app": {
     "name": "GALLO CRM",
     "collapseSidebar": "Collapse",

@@ -1,4 +1,10 @@
 {
+  "errorBoundary": {
+    "title": "Une erreur s'est produite",
+    "message": "Une erreur inattendue s'est produite. Réessayez ou retournez au tableau de bord.",
+    "retry": "Réessayer",
+    "backToDashboard": "Retour au tableau de bord"
+  },
   "app": {
     "name": "GALLO CRM",
     "collapseSidebar": "Collapse",

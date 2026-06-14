@@ -1,4 +1,10 @@
 {
+  "errorBoundary": {
+    "title": "Insatge è ì sbaglià",
+    "message": "Ina errur nunspetgada è capitada. Empruvai danovamain u turnai al dashboard.",
+    "retry": "Empruvar danovamain",
+    "backToDashboard": "Turnar al dashboard"
+  },
   "app": {
     "name": "GALLO CRM",
     "collapseSidebar": "Collapse",
