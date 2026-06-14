@@ -1704,7 +1704,10 @@ async def prune_webhook_deliveries(ctx: dict) -> dict:
 # EUR-based quotes we refresh. Covers the Currency enum (EUR/CHF/USD/GBP)
 # plus BRL (Stripe price point). EUR is the base, so it isn't fetched.
 _FX_QUOTES = ("CHF", "USD", "GBP", "BRL")
-_FX_FEED_URL = "https://api.frankfurter.app/latest"
+# Canonical host is now frankfurter.dev/v1; the old frankfurter.app 301-
+# redirects here. We point straight at it AND follow redirects so a future
+# move doesn't silently break the cron again.
+_FX_FEED_URL = "https://api.frankfurter.dev/v1/latest"
 _FX_HTTP_TIMEOUT_S = 15.0
 
 
@@ -1722,7 +1725,7 @@ async def refresh_fx_rates(ctx: dict) -> dict:
 
     SessionLocal = ctx["SessionLocal"]
     try:
-        async with httpx.AsyncClient(timeout=_FX_HTTP_TIMEOUT_S) as client:
+        async with httpx.AsyncClient(timeout=_FX_HTTP_TIMEOUT_S, follow_redirects=True) as client:
             r = await client.get(_FX_FEED_URL, params={"from": "EUR", "to": ",".join(_FX_QUOTES)})
             r.raise_for_status()
             data = r.json()
