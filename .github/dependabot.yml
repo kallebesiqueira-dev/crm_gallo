@@ -42,6 +42,15 @@ updates:
       interval: weekly
       day: monday
       time: "06:30"
+    ignore:
+      # Stay on the supported CPython 3.12 line: the code targets py312 (ruff
+      # target-version), 3.12 is maintained to 2028, and 3.14-slim broke the
+      # image build (C-extension deps lack 3.14 wheels). Patch tags still float
+      # via `3.12-slim`. Revisit the minor deliberately, not on Dependabot's clock.
+      - dependency-name: "python"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
 
   - package-ecosystem: docker
     directory: /frontend
@@ -49,6 +58,13 @@ updates:
       interval: weekly
       day: monday
       time: "06:30"
+    ignore:
+      # Track the Active LTS Node line (24, EOL 2026-10). Node 26 is still in the
+      # "Current" phase (not promoted to LTS until ~2027) — too new for a prod
+      # runtime. Revisit as 24 nears EOL to step to the next LTS.
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: github-actions
     directory: /

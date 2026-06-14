@@ -1936,7 +1936,7 @@ class SendTemplateRequest(BaseModel):
 
     template_name: Annotated[str, Field(min_length=1, max_length=512)]
     language_code: Annotated[str, Field(default="en_US", min_length=2, max_length=15)] = "en_US"
-    body_params: Annotated[list[str], Field(default_factory=list, max_length=30)] = []
+    body_params: Annotated[list[str], Field(default_factory=list, max_length=30)]
 
 
 class SendMediaRequest(BaseModel):

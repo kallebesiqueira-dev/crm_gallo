@@ -16,7 +16,7 @@
 # =============================================================================
 
 # ---- deps -------------------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
@@ -87,7 +87,7 @@ COPY . .
 RUN npm run build
 
 # ---- runner -----------------------------------------------------------------
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 # Patch base-image OS CVEs (mirrors the backend Dockerfile's apt upgrade) and
