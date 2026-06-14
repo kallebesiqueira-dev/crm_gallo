@@ -1,4 +1,10 @@
 {
+  "errorBoundary": {
+    "title": "Algo deu errado",
+    "message": "Ocorreu um erro inesperado. Tente novamente ou volte ao painel.",
+    "retry": "Tentar novamente",
+    "backToDashboard": "Voltar ao painel"
+  },
   "app": {
     "name": "GALLO CRM",
     "collapseSidebar": "Collapse",

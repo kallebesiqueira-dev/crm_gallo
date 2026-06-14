@@ -1,4 +1,10 @@
 {
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "An unexpected error occurred. You can try again, or head back to your dashboard.",
+    "retry": "Try again",
+    "backToDashboard": "Back to dashboard"
+  },
   "app": {
     "name": "GALLO CRM",
     "collapseSidebar": "Collapse",
