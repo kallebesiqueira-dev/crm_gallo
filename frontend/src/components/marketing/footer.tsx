@@ -6,7 +6,6 @@ import {
   Cloud,
   Cpu,
   CreditCard,
-  Instagram,
   Lock,
   Mail,
   ShieldCheck,
@@ -50,7 +49,7 @@ interface SocialLink {
   id: string;
   label: string;
   href: string;
-  // lucide-react component or null for inline-SVG specials (WhatsApp).
+  // lucide-react component or null for inline-SVG specials (WhatsApp, Instagram).
   Icon: typeof Sparkles | null;
 }
 
@@ -58,7 +57,7 @@ interface SocialLink {
 // the channels go live; the design holds either way.
 const SOCIAL_LINKS: SocialLink[] = [
   { id: "whatsapp",  label: "WhatsApp",  href: "https://wa.me/393717403464", Icon: null },
-  { id: "instagram", label: "Instagram", href: "#",                       Icon: Instagram },
+  { id: "instagram", label: "Instagram", href: "#",                       Icon: null },
   { id: "email",     label: "Email",     href: "mailto:gallo-crm@hotmail.com", Icon: Mail },
 ];
 
@@ -144,6 +143,24 @@ export function Footer() {
                 >
                   {s.Icon ? (
                     <s.Icon className="h-4 w-4" />
+                  ) : s.id === "instagram" ? (
+                    /* Instagram — lucide-react v1 dropped brand icons, so we
+                       inline lucide's own glyph (rounded square + lens + flash
+                       dot), stroke-styled to match the sibling icons. */
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                    </svg>
                   ) : (
                     /* WhatsApp — lucide-react doesn't ship it, so we
                        inline the official mark trimmed to 24×24. */
