@@ -27,7 +27,7 @@ jobs:
   playwright-smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Dev defaults only — no real secrets. Stripe/email/Sentry are empty
       # (no-op), the JWT secret is a non-production placeholder, and
