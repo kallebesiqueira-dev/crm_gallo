@@ -83,7 +83,7 @@ export default function NewLeadPage() {
       <CardContent>
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="first_name">First name</Label>
+            <Label htmlFor="first_name">{t("firstName")}</Label>
             <Input
               id="first_name"
               required
@@ -92,7 +92,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="last_name">Last name</Label>
+            <Label htmlFor="last_name">{t("lastName")}</Label>
             <Input
               id="last_name"
               required
@@ -101,7 +101,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input
               id="email"
               type="email"
@@ -110,7 +110,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">{t("phone")}</Label>
             <Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
           </div>
           <div className="space-y-2">
@@ -122,7 +122,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="industry">Industry</Label>
+            <Label htmlFor="industry">{t("industry")}</Label>
             <Input
               id="industry"
               value={form.industry}
@@ -130,7 +130,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="country">Country (ISO-2)</Label>
+            <Label htmlFor="country">{t("country")}</Label>
             <Input
               id="country"
               maxLength={2}
@@ -139,7 +139,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="company_size">Company size</Label>
+            <Label htmlFor="company_size">{t("companySize")}</Label>
             <Input
               id="company_size"
               type="number"
@@ -149,7 +149,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="budget">Budget</Label>
+            <Label htmlFor="budget">{t("budget")}</Label>
             <Input
               id="budget"
               type="number"
@@ -160,7 +160,7 @@ export default function NewLeadPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="source">Source</Label>
+            <Label htmlFor="source">{t("source")}</Label>
             <Input
               id="source"
               value={form.source}
@@ -186,7 +186,7 @@ export default function NewLeadPage() {
             </div>
           )}
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{t("notes")}</Label>
             <textarea
               id="notes"
               className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

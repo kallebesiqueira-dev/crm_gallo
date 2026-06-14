@@ -67,20 +67,20 @@ export default function NewCustomerPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field id="first_name" label="First name" required value={form.first_name} onChange={(v) => set("first_name", v)} />
-          <Field id="last_name" label="Last name" required value={form.last_name} onChange={(v) => set("last_name", v)} />
-          <Field id="email" label="Email" type="email" value={form.email} onChange={(v) => set("email", v)} />
-          <Field id="phone" label="Phone" value={form.phone} onChange={(v) => set("phone", v)} />
+          <Field id="first_name" label={tCommon("firstName")} required value={form.first_name} onChange={(v) => set("first_name", v)} />
+          <Field id="last_name" label={tCommon("lastName")} required value={form.last_name} onChange={(v) => set("last_name", v)} />
+          <Field id="email" label={tCommon("email")} type="email" value={form.email} onChange={(v) => set("email", v)} />
+          <Field id="phone" label={tCommon("phone")} value={form.phone} onChange={(v) => set("phone", v)} />
           <Field id="company" label={t("company")} value={form.company} onChange={(v) => set("company", v)} />
-          <Field id="industry" label="Industry" value={form.industry} onChange={(v) => set("industry", v)} />
-          <Field id="country" label="Country (ISO-2)" maxLength={2} value={form.country} onChange={(v) => set("country", v.toUpperCase())} />
-          <Field id="website" label="Website" value={form.website} onChange={(v) => set("website", v)} />
+          <Field id="industry" label={tCommon("industry")} value={form.industry} onChange={(v) => set("industry", v)} />
+          <Field id="country" label={tCommon("country")} maxLength={2} value={form.country} onChange={(v) => set("country", v.toUpperCase())} />
+          <Field id="website" label={tCommon("website")} value={form.website} onChange={(v) => set("website", v)} />
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">{tCommon("address")}</Label>
             <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{tCommon("notes")}</Label>
             <textarea
               id="notes"
               className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

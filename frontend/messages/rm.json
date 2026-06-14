@@ -251,6 +251,10 @@
     "customizeHint": "Secziuns visiblas"
   },
   "leads": {
+    "firstName": "Prenum",
+    "lastName": "Num da famiglia",
+    "website": "Sit web",
+    "address": "Adressa",
     "title": "Leads",
     "new": "Nov lead",
     "search": "Tschertgar tras num, e-mail, interpresa...",

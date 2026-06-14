@@ -251,6 +251,10 @@
     "customizeHint": "Sections visibles"
   },
   "leads": {
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "website": "Site web",
+    "address": "Adresse",
     "title": "Prospects",
     "new": "Nouveau prospect",
     "search": "Rechercher par nom, e-mail, société...",

@@ -205,7 +205,7 @@ export default function NewDealPage() {
             </div>
           )}
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{tLeads("notes")}</Label>
             <textarea
               id="notes"
               className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
