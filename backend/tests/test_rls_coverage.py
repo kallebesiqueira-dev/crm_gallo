@@ -15,6 +15,7 @@ exactly the regression class that bit us.
 Reads only catalog tables, so it runs in both single-role and two-role test
 modes (the migration sets rowsecurity regardless of the connecting role).
 """
+
 from __future__ import annotations
 
 from sqlalchemy import text
