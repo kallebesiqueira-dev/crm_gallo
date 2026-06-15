@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useConfirm } from "@/components/confirm-dialog";
 import { api, type Team, type TeamMember } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -19,6 +20,7 @@ export default function TeamsPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
@@ -26,8 +28,10 @@ export default function TeamsPage() {
       const [ts, ms] = await Promise.all([api.listTeams(), api.listOrgMembers()]);
       setTeams(ts);
       setMembers(ms);
+      setLoading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
+      setLoading(false);
     }
   }
 
@@ -114,7 +118,22 @@ export default function TeamsPage() {
         </div>
       )}
 
-      {teams.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="space-y-3 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-4 rounded" />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-5 w-24 rounded-full" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : teams.length === 0 ? (
         <Card className="p-10 text-center text-sm text-muted-foreground">{t("noTeams")}</Card>
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">

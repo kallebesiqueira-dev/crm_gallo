@@ -11,6 +11,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { TagChipList } from "@/components/entity-tags";
 import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { api, type Company, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -27,6 +28,7 @@ export default function CompaniesPage() {
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,6 +58,7 @@ export default function CompaniesPage() {
           setCursor(page.next_cursor);
           setHasMore(page.has_more);
           setTagMap({});
+          setLoading(false);
           setSelected(new Set());
           loadTags(page.items.map((c) => c.id));
         })
@@ -63,6 +66,7 @@ export default function CompaniesPage() {
           setItems([]);
           setCursor(null);
           setHasMore(false);
+          setLoading(false);
         });
     }, 200);
     return () => clearTimeout(handle);
@@ -162,7 +166,20 @@ export default function CompaniesPage() {
       )}
 
       <Card className="overflow-hidden">
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="space-y-0 divide-y">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <Skeleton className="h-4 w-4 shrink-0 rounded" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="ml-auto h-4 w-24" />
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
           <EmptyState
             icon={Building2}
             title={t("empty")}

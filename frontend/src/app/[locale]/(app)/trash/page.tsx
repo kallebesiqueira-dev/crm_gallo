@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useConfirm } from "@/components/confirm-dialog";
 import { api, type TrashCounts, type TrashItem } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -28,6 +29,7 @@ export default function TrashPage() {
   const [counts, setCounts] = useState<TrashCounts | null>(null);
   const [tab, setTab] = useState<Tab>("all");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,8 +44,10 @@ export default function TrashPage() {
       setItems(page.items);
       setHasMore(page.has_more);
       setCounts(c);
+      setLoading(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
+      setLoading(false);
     }
   }, []);
 
@@ -181,7 +185,23 @@ export default function TrashPage() {
       </div>
 
       <Card className="overflow-hidden">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <ul className="divide-y">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+                <Skeleton className="h-5 w-16 shrink-0 rounded" />
+                <div className="min-w-0 flex-1 basis-40 space-y-1.5">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : filtered.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">{t("empty")}</div>
         ) : (
           <ul className="divide-y">

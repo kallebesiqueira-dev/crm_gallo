@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -305,7 +306,9 @@ export default function AutomationsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="py-8 text-center text-xs text-muted-foreground">—</p>
+            <div className="grid place-items-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
           ) : rules.length === 0 ? (
             <p className="py-8 text-center text-xs text-muted-foreground">{t("noRules")}</p>
           ) : (

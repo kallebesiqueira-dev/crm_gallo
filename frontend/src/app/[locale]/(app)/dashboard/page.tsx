@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { api, type Company, type DashboardStats, type Quote, type Task } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardCustomize } from "@/components/dashboard-customize";
 import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
 
@@ -39,11 +40,22 @@ export default function DashboardPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    api.stats(token).then(setStats).catch(() => {});
+    api
+      .stats(token)
+      .then((s) => {
+        setStats(s);
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : "Failed");
+        setLoading(false);
+      });
     api.listTasks(token, { mine: true }).then(setTasks).catch(() => {});
     api
       .listCompanies(token, { limit: 8 })
@@ -167,6 +179,12 @@ export default function DashboardPage() {
       {/* Onboarding checklist — visible until all 5 steps are done or dismissed */}
       <OnboardingChecklistWidget locale={locale} />
 
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {/* KPI row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((k) => (
@@ -177,8 +195,12 @@ export default function DashboardPage() {
                 <k.icon className="h-5 w-5" />
               </span>
             </div>
-            <div className="mt-3 text-3xl font-bold tracking-tight">{k.value}</div>
-            {"sub" in k && k.sub ? (
+            {loading ? (
+              <Skeleton className="mt-3 h-9 w-24" />
+            ) : (
+              <div className="mt-3 text-3xl font-bold tracking-tight">{k.value}</div>
+            )}
+            {!loading && "sub" in k && k.sub ? (
               <div className="mt-1 text-xs text-muted-foreground">{k.sub}</div>
             ) : null}
           </Panel>
