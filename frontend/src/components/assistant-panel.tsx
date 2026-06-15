@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowUp, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth";
+import { getToken, readCookie } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -71,9 +71,16 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
     setBusy(true);
 
     try {
+      // Auth is the httpOnly cookie (+ double-submit CSRF), same as lib/api.ts —
+      // NOT a Bearer token (getToken() is a sentinel since the cookie migration).
+      const csrf = readCookie("csrf_token");
       const res = await fetch(`${API_URL}/api/assistant/chat/stream`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrf ? { "X-CSRF-Token": csrf } : {}),
+        },
+        credentials: "include",
         body: JSON.stringify({ message: content, locale, history }),
       });
 
