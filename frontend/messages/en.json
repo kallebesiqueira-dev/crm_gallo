@@ -60,7 +60,7 @@
     "todayTasks": "Today's tasks",
     "overdueTasks": "Overdue tasks",
     "empty": "Nothing pending. Good selling!",
-    "pendingCount": "pending"
+    "pendingCount": "{count, plural, one {# pending} other {# pending}}"
   },
   "inbox": {
     "title": "WhatsApp Inbox",
@@ -356,6 +356,7 @@
     "expectedClose": "Expected close",
     "customer": "Customer",
     "stage": "Stage",
+    "noFollowUp": "no follow-up",
     "nextAction": "Next action",
     "noNextAction": "No follow-up scheduled",
     "created": "Created",
@@ -760,7 +761,8 @@
     "confirmDelete": "Delete this quote? This cannot be undone.",
     "details": "Details",
     "created": "Created",
-    "createContract": "Create contract"
+    "createContract": "Create contract",
+    "removeLine": "Remove line"
   },
   "contracts": {
     "title": "Contracts",

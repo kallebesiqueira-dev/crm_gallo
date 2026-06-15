@@ -60,7 +60,7 @@
     "todayTasks": "Tareas de hoy",
     "overdueTasks": "Tareas atrasadas",
     "empty": "Nada pendiente. ¡Buenas ventas!",
-    "pendingCount": "pendientes"
+    "pendingCount": "{count, plural, one {# pendiente} other {# pendientes}}"
   },
   "inbox": {
     "title": "Bandeja de WhatsApp",
@@ -356,6 +356,7 @@
     "expectedClose": "Cierre previsto",
     "customer": "Cliente",
     "stage": "Fase",
+    "noFollowUp": "sin seguimiento",
     "nextAction": "Próxima acción",
     "noNextAction": "Sin seguimiento planificado",
     "created": "Creado",
@@ -760,7 +761,8 @@
     "confirmDelete": "¿Eliminar este presupuesto? Esta acción no se puede deshacer.",
     "details": "Detalles",
     "created": "Creado",
-    "createContract": "Crear contrato"
+    "createContract": "Crear contrato",
+    "removeLine": "Eliminar línea"
   },
   "contracts": {
     "title": "Contratos",

@@ -188,6 +188,7 @@ export default function TeamsPage() {
                   <Select
                     value=""
                     onChange={(e) => addMember(team, e.target.value)}
+                    aria-label={t("addMember")}
                   >
                     <option value="">{t("addMember")}</option>
                     {available.map((m) => (

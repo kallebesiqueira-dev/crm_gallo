@@ -205,7 +205,7 @@ export default function BillingPage() {
                     PLAN_BADGE[me.plan],
                   )}
                 >
-                  {me.billing_cycle}
+                  {tPricing(me.billing_cycle)}
                 </span>
                 {trialActive && (
                   <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">

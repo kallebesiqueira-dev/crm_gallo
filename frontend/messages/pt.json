@@ -60,7 +60,7 @@
     "todayTasks": "Tarefas de hoje",
     "overdueTasks": "Tarefas atrasadas",
     "empty": "Nada pendente. Boa venda!",
-    "pendingCount": "pendentes"
+    "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}"
   },
   "inbox": {
     "title": "Caixa de entrada WhatsApp",
@@ -356,6 +356,7 @@
     "expectedClose": "Fechamento previsto",
     "customer": "Cliente",
     "stage": "Fase",
+    "noFollowUp": "sem follow-up",
     "nextAction": "Próxima ação",
     "noNextAction": "Sem follow-up agendado",
     "created": "Criado",
@@ -760,7 +761,8 @@
     "confirmDelete": "Excluir este orçamento? Isto não pode ser desfeito.",
     "details": "Detalhes",
     "created": "Criado",
-    "createContract": "Criar contrato"
+    "createContract": "Criar contrato",
+    "removeLine": "Remover linha"
   },
   "contracts": {
     "title": "Contratos",

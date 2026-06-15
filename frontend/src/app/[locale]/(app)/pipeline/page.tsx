@@ -315,7 +315,7 @@ function DealCard({
           </div>
         ) : (
           <div className="mt-1.5 text-[10px] italic text-muted-foreground/40">
-            no follow-up
+            {t("noFollowUp")}
           </div>
         )}
       </div>
