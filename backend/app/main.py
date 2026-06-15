@@ -39,6 +39,7 @@ from app.api import (
     invites,
     lead_convert,
     leads,
+    llm_usage,
     notes,
     notifications,
     oauth,
@@ -385,6 +386,7 @@ app.include_router(signatures.router)
 app.include_router(tasks.router)
 app.include_router(dashboard.router)
 app.include_router(fx.router)
+app.include_router(llm_usage.router)
 app.include_router(performance.router)
 app.include_router(automations.router)
 app.include_router(assistant.router)

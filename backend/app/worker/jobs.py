@@ -56,7 +56,9 @@ from app.models import (
     WhatsAppAccount,
     WhatsAppAccountStatus,
 )
+from app.services import llm
 from app.services.ai_scoring import score_lead as score_lead_via_llm
+from app.services.llm_usage import persist_usage
 from app.webhook_sign import SIGNATURE_HEADER, sign_payload
 
 log = structlog.get_logger(__name__)
@@ -128,7 +130,8 @@ async def score_lead(ctx: dict, lead_id: str, organization_id: str, locale: str 
             log.warning("score_lead.lead_missing", lead_id=lead_id, organization_id=organization_id)
             return {"status": "missing"}
 
-        scoring = await score_lead_via_llm(lead, locale)
+        with llm.capture_usage() as usage:
+            scoring = await score_lead_via_llm(lead, locale)
         lead.ai_score = scoring["score"]
         lead.ai_priority = scoring["priority"]
         lead.ai_next_action = scoring["next_action"]
@@ -159,6 +162,7 @@ async def score_lead(ctx: dict, lead_id: str, organization_id: str, locale: str 
             metadata={"score": lead.ai_score, "via": "worker"},
         )
         await db.commit()
+        await persist_usage(db, organization_id=org_uuid, use_case="lead_scoring", records=usage)
 
     log.info(
         "score_lead.done",
