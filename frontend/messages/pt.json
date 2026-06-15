@@ -668,7 +668,10 @@
   },
   "assistant": {
     "empty": "Peça ao assistente para resumir um cliente, redigir um e-mail de follow-up ou sugerir o próximo passo.",
-    "placeholder": "Escreva uma mensagem…"
+    "placeholder": "Escreva uma mensagem…",
+    "hero": "Como posso ajudar você hoje?",
+    "disclaimer": "A IA pode cometer erros — confira informações importantes.",
+    "close": "Fechar"
   },
   "audit": {
     "title": "Registro de auditoria",

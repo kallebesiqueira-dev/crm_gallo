@@ -668,7 +668,10 @@
   },
   "assistant": {
     "empty": "Dumonda l'assistent da resumar in client, da scriver in e-mail da follow-up u da proponer il proxim pass.",
-    "placeholder": "Scriva in messadi…"
+    "placeholder": "Scriva in messadi…",
+    "hero": "Co poss jau ta gidar oz?",
+    "disclaimer": "L'IA po far sbagls — controllai infurmaziuns impurtantas.",
+    "close": "Serrar"
   },
   "audit": {
     "title": "Protocol d'audit",
