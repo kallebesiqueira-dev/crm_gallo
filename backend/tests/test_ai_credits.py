@@ -51,6 +51,15 @@ def test_scoring_blocked_when_exhausted(admin_client, db: Session, test_org):
     assert r.status_code == 402
 
 
+def test_async_scoring_also_blocked_when_exhausted(admin_client, db: Session, test_org):
+    # /score-async is user-initiated too — it must not bypass the quota.
+    lead = admin_client.post("/api/leads", json={"first_name": "Async", "last_name": "Cap"}).json()
+    _seed_usage(db, test_org.id, 50)
+    db.commit()
+    r = admin_client.post(f"/api/leads/{lead['id']}/score-async")
+    assert r.status_code == 402
+
+
 def test_assistant_blocked_when_exhausted(admin_client, db: Session, test_org):
     _seed_usage(db, test_org.id, 50)
     db.commit()
