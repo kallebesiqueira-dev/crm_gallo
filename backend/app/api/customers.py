@@ -20,7 +20,9 @@ from app.metrics import SEARCH_TRGM_FALLBACK
 from app.models import Customer, Deal, DealStage, Task, TaskStatus, User
 from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginate
 from app.schemas import CustomerCreate, CustomerOut, CustomerUpdate
+from app.services import llm
 from app.services.ai_assistant import summarize_customer
+from app.services.llm_usage import persist_usage
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
 
@@ -262,9 +264,10 @@ async def summarize(
         )
     ).all()
 
-    summary = await summarize_customer(
-        customer, user.locale, open_deals=open_deals, open_tasks=open_tasks
-    )
+    with llm.capture_usage() as usage:
+        summary = await summarize_customer(
+            customer, user.locale, open_deals=open_deals, open_tasks=open_tasks
+        )
     customer.ai_summary = summary
     customer.ai_summary_updated_at = datetime.now(UTC)
     await record_audit(
@@ -276,5 +279,8 @@ async def summarize(
         organization_id=org_id,
     )
     await db.commit()
+    await persist_usage(
+        db, organization_id=org_id, use_case="customer_summary", records=usage, user_id=user.id
+    )
     await db.refresh(customer)
     return customer

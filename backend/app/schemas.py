@@ -1652,6 +1652,26 @@ class FxRatesOut(BaseModel):
     source: str
 
 
+class LlmUsageUseCaseStat(BaseModel):
+    """Token totals for one use-case bucket within the window."""
+
+    use_case: str
+    calls: int
+    input_tokens: int
+    output_tokens: int
+
+
+class LlmUsageSummary(BaseModel):
+    """Per-org LLM token usage over a recent window, for cost observability.
+    Scoped to the caller's org by RLS; admin/manager only."""
+
+    window_days: int
+    total_calls: int
+    total_input_tokens: int
+    total_output_tokens: int
+    by_use_case: list[LlmUsageUseCaseStat] = Field(default_factory=list)
+
+
 # ---------- Performance / KPI ----------
 class SalesGoalBase(BaseModel):
     # Exactly one scope is implied: owner_id set = per-rep, team_id set =

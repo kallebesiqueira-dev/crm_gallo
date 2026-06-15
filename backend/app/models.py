@@ -2522,3 +2522,41 @@ class FxRate(Base):
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class LlmUsage(Base):
+    """One LLM call's token usage, attributed to an org (and user when the
+    call came from a request, not a background job).
+
+    Cost/observability for a paid AI product: "how much is each org spending
+    on AI, by use case?" Written best-effort right after a successful
+    completion via `app.services.llm.capture_usage` + `llm_usage.persist_usage`
+    — streaming calls don't carry usage from the providers, so only the
+    blocking call sites (lead scoring, customer summary, assistant chat) record.
+
+    Tenant-scoped + RLS'd (ENABLE+FORCE+`tenant_isolation`) like every other
+    org table; the request/worker GUC scopes reads and writes.
+    """
+
+    __tablename__ = "llm_usage"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # Null for background jobs (e.g. the worker re-scoring a lead) — no HTTP user.
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Coarse bucket: "lead_scoring" | "customer_summary" | "assistant" | ...
+    use_case: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(40), nullable=False)
+    model: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )

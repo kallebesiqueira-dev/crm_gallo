@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Literal, TypedDict
 
 import httpx
@@ -36,6 +38,41 @@ TEMP_CONVERSATIONAL = 0.5  # in-app AI assistant chat
 TEMP_CHATBOT = 0.4  # public landing chatbot
 
 
+# Per-call token usage is fanned out to Prometheus (LLM_TOKENS) AND, when a
+# `capture_usage()` block is active on the current task, buffered for per-org
+# persistence (app.services.llm_usage). The ContextVar keeps llm.py DB-free:
+# providers just append; the caller (which has the org + DB session) persists.
+_usage_buffer: ContextVar[list[dict] | None] = ContextVar("llm_usage_buffer", default=None)
+
+
+def _record_usage(provider: str, model: str, input_tokens: int, output_tokens: int) -> None:
+    buf = _usage_buffer.get()
+    if buf is not None:
+        buf.append(
+            {
+                "provider": provider,
+                "model": model,
+                "input_tokens": int(input_tokens or 0),
+                "output_tokens": int(output_tokens or 0),
+            }
+        )
+
+
+@contextmanager
+def capture_usage() -> Iterator[list[dict]]:
+    """Collect token usage from blocking LLM calls made inside the block.
+
+    Yields a list of {provider, model, input_tokens, output_tokens} dicts —
+    one per completion. Streaming calls don't carry usage from the providers,
+    so they record nothing. Reset-token based, so nesting is safe."""
+    buf: list[dict] = []
+    token = _usage_buffer.set(buf)
+    try:
+        yield buf
+    finally:
+        _usage_buffer.reset(token)
+
+
 async def _chat_anthropic(
     messages: list[Message], system: str | None, max_tokens: int, temperature: float | None = None
 ) -> str:
@@ -57,12 +94,11 @@ async def _chat_anthropic(
         raise LLMError(f"Anthropic: {e}") from e
     usage = getattr(message, "usage", None)
     if usage:
-        LLM_TOKENS.labels(provider="anthropic", direction="input").inc(
-            getattr(usage, "input_tokens", 0)
-        )
-        LLM_TOKENS.labels(provider="anthropic", direction="output").inc(
-            getattr(usage, "output_tokens", 0)
-        )
+        inp = getattr(usage, "input_tokens", 0)
+        out = getattr(usage, "output_tokens", 0)
+        LLM_TOKENS.labels(provider="anthropic", direction="input").inc(inp)
+        LLM_TOKENS.labels(provider="anthropic", direction="output").inc(out)
+        _record_usage("anthropic", settings.anthropic_model, inp, out)
     return "".join(block.text for block in message.content if block.type == "text").strip()
 
 
@@ -94,8 +130,11 @@ async def _chat_ollama(
     content = data.get("message", {}).get("content", "")
     if not content:
         raise LLMError(f"Ollama returned empty content: {data}")
-    LLM_TOKENS.labels(provider="ollama", direction="input").inc(data.get("prompt_eval_count", 0))
-    LLM_TOKENS.labels(provider="ollama", direction="output").inc(data.get("eval_count", 0))
+    inp = data.get("prompt_eval_count", 0)
+    out = data.get("eval_count", 0)
+    LLM_TOKENS.labels(provider="ollama", direction="input").inc(inp)
+    LLM_TOKENS.labels(provider="ollama", direction="output").inc(out)
+    _record_usage("ollama", settings.ollama_model, inp, out)
     return content.strip()
 
 
@@ -141,12 +180,11 @@ async def _chat_openai_compatible(
         raise LLMError("OpenAI-compatible LLM returned empty content")
     usage = data.get("usage") or {}
     if usage:
-        LLM_TOKENS.labels(provider="openai_compat", direction="input").inc(
-            usage.get("prompt_tokens", 0)
-        )
-        LLM_TOKENS.labels(provider="openai_compat", direction="output").inc(
-            usage.get("completion_tokens", 0)
-        )
+        inp = usage.get("prompt_tokens", 0)
+        out = usage.get("completion_tokens", 0)
+        LLM_TOKENS.labels(provider="openai_compat", direction="input").inc(inp)
+        LLM_TOKENS.labels(provider="openai_compat", direction="output").inc(out)
+        _record_usage("openai_compat", settings.llm_model, inp, out)
     return content.strip()
 
 
