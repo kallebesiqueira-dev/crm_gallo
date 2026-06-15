@@ -1645,7 +1645,21 @@
   "search": {
     "placeholder": "Cerca lead, clienti, aziende…",
     "hint": "Digita almeno 2 caratteri per cercare.",
-    "noResults": "Nessun risultato"
+    "noResults": "Nessun risultato",
+    "newLead": "Nuovo lead",
+    "newCustomer": "Nuovo cliente",
+    "newCompany": "Nuova azienda",
+    "newDeal": "Nuova trattativa",
+    "newQuote": "Nuovo preventivo",
+    "newContract": "Nuovo contratto",
+    "newProduct": "Nuovo prodotto"
+  },
+  "shortcuts": {
+    "title": "Scorciatoie da tastiera",
+    "search": "Ricerca e comandi",
+    "help": "Mostra questa guida",
+    "close": "Chiudi finestra / menu",
+    "hint": "Premi ⌘K per andare a una pagina o creare un record."
   },
   "documents": {
     "title": "Documenti",
