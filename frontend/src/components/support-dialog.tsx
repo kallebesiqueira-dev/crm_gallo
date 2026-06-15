@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 const CATEGORIES = ["technical", "bug", "feature", "question", "other"] as const;
 
@@ -21,6 +22,9 @@ export function SupportDialog({ open, onClose }: { open: boolean; onClose: () =>
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(dialogRef, open, { onEscape: close });
 
   if (!open) return null;
 
@@ -67,6 +71,7 @@ export function SupportDialog({ open, onClose }: { open: boolean; onClose: () =>
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className="w-full max-w-md rounded-xl border bg-background p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"

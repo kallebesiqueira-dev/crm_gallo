@@ -254,6 +254,7 @@ function DealCard({
   deleteLabel?: string;
 }) {
   const locale = useLocale();
+  const t = useTranslations("pipeline");
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
   });
