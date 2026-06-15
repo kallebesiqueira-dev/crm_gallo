@@ -46,10 +46,11 @@ jobs:
         run: npm run lint
 
       - name: Dead code (knip)
-        # Fails on unused dependencies, unused files, and unlisted/unresolved
-        # imports — the high-signal categories that keep the bundle lean and
-        # catch dead code before it accumulates. (Unused exports are curated
-        # locally via `npx knip`, not gated here — too noisy for a hard gate.)
+        # Fails on unused dependencies, unused files, and unlisted (used-but-
+        # undeclared) deps — the high-signal categories that keep the bundle
+        # lean and catch dead code before it accumulates. Unused exports are
+        # curated locally via `npx knip` (too noisy to hard-gate), and broken
+        # imports are already caught by tsc.
         run: npm run knip
 
       - name: Typecheck (tsc --noEmit)
