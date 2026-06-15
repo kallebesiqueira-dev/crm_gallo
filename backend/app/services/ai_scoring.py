@@ -4,7 +4,7 @@ import re
 from datetime import UTC, datetime
 
 from app.models import Lead
-from app.services.llm import LLMError, chat_completion, is_configured
+from app.services.llm import TEMP_DETERMINISTIC, LLMError, chat_completion, is_configured
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +110,7 @@ async def score_lead(lead: Lead, locale: str = "en") -> dict:
             f"language (locale code: {locale}); keep the JSON keys and the "
             f"'priority' value ('low'/'medium'/'high') in English.",
             max_tokens=512,
+            temperature=TEMP_DETERMINISTIC,
         )
         parsed = _parse_score_json(text)
         validated = _validate_score(parsed) if parsed else None

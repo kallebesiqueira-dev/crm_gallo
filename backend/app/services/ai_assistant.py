@@ -3,7 +3,14 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 from app.models import Customer
-from app.services.llm import LLMError, chat_completion, chat_completion_stream, is_configured
+from app.services.llm import (
+    TEMP_CONVERSATIONAL,
+    TEMP_FACTUAL,
+    LLMError,
+    chat_completion,
+    chat_completion_stream,
+    is_configured,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +40,7 @@ async def chat(
             messages=messages,
             system=f"{SYSTEM_PROMPT} Reply in locale: {locale}.",
             max_tokens=1024,
+            temperature=TEMP_CONVERSATIONAL,
         )
     except LLMError as e:
         logger.warning("Assistant LLM failed: %s", e)
@@ -59,6 +67,7 @@ async def chat_stream(
             messages=messages,
             system=f"{SYSTEM_PROMPT} Reply in locale: {locale}.",
             max_tokens=1024,
+            temperature=TEMP_CONVERSATIONAL,
         ):
             yield chunk
     except LLMError as e:
@@ -123,6 +132,7 @@ async def summarize_customer(
                 f"Write the summary in the user's language (locale code: {locale})."
             ),
             max_tokens=400,
+            temperature=TEMP_FACTUAL,
         )
     except LLMError as e:
         logger.warning("Summary LLM failed: %s", e)

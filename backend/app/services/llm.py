@@ -27,7 +27,18 @@ class LLMError(RuntimeError):
     """Raised when no LLM backend can answer."""
 
 
-async def _chat_anthropic(messages: list[Message], system: str | None, max_tokens: int) -> str:
+# Per-use-case temperature policy (None ⇒ provider default). Structured /
+# extraction tasks run deterministic so the same input yields the same output
+# (reproducible lead scores, stable summaries); conversation runs warmer.
+TEMP_DETERMINISTIC = 0.0  # lead scoring — parses a numeric score + fixed enum
+TEMP_FACTUAL = 0.3  # customer summaries — concise, low variance
+TEMP_CONVERSATIONAL = 0.5  # in-app AI assistant chat
+TEMP_CHATBOT = 0.4  # public landing chatbot
+
+
+async def _chat_anthropic(
+    messages: list[Message], system: str | None, max_tokens: int, temperature: float | None = None
+) -> str:
     if not settings.anthropic_api_key:
         raise LLMError("ANTHROPIC_API_KEY is empty")
     client = AsyncAnthropic(api_key=settings.anthropic_api_key)
@@ -38,6 +49,8 @@ async def _chat_anthropic(messages: list[Message], system: str | None, max_token
     }
     if system:
         kwargs["system"] = system
+    if temperature is not None:
+        kwargs["temperature"] = temperature
     try:
         message = await client.messages.create(**kwargs)
     except AnthropicError as e:
@@ -53,17 +66,22 @@ async def _chat_anthropic(messages: list[Message], system: str | None, max_token
     return "".join(block.text for block in message.content if block.type == "text").strip()
 
 
-async def _chat_ollama(messages: list[Message], system: str | None, max_tokens: int) -> str:
+async def _chat_ollama(
+    messages: list[Message], system: str | None, max_tokens: int, temperature: float | None = None
+) -> str:
     payload_messages: list[dict] = []
     if system:
         payload_messages.append({"role": "system", "content": system})
     payload_messages.extend(messages)
 
+    options: dict = {"num_predict": max_tokens}
+    if temperature is not None:
+        options["temperature"] = temperature
     payload = {
         "model": settings.ollama_model,
         "messages": payload_messages,
         "stream": False,
-        "options": {"num_predict": max_tokens},
+        "options": options,
     }
     try:
         async with httpx.AsyncClient(timeout=180.0) as client:
@@ -82,7 +100,7 @@ async def _chat_ollama(messages: list[Message], system: str | None, max_tokens: 
 
 
 async def _chat_openai_compatible(
-    messages: list[Message], system: str | None, max_tokens: int
+    messages: list[Message], system: str | None, max_tokens: int, temperature: float | None = None
 ) -> str:
     """Any provider that speaks the OpenAI `POST /chat/completions` shape —
     Groq, Mistral, Cerebras, OpenRouter, Together, a self-hosted vLLM, etc.
@@ -103,6 +121,8 @@ async def _chat_openai_compatible(
         "max_tokens": max_tokens,
         "stream": False,
     }
+    if temperature is not None:
+        payload["temperature"] = temperature
     headers = {"Authorization": f"Bearer {settings.llm_api_key}"}
     url = f"{settings.llm_base_url.rstrip('/')}/chat/completions"
     try:
@@ -134,7 +154,7 @@ async def _chat_openai_compatible(
 
 
 async def _stream_anthropic(
-    messages: list[Message], system: str | None, max_tokens: int
+    messages: list[Message], system: str | None, max_tokens: int, temperature: float | None = None
 ) -> AsyncGenerator[str, None]:
     if not settings.anthropic_api_key:
         raise LLMError("ANTHROPIC_API_KEY is empty")
@@ -146,6 +166,8 @@ async def _stream_anthropic(
     }
     if system:
         kwargs["system"] = system
+    if temperature is not None:
+        kwargs["temperature"] = temperature
     try:
         async with client.messages.stream(**kwargs) as stream:
             async for text in stream.text_stream:
@@ -155,18 +177,21 @@ async def _stream_anthropic(
 
 
 async def _stream_ollama(
-    messages: list[Message], system: str | None, max_tokens: int
+    messages: list[Message], system: str | None, max_tokens: int, temperature: float | None = None
 ) -> AsyncGenerator[str, None]:
     payload_messages: list[dict] = []
     if system:
         payload_messages.append({"role": "system", "content": system})
     payload_messages.extend(messages)
 
+    options: dict = {"num_predict": max_tokens}
+    if temperature is not None:
+        options["temperature"] = temperature
     payload = {
         "model": settings.ollama_model,
         "messages": payload_messages,
         "stream": True,
-        "options": {"num_predict": max_tokens},
+        "options": options,
     }
     try:
         async with httpx.AsyncClient(timeout=180.0) as client:
@@ -188,7 +213,7 @@ async def _stream_ollama(
 
 
 async def _stream_openai_compatible(
-    messages: list[Message], system: str | None, max_tokens: int
+    messages: list[Message], system: str | None, max_tokens: int, temperature: float | None = None
 ) -> AsyncGenerator[str, None]:
     if not settings.llm_api_key or not settings.llm_base_url:
         raise LLMError("LLM_BASE_URL / LLM_API_KEY not set")
@@ -204,6 +229,8 @@ async def _stream_openai_compatible(
         "max_tokens": max_tokens,
         "stream": True,
     }
+    if temperature is not None:
+        payload["temperature"] = temperature
     headers = {"Authorization": f"Bearer {settings.llm_api_key}"}
     url = f"{settings.llm_base_url.rstrip('/')}/chat/completions"
     try:
@@ -258,12 +285,17 @@ async def chat_completion(
     messages: list[Message],
     system: str | None = None,
     max_tokens: int = 1024,
+    temperature: float | None = None,
 ) -> str:
     """Send a chat completion using the configured provider, falling back to
     any *other configured cloud* provider if it fails (e.g. Groq rate-limited
     → Anthropic when a key is set). The local Ollama backend is only attempted
     when it is the selected provider, so an unreachable Ollama can never stall
     a cloud deploy's fallback path on its long timeout.
+
+    `temperature` is forwarded to the provider when set; leave it None to use
+    the provider default. Callers pick a value per use case — e.g. 0.0 for the
+    deterministic lead score, warmer for the conversational assistant.
     """
     provider = settings.llm_provider.lower()
     order = [provider] + [
@@ -277,7 +309,7 @@ async def chat_completion(
         if fn is None:
             continue
         try:
-            result = await fn(messages, system, max_tokens)
+            result = await fn(messages, system, max_tokens, temperature)
             status = "fallback" if i > 0 else "success"
             used_provider = name
             LLM_REQUESTS.labels(provider=used_provider, status=status).inc()
@@ -294,6 +326,7 @@ async def chat_completion_stream(
     messages: list[Message],
     system: str | None = None,
     max_tokens: int = 1024,
+    temperature: float | None = None,
 ) -> AsyncGenerator[str, None]:
     """Streaming variant — yields text chunks as they arrive from the provider.
     No fallback between providers (can't retry mid-stream); errors surface as
@@ -302,7 +335,7 @@ async def chat_completion_stream(
     fn = _STREAM_PROVIDERS.get(provider)
     if fn is None:
         raise LLMError(f"Unknown provider: {provider}")
-    async for chunk in fn(messages, system, max_tokens):
+    async for chunk in fn(messages, system, max_tokens, temperature):
         yield chunk
 
 
