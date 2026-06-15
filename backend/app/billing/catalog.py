@@ -36,6 +36,10 @@ class PlanDescriptor:
     tagline: str
     monthly_eur: Decimal  # exact money (ADR-015); PlanOut serializes to float
     seat_limit: int | None  # None = unlimited
+    # Monthly AI-credit allowance for the plan. None = unlimited. Surfaced on
+    # the pricing cards + /plans API today; metering/enforcement is a planned
+    # follow-up (currently usage is tracked via llm_usage, not gated).
+    ai_credits: int | None = None
     features: list[str] = field(default_factory=list)
     highlighted: bool = False
     requires_payment: bool = False
@@ -72,11 +76,13 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         tagline="Get started and validate with your team.",
         monthly_eur=Decimal("0"),
         seat_limit=FREE_SEAT_LIMIT,
+        ai_credits=50,
         features=[
             "Up to 2 users",
-            "Leads, customers, deals and pipeline",
-            "AI scoring (lightweight model)",
-            "Email support",
+            "Basic CRM",
+            "Leads",
+            "Pipeline",
+            "Limited AI — 50 credits",
         ],
     ),
     Plan.standard: PlanDescriptor(
@@ -89,15 +95,14 @@ CATALOG: dict[Plan, PlanDescriptor] = {
             "gbp": Decimal("17.00"),
             "brl": Decimal("99.00"),
         },
-        seat_limit=None,
+        seat_limit=10,
+        ai_credits=500,
         features=[
-            "Unlimited users",
-            "Everything in Free",
-            "Advanced AI scoring",
-            "Unlimited AI assistant",
-            "Quotes & PDF proposals",
-            "Reports and visual charts",
-            "Priority support",
+            "Up to 10 users",
+            "PDF proposals",
+            "Reports",
+            "Advanced dashboard",
+            "AI — 500 credits",
         ],
         highlighted=True,
         requires_payment=True,
@@ -113,13 +118,15 @@ CATALOG: dict[Plan, PlanDescriptor] = {
             "brl": Decimal("199.00"),
         },
         seat_limit=None,
+        ai_credits=2000,
         features=[
             "Everything in Standard",
-            "Contracts & e-signature",
-            "Bulk imports & exports",
-            "Teams & custom pipelines",
-            "Full audit log",
-            "Outgoing webhooks",
+            "E-signature",
+            "Permissions",
+            "Teams",
+            "Basic automations",
+            "Multiple pipelines",
+            "AI — 2,000 credits",
         ],
         requires_payment=True,
     ),
@@ -134,11 +141,15 @@ CATALOG: dict[Plan, PlanDescriptor] = {
             "brl": Decimal("299.00"),
         },
         seat_limit=None,
+        ai_credits=None,
         features=[
             "Everything in Business",
-            "Workflow automations",
-            "WhatsApp integration",
-            "Public API + API keys",
+            "WhatsApp",
+            "API",
+            "Webhooks",
+            "Unlimited automations",
+            "Unlimited AI",
+            "Priority support",
             "Dedicated account manager",
         ],
         requires_payment=True,

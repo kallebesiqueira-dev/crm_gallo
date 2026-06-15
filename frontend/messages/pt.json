@@ -1211,10 +1211,11 @@
         "shortPrice": "€0",
         "tagline": "Comece e valide com a sua equipa.",
         "features": [
-          "Até 2 utilizadores",
-          "Leads, clientes, negócios, pipeline",
-          "AI scoring (modelo leve)",
-          "Suporte por e-mail"
+          "Até 2 usuários",
+          "CRM básico",
+          "Leads",
+          "Pipeline",
+          "IA limitada — 50 créditos"
         ]
       },
       "standard": {
@@ -1222,13 +1223,11 @@
         "shortPrice": "€19/mês",
         "tagline": "Para equipas de vendas em crescimento.",
         "features": [
-          "Utilizadores ilimitados",
-          "Tudo do Free",
-          "AI scoring avançado",
-          "Assistente IA ilimitado",
-          "Orçamentos e propostas em PDF",
-          "Relatórios e gráficos",
-          "Suporte prioritário"
+          "Até 10 usuários",
+          "Propostas PDF",
+          "Relatórios",
+          "Dashboard avançado",
+          "IA — 500 créditos"
         ]
       },
       "business": {
@@ -1237,11 +1236,12 @@
         "tagline": "Para equipas que fecham negócios de ponta a ponta.",
         "features": [
           "Tudo do Standard",
-          "Contratos e assinatura eletrónica",
-          "Importações e exportações em massa",
-          "Equipas e pipelines personalizados",
-          "Registo de auditoria completo",
-          "Webhooks de saída"
+          "Assinatura eletrônica",
+          "Permissões",
+          "Equipes",
+          "Automações básicas",
+          "Pipelines múltiplos",
+          "IA — 2.000 créditos"
         ]
       },
       "premium": {
@@ -1250,10 +1250,13 @@
         "tagline": "Para equipas que escalam com automação.",
         "features": [
           "Tudo do Business",
-          "Automações de workflow",
-          "Integração WhatsApp",
-          "API pública + chaves de API",
-          "Gestor de conta dedicado"
+          "WhatsApp",
+          "API",
+          "Webhooks",
+          "Automações ilimitadas",
+          "IA ilimitada",
+          "Suporte prioritário",
+          "Gerente dedicado"
         ]
       }
     }

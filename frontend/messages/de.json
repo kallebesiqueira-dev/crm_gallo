@@ -1212,9 +1212,10 @@
         "tagline": "Starten und mit dem Team validieren.",
         "features": [
           "Bis zu 2 Nutzer",
-          "Leads, Kunden, Deals, Pipeline",
-          "KI-Scoring (leichtes Modell)",
-          "E-Mail-Support"
+          "Basis-CRM",
+          "Leads",
+          "Pipeline",
+          "Begrenzte KI — 50 Credits"
         ]
       },
       "standard": {
@@ -1222,13 +1223,11 @@
         "shortPrice": "€19/Mo",
         "tagline": "Für wachsende Vertriebsteams.",
         "features": [
-          "Unbegrenzte Nutzer",
-          "Alles aus Free",
-          "Erweitertes KI-Scoring",
-          "Unbegrenzter KI-Assistent",
-          "Angebote & PDF-Vorschläge",
-          "Berichte und Charts",
-          "Priority-Support"
+          "Bis zu 10 Nutzer",
+          "PDF-Angebote",
+          "Berichte",
+          "Erweitertes Dashboard",
+          "KI — 500 Credits"
         ]
       },
       "business": {
@@ -1237,11 +1236,12 @@
         "tagline": "Für Teams, die Deals end-to-end abschließen.",
         "features": [
           "Alles aus Standard",
-          "Verträge & E-Signatur",
-          "Massen-Import & -Export",
-          "Teams & eigene Pipelines",
-          "Vollständiges Audit-Log",
-          "Ausgehende Webhooks"
+          "E-Signatur",
+          "Berechtigungen",
+          "Teams",
+          "Basis-Automationen",
+          "Mehrere Pipelines",
+          "KI — 2.000 Credits"
         ]
       },
       "premium": {
@@ -1250,9 +1250,12 @@
         "tagline": "Für Teams, die mit Automatisierung skalieren.",
         "features": [
           "Alles aus Business",
-          "Workflow-Automatisierungen",
-          "WhatsApp-Integration",
-          "Öffentliche API + API-Schlüssel",
+          "WhatsApp",
+          "API",
+          "Webhooks",
+          "Unbegrenzte Automationen",
+          "Unbegrenzte KI",
+          "Priorisierter Support",
           "Dedizierter Account-Manager"
         ]
       }

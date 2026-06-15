@@ -1212,9 +1212,10 @@
         "tagline": "Cumenza e valida cun tia squadra.",
         "features": [
           "Fin a 2 utilisaders",
-          "Leads, clients, affars, pipeline",
-          "Scoring IA (model lev)",
-          "Sustegn per e-mail"
+          "CRM da basa",
+          "Leads",
+          "Pipeline",
+          "IA limitada — 50 credits"
         ]
       },
       "standard": {
@@ -1222,13 +1223,11 @@
         "shortPrice": "€19/mais",
         "tagline": "Per squadras da vendita en crescita.",
         "features": [
-          "Utilisaders illimitads",
-          "Tut da Free",
-          "Scoring IA avanzà",
-          "Assistent IA illimità",
-          "Offertas e propostas PDF",
-          "Rapports e grafics",
-          "Sustegn prioritar"
+          "Fin a 10 utilisaders",
+          "Propostas PDF",
+          "Rapports",
+          "Dashboard avanzà",
+          "IA — 500 credits"
         ]
       },
       "business": {
@@ -1237,11 +1236,12 @@
         "tagline": "Per squadras che concludan affars dal cumenzament a la fin.",
         "features": [
           "Tut da Standard",
-          "Contracts e signatura electronica",
-          "Importaziuns ed exportaziuns en massa",
-          "Squadras e pipelines persunalisadas",
-          "Protocol da revisiun cumplet",
-          "Webhooks che sortan"
+          "Signatura electronica",
+          "Permissiuns",
+          "Squadras",
+          "Automatisaziuns da basa",
+          "Pipelines multiplas",
+          "IA — 2'000 credits"
         ]
       },
       "premium": {
@@ -1250,9 +1250,12 @@
         "tagline": "Per squadras che scalan cun l'automatisaziun.",
         "features": [
           "Tut da Business",
-          "Automatisaziuns da workflow",
-          "Integraziun WhatsApp",
-          "API publica + clavs API",
+          "WhatsApp",
+          "API",
+          "Webhooks",
+          "Automatisaziuns illimitadas",
+          "IA illimitada",
+          "Sustegn prioritar",
           "Manager da conto dedicà"
         ]
       }

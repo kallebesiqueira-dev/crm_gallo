@@ -1029,6 +1029,8 @@ export interface PlanOut {
   yearly_eur_per_user: number;
   yearly_total_eur: number;
   seat_limit: number | null;
+  /** Monthly AI-credit allowance (null = unlimited). Display metadata. */
+  ai_credits?: number | null;
   features: string[];
   highlighted: boolean;
   requires_payment: boolean;

@@ -1491,6 +1491,9 @@ class PlanOut(BaseModel):
     yearly_eur_per_user: float
     yearly_total_eur: float
     seat_limit: int | None
+    # Monthly AI-credit allowance (None = unlimited). Display metadata for the
+    # pricing cards; not yet enforced (metering is a planned follow-up).
+    ai_credits: int | None = None
     features: list[str]
     highlighted: bool
     requires_payment: bool = False

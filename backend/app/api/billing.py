@@ -94,6 +94,7 @@ async def get_plans() -> list[PlanOut]:
             yearly_eur_per_user=p.yearly_eur_per_user,
             yearly_total_eur=p.yearly_total_eur,
             seat_limit=p.seat_limit,
+            ai_credits=p.ai_credits,
             features=p.features,
             highlighted=p.highlighted,
             requires_payment=p.requires_payment,

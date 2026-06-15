@@ -1212,9 +1212,10 @@
         "tagline": "Inizia e valida le idee con il tuo team.",
         "features": [
           "Fino a 2 utenti",
-          "Lead, clienti, trattative, pipeline",
-          "AI scoring (modello leggero)",
-          "Supporto e-mail"
+          "CRM di base",
+          "Lead",
+          "Pipeline",
+          "IA limitata — 50 crediti"
         ]
       },
       "standard": {
@@ -1222,13 +1223,11 @@
         "shortPrice": "€19/mese",
         "tagline": "Per team commerciali in crescita.",
         "features": [
-          "Utenti illimitati",
-          "Tutto del Free",
-          "AI scoring avanzato",
-          "Assistente IA illimitato",
-          "Preventivi e proposte PDF",
-          "Report e grafici",
-          "Supporto prioritario"
+          "Fino a 10 utenti",
+          "Proposte PDF",
+          "Report",
+          "Dashboard avanzata",
+          "IA — 500 crediti"
         ]
       },
       "business": {
@@ -1236,12 +1235,13 @@
         "shortPrice": "€39/mese",
         "tagline": "Per team che chiudono trattative end-to-end.",
         "features": [
-          "Tutto dello Standard",
-          "Contratti e firma elettronica",
-          "Importazioni ed esportazioni in blocco",
-          "Team e pipeline personalizzate",
-          "Registro di audit completo",
-          "Webhook in uscita"
+          "Tutto di Standard",
+          "Firma elettronica",
+          "Permessi",
+          "Team",
+          "Automazioni di base",
+          "Pipeline multiple",
+          "IA — 2.000 crediti"
         ]
       },
       "premium": {
@@ -1249,10 +1249,13 @@
         "shortPrice": "€59/mese",
         "tagline": "Per team che scalano con l'automazione.",
         "features": [
-          "Tutto del Business",
-          "Automazioni workflow",
-          "Integrazione WhatsApp",
-          "API pubblica + chiavi API",
+          "Tutto di Business",
+          "WhatsApp",
+          "API",
+          "Webhooks",
+          "Automazioni illimitate",
+          "IA illimitata",
+          "Supporto prioritario",
           "Account manager dedicato"
         ]
       }
