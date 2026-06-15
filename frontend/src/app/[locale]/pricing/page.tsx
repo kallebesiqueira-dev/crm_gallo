@@ -134,7 +134,7 @@ const FALLBACK_PLANS: PlanOut[] = [
     seat_limit: null,
     features: [
       "Everything in Standard",
-      "Contracts & e-signature (eIDAS)",
+      "Contracts & e-signature",
       "Bulk imports & exports",
       "Teams & custom pipelines",
       "Full audit log",

@@ -11,10 +11,10 @@
 
 <p align="center">
   <img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg">
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-black?logo=next.js">
   <img alt="React" src="https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white">
-  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16%20+%20pgvector-336791?logo=postgresql&logoColor=white">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white">
   <img alt="i18n" src="https://img.shields.io/badge/i18n-7%20locales-7c3aed">
 </p>
@@ -53,7 +53,7 @@ GALLO CRM is a **production-grade, multi-tenant CRM platform** that takes a deal
 - **Product / Service catalog** — priced catalog items the tenant sells, ready to attach to quotes & contracts.
 
 ### AI
-- **Lead scoring** + next-best-action and **customer summaries** via **Anthropic Claude**, **Ollama** (local), or any OpenAI-compatible provider — with a heuristic fallback when no LLM is configured.
+- **Lead scoring** + next-best-action and **customer summaries** via any **OpenAI-compatible** provider (Groq in production), **Ollama** (local), or **Anthropic Claude** — provider-abstracted, with a heuristic fallback when no LLM is configured.
 - **Sales-assistant chat** and a **public landing chatbot**, rate-limited per user/IP.
 
 ### Multi-tenancy & auth
@@ -82,10 +82,10 @@ GALLO CRM is a **production-grade, multi-tenant CRM platform** that takes a deal
 | i18n        | next-intl (7 locales, URL-prefixed)                                   |
 | Backend     | FastAPI (async) · SQLAlchemy 2.0 · Pydantic v2 · Alembic · SlowAPI    |
 | Worker      | Arq (Redis-backed jobs, cron, outbox drain)                          |
-| Database    | PostgreSQL 16 + pgvector · Row-Level Security                         |
+| Database    | PostgreSQL 16 · Row-Level Security                                   |
 | Cache/Queue | Redis 7                                                               |
 | Storage     | S3-compatible (MinIO in dev · Cloudflare R2 in prod)                 |
-| AI          | Anthropic Claude (Sonnet 4.6) · Ollama · OpenAI-compatible           |
+| AI          | OpenAI-compatible (Groq in prod) · Ollama · Anthropic — abstracted   |
 | Email       | Resend · SMTP · console (dev)                                        |
 | Payments    | Stripe (Checkout, Customer Portal, webhooks)                         |
 | Logging     | structlog (JSON) + request-id middleware · Sentry                    |
@@ -143,8 +143,8 @@ All config lives in `.env` (see `.env.example`). The most relevant keys:
 | `JWT_SECRET` | **Required.** ≥32 random chars; the app refuses to boot in prod with a weak secret. |
 | `DATABASE_URL` / `APP_DATABASE_URL` | Owner role (Alembic DDL) vs runtime role (`crm_app`, RLS-enforcing). |
 | `REDIS_URL` | Sessions, rate limits, Arq queue. |
-| `LLM_PROVIDER` | `ollama` (default, local) · `anthropic` · OpenAI-compatible. |
-| `ANTHROPIC_API_KEY` / `OLLAMA_URL` | LLM credentials (optional — heuristic fallback otherwise). |
+| `LLM_PROVIDER` | `openai_compat` (prod, e.g. Groq) · `ollama` (default, local) · `anthropic`. |
+| `LLM_API_KEY` / `LLM_BASE_URL` / `ANTHROPIC_API_KEY` / `OLLAMA_URL` | LLM credentials per provider (optional — heuristic fallback otherwise). |
 | `EMAIL_PROVIDER` | `console` (dev) · `resend` · `smtp`. |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Transactional email (when `EMAIL_PROVIDER=resend`). |
 | `STRIPE_SECRET_KEY` + `STRIPE_PRICE_*` | Paid plans (Free works without them). |
