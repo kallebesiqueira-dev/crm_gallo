@@ -105,7 +105,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
   if (error) return <p className="text-sm text-destructive">{error}</p>;
 
   return (
-    <Card className="max-w-3xl">
+    <Card className="mx-auto max-w-3xl">
       <CardHeader>
         <div className="flex items-center gap-4">
           <AvatarUpload

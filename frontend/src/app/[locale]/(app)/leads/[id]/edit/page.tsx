@@ -122,7 +122,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
 
   return (
-    <Card className="max-w-3xl">
+    <Card className="mx-auto max-w-3xl">
       <CardHeader>
         <CardTitle>
           {tCommon("edit")} — {form.first_name} {form.last_name}
