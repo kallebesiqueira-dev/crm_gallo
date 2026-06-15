@@ -62,7 +62,7 @@ export default function NewCustomerPage() {
   }
 
   return (
-    <Card className="max-w-3xl">
+    <Card className="mx-auto max-w-3xl">
       <CardHeader>
         <CardTitle>{t("new")}</CardTitle>
       </CardHeader>

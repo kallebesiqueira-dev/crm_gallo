@@ -92,7 +92,7 @@ export default function NewDealPage() {
   }
 
   return (
-    <Card className="max-w-2xl">
+    <Card className="mx-auto max-w-2xl">
       <CardHeader>
         <CardTitle>{t("new")}</CardTitle>
       </CardHeader>

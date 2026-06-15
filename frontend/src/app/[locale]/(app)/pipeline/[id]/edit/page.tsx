@@ -132,7 +132,7 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <Card className="max-w-2xl">
+    <Card className="mx-auto max-w-2xl">
       <CardHeader>
         <CardTitle>{t("dealTitle")}</CardTitle>
       </CardHeader>

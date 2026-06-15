@@ -15,6 +15,7 @@ import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
 import { PageSpinner } from "@/components/page-spinner";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { useToast } from "@/components/toast-provider";
 import { api, type Customer, type Deal } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -86,11 +87,19 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <CardTitle className="text-2xl">
-                  {customer.first_name} {customer.last_name}
-                </CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">{customer.company ?? "—"}</p>
+              <div className="flex items-center gap-4">
+                <AvatarUpload
+                  entityType="customer"
+                  entityId={customer.id}
+                  fallback={((customer.first_name[0] ?? "") + (customer.last_name[0] ?? "")).toUpperCase() || "?"}
+                  size={64}
+                />
+                <div>
+                  <CardTitle className="text-2xl">
+                    {customer.first_name} {customer.last_name}
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">{customer.company ?? "—"}</p>
+                </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Button asChild size="sm">

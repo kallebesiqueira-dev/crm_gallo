@@ -109,7 +109,7 @@ export default function EditProductPage() {
   }
 
   return (
-    <Card className="max-w-3xl">
+    <Card className="mx-auto max-w-3xl">
       <CardHeader>
         <CardTitle>{t("edit")}</CardTitle>
       </CardHeader>
