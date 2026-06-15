@@ -21,18 +21,7 @@ import {
   type TaskTodayItem,
 } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-
-const NEXT_ACTION_ICONS: Record<string, string> = {
-  call: "📞",
-  whatsapp: "💬",
-  email: "✉️",
-  proposal: "📄",
-  meeting: "📅",
-  follow_up: "🔁",
-  contract: "📝",
-  chase: "⚡",
-  other: "•",
-};
+import { ActionIcon } from "@/lib/action-icons";
 
 function formatDatetime(iso: string) {
   const d = new Date(iso);
@@ -54,7 +43,10 @@ function DealRow({ deal }: { deal: DealTodayItem }) {
       </div>
       <div className="ml-4 shrink-0 text-right">
         {deal.next_action_type && (
-          <span className="text-base">{NEXT_ACTION_ICONS[deal.next_action_type] ?? "•"}</span>
+          <ActionIcon
+            type={deal.next_action_type}
+            className="inline-block h-4 w-4 text-muted-foreground"
+          />
         )}
         {deal.next_action_at && (
           <p className="text-xs text-muted-foreground">{formatDatetime(deal.next_action_at)}</p>

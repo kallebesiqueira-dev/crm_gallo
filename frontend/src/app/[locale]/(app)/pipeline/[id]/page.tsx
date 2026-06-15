@@ -18,6 +18,7 @@ import { PageSpinner } from "@/components/page-spinner";
 import { useToast } from "@/components/toast-provider";
 import { api, type Deal, type DealStage, type NextActionType } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { ActionIcon } from "@/lib/action-icons";
 
 const STAGES: DealStage[] = [
   "new",
@@ -42,17 +43,6 @@ const NEXT_ACTION_TYPES = [
   "other",
 ] as const;
 
-const NEXT_ACTION_ICONS: Record<string, string> = {
-  call: "📞",
-  whatsapp: "💬",
-  email: "✉️",
-  proposal: "📄",
-  meeting: "📅",
-  follow_up: "🔁",
-  contract: "📝",
-  chase: "⚡",
-  other: "•",
-};
 
 function formatMoney(value: number, currency: string) {
   const sym = CURRENCY_SYMBOL[currency] ?? currency + " ";
@@ -209,7 +199,10 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                       : "mt-1 text-sm"
                   }
                 >
-                  {NEXT_ACTION_ICONS[deal.next_action_type] ?? "•"}{" "}
+                  <ActionIcon
+                    type={deal.next_action_type}
+                    className="mr-1 inline h-4 w-4 align-text-bottom"
+                  />
                   {tActions(deal.next_action_type)}
                   {deal.next_action_at && (
                     <span className="ml-2 text-xs text-muted-foreground">
@@ -286,7 +279,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                   <option value="">—</option>
                   {NEXT_ACTION_TYPES.map((k) => (
                     <option key={k} value={k}>
-                      {NEXT_ACTION_ICONS[k]} {tActions(k)}
+                      {tActions(k)}
                     </option>
                   ))}
                 </select>
