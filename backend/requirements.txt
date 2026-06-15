@@ -35,7 +35,7 @@ openpyxl==3.1.5
 # in lockstep: 68.0 is written against the pydyf 0.11+ Stream.transform
 # API, so it pairs with 0.12.1 (the old 62.3 ↔ 0.10.0 pin would crash
 # 68.0). 68.0 also pulls tinyhtml5 (pinned below) as its HTML parser.
-weasyprint==68.0
+weasyprint==69.0
 pydyf==0.12.1
 tinyhtml5==2.1.0
 pytest==8.3.3
