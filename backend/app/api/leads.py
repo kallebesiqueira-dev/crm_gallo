@@ -377,6 +377,10 @@ async def score_async(
     # foreign-org lead.
     lead = await _get_lead_or_404(db, lead_id, org_id)
     ensure_can_mutate(user, lead.owner_id)
+    # Gate here too — async scoring is still a user-initiated AI action, so it
+    # must count against the plan's monthly credits like the sync /score does
+    # (otherwise it's a quota bypass).
+    await ensure_credits(db, org_id)
 
     from app.worker.queue import enqueue
 
