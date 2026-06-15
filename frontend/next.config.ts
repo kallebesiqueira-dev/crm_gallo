@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
 // (Railway) to activate.
 const sentryEnabled = !!process.env.SENTRY_AUTH_TOKEN;
 
+// Server-side Sentry is intentionally NOT initialized — the runtime SDK init
+// is client-only (src/sentry/init.ts, gated on NEXT_PUBLIC_SENTRY_DSN). Suppress
+// Sentry v10's missing-`instrumentation.ts` warning so it doesn't clutter builds.
+process.env.SENTRY_SUPPRESS_INSTRUMENTATION_FILE_WARNING ||= "1";
+
 export default withSentryConfig(withNextIntl(nextConfig), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
@@ -44,6 +49,9 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   sourcemaps: { disable: !sentryEnabled },
   // Upload only — the runtime SDK init stays in src/sentry/init.ts,
   // dynamically imported and gated on NEXT_PUBLIC_SENTRY_DSN.
-  autoInstrumentServerFunctions: false,
   widenClientFileUpload: true,
+  webpack: {
+    // v10 moved this option under `webpack`; keep server fns un-instrumented.
+    autoInstrumentServerFunctions: false,
+  },
 });
