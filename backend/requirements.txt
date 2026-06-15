@@ -8,7 +8,7 @@ alembic==1.18.4
 pydantic==2.13.4
 pydantic-settings==2.14.1
 python-jose[cryptography]==3.5.0
-argon2-cffi==23.1.0
+argon2-cffi==25.1.0
 # bcrypt kept for verifying legacy hashes during migration (remove after all
 # users have re-authenticated once and hashes are fully rotated to argon2).
 bcrypt==5.0.0
