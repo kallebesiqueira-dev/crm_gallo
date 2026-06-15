@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { api, type Pipeline, type PipelineStageDraft } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -195,16 +196,16 @@ export function PipelinesCard({ canManage }: Props) {
           <form onSubmit={create} className="flex flex-wrap items-end gap-2">
             <div className="space-y-1.5">
               <Label htmlFor="new_pipeline_kind">{t("kindLabel")}</Label>
-              <select
+              <Select
                 id="new_pipeline_kind"
                 aria-label={t("kindLabel")}
                 value={newKind}
                 onChange={(e) => setNewKind(e.target.value as "lead" | "deal")}
-                className="flex h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="w-auto"
               >
                 <option value="lead">{t("kindLead")}</option>
                 <option value="deal">{t("kindDeal")}</option>
-              </select>
+              </Select>
             </div>
             <div className="min-w-[200px] flex-1 space-y-1.5">
               <Label htmlFor="new_pipeline_name">{t("nameLabel")}</Label>

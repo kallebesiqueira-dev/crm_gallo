@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import { SignaturePanel } from "@/components/signature-panel";
@@ -322,11 +323,10 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
               >
                 {tTpl("applyToContract")}
               </label>
-              <select
+              <Select
                 id="apply-template"
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">{tTpl("chooseTemplate")}</option>
                 {templates.map((tpl) => (
@@ -335,7 +335,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                     {tpl.is_default ? ` (${tTpl("default")})` : ""}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <Button onClick={applyTemplate} disabled={applying || !selectedTemplate}>
               {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}

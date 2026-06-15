@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { api, type DocumentTemplate, type MergeField } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -171,10 +172,10 @@ export function DocumentTemplatesCard({ canManage }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="tpl-body">{t("bodyLabel")}</Label>
-              <textarea
+              <Textarea
                 id="tpl-body"
                 ref={bodyRef}
-                className="flex min-h-48 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
+                className="min-h-48 font-mono"
                 value={draft.body}
                 onChange={(e) => setDraft({ ...draft, body: e.target.value })}
                 placeholder={t("bodyPlaceholder")}

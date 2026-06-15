@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { api, type Invite, type Role } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -125,10 +126,9 @@ export function TeamCard({ canInvite }: { canInvite: boolean }) {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="invite_role">{t("roleLabel")}</Label>
-                <select
+                <Select
                   id="invite_role"
                   aria-label={t("roleLabel")}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={role}
                   onChange={(e) => setRole(e.target.value as Role)}
                 >
@@ -137,7 +137,7 @@ export function TeamCard({ canInvite }: { canInvite: boolean }) {
                       {r}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className="self-end">
                 <Button type="submit" disabled={busy || !email.trim()}>

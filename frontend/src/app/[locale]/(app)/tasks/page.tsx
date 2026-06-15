@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -197,9 +198,8 @@ export default function TasksPage() {
               required
               className="sm:col-span-3 lg:col-span-1"
             />
-            <select
+            <Select
               aria-label="priority"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={priority}
               onChange={(e) => setPriority(e.target.value as TaskPriority)}
             >
@@ -208,7 +208,7 @@ export default function TasksPage() {
                   {t(`priorities.${p}`)}
                 </option>
               ))}
-            </select>
+            </Select>
             <Input
               type="date"
               value={dueDate}

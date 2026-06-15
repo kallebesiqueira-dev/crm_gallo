@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Plus, Trash2, Users2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
 import { api, type Team, type TeamMember } from "@/lib/api";
@@ -165,10 +166,9 @@ export default function TeamsPage() {
                 </div>
 
                 {available.length > 0 && (
-                  <select
+                  <Select
                     value=""
                     onChange={(e) => addMember(team, e.target.value)}
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <option value="">{t("addMember")}</option>
                     {available.map((m) => (
@@ -176,7 +176,7 @@ export default function TeamsPage() {
                         {m.full_name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 )}
               </Card>
             );

@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -74,15 +76,14 @@ export default function NewProductPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="type">{t("type")}</Label>
-            <select
+            <Select
               id="type"
               value={form.type}
               onChange={(e) => set("type", e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="product">{t("typeProduct")}</option>
               <option value="service">{t("typeService")}</option>
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="price">{t("price")}</Label>
@@ -119,9 +120,9 @@ export default function NewProductPage() {
           </label>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="description">{t("description")}</Label>
-            <textarea
+            <Textarea
               id="description"
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[100px]"
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
             />

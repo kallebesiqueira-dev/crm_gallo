@@ -6,6 +6,7 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChartTooltip } from "@/components/charts/tooltip";
@@ -337,30 +338,28 @@ export default function PerformancePage() {
           <form onSubmit={handleCreateGoal} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
             <div className="space-y-1">
               <Label htmlFor="g-metric">{t("metric")}</Label>
-              <select
+              <Select
                 id="g-metric"
                 value={gMetric}
                 onChange={(e) => setGMetric(e.target.value as GoalMetric)}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <option value="revenue">{t("metricRevenue")}</option>
                 <option value="deal_count">{t("metricDealCount")}</option>
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="g-period">{t("goalPeriod")}</Label>
-              <select
+              <Select
                 id="g-period"
                 value={gPeriod}
                 onChange={(e) => setGPeriod(e.target.value as GoalPeriod)}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 {PERIODS.map((p) => (
                   <option key={p} value={p}>
                     {t(`period.${p}`)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="g-start">{t("periodStart")}</Label>

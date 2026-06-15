@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import {
   api,
   type CustomFieldDefinition,
@@ -189,19 +190,18 @@ export function CustomFieldsCard({ canManage }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cf_kind">{t("type")}</Label>
-              <select
+              <Select
                 id="cf_kind"
                 aria-label={t("type")}
                 value={kind}
                 onChange={(e) => setKind(e.target.value as CustomFieldKind)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 {KINDS.map((k) => (
                   <option key={k} value={k}>
                     {t(`kind.${k}`)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="flex items-end gap-2 pb-1.5">
               <label className="flex items-center gap-2 text-sm">

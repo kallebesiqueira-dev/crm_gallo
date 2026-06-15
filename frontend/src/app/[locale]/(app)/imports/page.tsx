@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { CopyCheck, Download, FileUp, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -122,26 +123,24 @@ export default function ImportsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
               <span className="text-sm font-medium">{t("entityType")}</span>
-              <select
+              <Select
                 value={entityType}
                 onChange={(e) => setEntityType(e.target.value as ImportEntityType)}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="lead">{t("entityLead")}</option>
                 <option value="customer">{t("entityCustomer")}</option>
-              </select>
+              </Select>
             </label>
 
             <label className="space-y-1.5">
               <span className="text-sm font-medium">{t("mode")}</span>
-              <select
+              <Select
                 value={mode}
                 onChange={(e) => setMode(e.target.value as ImportMode)}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="create">{t("modeCreate")}</option>
                 <option value="upsert">{t("modeUpsert")}</option>
-              </select>
+              </Select>
             </label>
           </div>
 

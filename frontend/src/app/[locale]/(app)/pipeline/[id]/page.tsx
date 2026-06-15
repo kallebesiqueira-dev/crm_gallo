@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ActivityTimeline } from "@/components/activity-timeline";
 import { AttachmentsPanel } from "@/components/attachments-panel";
@@ -270,11 +271,10 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
             <form onSubmit={saveNextAction} className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="na-type">{t("actionType")}</Label>
-                <select
+                <Select
                   id="na-type"
                   value={naType}
                   onChange={(e) => setNaType(e.target.value as NextActionType | "")}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="">—</option>
                   {NEXT_ACTION_TYPES.map((k) => (
@@ -282,7 +282,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                       {tActions(k)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="na-at">{t("scheduledFor")}</Label>

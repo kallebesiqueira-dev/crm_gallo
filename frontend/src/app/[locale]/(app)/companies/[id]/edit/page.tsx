@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
 import { AvatarUpload } from "@/components/avatar-upload";
@@ -129,9 +130,9 @@ export default function EditCompanyPage({ params }: { params: Promise<{ id: stri
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="notes">{t("notes")}</Label>
-            <textarea
+            <Textarea
               id="notes"
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[100px]"
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
             />

@@ -6,6 +6,8 @@ import { Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Contract, ContractCreate, Currency } from "@/lib/api";
 
@@ -69,9 +71,8 @@ export function ContractForm({ initial, submitLabel, busy, error, onSubmit }: Pr
           </div>
           <div>
             <Label htmlFor="c-currency">{t("currency")}</Label>
-            <select
+            <Select
               id="c-currency"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
             >
@@ -80,7 +81,7 @@ export function ContractForm({ initial, submitLabel, busy, error, onSubmit }: Pr
                   {c}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <Label htmlFor="c-value">{t("value")}</Label>
@@ -149,9 +150,9 @@ export function ContractForm({ initial, submitLabel, busy, error, onSubmit }: Pr
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="c-body">{t("body")}</Label>
-            <textarea
+            <Textarea
               id="c-body"
-              className="flex min-h-40 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="min-h-40"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder={t("bodyPlaceholder")}
@@ -159,9 +160,8 @@ export function ContractForm({ initial, submitLabel, busy, error, onSubmit }: Pr
           </div>
           <div>
             <Label htmlFor="c-notes">{t("notes")}</Label>
-            <textarea
+            <Textarea
               id="c-notes"
-              className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={t("notesPlaceholder")}

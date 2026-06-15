@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   api,
   type CustomFieldDefinition,
@@ -22,12 +24,6 @@ import { getToken } from "@/lib/auth";
  * Renders nothing when the org has no definitions for this entity — so
  * dropping it into a form is a no-op until an admin defines fields.
  */
-const TEXTAREA_CLASS =
-  "flex min-h-[80px] w-full rounded-md border border-input bg-background p-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-const SELECT_CLASS =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
 interface Props {
   entityType: CustomFieldEntity;
   value: Record<string, unknown>;
@@ -100,9 +96,8 @@ function FieldWidget({
       return (
         <div className="space-y-2 sm:col-span-2">
           {label}
-          <textarea
+          <Textarea
             id={id}
-            className={TEXTAREA_CLASS}
             value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
           />
@@ -151,9 +146,8 @@ function FieldWidget({
       return (
         <div className="space-y-2">
           {label}
-          <select
+          <Select
             id={id}
-            className={SELECT_CLASS}
             value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
           >
@@ -163,7 +157,7 @@ function FieldWidget({
                 {o}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       );
     case "multiselect": {
