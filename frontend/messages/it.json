@@ -1676,7 +1676,8 @@
     "search": "Ricerca e comandi",
     "help": "Mostra questa guida",
     "close": "Chiudi finestra / menu",
-    "hint": "Premi ⌘K per andare a una pagina o creare un record."
+    "hint": "Premi ⌘K per andare a una pagina o creare un record.",
+    "goto": "poi D/H/L/C/P — vai a una sezione"
   },
   "documents": {
     "title": "Documenti",

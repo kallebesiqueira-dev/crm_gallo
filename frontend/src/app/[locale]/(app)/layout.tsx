@@ -124,6 +124,56 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("gallo:assistant-open", onOpen);
   }, []);
 
+  // "Go to" leader shortcuts: press G then D/H/L/C/P/T to jump to a section
+  // (ignored while typing in a field).
+  useEffect(() => {
+    const GOTO: Record<string, string> = {
+      d: "dashboard",
+      h: "hoje",
+      l: "leads",
+      c: "customers",
+      p: "pipeline",
+      t: "tasks",
+    };
+    let leader = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      const typing =
+        !!el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.tagName === "SELECT" ||
+          el.isContentEditable);
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) {
+        leader = false;
+        return;
+      }
+      if (leader) {
+        leader = false;
+        clearTimeout(timer);
+        const dest = GOTO[e.key.toLowerCase()];
+        if (dest) {
+          e.preventDefault();
+          router.push(`/${locale}/${dest}`);
+        }
+        return;
+      }
+      if (e.key.toLowerCase() === "g") {
+        leader = true;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          leader = false;
+        }, 1500);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      clearTimeout(timer);
+    };
+  }, [locale, router]);
+
   async function logout() {
     const token = getToken();
     if (token) {

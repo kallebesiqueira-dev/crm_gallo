@@ -71,5 +71,9 @@ html.gallo-splash-pending body {
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Native form controls (checkbox / radio / select option highlight) use
+       the brand violet instead of the OS default blue. Inherited, so it
+       applies to every control app-wide; follows light/dark --primary. */
+    accent-color: hsl(var(--primary));
   }
 }

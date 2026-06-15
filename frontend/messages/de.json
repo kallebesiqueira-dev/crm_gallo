@@ -1676,7 +1676,8 @@
     "search": "Suche & Befehle",
     "help": "Diese Hilfe anzeigen",
     "close": "Dialog / Menü schließen",
-    "hint": "Drücke ⌘K, um zu einer Seite zu springen oder einen Datensatz anzulegen."
+    "hint": "Drücke ⌘K, um zu einer Seite zu springen oder einen Datensatz anzulegen.",
+    "goto": "dann D/H/L/C/P — zu einem Bereich springen"
   },
   "documents": {
     "title": "Dokumente",
