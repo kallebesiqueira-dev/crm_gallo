@@ -23,6 +23,9 @@
 12. [Sequence — Outbox → outgoing webhook](#12-sequence--outbox--outgoing-webhook)
 13. [Sequence — Stripe billing](#13-sequence--stripe-billing)
 14. [State — Deal pipeline & Webhook endpoint](#14-state--deal-pipeline--webhook-endpoint)
+15. [Domain class diagram — Quotes, Contracts, Products & Documents](#15-class--quotes-contracts-products--documents)
+16. [Domain class diagram — Omnichannel, Public API & Automation](#16-class--omnichannel-public-api--automation)
+17. [Domain class diagram — Segmentation, Custom Fields, Imports, FX & Usage](#17-class--segmentation-custom-fields-imports-fx--usage)
 
 ---
 
@@ -516,7 +519,58 @@ erDiagram
     NOTES }o..|| LEADS : "poly entity"
     ACTIVITIES }o..|| LEADS : "poly entity"
     FILE_ATTACHMENTS }o..|| LEADS : "poly entity"
+
+    ORGANIZATIONS ||--o{ COMPANIES : scopes
+    COMPANIES |o--o{ LEADS : links
+    COMPANIES |o--o{ CUSTOMERS : links
+    ORGANIZATIONS ||--o{ PRODUCTS : scopes
+    ORGANIZATIONS ||--o{ DOCUMENT_TEMPLATES : owns
+    ORGANIZATIONS ||--o{ CUSTOM_FIELD_DEFINITIONS : defines
+    ORGANIZATIONS ||--o{ TAGS : owns
+    TAGS ||--o{ ENTITY_TAGS : applied
+    ORGANIZATIONS ||--o{ SAVED_SEGMENTS : owns
+    ORGANIZATIONS ||--o{ WEB_FORMS : owns
+    ORGANIZATIONS ||--o{ IMPORT_JOBS : runs
+
+    ORGANIZATIONS ||--o{ QUOTES : scopes
+    QUOTES ||--o{ QUOTE_LINE_ITEMS : "line items"
+    DEALS |o--o{ QUOTES : has
+    CUSTOMERS |o--o{ QUOTES : for
+    ORGANIZATIONS ||--o{ CONTRACTS : scopes
+    QUOTES |o--o{ CONTRACTS : "converted to"
+    CONTRACTS |o--o{ DOCUMENT_TEMPLATES : "rendered from"
+    ORGANIZATIONS ||--o{ SIGNATURE_REQUESTS : scopes
+    QUOTES |o--o{ SIGNATURE_REQUESTS : "e-sign"
+    CONTRACTS |o--o{ SIGNATURE_REQUESTS : "e-sign"
+
+    ORGANIZATIONS ||--o{ WHATSAPP_ACCOUNTS : owns
+    WHATSAPP_ACCOUNTS ||--o{ CONVERSATIONS : threads
+    CONVERSATIONS ||--o{ MESSAGES : contains
+    LEADS |o--o{ CONVERSATIONS : "linked to"
+    CUSTOMERS |o--o{ CONVERSATIONS : "linked to"
+    USERS |o--o{ CONVERSATIONS : assignee
+
+    ORGANIZATIONS ||--o{ API_KEYS : owns
+    ORGANIZATIONS ||--o{ AUTOMATION_RULES : owns
+    AUTOMATION_RULES ||--o{ AUTOMATION_RUNS : logs
+    ORGANIZATIONS ||--o{ SALES_GOALS : scopes
+    USERS |o--o{ SALES_GOALS : "owner/team"
+
+    ORGANIZATIONS ||--o{ LLM_USAGE : scopes
+    USERS |o--o{ LLM_USAGE : "by (nullable)"
+    ORGANIZATIONS ||--o{ STRIPE_EVENTS : "billing log"
+    USERS ||--o{ EMAIL_VERIFICATION_TOKENS : verifies
+    FX_RATES }o..o{ ORGANIZATIONS : "global ref (no FK)"
 ```
+
+> The 44 tenant + reference tables: `organizations · org_memberships · org_invites · users · teams ·
+> password_reset_tokens · email_verification_tokens · mfa_backup_codes · leads · customers · companies ·
+> deals · tasks · pipelines · pipeline_stages · products · quotes · quote_line_items · contracts ·
+> signature_requests · document_templates · custom_field_definitions · tags · entity_tags · saved_segments ·
+> web_forms · import_jobs · notes · activities · file_attachments · notifications · audit_logs ·
+> outbox_events · webhook_endpoints · webhook_deliveries · api_keys · automation_rules · automation_runs ·
+> sales_goals · whatsapp_accounts · conversations · messages · stripe_events · fx_rates · llm_usage`.
+> `fx_rates` is **global reference data** (no `organization_id`, no RLS); everything else is tenant-scoped.
 
 > Cardinality legend: `||` = exactly one, `|o` = zero-or-one (nullable FK / `SET NULL`),
 > `o{` = zero-or-many. Polymorphic links (`}o..||`) are shown against `LEADS` for illustration —
@@ -795,5 +849,301 @@ stateDiagram-v2
 
 ---
 
+## 15. Class — Quotes, Contracts, Products & Documents
+
+```mermaid
+classDiagram
+    class Product {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str name
+        +str sku
+        +ProductType type
+        +Decimal price
+        +str currency
+        +str unit
+        +bool active
+        +UUID owner_id  «FK»
+        +int version
+    }
+    class Quote {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID deal_id  «FK»
+        +UUID customer_id  «FK»
+        +str number
+        +int version
+        +QuoteStatus status
+        +str title
+        +Currency currency
+        +date valid_until
+        +Decimal subtotal
+        +Decimal tax_rate
+        +Decimal tax_amount
+        +Decimal total
+        +UUID superseded_by  «FK»
+        +datetime sent_at
+        +datetime accepted_at
+        +datetime declined_at
+    }
+    class QuoteLineItem {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID quote_id  «FK»
+        +str description
+        +Decimal quantity
+        +Decimal unit_price
+        +Decimal line_total
+        +int sort_index
+    }
+    class Contract {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID quote_id  «FK»
+        +UUID deal_id  «FK»
+        +UUID customer_id  «FK»
+        +str number
+        +int version
+        +ContractStatus status
+        +str title
+        +Currency currency
+        +Decimal value
+        +date effective_date
+        +date end_date
+        +bool auto_renew
+        +int renewal_term_months
+        +str body
+        +UUID applied_template_id  «FK»
+        +datetime signed_at
+        +datetime activated_at
+        +datetime terminated_at
+    }
+    class SignatureRequest {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID quote_id  «FK»
+        +UUID contract_id  «FK»
+        +str provider
+        +SignatureStatus status
+        +str signer_name
+        +str signer_email
+        +str sign_token
+        +UUID document_attachment_id  «FK»
+        +str signed_document_key
+        +datetime signed_at
+        +datetime declined_at
+    }
+    class DocumentTemplate {
+        +UUID id
+        +UUID organization_id  «FK»
+        +DocumentType doc_type
+        +str name
+        +str body
+        +bool is_default
+        +UUID created_by_user_id  «FK»
+    }
+    Quote "1" --> "*" QuoteLineItem : line_items
+    Quote ..> Contract : "converted to"
+    DocumentTemplate ..> Contract : renders
+    Quote ..> SignatureRequest
+    Contract ..> SignatureRequest
+    Product ..> QuoteLineItem : "pre-fills"
+```
+
+---
+
+## 16. Class — Omnichannel, Public API & Automation
+
+```mermaid
+classDiagram
+    class WhatsAppAccount {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str phone_number_id
+        +str waba_id
+        +str display_phone_number
+        +str access_token  «encrypted»
+        +WhatsAppAccountStatus status
+    }
+    class Conversation {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID account_id  «FK»
+        +ConversationChannel channel
+        +str contact_wa_id
+        +str contact_name
+        +UUID lead_id  «FK»
+        +UUID customer_id  «FK»
+        +ConversationStatus status
+        +datetime last_message_at
+        +int unread_count
+        +UUID assignee_id  «FK»
+    }
+    class Message {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID conversation_id  «FK»
+        +str wa_message_id
+        +MessageDirection direction
+        +MessageType type
+        +str body
+        +str media_storage_key
+        +MessageStatus status
+        +UUID sender_user_id  «FK»
+        +datetime timestamp
+    }
+    class ApiKey {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str name
+        +str hashed_key  «sha256»
+        +str display_prefix
+        +str scopes
+        +datetime last_used_at
+        +datetime expires_at
+        +datetime revoked_at
+    }
+    class WebForm {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str name
+        +str token
+        +str default_source
+        +str redirect_url
+        +bool active
+        +int submission_count
+    }
+    class AutomationRule {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str name
+        +bool enabled
+        +AutomationTrigger trigger
+        +AutomationAction action
+        +str action_config  «JSON»
+        +int run_count
+        +datetime last_run_at
+    }
+    class AutomationRun {
+        +UUID id
+        +UUID rule_id  «FK»
+        +UUID organization_id  «FK»
+        +str idempotency_key
+        +str status
+        +str entity_type
+        +UUID entity_id
+        +str detail
+    }
+    WhatsAppAccount "1" --> "*" Conversation
+    Conversation "1" --> "*" Message
+    AutomationRule "1" --> "*" AutomationRun
+```
+
+---
+
+## 17. Class — Segmentation, Custom Fields, Imports, FX & Usage
+
+```mermaid
+classDiagram
+    class Company {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str name
+        +str industry
+        +str website
+        +str email
+        +str country
+        +int size
+        +str avatar_key
+        +dict custom_fields
+        +UUID owner_id  «FK»
+        +int version
+    }
+    class CustomFieldDefinition {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str entity_type
+        +str key
+        +str label
+        +CustomFieldType field_type
+        +list options
+        +bool required
+        +int position
+    }
+    class Tag {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str name
+        +str color
+    }
+    class EntityTag {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID tag_id  «FK»
+        +str entity_type
+        +UUID entity_id
+    }
+    class SavedSegment {
+        +UUID id
+        +UUID organization_id  «FK»
+        +str entity_type
+        +str name
+        +dict filters
+        +UUID created_by_id  «FK»
+    }
+    class ImportJob {
+        +UUID id
+        +UUID organization_id  «FK»
+        +ImportEntityType entity_type
+        +ImportMode mode
+        +ImportStatus status
+        +str filename
+        +str storage_key
+        +int total_rows
+        +int created_count
+        +int updated_count
+        +int error_count
+        +list error_report
+        +datetime finished_at
+    }
+    class SalesGoal {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID owner_id  «FK»
+        +UUID team_id  «FK»
+        +GoalPeriod period
+        +date period_start
+        +GoalMetric metric
+        +Decimal target
+    }
+    class FxRate {
+        +str base  «PK»
+        +str quote  «PK»
+        +Decimal rate
+        +date as_of
+        +str source
+        +datetime fetched_at
+    }
+    note for FxRate "Global reference data — no organization_id, no RLS."
+    class LlmUsage {
+        +UUID id
+        +UUID organization_id  «FK»
+        +UUID user_id  «FK»
+        +str use_case
+        +str provider
+        +str model
+        +int input_tokens
+        +int output_tokens
+        +datetime created_at
+    }
+    Tag "1" --> "*" EntityTag
+```
+
+> ER cardinality legend (used in §6): `||` exactly one · `|o` zero-or-one · `o{` zero-or-many ·
+> `}o..||` polymorphic (no real FK).
+
+---
+
 *Generated by reverse-engineering the live code. If you change `models.py`, the API surface,
 the worker, or `docker-compose.yml`, update the affected diagram here in the same PR.*
+*Last reconciled against the schema: 2026-06-15 (44 tables).*
