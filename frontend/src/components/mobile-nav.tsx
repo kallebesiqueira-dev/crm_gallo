@@ -92,7 +92,7 @@ export function MobileNav() {
                     height={32}
                     className="h-8 w-8 rounded-lg object-contain"
                   />
-                  <span className="text-sm font-semibold">GALLO crm</span>
+                  <span className="text-sm font-semibold">GALLO CRM</span>
                 </Link>
                 <button
                   type="button"

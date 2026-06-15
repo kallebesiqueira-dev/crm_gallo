@@ -160,7 +160,7 @@ export default function DashboardPage() {
           />
           <div className="min-w-0">
             <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-xl font-bold tracking-tight text-transparent dark:from-white dark:to-violet-200">
-              GALLO crm
+              GALLO CRM
             </div>
             <div className="line-clamp-2 text-xs text-muted-foreground">{t("welcome")}</div>
           </div>
