@@ -212,7 +212,7 @@ export function AssistantPanel({
           // mobile: bottom-sheet
           "inset-x-0 bottom-0 max-h-[88dvh] rounded-t-2xl",
           // desktop: floating panel anchored bottom-right
-          "sm:inset-x-auto sm:bottom-6 sm:right-6 sm:left-auto sm:w-[26rem] sm:max-h-[40rem] sm:rounded-2xl",
+          "sm:inset-x-auto sm:bottom-6 sm:right-6 sm:left-auto sm:w-[26rem] sm:max-h-[calc(100dvh_-_3rem)] sm:rounded-2xl",
         )}
       >
         {/* drag handle (mobile only) */}
