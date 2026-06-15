@@ -24,18 +24,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { api, ApiError, type Deal, type DealStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-
-const NEXT_ACTION_ICONS: Record<string, string> = {
-  call: "📞",
-  whatsapp: "💬",
-  email: "✉️",
-  proposal: "📄",
-  meeting: "📅",
-  follow_up: "🔁",
-  contract: "📝",
-  chase: "⚡",
-  other: "•",
-};
+import { ActionIcon } from "@/lib/action-icons";
 
 const STAGES: DealStage[] = [
   "new",
@@ -321,7 +310,7 @@ function DealCard({
               ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
               : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
           )}>
-            <span>{deal.next_action_type ? NEXT_ACTION_ICONS[deal.next_action_type] ?? "•" : "•"}</span>
+            <ActionIcon type={deal.next_action_type} className="h-3 w-3" />
             <span>{new Date(deal.next_action_at).toLocaleDateString()}</span>
           </div>
         ) : (
