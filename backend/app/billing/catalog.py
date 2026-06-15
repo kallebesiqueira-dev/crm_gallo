@@ -115,7 +115,7 @@ CATALOG: dict[Plan, PlanDescriptor] = {
         seat_limit=None,
         features=[
             "Everything in Standard",
-            "Contracts & e-signature (eIDAS)",
+            "Contracts & e-signature",
             "Bulk imports & exports",
             "Teams & custom pipelines",
             "Full audit log",

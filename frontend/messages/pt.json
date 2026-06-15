@@ -918,11 +918,6 @@
     "navFeatures": "Recursos",
     "navPricing": "Preços",
     "navFaq": "FAQ",
-    "logosTitle": "Usado por times de vendas que entregam",
-    "statsLeads": "Leads acompanhados",
-    "statsLanguages": "Idiomas nativos",
-    "statsUptime": "SLO de uptime",
-    "statsOpenSource": "Open source",
     "manifesto": {
       "eyebrow": "Nosso objetivo",
       "line1": "Não somos apenas um CRM.",
@@ -931,7 +926,7 @@
       "pillars": {
         "connect": {
           "title": "Conecte qualquer coisa",
-          "body": "APIs, webhooks, e-mail, calendário, base de conhecimento. Se tem endpoint, conecta."
+          "body": "API REST, webhooks de saída e WhatsApp — conecte os canais que seus clientes realmente usam."
         },
         "automate": {
           "title": "Automatize tudo",
@@ -1050,8 +1045,6 @@
         }
       }
     },
-    "testimonialsEyebrow": "O que estão dizendo",
-    "testimonialsTitle": "Amado por times de vendas que medem o que entregam.",
     "footerTagline": "CRM com IA, feito para times de vendas modernos. Open source sob AGPL-3.0.",
     "footerProduct": "Produto",
     "footerLegal": "Legal",
@@ -1109,68 +1102,6 @@
           "3": "Compatível com residência de dados UE, GDPR-aware"
         }
       }
-    },
-    "testimonial": {
-      "1": {
-        "quote": "Substituímos duas ferramentas pelo Gallo CRM e o AI scoring pegou dois leads quentes que teríamos perdido no meio do ruído.",
-        "author": "Andrea Müller",
-        "role": "Head of Sales, SaaS B2B"
-      },
-      "2": {
-        "quote": "Finalmente um CRM em que nossos escritórios francês e alemão se sentem em casa. O pipeline drag-drop é exatamente o que meus reps queriam.",
-        "author": "Léa Petit",
-        "role": "RevOps Lead, Agência Europeia"
-      },
-      "3": {
-        "quote": "Open source, self-hostável, com uma IA séria — é assim que ferramentas modernas de vendas deveriam ser.",
-        "author": "Joana Ramos",
-        "role": "CTO, Startup de Lisboa"
-      },
-      "4": {
-        "quote": "Migramos do HubSpot em uma semana. O AI scoring sozinho nos economiza 3 horas por dia.",
-        "author": "Marco Bianchi",
-        "role": "Founder, SaaS Italiano"
-      },
-      "5": {
-        "quote": "Suporte multilíngue fechou o deal. Meu time em 4 países finalmente usa a mesma ferramenta.",
-        "author": "Sara Lopez",
-        "role": "Sales Director, Varejo Espanhol"
-      },
-      "6": {
-        "quote": "O pipeline drag-drop é finalmente o que kanban deveria ser. Tempo real, ponderado, lindo.",
-        "author": "Hans Müller",
-        "role": "VP Sales, Manufatura Alemã"
-      },
-      "7": {
-        "quote": "Rascunhos de follow-up de IA em francês nativo têm 41% de taxa de resposta. Game-changer.",
-        "author": "Camille Dubois",
-        "role": "Account Executive, B2B Francês"
-      },
-      "8": {
-        "quote": "Self-hosted em 2 dias. Auditores adoraram AGPL + residência na UE.",
-        "author": "Davi Costa",
-        "role": "CRO, Fintech Brasileira"
-      },
-      "9": {
-        "quote": "O módulo de reports substituiu duas ferramentas de BI. A precisão do forecast subiu de 60% pra 87%.",
-        "author": "Anya Kowalski",
-        "role": "RevOps, Logística Polonesa"
-      },
-      "10": {
-        "quote": "Suporte em rumantsch já na caixa. Nem pedimos — eles entregaram.",
-        "author": "Tobias Weber",
-        "role": "Sales Engineer, IoT Itália"
-      },
-      "11": {
-        "quote": "Resumos de clientes com contexto real substituíram nossas reuniões semanais de review.",
-        "author": "Isabella Rossi",
-        "role": "Co-founder, Exportação de Vinho Italiano"
-      },
-      "12": {
-        "quote": "O tier Free pra 2 usuários nos deu tempo de validar. Upgrade em 3 semanas sem atrito.",
-        "author": "Carlos Mendes",
-        "role": "Sales Manager, SaaS Português"
-      }
     }
   },
   "pricing": {
@@ -1204,8 +1135,6 @@
       "aiAssistant": "Assistente IA ilimitado",
       "reports": "Relatórios e gráficos",
       "automations": "Automações de workflow",
-      "integrations": "Integrações de e-mail, calendário + WhatsApp",
-      "rag": "Base de conhecimento (RAG)",
       "api": "API + Webhooks",
       "support": "Suporte",
       "supportDedicated": "Dedicado",
@@ -1242,11 +1171,11 @@
       },
       "7": {
         "q": "Posso self-hostar o Gallo CRM?",
-        "a": "Sim. O código é público sob AGPL-3.0. Clone o repo, rode docker compose up e sua instância sobe em 5 minutos. Mantemos imagens Docker atualizadas e guias de deploy pra AWS, GCP, Hetzner e Scaleway."
+        "a": "Sim. O código é público sob AGPL-3.0. Clone o repo, rode docker compose up e sua instância sobe em 5 minutos. Mantemos imagens Docker atualizadas, que você pode rodar em qualquer host Docker."
       },
       "8": {
         "q": "Quais integrações estão disponíveis?",
-        "a": "Stripe pra cobrança, IMAP/SMTP pra e-mail, Google/Outlook Calendar pra agenda, WhatsApp Business pra mensagens, Slack pra notificações. API REST + webhooks pra integrações custom. Roadmap pública inclui Instagram, Messenger, HubSpot, Pipedrive, Notion, Zapier."
+        "a": "Stripe pra cobrança, WhatsApp Business pra mensagens, mais uma API REST e webhooks de saída pra integrações custom. Sincronização de e-mail e calendário, Slack e mais estão na roadmap pública."
       },
       "9": {
         "q": "O Gallo CRM é compatível com a LGPD/GDPR?",
@@ -1254,7 +1183,7 @@
       },
       "10": {
         "q": "O que inclui o suporte Premium?",
-        "a": "Canal Slack privado com resposta em 4 horas úteis, onboarding guiado de 90 minutos, account manager dedicado pra times 10+, SLO de uptime 99.9% com crédito automático em caso de breach."
+        "a": "Suporte por e-mail com meta de resposta em 4 horas úteis, um onboarding guiado de 90 minutos e um account manager dedicado pra times 10+."
       }
     },
     "ctaTitle": "Pronto para levar seu pipeline a sério?",
@@ -1293,7 +1222,7 @@
         "tagline": "Para equipas que fecham negócios de ponta a ponta.",
         "features": [
           "Tudo do Standard",
-          "Contratos e assinatura eletrónica (eIDAS)",
+          "Contratos e assinatura eletrónica",
           "Importações e exportações em massa",
           "Equipas e pipelines personalizados",
           "Registo de auditoria completo",

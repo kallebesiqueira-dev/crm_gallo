@@ -918,11 +918,6 @@
     "navFeatures": "Funktionen",
     "navPricing": "Preise",
     "navFaq": "FAQ",
-    "logosTitle": "Vertraut von Vertriebsteams, die liefern",
-    "statsLeads": "Verfolgte Leads",
-    "statsLanguages": "Native Sprachen",
-    "statsUptime": "Uptime-SLO",
-    "statsOpenSource": "Open Source",
     "manifesto": {
       "eyebrow": "Unser Ziel",
       "line1": "Wir sind nicht nur ein CRM.",
@@ -931,7 +926,7 @@
       "pillars": {
         "connect": {
           "title": "Alles verbinden",
-          "body": "APIs, Webhooks, E-Mail, Kalender, Knowledge Base. Wenn es einen Endpoint hat, lässt es sich anschließen."
+          "body": "REST-API, ausgehende Webhooks und WhatsApp — verbinden Sie die Kanäle, die Ihre Kunden wirklich nutzen."
         },
         "automate": {
           "title": "Alles automatisieren",
@@ -1050,8 +1045,6 @@
         }
       }
     },
-    "testimonialsEyebrow": "Stimmen aus der Praxis",
-    "testimonialsTitle": "Geliebt von Vertriebsteams, die ihre Arbeit messen.",
     "footerTagline": "KI-gestütztes CRM für moderne Vertriebsteams. Open Source unter AGPL-3.0.",
     "footerProduct": "Produkt",
     "footerLegal": "Rechtliches",
@@ -1109,68 +1102,6 @@
           "3": "EU-Datenresidenz-tauglich, DSGVO-konform"
         }
       }
-    },
-    "testimonial": {
-      "1": {
-        "quote": "Wir haben zwei Tools durch Gallo CRM ersetzt — das KI-Scoring fing zwei warme Leads ab, die wir sonst im Rauschen verloren hätten.",
-        "author": "Andrea Müller",
-        "role": "Head of Sales, B2B SaaS"
-      },
-      "2": {
-        "quote": "Endlich ein CRM, in dem sich unsere französischen und deutschen Büros gleichermaßen zuhause fühlen. Die Drag-Drop-Pipeline ist genau das, was meine Reps wollten.",
-        "author": "Léa Petit",
-        "role": "RevOps Lead, Europäische Agentur"
-      },
-      "3": {
-        "quote": "Open Source, selbst hostbar, mit einer ernstzunehmenden KI — so sollten moderne Sales-Tools aussehen.",
-        "author": "Joana Ramos",
-        "role": "CTO, Lissabon Startup"
-      },
-      "4": {
-        "quote": "Wechsel von HubSpot in einer Woche. Allein das KI-Scoring spart uns 3 Stunden täglich.",
-        "author": "Marco Bianchi",
-        "role": "Founder, italienisches SaaS"
-      },
-      "5": {
-        "quote": "Die Mehrsprachigkeit hat den Deal besiegelt. Mein Team in 4 Ländern nutzt endlich dasselbe Tool.",
-        "author": "Sara Lopez",
-        "role": "Sales Director, spanischer Retail"
-      },
-      "6": {
-        "quote": "Pipeline-Drag-Drop ist endlich das, was Kanban sein sollte. Echtzeit, gewichtet, schön.",
-        "author": "Hans Müller",
-        "role": "VP Sales, deutsche Fertigung"
-      },
-      "7": {
-        "quote": "KI-Follow-up-Entwürfe in nativem Französisch erreichen 41% Antwortquote. Game-Changer.",
-        "author": "Camille Dubois",
-        "role": "Account Executive, französisches B2B"
-      },
-      "8": {
-        "quote": "Self-hosted in 2 Tagen. Auditoren liebten AGPL + EU-Residenz.",
-        "author": "Davi Costa",
-        "role": "CRO, brasilianisches Fintech"
-      },
-      "9": {
-        "quote": "Das Reports-Modul ersetzte zwei BI-Tools. Forecast-Genauigkeit stieg von 60% auf 87%.",
-        "author": "Anya Kowalski",
-        "role": "RevOps, polnische Logistik"
-      },
-      "10": {
-        "quote": "Rumantsch-Support direkt eingebaut. Wir haben nicht mal gefragt — sie haben es geliefert.",
-        "author": "Tobias Weber",
-        "role": "Sales Engineer, Italienisches IoT"
-      },
-      "11": {
-        "quote": "Kundenzusammenfassungen mit echtem Kontext ersetzten unsere wöchentlichen Review-Meetings.",
-        "author": "Isabella Rossi",
-        "role": "Co-Founderin, italienischer Weinexport"
-      },
-      "12": {
-        "quote": "Free-Tier für 2 Nutzer gab uns Zeit zum Validieren. Upgrade nach 3 Wochen ohne Reibung.",
-        "author": "Carlos Mendes",
-        "role": "Sales Manager, portugiesisches SaaS"
-      }
     }
   },
   "pricing": {
@@ -1204,8 +1135,6 @@
       "aiAssistant": "Unbegrenzter KI-Assistent",
       "reports": "Berichte und Charts",
       "automations": "Workflow-Automatisierungen",
-      "integrations": "E-Mail-, Kalender- + WhatsApp-Integrationen",
-      "rag": "RAG-Wissensdatenbank",
       "api": "API + Webhooks",
       "support": "Support",
       "supportDedicated": "Dediziert",
@@ -1242,11 +1171,11 @@
       },
       "7": {
         "q": "Kann ich Gallo CRM selbst hosten?",
-        "a": "Ja. Der Quellcode ist öffentlich unter AGPL-3.0. Repo klonen, docker compose up ausführen, und Ihre Instanz läuft in 5 Minuten. Wir pflegen aktuelle Docker-Images und Deploy-Guides für AWS, GCP, Hetzner und Scaleway."
+        "a": "Ja. Der Quellcode ist öffentlich unter AGPL-3.0. Repo klonen, docker compose up ausführen, und Ihre Instanz läuft in 5 Minuten. Wir pflegen aktuelle Docker-Images, die Sie auf jedem Docker-Host betreiben können."
       },
       "8": {
         "q": "Welche Integrationen sind verfügbar?",
-        "a": "Stripe für Abrechnung, IMAP/SMTP für E-Mail, Google/Outlook Calendar für Termine, WhatsApp Business für Nachrichten, Slack für Benachrichtigungen. REST-API + Webhooks für individuelle Integrationen. Öffentliche Roadmap umfasst Instagram, Messenger, HubSpot, Pipedrive, Notion, Zapier."
+        "a": "Stripe für Abrechnung, WhatsApp Business für Nachrichten, dazu eine REST-API und ausgehende Webhooks für individuelle Integrationen. E-Mail- und Kalender-Sync, Slack und mehr stehen auf der öffentlichen Roadmap."
       },
       "9": {
         "q": "Ist Gallo CRM DSGVO-konform?",
@@ -1254,7 +1183,7 @@
       },
       "10": {
         "q": "Was umfasst der Premium-Support?",
-        "a": "Privater Slack-Kanal mit Antwort innerhalb von 4 Arbeitsstunden, 90-minütiges geführtes Onboarding, dedizierter Account Manager für Teams ab 10 Personen, 99,9% Uptime-SLO mit automatischer Gutschrift bei Verletzung."
+        "a": "E-Mail-Support mit Antwortziel innerhalb von 4 Arbeitsstunden, ein 90-minütiges geführtes Onboarding und ein dedizierter Account Manager für Teams ab 10 Personen."
       }
     },
     "ctaTitle": "Bereit, Ihre Pipeline ernst zu nehmen?",
@@ -1293,7 +1222,7 @@
         "tagline": "Für Teams, die Deals end-to-end abschließen.",
         "features": [
           "Alles aus Standard",
-          "Verträge & E-Signatur (eIDAS)",
+          "Verträge & E-Signatur",
           "Massen-Import & -Export",
           "Teams & eigene Pipelines",
           "Vollständiges Audit-Log",

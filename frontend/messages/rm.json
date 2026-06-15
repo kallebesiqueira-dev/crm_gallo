@@ -918,11 +918,6 @@
     "navFeatures": "Funcziuns",
     "navPricing": "Pretschs",
     "navFaq": "FAQ",
-    "logosTitle": "Duvrà da teams da venditas ch'inoltrescha",
-    "statsLeads": "Leads suandads",
-    "statsLanguages": "Linguas nativas",
-    "statsUptime": "SLO da disponibilitad",
-    "statsOpenSource": "Open source",
     "manifesto": {
       "eyebrow": "Noss objectiv",
       "line1": "Nus n'essan betg mo in CRM.",
@@ -931,7 +926,7 @@
       "pillars": {
         "connect": {
           "title": "Collegar tut",
-          "body": "APIs, webhooks, e-mail, chalender, base da savair. Sch'el ha in endpoint, el sa connectar."
+          "body": "API REST, webhooks da sortida e WhatsApp — collia ils chanals che tes clients dovran propi."
         },
         "automate": {
           "title": "Automatisar tut",
@@ -1050,8 +1045,6 @@
         }
       }
     },
-    "testimonialsEyebrow": "Tge che teams din",
-    "testimonialsTitle": "Amà dals teams da venditas che mesiran tge ch'els inoltreschan.",
     "footerTagline": "CRM cun IA, fatg per teams da venditas moderns. Open source sut AGPL-3.0.",
     "footerProduct": "Product",
     "footerLegal": "Legal",
@@ -1109,68 +1102,6 @@
           "3": "Cumpatibel cun residenza da datas UE, GDPR-aware"
         }
       }
-    },
-    "testimonial": {
-      "1": {
-        "quote": "Nus avain remplazzà dus instruments cun Gallo CRM, ed il scoring IA ha tschiffà dus leads chauds che nus avessan pers en il canaster.",
-        "author": "Andrea Müller",
-        "role": "Head of Sales, SaaS B2B"
-      },
-      "2": {
-        "quote": "Finalmain in CRM nua ch'ils nossas büros franzosos e tudestgs sa sentan a chasa. Il pipeline drag-drop è exact tge ch'ils mes reps vulevan.",
-        "author": "Léa Petit",
-        "role": "RevOps Lead, Agentura Europeica"
-      },
-      "3": {
-        "quote": "Open source, self-hostabel, cun in'IA seriusa — quai è co stuessan vegnir gnüds instruments commerzials moderns.",
-        "author": "Joana Ramos",
-        "role": "CTO, Startup da Lissabona"
-      },
-      "4": {
-        "quote": "Migrà da HubSpot en in'emna. L'AI scoring ans spargna 3 uras al di.",
-        "author": "Marco Bianchi",
-        "role": "Founder, SaaS Talian"
-      },
-      "5": {
-        "quote": "Il sustegn multilingual ha serrà l'affar. Mes team en 4 pajais utilisescha finalmain il medem utensil.",
-        "author": "Sara Lopez",
-        "role": "Sales Director, Retail Spagnol"
-      },
-      "6": {
-        "quote": "Il drag-drop dal pipeline è finalmain quai che kanban duess esser. Temp real, ponderà, bellischem.",
-        "author": "Hans Müller",
-        "role": "VP Sales, Manufactura Tudestga"
-      },
-      "7": {
-        "quote": "Sbozs da follow-up IA en franzos nativ han 41% da tariffa da resposta. Game-changer.",
-        "author": "Camille Dubois",
-        "role": "Account Executive, B2B Franzos"
-      },
-      "8": {
-        "quote": "Self-hosted en 2 dis. Ils auditurs han amà AGPL + residenza UE.",
-        "author": "Davi Costa",
-        "role": "CRO, Fintech Brasiliana"
-      },
-      "9": {
-        "quote": "Il modul Reports ha remplazzà dus utensils BI. La precisiun dal forecast è creschida da 60% a 87%.",
-        "author": "Anya Kowalski",
-        "role": "RevOps, Logistica Pulonaisa"
-      },
-      "10": {
-        "quote": "Sustegn en rumantsch gia en la chasta. Nus n'avain gnanc dumandà — els l'han furnì.",
-        "author": "Tobias Weber",
-        "role": "Sales Engineer, IoT talian"
-      },
-      "11": {
-        "quote": "Resumés da clients cun context real han remplazzà nossas runidas emnilas da revisiun.",
-        "author": "Isabella Rossi",
-        "role": "Co-founder, Export da Vin Talian"
-      },
-      "12": {
-        "quote": "Il tier Free per 2 utilisaturs ans ha dà temp da validar. Upgrade suenter 3 emnas senza fricziun.",
-        "author": "Carlos Mendes",
-        "role": "Sales Manager, SaaS Portugais"
-      }
     }
   },
   "pricing": {
@@ -1204,8 +1135,6 @@
       "aiAssistant": "Assistent IA illimità",
       "reports": "Rapports e grafics",
       "automations": "Automatisaziuns da workflow",
-      "integrations": "Integraziuns e-mail, chalender + WhatsApp",
-      "rag": "Base da savair RAG",
       "api": "API + Webhooks",
       "support": "Sustegn",
       "supportDedicated": "Dedicà",
@@ -1242,11 +1171,11 @@
       },
       "7": {
         "q": "Poss jau self-hostar Gallo CRM?",
-        "a": "Gea. Il code è public sut AGPL-3.0. Clona il repo, exequescha docker compose up e tia instanza è en lingia en 5 minutas. Nus mantegnain images Docker actualisadas e guidas da deploy per AWS, GCP, Hetzner e Scaleway."
+        "a": "Gea. Il code è public sut AGPL-3.0. Clona il repo, exequescha docker compose up e tia instanza è en lingia en 5 minutas. Nus mantegnain images Docker actualisadas che pon vegnir deployadas sin mintga host Docker."
       },
       "8": {
         "q": "Tge integraziuns èn disponiblas?",
-        "a": "Stripe per fatturaziun, IMAP/SMTP per e-mail, Google/Outlook Calendar per chalender, WhatsApp Business per messadis, Slack per notificaziuns. API REST + webhooks per integraziuns custom. Roadmap publica includa Instagram, Messenger, HubSpot, Pipedrive, Notion, Zapier."
+        "a": "Stripe per la fatturaziun, WhatsApp Business per ils messadis, plus in'API REST e webhooks da sortida per integraziuns custom. Sincronisaziun e-mail e chalender, Slack e dapli èn sin la roadmap publica."
       },
       "9": {
         "q": "È Gallo CRM conforma al GDPR?",
@@ -1254,7 +1183,7 @@
       },
       "10": {
         "q": "Tge cumpiglia il sustegn Premium?",
-        "a": "Chanal Slack privat cun resposta entaifer 4 uras d'industria, onboarding accumpagnà da 90 minutas, account manager dedicà per teams da 10+, SLO da disponibilitad 99,9% cun credit automatic en cas da rumpidura."
+        "a": "Sustegn via e-mail cun in böt da resposta entaifer 4 uras d'industria, in onboarding accumpagnà da 90 minutas ed in account manager dedicà per teams da 10+."
       }
     },
     "ctaTitle": "Pront da prender tes pipeline en seria?",
@@ -1293,7 +1222,7 @@
         "tagline": "Per squadras che concludan affars dal cumenzament a la fin.",
         "features": [
           "Tut da Standard",
-          "Contracts e signatura electronica (eIDAS)",
+          "Contracts e signatura electronica",
           "Importaziuns ed exportaziuns en massa",
           "Squadras e pipelines persunalisadas",
           "Protocol da revisiun cumplet",
