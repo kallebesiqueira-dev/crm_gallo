@@ -17,6 +17,7 @@ import { AssistantPanel } from "@/components/assistant-panel";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { SupportDialog } from "@/components/support-dialog";
 import { GlobalSearch } from "@/components/global-search";
+import { ShortcutsHelp } from "@/components/shortcuts-help";
 import { Button } from "@/components/ui/button";
 import {
   api,
@@ -40,6 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [supportOpen, setSupportOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -88,6 +90,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
+        return;
+      }
+      // "?" opens the keyboard-shortcuts help — but never while the user is
+      // typing into a field (where "?" is a literal character).
+      if (e.key === "?" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const el = document.activeElement as HTMLElement | null;
+        const typing =
+          !!el &&
+          (el.tagName === "INPUT" ||
+            el.tagName === "TEXTAREA" ||
+            el.tagName === "SELECT" ||
+            el.isContentEditable);
+        if (!typing) {
+          e.preventDefault();
+          setHelpOpen(true);
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -220,6 +238,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </ConfirmProvider>
   );

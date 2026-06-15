@@ -1645,7 +1645,21 @@
   "search": {
     "placeholder": "Tschertgar leads, clients, interpresas…",
     "hint": "Tippa almain 2 caracters per tschertgar.",
-    "noResults": "Nagins resultats"
+    "noResults": "Nagins resultats",
+    "newLead": "Nov lead",
+    "newCustomer": "Nov client",
+    "newCompany": "Nova interpresa",
+    "newDeal": "Nov affar",
+    "newQuote": "Nova offerta",
+    "newContract": "Nov contract",
+    "newProduct": "Nov product"
+  },
+  "shortcuts": {
+    "title": "Scursanidas da tastatura",
+    "search": "Tschertgar & cumonds",
+    "help": "Mussar quest agid",
+    "close": "Serrar dialog / menu",
+    "hint": "Smatga ⌘K per ir ad ina pagina u crear in record."
   },
   "documents": {
     "title": "Documents",
