@@ -67,7 +67,7 @@ export function MobileNav() {
         open &&
         createPortal(
           <div
-            className="fixed inset-0 z-[90] md:hidden"
+            className="fixed inset-0 z-[90] h-[100dvh] md:hidden"
             role="dialog"
             aria-modal="true"
             aria-label={tApp("name")}
@@ -103,7 +103,7 @@ export function MobileNav() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+              <nav className="flex-1 space-y-1 overflow-y-auto px-3 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 {NAV.map(({ href, label, icon: Icon }) => {
                   const fullPath = `/${locale}/${href}`;
                   const active = pathname === fullPath || pathname?.startsWith(`${fullPath}/`);
