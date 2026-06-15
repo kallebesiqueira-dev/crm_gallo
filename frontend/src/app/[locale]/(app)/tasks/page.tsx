@@ -213,7 +213,7 @@ export default function TasksPage() {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full lg:w-44"
+              className="w-44 sm:w-full lg:w-44"
             />
             <Button type="submit">
               <Plus className="h-4 w-4" />
