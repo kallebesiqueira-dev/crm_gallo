@@ -45,10 +45,16 @@ const config: Config = {
           foreground: "hsl(var(--popover-foreground))",
         },
       },
+      // Corporate radius scale, all tied to --radius (Design System #10) so the
+      // whole app squares from one token. xl/2xl/3xl were Tailwind defaults
+      // (12/16/24px) — now capped near the base for a less-rounded, premium feel.
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 2px)",
+        lg: "var(--radius)",
+        xl: "calc(var(--radius) + 2px)",
+        "2xl": "calc(var(--radius) + 4px)",
+        "3xl": "calc(var(--radius) + 8px)",
       },
       keyframes: {
         "marquee-left": {
