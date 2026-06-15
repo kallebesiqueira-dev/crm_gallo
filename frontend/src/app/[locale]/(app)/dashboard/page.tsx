@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardCustomize } from "@/components/dashboard-customize";
 import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
+import { AssistantCard } from "@/components/assistant-card";
 
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
@@ -175,6 +176,8 @@ export default function DashboardPage() {
           <DashboardCustomize items={customizeItems} hidden={hidden} onToggle={toggleSection} />
         </div>
       </div>
+
+      <AssistantCard />
 
       {/* Onboarding checklist — visible until all 5 steps are done or dismissed */}
       <OnboardingChecklistWidget locale={locale} />
