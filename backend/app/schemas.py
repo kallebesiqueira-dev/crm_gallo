@@ -831,6 +831,15 @@ class CompanyOut(CompanyBase):
     updated_at: datetime
 
 
+class SearchResults(BaseModel):
+    """Unified global-search payload for the Cmd/Ctrl+K command palette — top
+    matches per entity type in a single response (see GET /api/search)."""
+
+    leads: list[LeadOut] = Field(default_factory=list)
+    customers: list[CustomerOut] = Field(default_factory=list)
+    companies: list[CompanyOut] = Field(default_factory=list)
+
+
 # ---------- Products / Services (catalog) ----------
 class ProductBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
