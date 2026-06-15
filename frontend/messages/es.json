@@ -918,11 +918,6 @@
     "navFeatures": "Funcionalidades",
     "navPricing": "Precios",
     "navFaq": "FAQ",
-    "logosTitle": "Adoptado por equipos comerciales que entregan",
-    "statsLeads": "Leads seguidos",
-    "statsLanguages": "Idiomas nativos",
-    "statsUptime": "SLO de uptime",
-    "statsOpenSource": "Open source",
     "manifesto": {
       "eyebrow": "Nuestro objetivo",
       "line1": "No somos solo un CRM.",
@@ -931,7 +926,7 @@
       "pillars": {
         "connect": {
           "title": "Conecta cualquier cosa",
-          "body": "APIs, webhooks, email, calendario, base de conocimiento. Si tiene un endpoint, lo conectas."
+          "body": "API REST, webhooks salientes y WhatsApp — conecta los canales que tus clientes realmente usan."
         },
         "automate": {
           "title": "Automatiza todo",
@@ -1050,8 +1045,6 @@
         }
       }
     },
-    "testimonialsEyebrow": "Lo que dicen los equipos",
-    "testimonialsTitle": "Amado por equipos comerciales que miden lo que entregan.",
     "footerTagline": "CRM impulsado por IA, hecho para equipos comerciales modernos. Open source bajo AGPL-3.0.",
     "footerProduct": "Producto",
     "footerLegal": "Legal",
@@ -1109,68 +1102,6 @@
           "3": "Compatible con residencia de datos UE, GDPR"
         }
       }
-    },
-    "testimonial": {
-      "1": {
-        "quote": "Reemplazamos dos herramientas con Gallo CRM y el AI scoring atrapó dos leads calientes que habríamos perdido en el ruido.",
-        "author": "Andrea Müller",
-        "role": "Head of Sales, SaaS B2B"
-      },
-      "2": {
-        "quote": "Por fin un CRM donde nuestras oficinas francesa y alemana se sienten en casa. El pipeline drag-drop es exactamente lo que mis comerciales querían.",
-        "author": "Léa Petit",
-        "role": "RevOps Lead, Agencia Europea"
-      },
-      "3": {
-        "quote": "Open source, autohospedable, con una IA seria — así deberían ser las herramientas comerciales modernas.",
-        "author": "Joana Ramos",
-        "role": "CTO, Startup de Lisboa"
-      },
-      "4": {
-        "quote": "Migramos de HubSpot en una semana. Solo el AI scoring nos ahorra 3 horas al día.",
-        "author": "Marco Bianchi",
-        "role": "Founder, SaaS Italiano"
-      },
-      "5": {
-        "quote": "El soporte multilingüe cerró el deal. Mi equipo en 4 países por fin usa la misma herramienta.",
-        "author": "Sara Lopez",
-        "role": "Sales Director, Retail Español"
-      },
-      "6": {
-        "quote": "El drag-drop del pipeline es por fin lo que el kanban debía ser. Tiempo real, ponderado, hermoso.",
-        "author": "Hans Müller",
-        "role": "VP Sales, Manufactura Alemana"
-      },
-      "7": {
-        "quote": "Los borradores de follow-up de IA en francés nativo tienen un 41% de tasa de respuesta. Game-changer.",
-        "author": "Camille Dubois",
-        "role": "Account Executive, B2B Francés"
-      },
-      "8": {
-        "quote": "Self-hosted en 2 días. A los auditores les encantó AGPL + residencia UE.",
-        "author": "Davi Costa",
-        "role": "CRO, Fintech Brasileña"
-      },
-      "9": {
-        "quote": "El módulo de reports reemplazó dos herramientas de BI. La precisión del forecast subió del 60% al 87%.",
-        "author": "Anya Kowalski",
-        "role": "RevOps, Logística Polaca"
-      },
-      "10": {
-        "quote": "Soporte en rumantsch desde el primer día. Ni siquiera lo pedimos — lo entregaron.",
-        "author": "Tobias Weber",
-        "role": "Sales Engineer, IoT Italiano"
-      },
-      "11": {
-        "quote": "Los resúmenes de clientes con contexto real reemplazaron nuestras reuniones semanales de revisión.",
-        "author": "Isabella Rossi",
-        "role": "Co-founder, Exportación de Vino Italiano"
-      },
-      "12": {
-        "quote": "El tier Free para 2 usuarios nos dio tiempo de validar. Upgrade tras 3 semanas sin fricciones.",
-        "author": "Carlos Mendes",
-        "role": "Sales Manager, SaaS Portugués"
-      }
     }
   },
   "pricing": {
@@ -1204,8 +1135,6 @@
       "aiAssistant": "Asistente IA ilimitado",
       "reports": "Informes y gráficos",
       "automations": "Automatizaciones de workflow",
-      "integrations": "Integraciones email, calendario + WhatsApp",
-      "rag": "Base de conocimiento RAG",
       "api": "API + Webhooks",
       "support": "Soporte",
       "supportDedicated": "Dedicado",
@@ -1242,11 +1171,11 @@
       },
       "7": {
         "q": "¿Puedo self-hostar Gallo CRM?",
-        "a": "Sí. El código es público bajo AGPL-3.0. Clona el repo, ejecuta docker compose up y tu instancia está lista en 5 minutos. Mantenemos imágenes Docker actualizadas y guías de deploy para AWS, GCP, Hetzner y Scaleway."
+        "a": "Sí. El código es público bajo AGPL-3.0. Clona el repo, ejecuta docker compose up y tu instancia está lista en 5 minutos. Mantenemos imágenes Docker actualizadas, desplegables en cualquier host Docker."
       },
       "8": {
         "q": "¿Qué integraciones están disponibles?",
-        "a": "Stripe para facturación, IMAP/SMTP para email, Google/Outlook Calendar para agenda, WhatsApp Business para mensajes, Slack para notificaciones. API REST + webhooks para integraciones custom. Roadmap pública incluye Instagram, Messenger, HubSpot, Pipedrive, Notion, Zapier."
+        "a": "Stripe para facturación, WhatsApp Business para mensajes, además de una API REST y webhooks salientes para integraciones custom. Sincronización de email y calendario, Slack y más están en la roadmap pública."
       },
       "9": {
         "q": "¿Gallo CRM cumple con el GDPR?",
@@ -1254,7 +1183,7 @@
       },
       "10": {
         "q": "¿Qué incluye el soporte Premium?",
-        "a": "Canal Slack privado con respuesta en 4 horas hábiles, onboarding guiado de 90 minutos, account manager dedicado para equipos 10+, SLO de uptime 99.9% con crédito automático en caso de breach."
+        "a": "Soporte por email con objetivo de respuesta en 4 horas hábiles, un onboarding guiado de 90 minutos y un account manager dedicado para equipos 10+."
       }
     },
     "ctaTitle": "¿Listo para tomarte en serio tu pipeline?",
