@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { api, type Product } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -21,6 +22,7 @@ export default function ProductsPage() {
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,11 +36,13 @@ export default function ProductsPage() {
           setItems(page.items);
           setCursor(page.next_cursor);
           setHasMore(page.has_more);
+          setLoading(false);
         })
         .catch(() => {
           setItems([]);
           setCursor(null);
           setHasMore(false);
+          setLoading(false);
         });
     }, 200);
     return () => clearTimeout(handle);
@@ -119,7 +123,20 @@ export default function ProductsPage() {
       )}
 
       <Card className="overflow-hidden">
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="space-y-0 divide-y">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="ml-auto h-4 w-24" />
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
           <EmptyState
             icon={Package}
             title={t("empty")}

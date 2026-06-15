@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ export default function QuotesPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -31,7 +32,10 @@ export default function QuotesPage() {
         setCursor(page.next_cursor);
         setHasMore(page.has_more);
       })
-      .catch(() => setQuotes([]));
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : "Failed");
+        setQuotes([]);
+      });
   }, []);
 
   async function loadMore() {
@@ -43,6 +47,8 @@ export default function QuotesPage() {
       setQuotes((prev) => [...(prev ?? []), ...page.items]);
       setCursor(page.next_cursor);
       setHasMore(page.has_more);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
     } finally {
       setLoadingMore(false);
     }
@@ -60,17 +66,27 @@ export default function QuotesPage() {
         </Button>
       </div>
 
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <Card>
         <CardContent className="p-0">
           {quotes === null ? (
-            <div className="p-10 text-center text-sm text-muted-foreground">…</div>
+            <div className="grid place-items-center py-10">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
           ) : quotes.length === 0 ? (
-            <EmptyState
-              icon={FileText}
-              title={t("empty")}
-              actionLabel={t("new")}
-              actionHref={`/${locale}/quotes/new`}
-            />
+            error ? null : (
+              <EmptyState
+                icon={FileText}
+                title={t("empty")}
+                actionLabel={t("new")}
+                actionHref={`/${locale}/quotes/new`}
+              />
+            )
           ) : (
             <ul className="divide-y">
               {quotes.map((q) => (

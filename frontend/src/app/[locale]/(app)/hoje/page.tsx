@@ -152,6 +152,7 @@ export default function HojePage() {
   const locale = useLocale();
   const [data, setData] = useState<HojeResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   function removeTask(id: string) {
     setData((prev) => {
@@ -167,10 +168,16 @@ export default function HojePage() {
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    api.getHoje(token).then((d) => {
-      setData(d);
-      setLoading(false);
-    });
+    api
+      .getHoje(token)
+      .then((d) => {
+        setData(d);
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : "Failed");
+        setLoading(false);
+      });
   }, []);
 
   const totalPending = data
@@ -195,8 +202,8 @@ export default function HojePage() {
           <CalendarClock className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
-          {!loading && (
+          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+          {!loading && !error && (
             <p className="text-sm text-muted-foreground">
               {allClear
                 ? t("empty")
@@ -205,6 +212,12 @@ export default function HojePage() {
           )}
         </div>
       </div>
+
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {loading && (
         <div className="space-y-3">
