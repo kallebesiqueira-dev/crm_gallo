@@ -45,6 +45,13 @@ jobs:
       - name: Lint (eslint)
         run: npm run lint
 
+      - name: Dead code (knip)
+        # Fails on unused dependencies, unused files, and unlisted/unresolved
+        # imports — the high-signal categories that keep the bundle lean and
+        # catch dead code before it accumulates. (Unused exports are curated
+        # locally via `npx knip`, not gated here — too noisy for a hard gate.)
+        run: npm run knip
+
       - name: Typecheck (tsc --noEmit)
         # `tsc --noEmit` runs the full type check without producing JS;
         # catches type errors that `next build` would otherwise hide
