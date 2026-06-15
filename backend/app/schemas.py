@@ -72,6 +72,7 @@ class UserOut(BaseModel):
     full_name: str
     role: UserRole
     locale: str
+    display_currency: Currency = Currency.EUR
     is_active: bool
     # Whether the user has confirmed their email. False for fresh
     # self-signups until they click the verification link; true for the
@@ -118,6 +119,9 @@ class UserUpdate(BaseModel):
     full_name: str | None = Field(default=None, min_length=1, max_length=255)
     email: EmailStr | None = None
     locale: str | None = None
+    # Preferred display currency (EUR/CHF/USD/GBP). Validated against the
+    # Currency enum; setattr in PATCH /me stores the enum on the column.
+    display_currency: Currency | None = None
 
 
 class PasswordChange(BaseModel):

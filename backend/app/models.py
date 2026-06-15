@@ -523,6 +523,16 @@ class User(Base):
         Enum(UserRole), default=UserRole.sales_agent, nullable=False
     )
     locale: Mapped[str] = mapped_column(String(5), default="en", nullable=False)
+    # Preferred display currency for money figures across the UI (reports,
+    # dashboards, stats). Display-only: the frontend converts EUR-canonical
+    # figures client-side using the live rates from /api/fx/rates. Stored
+    # amounts never change (ADR-015). Defaults to EUR.
+    display_currency: Mapped[Currency] = mapped_column(
+        Enum(Currency),
+        default=Currency.EUR,
+        server_default=Currency.EUR.value,
+        nullable=False,
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     # Profile photo — S3 object key; served to clients via a fresh presigned URL.
     avatar_key: Mapped[str | None] = mapped_column(String(512))

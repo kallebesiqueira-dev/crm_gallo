@@ -61,6 +61,23 @@ def test_me_with_cookie(admin_client: CsrfAwareClient, admin_user: User):
     assert r.json()["email"] == admin_user.email
 
 
+def test_display_currency_defaults_to_eur(admin_client: CsrfAwareClient):
+    assert admin_client.get("/api/auth/me").json()["display_currency"] == "EUR"
+
+
+def test_update_display_currency(admin_client: CsrfAwareClient):
+    r = admin_client.patch("/api/auth/me", json={"display_currency": "CHF"})
+    assert r.status_code == 200, r.text
+    assert r.json()["display_currency"] == "CHF"
+    # Persisted across reads.
+    assert admin_client.get("/api/auth/me").json()["display_currency"] == "CHF"
+
+
+def test_update_display_currency_rejects_unknown(admin_client: CsrfAwareClient):
+    r = admin_client.patch("/api/auth/me", json={"display_currency": "XXX"})
+    assert r.status_code == 422
+
+
 def test_logout_clears_cookies(admin_client: CsrfAwareClient):
     r = admin_client.post("/api/auth/logout")
     assert r.status_code == 204
