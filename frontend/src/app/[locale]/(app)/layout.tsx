@@ -41,6 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [supportOpen, setSupportOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantPrompt, setAssistantPrompt] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
@@ -110,6 +111,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // The dashboard AI card (and its chips) opens the assistant via this event.
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const detail = (e as CustomEvent<{ prompt?: string }>).detail;
+      setAssistantPrompt(detail?.prompt ?? "");
+      setAssistantOpen(true);
+    };
+    window.addEventListener("gallo:assistant-open", onOpen);
+    return () => window.removeEventListener("gallo:assistant-open", onOpen);
   }, []);
 
   async function logout() {
@@ -190,7 +202,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   left the nav (mobile must keep an entry point). */}
               <button
                 type="button"
-                onClick={() => setAssistantOpen(true)}
+                onClick={() => {
+                  setAssistantPrompt("");
+                  setAssistantOpen(true);
+                }}
                 aria-label={tNav("assistant")}
                 title={tNav("assistant")}
                 className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground"
@@ -239,7 +254,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
-      <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
+      <AssistantPanel
+        open={assistantOpen}
+        initialPrompt={assistantPrompt}
+        onClose={() => {
+          setAssistantOpen(false);
+          setAssistantPrompt("");
+        }}
+      />
     </ConfirmProvider>
   );
 }

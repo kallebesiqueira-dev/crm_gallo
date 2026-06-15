@@ -671,7 +671,17 @@
     "placeholder": "Escribe un mensaje…",
     "hero": "¿Cómo puedo ayudarte hoy?",
     "disclaimer": "La IA puede cometer errores — verifica la información importante.",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "chipPipeline": "Analizar pipeline",
+    "chipProposal": "Crear propuesta",
+    "chipReport": "Generar informe",
+    "chipCustomers": "Resumir clientes",
+    "chipEmail": "Redactar correo",
+    "promptPipeline": "Analiza mi pipeline de ventas y señala las oportunidades en mayor riesgo.",
+    "promptProposal": "Ayúdame a redactar una propuesta comercial para un cliente.",
+    "promptReport": "Resume el rendimiento de ventas de este mes.",
+    "promptCustomers": "Resume mis clientes clave y su estado actual.",
+    "promptEmail": "Redacta un correo de seguimiento para un cliente."
   },
   "audit": {
     "title": "Registro de auditoría",

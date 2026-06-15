@@ -14,6 +14,15 @@ interface Msg {
   content: string;
 }
 
+// Quick-action chips shown in the empty state (label + the prompt each sends).
+const CHIPS = [
+  { id: "pipeline", labelKey: "chipPipeline", promptKey: "promptPipeline" },
+  { id: "proposal", labelKey: "chipProposal", promptKey: "promptProposal" },
+  { id: "report", labelKey: "chipReport", promptKey: "promptReport" },
+  { id: "customers", labelKey: "chipCustomers", promptKey: "promptCustomers" },
+  { id: "email", labelKey: "chipEmail", promptKey: "promptEmail" },
+] as const;
+
 /**
  * Global AI assistant (skills.md §3 priority A — "Gemini in Gmail" redesign).
  * A bottom-sheet on mobile (rounded top, drag handle, dashboard visible behind
@@ -24,7 +33,15 @@ interface Msg {
  * doesn't trap the fixed sheet; sized with dvh so the composer clears the iOS
  * toolbar. Colors follow the project tokens + the dashboard brand gradient.
  */
-export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AssistantPanel({
+  open,
+  onClose,
+  initialPrompt = "",
+}: {
+  open: boolean;
+  onClose: () => void;
+  initialPrompt?: string;
+}) {
   const tNav = useTranslations("nav");
   const t = useTranslations("assistant");
   const locale = useLocale();
@@ -59,6 +76,21 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
   }, [input]);
+
+  // Send a prompt the opener passed in (e.g. a dashboard quick-action chip),
+  // once per open cycle.
+  const autoSentRef = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      autoSentRef.current = false;
+      return;
+    }
+    if (initialPrompt && !autoSentRef.current) {
+      autoSentRef.current = true;
+      void sendText(initialPrompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialPrompt]);
 
   async function sendText(text: string) {
     const token = getToken();
@@ -209,6 +241,19 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
                 {t("hero")}
               </h2>
               <p className="text-sm text-muted-foreground">{t("empty")}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {CHIPS.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => void sendText(t(c.promptKey))}
+                    disabled={busy}
+                    className="rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground/80 transition hover:border-primary/40 hover:text-foreground disabled:opacity-50"
+                  >
+                    {t(c.labelKey)}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="space-y-3 py-3">

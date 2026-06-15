@@ -671,7 +671,17 @@
     "placeholder": "Scriva in messadi…",
     "hero": "Co poss jau ta gidar oz?",
     "disclaimer": "L'IA po far sbagls — controllai infurmaziuns impurtantas.",
-    "close": "Serrar"
+    "close": "Serrar",
+    "chipPipeline": "Analisar la pipeline",
+    "chipProposal": "Crear proposta",
+    "chipReport": "Generar rapport",
+    "chipCustomers": "Resumar ils clients",
+    "chipEmail": "Scriver in e-mail",
+    "promptPipeline": "Analisescha mia pipeline da vendita ed evidenzia ils affars ils pli en privel.",
+    "promptProposal": "Gida mai a scriver ina proposta commerziala per in client.",
+    "promptReport": "Resumescha la prestaziun da vendita da quest mais.",
+    "promptCustomers": "Resumescha mes clients principals e lur status actual.",
+    "promptEmail": "Scriva in e-mail da suandar a in client."
   },
   "audit": {
     "title": "Protocol d'audit",

@@ -671,7 +671,17 @@
     "placeholder": "Nachricht eingeben…",
     "hero": "Wie kann ich dir heute helfen?",
     "disclaimer": "KI kann Fehler machen — wichtige Informationen prüfen.",
-    "close": "Schließen"
+    "close": "Schließen",
+    "chipPipeline": "Pipeline analysieren",
+    "chipProposal": "Angebot erstellen",
+    "chipReport": "Bericht erstellen",
+    "chipCustomers": "Kunden zusammenfassen",
+    "chipEmail": "E-Mail entwerfen",
+    "promptPipeline": "Analysiere meine Sales-Pipeline und markiere die gefährdetsten Deals.",
+    "promptProposal": "Hilf mir, ein Angebot für einen Kunden zu schreiben.",
+    "promptReport": "Fasse die Verkaufsleistung dieses Monats zusammen.",
+    "promptCustomers": "Fasse meine wichtigsten Kunden und ihren aktuellen Status zusammen.",
+    "promptEmail": "Entwirf eine Follow-up-E-Mail an einen Kunden."
   },
   "audit": {
     "title": "Audit-Log",

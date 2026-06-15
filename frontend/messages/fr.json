@@ -671,7 +671,17 @@
     "placeholder": "Écrivez un message…",
     "hero": "Comment puis-je vous aider aujourd'hui ?",
     "disclaimer": "L'IA peut faire des erreurs — vérifiez les informations importantes.",
-    "close": "Fermer"
+    "close": "Fermer",
+    "chipPipeline": "Analyser le pipeline",
+    "chipProposal": "Créer une proposition",
+    "chipReport": "Générer un rapport",
+    "chipCustomers": "Résumer les clients",
+    "chipEmail": "Rédiger un e-mail",
+    "promptPipeline": "Analyse mon pipeline de ventes et signale les affaires les plus à risque.",
+    "promptProposal": "Aide-moi à rédiger une proposition commerciale pour un client.",
+    "promptReport": "Résume la performance commerciale de ce mois.",
+    "promptCustomers": "Résume mes principaux clients et leur statut actuel.",
+    "promptEmail": "Rédige un e-mail de relance pour un client."
   },
   "audit": {
     "title": "Journal d'audit",

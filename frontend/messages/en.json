@@ -671,7 +671,17 @@
     "placeholder": "Type a message…",
     "hero": "How can I help you today?",
     "disclaimer": "AI can make mistakes — check important information.",
-    "close": "Close"
+    "close": "Close",
+    "chipPipeline": "Analyze pipeline",
+    "chipProposal": "Create proposal",
+    "chipReport": "Generate report",
+    "chipCustomers": "Summarize customers",
+    "chipEmail": "Draft email",
+    "promptPipeline": "Analyze my sales pipeline and flag the deals most at risk.",
+    "promptProposal": "Help me write a commercial proposal for a customer.",
+    "promptReport": "Summarize this month's sales performance.",
+    "promptCustomers": "Summarize my key customers and their current status.",
+    "promptEmail": "Draft a follow-up email to a customer."
   },
   "audit": {
     "title": "Audit log",
