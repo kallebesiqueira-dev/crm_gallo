@@ -51,6 +51,7 @@ from app.api import (
     products,
     public,
     quotes,
+    search,
     segments,
     signatures,
     support,
@@ -375,6 +376,7 @@ app.include_router(companies.router)
 app.include_router(products.router)
 app.include_router(custom_fields.router)
 app.include_router(tags.router)
+app.include_router(search.router)
 app.include_router(segments.router)
 app.include_router(duplicates.router)
 app.include_router(forms.router)
