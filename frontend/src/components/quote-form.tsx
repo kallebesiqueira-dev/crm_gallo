@@ -6,6 +6,8 @@ import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api, type Currency, type Product, type Quote, type QuoteCreate } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -138,9 +140,8 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
           </div>
           <div>
             <Label htmlFor="q-currency">{t("currency")}</Label>
-            <select
+            <Select
               id="q-currency"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
             >
@@ -149,7 +150,7 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
                   {c}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <Label htmlFor="q-tax">{t("taxRate")}</Label>
@@ -174,9 +175,8 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="q-notes">{t("notes")}</Label>
-            <textarea
+            <Textarea
               id="q-notes"
-              className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={t("notesPlaceholder")}
@@ -204,8 +204,8 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
             >
               <div className="flex gap-2">
                 {products.length > 0 && (
-                  <select
-                    className="h-10 w-36 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                  <Select
+                    className="w-36 shrink-0"
                     value={line.product_id ?? ""}
                     onChange={(e) => applyProduct(i, e.target.value)}
                     aria-label={t("fromCatalog")}
@@ -217,7 +217,7 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
                         {p.sku ? ` · ${p.sku}` : ""}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 )}
                 <Input
                   className="flex-1"

@@ -6,6 +6,8 @@ import { Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 
 const CATEGORIES = ["technical", "bug", "feature", "question", "other"] as const;
@@ -88,18 +90,17 @@ export function SupportDialog({ open, onClose }: { open: boolean; onClose: () =>
           <form onSubmit={submit} className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="sup-cat">{t("category")} *</Label>
-              <select
+              <Select
                 id="sup-cat"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {t(`categories.${c}`)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
@@ -115,12 +116,12 @@ export function SupportDialog({ open, onClose }: { open: boolean; onClose: () =>
 
             <div className="space-y-1.5">
               <Label htmlFor="sup-desc">{t("description")} *</Label>
-              <textarea
+              <Textarea
                 id="sup-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
-                className="min-h-[110px] w-full rounded-md border border-input bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[110px]"
               />
             </div>
 

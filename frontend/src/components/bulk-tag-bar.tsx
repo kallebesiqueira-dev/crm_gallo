@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { api, type Tag, type TaggableEntity } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -58,11 +59,10 @@ export function BulkTagBar({ entityType, selectedIds, onApplied, onClear }: Prop
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
       <span className="font-medium">{t("selected", { count: selectedIds.length })}</span>
-      <select
+      <Select
         aria-label={t("pickTag")}
         value={tagId}
         onChange={(e) => setTagId(e.target.value)}
-        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
       >
         {tags.length === 0 ? (
           <option value="">{t("noneYet")}</option>
@@ -73,7 +73,7 @@ export function BulkTagBar({ entityType, selectedIds, onApplied, onClear }: Prop
             </option>
           ))
         )}
-      </select>
+      </Select>
       <Button type="button" size="sm" disabled={busy || !tagId} onClick={() => apply("add")}>
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
         {t("addToSelected")}

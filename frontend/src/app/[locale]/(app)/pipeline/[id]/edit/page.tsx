@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
 import { api, type Currency, type Customer, type DealStage, type TeamMember } from "@/lib/api";
@@ -151,25 +153,23 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
           </div>
           <div className="space-y-2">
             <Label htmlFor="currency">{t("currency")}</Label>
-            <select
+            <Select
               id="currency"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={form.currency}
               onChange={(e) => set("currency", e.target.value as Currency)}
             >
               {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="stage">{t("stage")}</Label>
-            <select
+            <Select
               id="stage"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={form.stage}
               onChange={(e) => set("stage", e.target.value as DealStage)}
             >
               {STAGES.map((s) => <option key={s} value={s}>{tStages(s)}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="probability">{t("probability")} (%)</Label>
@@ -193,9 +193,8 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="customer">{t("customer")}</Label>
-            <select
+            <Select
               id="customer"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={form.customer_id}
               onChange={(e) => set("customer_id", e.target.value)}
             >
@@ -206,14 +205,13 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
                   {c.company ? ` · ${c.company}` : ""}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           {members.length > 0 && (
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="owner_id">{tLeads("owner")}</Label>
-              <select
+              <Select
                 id="owner_id"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={form.owner_id}
                 onChange={(e) => set("owner_id", e.target.value)}
               >
@@ -223,14 +221,14 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
                     {m.full_name} ({m.role})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="notes">{tLeads("notes")}</Label>
-            <textarea
+            <Textarea
               id="notes"
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[100px]"
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
             />

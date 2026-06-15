@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import { SignaturePanel } from "@/components/signature-panel";
@@ -239,11 +240,11 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
           {isAccepted && (
             <>
               {templates.length > 0 && (
-                <select
+                <Select
                   aria-label={tTpl("chooseTemplate")}
                   value={selectedTemplate}
                   onChange={(e) => setSelectedTemplate(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  className="w-auto"
                 >
                   <option value="">{tTpl("noTemplate")}</option>
                   {templates.map((tpl) => (
@@ -251,7 +252,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                       {tpl.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               )}
               <Button size="sm" disabled={busy} onClick={handleCreateContract}>
                 <FileSignature className="h-4 w-4" />

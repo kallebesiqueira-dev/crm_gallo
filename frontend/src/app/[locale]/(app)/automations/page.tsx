@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -37,9 +38,6 @@ const DEAL_TRIGGERS = new Set<AutomationTrigger>([
   "deal_lost",
   "deal_stage_changed",
 ]);
-
-const SELECT_CLS =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export default function AutomationsPage() {
   const t = useTranslations("automations");
@@ -204,33 +202,31 @@ export default function AutomationsPage() {
             </div>
             <div className="space-y-1">
               <Label htmlFor="a-trigger">{t("trigger")}</Label>
-              <select
+              <Select
                 id="a-trigger"
                 value={trigger}
                 onChange={(e) => setTrigger(e.target.value as AutomationTrigger)}
-                className={SELECT_CLS}
               >
                 {TRIGGERS.map((tr) => (
                   <option key={tr} value={tr}>
                     {t(`triggers.${tr}`)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="a-action">{t("action")}</Label>
-              <select
+              <Select
                 id="a-action"
                 value={action}
                 onChange={(e) => setAction(e.target.value as AutomationAction)}
-                className={SELECT_CLS}
               >
                 {availableActions.map((a) => (
                   <option key={a} value={a}>
                     {t(`actions.${a}`)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             {trigger === "lead_stale" && (
@@ -279,18 +275,17 @@ export default function AutomationsPage() {
             {action === "change_stage" && (
               <div className="space-y-1">
                 <Label htmlFor="a-stage">{t("toStage")}</Label>
-                <select
+                <Select
                   id="a-stage"
                   value={cfgToStage}
                   onChange={(e) => setCfgToStage(e.target.value as DealStage)}
-                  className={SELECT_CLS}
                 >
                   {DEAL_STAGES.map((s) => (
                     <option key={s} value={s}>
                       {tStages(s)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             )}
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MfaCard } from "@/components/mfa-card";
@@ -152,10 +153,9 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="locale">{tCommon("language")}</Label>
-              <select
+              <Select
                 id="locale"
                 aria-label={tCommon("language")}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={localePref}
                 onChange={(e) => setLocalePref(e.target.value as Locale)}
               >
@@ -164,7 +164,7 @@ export default function SettingsPage() {
                     {localeLabels[l]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="text-xs text-muted-foreground">
               {t("role")}: <span className="font-medium text-foreground">{user.role}</span>

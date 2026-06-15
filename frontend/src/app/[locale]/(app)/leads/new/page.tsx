@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
 import { api, type TeamMember } from "@/lib/api";
@@ -170,9 +172,8 @@ export default function NewLeadPage() {
           {members.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="owner_id">{t("owner")}</Label>
-              <select
+              <Select
                 id="owner_id"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={form.owner_id}
                 onChange={(e) => set("owner_id", e.target.value)}
               >
@@ -182,14 +183,14 @@ export default function NewLeadPage() {
                     {m.full_name} ({m.role})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="notes">{t("notes")}</Label>
-            <textarea
+            <Textarea
               id="notes"
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background p-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[100px]"
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
             />

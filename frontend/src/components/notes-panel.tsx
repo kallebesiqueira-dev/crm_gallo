@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Loader2, MessageSquarePlus, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { api, type Note } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -133,12 +134,11 @@ export function NotesPanel({ entityType, entityId }: Props) {
         )}
 
         <form onSubmit={submitNew} className="space-y-2">
-          <textarea
+          <Textarea
             value={newBody}
             onChange={(e) => setNewBody(e.target.value)}
             placeholder={t("placeholder")}
             rows={3}
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <div className="flex justify-end">
             <Button type="submit" size="sm" disabled={posting || !newBody.trim()}>
@@ -199,11 +199,10 @@ export function NotesPanel({ entityType, entityId }: Props) {
                   </div>
                   {isEditing ? (
                     <div className="space-y-2">
-                      <textarea
+                      <Textarea
                         value={editBody}
                         onChange={(e) => setEditBody(e.target.value)}
                         rows={Math.max(3, editBody.split("\n").length)}
-                        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                       <div className="flex justify-end gap-2">
                         <Button
