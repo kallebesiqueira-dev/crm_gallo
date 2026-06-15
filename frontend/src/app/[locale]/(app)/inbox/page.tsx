@@ -445,8 +445,8 @@ function ConnectEmptyState({
 
       <Card className="mx-auto max-w-xl">
         <CardHeader className="items-center text-center">
-          <span className="mb-2 grid h-12 w-12 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-            <WhatsAppIcon className="h-6 w-6" />
+          <span className="mb-2 grid h-14 w-14 place-items-center text-emerald-600 dark:text-emerald-400">
+            <WhatsAppIcon className="h-10 w-10" />
           </span>
           <CardTitle>{t("noAccounts")}</CardTitle>
           <p className="text-sm text-muted-foreground">{t("noAccountsBody")}</p>
