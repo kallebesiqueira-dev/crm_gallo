@@ -22,7 +22,7 @@ const POSTER = "/dashboard-tour-poster.jpg";
 export function DashboardVideo({ className }: { className?: string }) {
   return (
     <div className={cn("relative w-full", className)}>
-      {/* Frame — mirrors DashboardCarousel so the section reads identically. */}
+      {/* Framed, glass-bordered showcase for the product tour video. */}
       <div className="relative w-full overflow-hidden rounded-xl border border-white/10 shadow-2xl shadow-blue-500/20">
         {/* Browser chrome */}
         <div className="flex items-center gap-3 border-b border-white/10 bg-slate-900/90 px-4 py-3 backdrop-blur">
