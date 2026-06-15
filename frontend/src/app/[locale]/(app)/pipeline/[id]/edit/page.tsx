@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
-import { api, type Currency, type Customer, type DealStage, type TeamMember } from "@/lib/api";
+import { api, ApiError, type Currency, type Customer, type DealStage, type TeamMember } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 const STAGES: DealStage[] = [
@@ -28,6 +28,7 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
   const t = useTranslations("pipeline");
   const tLeads = useTranslations("leads");
   const tStages = useTranslations("leads.stages");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const router = useRouter();
 
@@ -110,7 +111,13 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
       );
       router.push(`/${locale}/pipeline/${id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      if (e instanceof ApiError && e.status === 412) {
+        setError(tCommon("versionConflict"));
+        const fresh = await api.getDeal(token, id).catch(() => null);
+        if (fresh) setVersion(fresh.version);
+      } else {
+        setError(e instanceof Error ? e.message : "Failed");
+      }
     } finally {
       setBusy(false);
     }

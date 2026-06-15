@@ -9,12 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 export default function EditProductPage() {
   const t = useTranslations("products");
   const tLeads = useTranslations("leads");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const router = useRouter();
   const params = useParams();
@@ -87,7 +88,13 @@ export default function EditProductPage() {
       );
       router.push(`/${locale}/products`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save");
+      if (e instanceof ApiError && e.status === 412) {
+        setError(tCommon("versionConflict"));
+        const fresh = await api.getProduct(token, id).catch(() => null);
+        if (fresh) setVersion(fresh.version);
+      } else {
+        setError(e instanceof Error ? e.message : "Failed to save");
+      }
     } finally {
       setBusy(false);
     }
