@@ -111,6 +111,7 @@ export default function AuditPage() {
               <Input
                 id="since"
                 type="date"
+                className="max-w-[11rem]"
                 value={since}
                 onChange={(e) => setSince(e.target.value)}
               />
@@ -120,6 +121,7 @@ export default function AuditPage() {
               <Input
                 id="until"
                 type="date"
+                className="max-w-[11rem]"
                 value={until}
                 onChange={(e) => setUntil(e.target.value)}
               />
