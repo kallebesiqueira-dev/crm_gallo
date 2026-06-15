@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from app.config import get_settings
 from app.logging_setup import get_logger
-from app.services.llm import LLMError, Message, chat_completion
+from app.services.llm import TEMP_CHATBOT, LLMError, Message, chat_completion
 
 log = get_logger(__name__)
 settings = get_settings()
@@ -152,7 +152,9 @@ async def answer_question(
         system = f"{system}\n\nThe user's interface language is '{locale}'."
 
     try:
-        answer = await chat_completion(messages, system=system, max_tokens=500)
+        answer = await chat_completion(
+            messages, system=system, max_tokens=500, temperature=TEMP_CHATBOT
+        )
     except LLMError as e:
         log.info("public_chatbot.fallback", reason=str(e)[:200])
         return static_fallback(message), "fallback"
