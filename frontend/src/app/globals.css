@@ -76,4 +76,13 @@ html.gallo-splash-pending body {
        applies to every control app-wide; follows light/dark --primary. */
     accent-color: hsl(var(--primary));
   }
+  /* Native <select> dropdown options: the browser renders the listbox and
+     ignores accent-color, so the selected option highlights blue by default.
+     Tint the selected/hovered option to the brand violet (Chromium honors
+     <option> background styling). */
+  option:checked,
+  option:hover {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
 }
