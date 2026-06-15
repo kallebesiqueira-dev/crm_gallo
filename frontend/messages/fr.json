@@ -1202,9 +1202,10 @@
         "tagline": "Démarrez et validez avec votre équipe.",
         "features": [
           "Jusqu'à 2 utilisateurs",
-          "Prospects, clients, affaires, pipeline",
-          "Scoring IA (modèle léger)",
-          "Support e-mail"
+          "CRM de base",
+          "Leads",
+          "Pipeline",
+          "IA limitée — 50 crédits"
         ]
       },
       "standard": {
@@ -1212,13 +1213,11 @@
         "shortPrice": "€19/mois",
         "tagline": "Pour les équipes commerciales en croissance.",
         "features": [
-          "Utilisateurs illimités",
-          "Tout de Free",
-          "Scoring IA avancé",
-          "Assistant IA illimité",
-          "Devis et propositions PDF",
-          "Rapports et graphiques",
-          "Support prioritaire"
+          "Jusqu'à 10 utilisateurs",
+          "Propositions PDF",
+          "Rapports",
+          "Tableau de bord avancé",
+          "IA — 500 crédits"
         ]
       },
       "business": {
@@ -1227,11 +1226,12 @@
         "tagline": "Pour les équipes qui closent de bout en bout.",
         "features": [
           "Tout de Standard",
-          "Contrats & signature électronique",
-          "Imports et exports en masse",
-          "Équipes & pipelines personnalisés",
-          "Journal d'audit complet",
-          "Webhooks sortants"
+          "Signature électronique",
+          "Permissions",
+          "Équipes",
+          "Automatisations de base",
+          "Pipelines multiples",
+          "IA — 2 000 crédits"
         ]
       },
       "premium": {
@@ -1240,9 +1240,12 @@
         "tagline": "Pour les équipes qui scalent avec l'automatisation.",
         "features": [
           "Tout de Business",
-          "Automatisations de workflow",
-          "Intégration WhatsApp",
-          "API publique + clés API",
+          "WhatsApp",
+          "API",
+          "Webhooks",
+          "Automatisations illimitées",
+          "IA illimitée",
+          "Support prioritaire",
           "Gestionnaire de compte dédié"
         ]
       }

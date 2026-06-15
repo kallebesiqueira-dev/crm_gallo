@@ -1202,9 +1202,10 @@
         "tagline": "Get started and validate with your team.",
         "features": [
           "Up to 2 users",
-          "Leads, customers, deals and pipeline",
-          "AI scoring (lightweight model)",
-          "Email support"
+          "Basic CRM",
+          "Leads",
+          "Pipeline",
+          "Limited AI — 50 credits"
         ]
       },
       "standard": {
@@ -1212,13 +1213,11 @@
         "shortPrice": "€19/mo",
         "tagline": "For growing sales teams.",
         "features": [
-          "Unlimited users",
-          "Everything in Free",
-          "Advanced AI scoring",
-          "Unlimited AI assistant",
-          "Quotes & PDF proposals",
-          "Reports and visual charts",
-          "Priority support"
+          "Up to 10 users",
+          "PDF proposals",
+          "Reports",
+          "Advanced dashboard",
+          "AI — 500 credits"
         ]
       },
       "business": {
@@ -1227,11 +1226,12 @@
         "tagline": "For teams closing deals end-to-end.",
         "features": [
           "Everything in Standard",
-          "Contracts & e-signature",
-          "Bulk imports & exports",
-          "Teams & custom pipelines",
-          "Full audit log",
-          "Outgoing webhooks"
+          "E-signature",
+          "Permissions",
+          "Teams",
+          "Basic automations",
+          "Multiple pipelines",
+          "AI — 2,000 credits"
         ]
       },
       "premium": {
@@ -1240,9 +1240,12 @@
         "tagline": "For teams that scale with automation.",
         "features": [
           "Everything in Business",
-          "Workflow automations",
-          "WhatsApp integration",
-          "Public API + API keys",
+          "WhatsApp",
+          "API",
+          "Webhooks",
+          "Unlimited automations",
+          "Unlimited AI",
+          "Priority support",
           "Dedicated account manager"
         ]
       }
