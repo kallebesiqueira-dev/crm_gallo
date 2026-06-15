@@ -95,6 +95,7 @@ export interface Lead {
   owner_id: string | null;
   company_id: string | null;
   custom_fields: Record<string, unknown>;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -1684,8 +1685,13 @@ export const api = {
   createLead: (token: string, payload: Partial<Lead>) =>
     request<Lead>("/api/leads", { method: "POST", token, body: JSON.stringify(payload) }),
   getLead: (token: string, id: string) => request<Lead>(`/api/leads/${id}`, { token }),
-  updateLead: (token: string, id: string, payload: Partial<Lead>) =>
-    request<Lead>(`/api/leads/${id}`, { method: "PATCH", token, body: JSON.stringify(payload) }),
+  updateLead: (token: string, id: string, payload: Partial<Lead>, version?: number) =>
+    request<Lead>(`/api/leads/${id}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+      headers: version !== undefined ? { "If-Match": String(version) } : undefined,
+    }),
   scoreLead: (token: string, id: string) =>
     request<Lead>(`/api/leads/${id}/score`, { method: "POST", token }),
   deleteLead: (token: string, id: string) =>
