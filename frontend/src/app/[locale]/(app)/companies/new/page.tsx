@@ -69,7 +69,7 @@ export default function NewCompanyPage() {
         <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field id="name" label={t("name")} required value={form.name} onChange={(v) => set("name", v)} />
           <Field id="industry" label={t("industry")} value={form.industry} onChange={(v) => set("industry", v)} />
-          <Field id="website" label={t("website")} value={form.website} onChange={(v) => set("website", v)} />
+          <Field id="website" label={t("website")} type="url" value={form.website} onChange={(v) => set("website", v)} />
           <Field id="email" label={t("email")} type="email" value={form.email} onChange={(v) => set("email", v)} />
           <Field id="phone" label={t("phone")} value={form.phone} onChange={(v) => set("phone", v)} />
           <Field id="country" label={t("country")} maxLength={2} value={form.country} onChange={(v) => set("country", v.toUpperCase())} />

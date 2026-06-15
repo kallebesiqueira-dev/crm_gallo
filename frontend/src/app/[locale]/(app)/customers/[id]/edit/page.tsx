@@ -128,7 +128,7 @@ export default function EditCustomerPage({ params }: { params: Promise<{ id: str
           <Field id="company" label={t("company")} value={form.company} onChange={(v) => set("company", v)} />
           <Field id="industry" label={tLeads("industry")} value={form.industry} onChange={(v) => set("industry", v)} />
           <Field id="country" label={tLeads("country")} maxLength={2} value={form.country} onChange={(v) => set("country", v.toUpperCase())} />
-          <Field id="website" label={tLeads("website")} value={form.website} onChange={(v) => set("website", v)} />
+          <Field id="website" label={tLeads("website")} type="url" value={form.website} onChange={(v) => set("website", v)} />
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="address">{tLeads("address")}</Label>
             <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} />
