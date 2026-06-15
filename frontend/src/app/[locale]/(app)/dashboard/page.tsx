@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardCustomize } from "@/components/dashboard-customize";
 import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
+import { EntityAvatar } from "@/components/entity-avatar";
 
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
@@ -256,9 +257,12 @@ export default function DashboardPage() {
                   href={`/${locale}/companies/${c.id}`}
                   className="rounded-xl border border-border bg-background/40 p-3 transition hover:border-primary/40 hover:shadow-sm"
                 >
-                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-bold text-white">
-                    {c.name.slice(0, 2).toUpperCase()}
-                  </span>
+                  <EntityAvatar
+                    entityType="company"
+                    entityId={c.id}
+                    fallback={c.name.slice(0, 2).toUpperCase()}
+                    size={36}
+                  />
                   <div className="mt-2 truncate text-sm font-semibold">{c.name}</div>
                   <div className="truncate text-xs text-muted-foreground">{c.industry ?? c.country ?? "—"}</div>
                 </Link>
