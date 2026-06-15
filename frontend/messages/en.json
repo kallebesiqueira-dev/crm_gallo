@@ -668,7 +668,10 @@
   },
   "assistant": {
     "empty": "Ask the assistant to summarize a customer, draft a follow-up email, or suggest a next step.",
-    "placeholder": "Type a message…"
+    "placeholder": "Type a message…",
+    "hero": "How can I help you today?",
+    "disclaimer": "AI can make mistakes — check important information.",
+    "close": "Close"
   },
   "audit": {
     "title": "Audit log",

@@ -668,7 +668,10 @@
   },
   "assistant": {
     "empty": "Demandez à l'assistant de résumer un client, de rédiger un e-mail de suivi ou de suggérer la prochaine étape.",
-    "placeholder": "Écrivez un message…"
+    "placeholder": "Écrivez un message…",
+    "hero": "Comment puis-je vous aider aujourd'hui ?",
+    "disclaimer": "L'IA peut faire des erreurs — vérifiez les informations importantes.",
+    "close": "Fermer"
   },
   "audit": {
     "title": "Journal d'audit",

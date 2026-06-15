@@ -668,7 +668,10 @@
   },
   "assistant": {
     "empty": "Chiedi all'assistente di riassumere un cliente, scrivere un'email di follow-up o suggerire il prossimo passo.",
-    "placeholder": "Scrivi un messaggio…"
+    "placeholder": "Scrivi un messaggio…",
+    "hero": "Come posso aiutarti oggi?",
+    "disclaimer": "L'IA può commettere errori — verifica le informazioni importanti.",
+    "close": "Chiudi"
   },
   "audit": {
     "title": "Registro di audit",

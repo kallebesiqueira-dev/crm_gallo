@@ -668,7 +668,10 @@
   },
   "assistant": {
     "empty": "Bitten Sie den Assistenten, einen Kunden zusammenzufassen, eine Follow-up-E-Mail zu entwerfen oder den nächsten Schritt vorzuschlagen.",
-    "placeholder": "Nachricht eingeben…"
+    "placeholder": "Nachricht eingeben…",
+    "hero": "Wie kann ich dir heute helfen?",
+    "disclaimer": "KI kann Fehler machen — wichtige Informationen prüfen.",
+    "close": "Schließen"
   },
   "audit": {
     "title": "Audit-Log",
