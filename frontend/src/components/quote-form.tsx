@@ -276,7 +276,10 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
       </Card>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={busy || !title.trim()}>
+        <Button
+          type="submit"
+          disabled={busy || !title.trim() || !lines.some((l) => l.description.trim())}
+        >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {submitLabel}
         </Button>
