@@ -629,7 +629,7 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {buildMatrix(plans, t).map((row) => (
+                  {buildMatrix(plans, t, locale).map((row) => (
                     <tr key={row.label}>
                       <td className="px-6 py-3 font-medium">{row.label}</td>
                       {row.cells.map((cell, i) => (
@@ -876,6 +876,7 @@ type Row = { label: string; cells: Cell[] };
 function buildMatrix(
   plans: PlanOut[],
   t: (key: string, values?: Record<string, string | number>) => string,
+  locale: string,
 ): Row[] {
   return [
     {
@@ -888,12 +889,18 @@ function buildMatrix(
       ),
     },
     { label: t("matrix.coreCrm"), cells: plans.map(() => true) },
-    { label: t("matrix.aiScoringPro"), cells: plans.map((p) => p.id !== "free") },
-    { label: t("matrix.aiAssistant"), cells: plans.map((p) => p.id !== "free") },
+    {
+      label: t("matrix.aiCredits"),
+      cells: plans.map((p) =>
+        p.ai_credits == null
+          ? t("matrix.unlimited")
+          : new Intl.NumberFormat(locale).format(p.ai_credits),
+      ),
+    },
     { label: t("matrix.reports"), cells: plans.map((p) => p.id !== "free") },
     { label: t("matrix.contracts"), cells: plans.map((p) => p.id === "business" || p.id === "premium") },
     { label: t("matrix.audit"), cells: plans.map((p) => p.id === "business" || p.id === "premium") },
-    { label: t("matrix.automations"), cells: plans.map((p) => p.id === "premium") },
+    { label: t("matrix.automations"), cells: plans.map((p) => p.id === "business" || p.id === "premium") },
     { label: t("matrix.api"), cells: plans.map((p) => p.id === "premium") },
     {
       label: t("matrix.support"),

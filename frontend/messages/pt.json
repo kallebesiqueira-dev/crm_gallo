@@ -1156,7 +1156,8 @@
       "supportPriority": "Prioritário",
       "supportEmail": "E-mail",
       "contracts": "Contratos e assinatura eletrónica",
-      "audit": "Registo de auditoria"
+      "audit": "Registo de auditoria",
+      "aiCredits": "Créditos de IA"
     },
     "faqTitle": "Perguntas frequentes",
     "faq": {

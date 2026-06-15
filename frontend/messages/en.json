@@ -1156,7 +1156,8 @@
       "supportPriority": "Priority",
       "supportEmail": "Email",
       "contracts": "Contracts & e-signature",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "aiCredits": "AI credits"
     },
     "faqTitle": "Frequently asked questions",
     "faq": {
