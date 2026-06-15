@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
-import { api, type LeadStage } from "@/lib/api";
+import { api, ApiError, type LeadStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 const STAGES: LeadStage[] = [
@@ -33,6 +33,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [version, setVersion] = useState<number | undefined>(undefined);
   const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
   const [form, setForm] = useState({
     first_name: "",
@@ -70,6 +71,7 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
           stage: l.stage,
         });
         setCustomFields((l.custom_fields as Record<string, unknown>) ?? {});
+        setVersion(l.version);
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
@@ -101,10 +103,16 @@ export default function EditLeadPage({ params }: { params: Promise<{ id: string 
         stage: form.stage,
         custom_fields: customFields,
       };
-      await api.updateLead(token, id, payload);
+      await api.updateLead(token, id, payload, version);
       router.push(`/${locale}/leads/${id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      if (e instanceof ApiError && e.status === 412) {
+        setError(tCommon("versionConflict"));
+        const fresh = await api.getLead(token, id).catch(() => null);
+        if (fresh) setVersion(fresh.version);
+      } else {
+        setError(e instanceof Error ? e.message : "Failed");
+      }
     } finally {
       setBusy(false);
     }
