@@ -3,6 +3,37 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/toast-provider";
+
+/**
+ * Shrink an image to <=512px on its longest side and re-encode as JPEG before
+ * upload: phone photos are multi-MB and were silently exceeding the server's
+ * size limit (the upload failed and the avatar never saved). Falls back to the
+ * original file if the canvas path isn't available so the upload still tries.
+ */
+async function downscaleImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const max = 512;
+    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85),
+    );
+    return blob ? new File([blob], "avatar.jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}
 
 /**
  * Round avatar that doubles as an upload control: it fetches the current photo
@@ -23,6 +54,7 @@ export function AvatarUpload({
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
 
   useEffect(() => {
     let stop = false;
@@ -42,10 +74,11 @@ export function AvatarUpload({
     if (!file) return;
     setBusy(true);
     try {
-      const r = await api.uploadAvatar(entityType, entityId, file);
+      const upload = await downscaleImage(file);
+      const r = await api.uploadAvatar(entityType, entityId, upload);
       setUrl(r.url);
-    } catch {
-      /* surfaced by the disabled state resetting; keep the old photo */
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Upload failed", "error");
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";

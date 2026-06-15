@@ -75,7 +75,7 @@ export default function NewCustomerPage() {
           <Field id="company" label={t("company")} value={form.company} onChange={(v) => set("company", v)} />
           <Field id="industry" label={tCommon("industry")} value={form.industry} onChange={(v) => set("industry", v)} />
           <Field id="country" label={tCommon("country")} maxLength={2} value={form.country} onChange={(v) => set("country", v.toUpperCase())} />
-          <Field id="website" label={tCommon("website")} type="url" value={form.website} onChange={(v) => set("website", v)} />
+          <Field id="website" label={tCommon("website")} type="text" value={form.website} onChange={(v) => set("website", v)} />
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="address">{tCommon("address")}</Label>
             <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} />
