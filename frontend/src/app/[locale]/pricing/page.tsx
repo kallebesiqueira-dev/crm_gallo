@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ComponentType } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,7 +22,6 @@ import {
   Headset,
   KanbanSquare,
   LayoutGrid,
-  MessageCircle,
   ShieldCheck,
   Sparkles,
   UserCheck,
@@ -32,6 +31,7 @@ import {
   Workflow,
   Zap,
 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { DashboardVideo } from "@/components/marketing/dashboard-video";
@@ -70,11 +70,11 @@ const PLAN_GRADIENT: Record<PlanId, string> = {
 // Per-feature icons (by plan + position) — a contextual glyph instead of a
 // generic green check, matched to each feature's meaning. Order MUST mirror the
 // FALLBACK_PLANS features arrays / the pricing.plans.<id>.features messages.
-const FEATURE_ICONS: Record<PlanId, Array<typeof Check>> = {
+const FEATURE_ICONS: Record<PlanId, Array<ComponentType<{ className?: string }>>> = {
   free: [Users, LayoutGrid, UserPlus, KanbanSquare, Sparkles],
   standard: [Users, FileText, BarChart3, Gauge, Sparkles],
   business: [CheckCheck, FileSignature, ShieldCheck, Users, Workflow, ArrowDownUp, Brain],
-  premium: [CheckCheck, MessageCircle, Code2, Webhook, Zap, Sparkles, Headset, UserCheck],
+  premium: [CheckCheck, WhatsAppIcon, Code2, Webhook, Zap, Sparkles, Headset, UserCheck],
 };
 
 // Static mirror of backend/app/billing/catalog.py. The public marketing page

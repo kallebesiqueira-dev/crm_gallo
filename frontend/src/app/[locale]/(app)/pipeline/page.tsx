@@ -222,7 +222,7 @@ function Column({
     >
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-sm font-semibold text-transparent dark:from-white dark:to-violet-200">
+          <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-sm font-semibold text-transparent dark:from-violet-400 dark:to-fuchsia-400">
             {label}
           </div>
           <div className="text-xs text-muted-foreground">

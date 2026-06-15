@@ -217,6 +217,11 @@ export function Sidebar() {
             height={48}
             className="h-12 w-12 shrink-0 rounded-lg object-contain"
           />
+          {!collapsed && (
+            <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-violet-200/50">
+              AI Sales Platform
+            </div>
+          )}
         </Link>
       </div>
 
