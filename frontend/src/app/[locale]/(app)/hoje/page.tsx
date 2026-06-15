@@ -23,9 +23,9 @@ import {
 import { getToken } from "@/lib/auth";
 import { ActionIcon } from "@/lib/action-icons";
 
-function formatDatetime(iso: string) {
+function formatDatetime(iso: string, locale: string) {
   const d = new Date(iso);
-  return d.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 function DealRow({ deal }: { deal: DealTodayItem }) {
@@ -49,7 +49,7 @@ function DealRow({ deal }: { deal: DealTodayItem }) {
           />
         )}
         {deal.next_action_at && (
-          <p className="text-xs text-muted-foreground">{formatDatetime(deal.next_action_at)}</p>
+          <p className="text-xs text-muted-foreground">{formatDatetime(deal.next_action_at, locale)}</p>
         )}
       </div>
     </Link>
