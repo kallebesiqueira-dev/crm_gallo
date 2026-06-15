@@ -213,20 +213,10 @@ export function Sidebar() {
           <Image
             src="/gallo-logo.png"
             alt=""
-            width={36}
-            height={36}
-            className="h-9 w-9 shrink-0 rounded-lg object-contain"
+            width={48}
+            height={48}
+            className="h-12 w-12 shrink-0 rounded-lg object-contain"
           />
-          {!collapsed && (
-            <div className="leading-tight">
-              <div className="bg-gradient-to-r from-white to-violet-200 bg-clip-text text-base font-bold tracking-tight text-transparent">
-                GALLO crm
-              </div>
-              <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-violet-200/50">
-                AI Sales Platform
-              </div>
-            </div>
-          )}
         </Link>
       </div>
 

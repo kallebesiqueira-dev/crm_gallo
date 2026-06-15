@@ -641,7 +641,7 @@ export default function PricingPage() {
                           )}
                         >
                           {cell === true ? (
-                            <Check className="mx-auto h-4 w-4 text-emerald-500" />
+                            <Check className="mx-auto h-4 w-4 text-primary" />
                           ) : cell === false ? (
                             <span className="text-muted-foreground/50">—</span>
                           ) : (
