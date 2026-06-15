@@ -37,9 +37,9 @@ const STAGES: DealStage[] = [
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", CHF: "CHF ", USD: "$", GBP: "£" };
 
-function formatMoney(value: number, currency: string) {
+function formatMoney(value: number, currency: string, locale: string) {
   const symbol = CURRENCY_SYMBOL[currency] ?? "";
-  return `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  return `${symbol}${value.toLocaleString(locale, { maximumFractionDigits: 0 })}`;
 }
 
 export default function PipelinePage() {
@@ -209,6 +209,7 @@ function Column({
   onDelete?: (deal: Deal) => void;
   deleteLabel?: string;
 }) {
+  const locale = useLocale();
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const total = deals.reduce((acc, d) => acc + d.value, 0);
 
@@ -226,7 +227,7 @@ function Column({
             {label}
           </div>
           <div className="text-xs text-muted-foreground">
-            {deals.length} · {formatMoney(total, deals[0]?.currency ?? "EUR")}
+            {deals.length} · {formatMoney(total, deals[0]?.currency ?? "EUR", locale)}
           </div>
         </div>
       </div>
@@ -293,7 +294,7 @@ function DealCard({
         </div>
         <div className="mt-1 flex items-center justify-between text-xs">
           <span className="font-mono text-muted-foreground">
-            {formatMoney(deal.value, deal.currency)}
+            {formatMoney(deal.value, deal.currency, locale)}
           </span>
           <Badge variant="outline" className="text-[10px]">
             {deal.probability}%
@@ -301,7 +302,7 @@ function DealCard({
         </div>
         {deal.expected_close_date && (
           <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            {new Date(deal.expected_close_date).toLocaleDateString()}
+            {new Date(deal.expected_close_date).toLocaleDateString(locale)}
           </div>
         )}
         {deal.next_action_at ? (
@@ -314,7 +315,7 @@ function DealCard({
               : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
           )}>
             <ActionIcon type={deal.next_action_type} className="h-3 w-3" />
-            <span>{new Date(deal.next_action_at).toLocaleDateString()}</span>
+            <span>{new Date(deal.next_action_at).toLocaleDateString(locale)}</span>
           </div>
         ) : (
           <div className="mt-1.5 text-[10px] italic text-muted-foreground/40">

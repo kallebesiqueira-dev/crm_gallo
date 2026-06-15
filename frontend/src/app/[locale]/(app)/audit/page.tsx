@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Loader2, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +31,7 @@ const PAGE_SIZE = 50;
 
 export default function AuditPage() {
   const t = useTranslations("audit");
+  const locale = useLocale();
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -168,7 +169,7 @@ export default function AuditPage() {
                   {entries.map((e) => (
                     <tr key={e.id} className="align-top">
                       <td className="whitespace-nowrap py-2 pr-3 text-xs text-muted-foreground">
-                        {formatWhen(e.created_at)}
+                        {formatWhen(e.created_at, locale)}
                       </td>
                       <td className="hidden py-2 pr-3 sm:table-cell">
                         {e.actor_name ? (
@@ -250,9 +251,9 @@ export default function AuditPage() {
   );
 }
 
-function formatWhen(iso: string): string {
+function formatWhen(iso: string, locale: string): string {
   try {
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleString(locale);
   } catch {
     return iso;
   }
