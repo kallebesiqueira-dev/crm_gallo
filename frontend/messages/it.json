@@ -60,7 +60,7 @@
     "todayTasks": "Attività di oggi",
     "overdueTasks": "Attività in ritardo",
     "empty": "Niente in sospeso. Buona vendita!",
-    "pendingCount": "in sospeso"
+    "pendingCount": "{count, plural, one {# in sospeso} other {# in sospeso}}"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -356,6 +356,7 @@
     "expectedClose": "Chiusura prevista",
     "customer": "Cliente",
     "stage": "Fase",
+    "noFollowUp": "nessun follow-up",
     "nextAction": "Prossima azione",
     "noNextAction": "Nessun follow-up pianificato",
     "created": "Creato",
@@ -760,7 +761,8 @@
     "confirmDelete": "Eliminare questo preventivo? L'operazione è irreversibile.",
     "details": "Dettagli",
     "created": "Creato",
-    "createContract": "Crea contratto"
+    "createContract": "Crea contratto",
+    "removeLine": "Rimuovi riga"
   },
   "contracts": {
     "title": "Contratti",

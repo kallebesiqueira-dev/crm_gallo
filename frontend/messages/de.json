@@ -60,7 +60,7 @@
     "todayTasks": "Heutige Aufgaben",
     "overdueTasks": "Überfällige Aufgaben",
     "empty": "Nichts ausstehend. Guten Verkauf!",
-    "pendingCount": "ausstehend"
+    "pendingCount": "{count, plural, one {# ausstehend} other {# ausstehend}}"
   },
   "inbox": {
     "title": "WhatsApp-Posteingang",
@@ -356,6 +356,7 @@
     "expectedClose": "Erwartetes Abschlussdatum",
     "customer": "Kunde",
     "stage": "Phase",
+    "noFollowUp": "kein Follow-up",
     "nextAction": "Nächste Aktion",
     "noNextAction": "Kein Follow-up geplant",
     "created": "Erstellt",
@@ -760,7 +761,8 @@
     "confirmDelete": "Dieses Angebot löschen? Dies kann nicht rückgängig gemacht werden.",
     "details": "Details",
     "created": "Erstellt",
-    "createContract": "Vertrag erstellen"
+    "createContract": "Vertrag erstellen",
+    "removeLine": "Zeile entfernen"
   },
   "contracts": {
     "title": "Verträge",

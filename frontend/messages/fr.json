@@ -60,7 +60,7 @@
     "todayTasks": "Tâches d'aujourd'hui",
     "overdueTasks": "Tâches en retard",
     "empty": "Rien en attente. Bonne vente !",
-    "pendingCount": "en attente"
+    "pendingCount": "{count, plural, one {# en attente} other {# en attente}}"
   },
   "inbox": {
     "title": "Boîte WhatsApp",
@@ -356,6 +356,7 @@
     "expectedClose": "Clôture prévue",
     "customer": "Client",
     "stage": "Étape",
+    "noFollowUp": "aucun suivi",
     "nextAction": "Prochaine action",
     "noNextAction": "Aucun suivi planifié",
     "created": "Créé",
@@ -760,7 +761,8 @@
     "confirmDelete": "Supprimer ce devis ? Cette action est irréversible.",
     "details": "Détails",
     "created": "Créé",
-    "createContract": "Créer un contrat"
+    "createContract": "Créer un contrat",
+    "removeLine": "Supprimer la ligne"
   },
   "contracts": {
     "title": "Contrats",

@@ -60,7 +60,7 @@
     "todayTasks": "Incumbensas da oz",
     "overdueTasks": "Incumbensas en retard",
     "empty": "Nagut pendent. Buna vendita!",
-    "pendingCount": "pendents"
+    "pendingCount": "{count, plural, one {# pendent} other {# pendents}}"
   },
   "inbox": {
     "title": "Posta WhatsApp",
@@ -356,6 +356,7 @@
     "expectedClose": "Serrada speranza",
     "customer": "Client",
     "stage": "Stadio",
+    "noFollowUp": "nagin follow-up",
     "nextAction": "Proxima acziun",
     "noNextAction": "Nagin follow-up planisà",
     "created": "Creà",
@@ -760,7 +761,8 @@
     "confirmDelete": "Stizzar questa offerta? Quai na po betg vegnir revocà.",
     "details": "Detagls",
     "created": "Creà",
-    "createContract": "Crear contract"
+    "createContract": "Crear contract",
+    "removeLine": "Allontanar la lingia"
   },
   "contracts": {
     "title": "Contracts",

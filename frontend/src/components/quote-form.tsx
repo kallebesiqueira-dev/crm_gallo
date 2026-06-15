@@ -245,7 +245,7 @@ export function QuoteForm({ initial, submitLabel, busy, error, onSubmit }: Props
                 type="button"
                 onClick={() => removeLine(i)}
                 className="justify-self-end text-muted-foreground hover:text-destructive"
-                aria-label="remove line"
+                aria-label={t("removeLine")}
               >
                 <Trash2 className="h-4 w-4" />
               </button>

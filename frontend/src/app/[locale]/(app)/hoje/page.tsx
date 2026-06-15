@@ -207,7 +207,7 @@ export default function HojePage() {
             <p className="text-sm text-muted-foreground">
               {allClear
                 ? t("empty")
-                : `${totalPending} ${t("pendingCount")}`}
+                : t("pendingCount", { count: totalPending })}
             </p>
           )}
         </div>
