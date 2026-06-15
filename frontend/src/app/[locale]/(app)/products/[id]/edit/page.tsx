@@ -147,12 +147,16 @@ export default function EditProductPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="currency">{t("currency")}</Label>
-            <Input
+            <Select
               id="currency"
-              maxLength={3}
               value={form.currency}
-              onChange={(e) => set("currency", e.target.value.toUpperCase())}
-            />
+              onChange={(e) => set("currency", e.target.value)}
+            >
+              <option value="EUR">EUR</option>
+              <option value="CHF">CHF</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="unit">{t("unit")}</Label>
