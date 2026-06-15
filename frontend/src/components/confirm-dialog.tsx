@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 type ConfirmTone = "default" | "danger";
 
@@ -39,6 +40,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [opts, setOpts] = useState<ConfirmOptions>({});
   const resolverRef = useRef<Resolver | null>(null);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const confirm = useCallback((options: ConfirmOptions = {}) => {
     setOpts(options);
@@ -61,9 +63,10 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
       if (e.key === "Enter") close(true);
     };
     window.addEventListener("keydown", onKey);
-    confirmBtnRef.current?.focus();
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close]);
+
+  useFocusTrap(dialogRef, open, { initialFocus: confirmBtnRef });
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -77,7 +80,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
             if (e.target === e.currentTarget) close(false);
           }}
         >
-          <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg">
+          <div ref={dialogRef} className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg">
             <h2 className="text-lg font-semibold">{opts.title ?? tCommon("confirmTitle")}</h2>
             {opts.description && (
               <p className="mt-2 text-sm text-muted-foreground">{opts.description}</p>
