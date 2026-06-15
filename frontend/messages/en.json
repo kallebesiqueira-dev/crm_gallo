@@ -1676,7 +1676,8 @@
     "search": "Search & commands",
     "help": "Show this help",
     "close": "Close dialog / menu",
-    "hint": "Press ⌘K anywhere to jump to a page or create a record."
+    "hint": "Press ⌘K anywhere to jump to a page or create a record.",
+    "goto": "then D/H/L/C/P — go to a section"
   },
   "documents": {
     "title": "Documents",

@@ -1676,7 +1676,8 @@
     "search": "Recherche et commandes",
     "help": "Afficher cette aide",
     "close": "Fermer la boîte / le menu",
-    "hint": "Appuyez sur ⌘K pour accéder à une page ou créer une fiche."
+    "hint": "Appuyez sur ⌘K pour accéder à une page ou créer une fiche.",
+    "goto": "puis D/H/L/C/P — aller à une section"
   },
   "documents": {
     "title": "Documents",

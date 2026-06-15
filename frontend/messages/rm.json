@@ -1676,7 +1676,8 @@
     "search": "Tschertgar & cumonds",
     "help": "Mussar quest agid",
     "close": "Serrar dialog / menu",
-    "hint": "Smatga ⌘K per ir ad ina pagina u crear in record."
+    "hint": "Smatga ⌘K per ir ad ina pagina u crear in record.",
+    "goto": "lura D/H/L/C/P — ir ad ina secziun"
   },
   "documents": {
     "title": "Documents",

@@ -1676,7 +1676,8 @@
     "search": "Busca e comandos",
     "help": "Mostrar esta ajuda",
     "close": "Fechar diálogo / menu",
-    "hint": "Pressione ⌘K para ir a uma página ou criar um registro."
+    "hint": "Pressione ⌘K para ir a uma página ou criar um registro.",
+    "goto": "depois D/H/L/C/P — ir a uma seção"
   },
   "documents": {
     "title": "Documentos",

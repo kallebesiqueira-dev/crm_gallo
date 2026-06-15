@@ -6,8 +6,9 @@ import { X } from "lucide-react";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 
 // Each row: the keys to render as <kbd> + the description i18n key.
-const SHORTCUTS: { keys: string[]; descKey: "search" | "help" | "close" }[] = [
+const SHORTCUTS: { keys: string[]; descKey: "search" | "goto" | "help" | "close" }[] = [
   { keys: ["⌘", "K"], descKey: "search" },
+  { keys: ["G"], descKey: "goto" },
   { keys: ["?"], descKey: "help" },
   { keys: ["Esc"], descKey: "close" },
 ];
