@@ -24,6 +24,7 @@ from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginat
 from app.rate_limit import limiter, user_or_ip_key
 from app.schemas import LeadCreate, LeadOut, LeadScoreOut, LeadUpdate
 from app.services import llm
+from app.services.ai_credits import ensure_credits
 from app.services.ai_scoring import score_lead
 from app.services.llm_usage import persist_usage
 
@@ -311,6 +312,7 @@ async def score(
 ) -> Lead:
     lead = await _get_lead_or_404(db, lead_id, org_id)
     ensure_can_mutate(user, lead.owner_id)
+    await ensure_credits(db, org_id)
     with llm.capture_usage() as usage:
         result = await score_lead(lead, user.locale)
     lead.ai_score = result["score"]

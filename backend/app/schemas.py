@@ -1688,6 +1688,17 @@ class LlmUsageSummary(BaseModel):
     by_use_case: list[LlmUsageUseCaseStat] = Field(default_factory=list)
 
 
+class AiCreditStatus(BaseModel):
+    """Current-month AI-credit usage for the caller's org (1 credit = 1 AI
+    action). `limit`/`remaining` are null on unlimited plans."""
+
+    used: int
+    limit: int | None = None
+    remaining: int | None = None
+    unlimited: bool = False
+    resets_at: datetime
+
+
 # ---------- Performance / KPI ----------
 class SalesGoalBase(BaseModel):
     # Exactly one scope is implied: owner_id set = per-rep, team_id set =

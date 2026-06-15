@@ -1,14 +1,18 @@
 import json
+import uuid
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
-from app.deps import get_current_user
+from app.database import get_db
+from app.deps import get_current_org_id, get_current_user
 from app.models import User
 from app.rate_limit import limiter, user_or_ip_key
 from app.services.ai_assistant import chat, chat_stream
+from app.services.ai_credits import ensure_credits
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 settings = get_settings()
@@ -35,7 +39,10 @@ async def chat_with_assistant(
     request: Request,
     payload: AssistantRequest,
     user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
 ) -> AssistantResponse:
+    await ensure_credits(db, org_id)
     prior = [{"role": m.role, "content": m.content} for m in payload.history]
     reply = await chat(payload.message, locale=payload.locale or user.locale, history=prior)
     return AssistantResponse(reply=reply)
@@ -47,9 +54,14 @@ async def chat_stream_endpoint(
     request: Request,
     payload: AssistantRequest,
     user: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """SSE streaming endpoint — yields `data: {"token": "..."}` lines.
     Ends with `data: [DONE]`. Errors are sent as `data: {"error": "..."}` then DONE."""
+    # Gate before opening the stream so an exhausted quota surfaces as a normal
+    # 402, not a mid-stream error token.
+    await ensure_credits(db, org_id)
     prior = [{"role": m.role, "content": m.content} for m in payload.history]
 
     async def generate():

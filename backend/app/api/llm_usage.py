@@ -17,9 +17,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.deps import get_current_org_id, require_roles
+from app.deps import get_current_org_id, get_current_user, require_roles
 from app.models import LlmUsage, User, UserRole
-from app.schemas import LlmUsageSummary, LlmUsageUseCaseStat
+from app.schemas import AiCreditStatus, LlmUsageSummary, LlmUsageUseCaseStat
+from app.services import ai_credits
 
 router = APIRouter(prefix="/api/llm-usage", tags=["llm-usage"])
 
@@ -62,3 +63,14 @@ async def usage_summary(
         total_output_tokens=sum(s.output_tokens for s in by_use_case),
         by_use_case=by_use_case,
     )
+
+
+@router.get("/credits", response_model=AiCreditStatus)
+async def ai_credit_status(
+    _: User = Depends(get_current_user),
+    org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_db),
+) -> AiCreditStatus:
+    """Current-month AI-credit usage for the caller's org (1 credit = 1 AI
+    action) — powers the usage meter. Open to any member."""
+    return AiCreditStatus(**await ai_credits.credit_status(db, org_id))

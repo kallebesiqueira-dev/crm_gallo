@@ -22,6 +22,7 @@ from app.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CursorPage, paginat
 from app.schemas import CustomerCreate, CustomerOut, CustomerUpdate
 from app.services import llm
 from app.services.ai_assistant import summarize_customer
+from app.services.ai_credits import ensure_credits
 from app.services.llm_usage import persist_usage
 
 router = APIRouter(prefix="/api/customers", tags=["customers"])
@@ -264,6 +265,7 @@ async def summarize(
         )
     ).all()
 
+    await ensure_credits(db, org_id)
     with llm.capture_usage() as usage:
         summary = await summarize_customer(
             customer, user.locale, open_deals=open_deals, open_tasks=open_tasks
