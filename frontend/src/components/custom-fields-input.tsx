@@ -98,6 +98,7 @@ function FieldWidget({
           {label}
           <Textarea
             id={id}
+            required={def.required}
             value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
           />
@@ -123,6 +124,7 @@ function FieldWidget({
           <Input
             id={id}
             type="number"
+            required={def.required}
             value={value === undefined || value === null ? "" : String(value)}
             onChange={(e) =>
               onChange(e.target.value === "" ? "" : Number(e.target.value))
@@ -137,6 +139,7 @@ function FieldWidget({
           <Input
             id={id}
             type="date"
+            required={def.required}
             value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
           />
@@ -148,6 +151,7 @@ function FieldWidget({
           {label}
           <Select
             id={id}
+            required={def.required}
             value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
           >
@@ -198,6 +202,7 @@ function FieldWidget({
           <Input
             id={id}
             type={def.field_type === "email" ? "email" : def.field_type === "url" ? "url" : "text"}
+            required={def.required}
             value={(value as string) ?? ""}
             onChange={(e) => onChange(e.target.value)}
           />
