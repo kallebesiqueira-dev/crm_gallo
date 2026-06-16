@@ -308,7 +308,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   return (
     <div>
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm">{value || "—"}</div>
+      <div className="mt-1 break-words text-sm">{value || "—"}</div>
     </div>
   );
 }

@@ -86,8 +86,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-4">
                 <AvatarUpload
                   entityType="customer"
                   entityId={customer.id}
@@ -101,7 +101,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   <p className="mt-1 text-sm text-muted-foreground">{customer.company ?? "—"}</p>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Button asChild size="sm">
                   <Link href={`/${locale}/customers/${customer.id}/edit`}>
                     <Pencil className="h-4 w-4" />
@@ -216,7 +216,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   return (
     <div>
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm">{value || "—"}</div>
+      <div className="mt-1 break-words text-sm">{value || "—"}</div>
     </div>
   );
 }

@@ -132,14 +132,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <CardTitle className="text-2xl">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="break-words text-2xl">
                   {lead.first_name} {lead.last_name}
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">{lead.company ?? "—"}</p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Badge>{tStages(lead.stage)}</Badge>
                 <Button asChild size="sm">
                   <Link href={`/${locale}/leads/${lead.id}/edit`}>
@@ -299,7 +299,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   return (
     <div>
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm">{value || "—"}</div>
+      <div className="mt-1 break-words text-sm">{value || "—"}</div>
     </div>
   );
 }
