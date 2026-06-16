@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { Check, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Flag } from "@/components/flag-icon";
@@ -87,14 +88,17 @@ export function MobileShowcase() {
 
           {/* 7-language greeting chips */}
           <div className="mt-7 flex flex-wrap gap-2">
-            {GREETINGS.map((g) => (
-              <span
-                key={g.code}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-200"
-              >
-                <Flag code={g.code} className="h-3.5 w-5 shrink-0 rounded-sm ring-1 ring-black/10" />
-                {g.word}
-              </span>
+            {GREETINGS.map((g, i) => (
+              <Fragment key={g.code}>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-200">
+                  <Flag code={g.code} className="h-3.5 w-5 shrink-0 rounded-sm ring-1 ring-black/10" />
+                  {g.word}
+                </span>
+                {/* Desktop: force a break after the 4th chip so the 7 languages
+                    sit 4-over-3 instead of an uneven 5/2 wrap. Mobile keeps the
+                    natural reflow. */}
+                {i === 3 && <span aria-hidden className="hidden basis-full md:block" />}
+              </Fragment>
             ))}
           </div>
         </div>
