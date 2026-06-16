@@ -44,6 +44,9 @@ export function TourGuide() {
   // Auto-start once, shortly after mount so the dashboard has painted.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Never auto-start under browser automation (Playwright/e2e): the overlay
+    // would intercept the test's clicks. Manual replay still works.
+    if (navigator.webdriver) return;
     if (localStorage.getItem(DONE_KEY)) return;
     const id = window.setTimeout(() => setActive(true), 1000);
     return () => window.clearTimeout(id);

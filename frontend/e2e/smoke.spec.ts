@@ -26,6 +26,20 @@ import { expect, test, type Page } from "@playwright/test";
 
 const PASSWORD = "PlaywrightPass2026!";
 
+// Suppress the first-run onboarding tour — its full-screen overlay would
+// intercept the test's clicks. Seed the "already seen" flag before any page
+// script runs (belt-and-suspenders: the app also skips auto-start under
+// navigator.webdriver).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("gallo_tour_done_v1", "1");
+    } catch {
+      /* ignore */
+    }
+  });
+});
+
 // The "Sign out" button renders only once the authenticated app layout is
 // interactive (i.e. `me()` has resolved). It carries no viewport-specific
 // `hidden` class, so it's a stable hydration signal on any authed page — unlike
