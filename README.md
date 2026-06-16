@@ -201,6 +201,12 @@ NEXT_PUBLIC_API_URL=http://localhost:8001 npm run dev -- -p 3030
 > ⚠️ Never run `alembic upgrade head` straight after `--autogenerate` without reviewing the file first (autogen can emit phantom `drop_index` for partial/DESC indexes).
 > ⚠️ New table migrations must **explicitly `GRANT` to `crm_app`** — the runtime role can't be assumed to inherit access.
 
+**API types** — the frontend's `src/lib/api-types.ts` is generated from the backend OpenAPI schema, which is the single source of truth for request/response shapes. After changing any endpoint or Pydantic schema, regenerate both and commit them (CI fails on drift):
+```bash
+cd backend && python -m scripts.dump_openapi > openapi.json   # refresh the schema
+cd ../frontend && npm run gen:api-types                        # regenerate TS types
+```
+
 ---
 
 ## ⚙️ Configuration
