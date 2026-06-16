@@ -220,7 +220,7 @@ function WhatsAppInbox() {
 
   if (loading) {
     return (
-      <div className="grid h-[calc(100vh-8rem)] place-items-center text-sm text-muted-foreground">
+      <div className="grid h-[calc(100dvh-8rem)] place-items-center text-sm text-muted-foreground">
         {t("loading")}
       </div>
     );
@@ -232,7 +232,7 @@ function WhatsAppInbox() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] flex-col gap-4">
+    <div className="flex h-[calc(100dvh-7rem)] flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>

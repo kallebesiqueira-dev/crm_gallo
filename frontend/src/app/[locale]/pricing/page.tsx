@@ -268,7 +268,7 @@ export default function PricingPage() {
         the viewport at z-0 and provides the actual base colour; every other
         page surface stacks above via `relative z-10` so it can't get hidden
         behind the mesh. */}
-    <div data-landing-root className="dark relative min-h-screen overflow-x-clip text-foreground">
+    <div data-landing-root className="dark relative min-h-dvh overflow-x-clip text-foreground">
       <Suspense fallback={null}>
         <SearchParamWatcher name="stripe" onValue={setStripeFlag} />
       </Suspense>

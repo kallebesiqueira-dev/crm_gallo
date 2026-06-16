@@ -18,7 +18,7 @@ export function CurrencySwitcher() {
         title="Display currency"
         value={currency}
         onChange={(e) => setCurrency(e.target.value as typeof currency)}
-        className="h-9 cursor-pointer appearance-none rounded-lg bg-transparent pl-7 pr-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-input bg-background pl-7 pr-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {CURRENCIES.map((c) => (
           <option key={c} value={c}>

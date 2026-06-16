@@ -24,6 +24,7 @@ import { DashboardCustomize } from "@/components/dashboard-customize";
 import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
 import { EntityAvatar } from "@/components/entity-avatar";
 import { useCurrency } from "@/components/currency-provider";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
@@ -166,6 +167,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <CurrencySwitcher />
           <Button asChild size="sm" className="gap-1.5">
             <Link href={`/${locale}/tasks`}>
               <Plus className="h-4 w-4" />

@@ -19,7 +19,6 @@ import { SupportDialog } from "@/components/support-dialog";
 import { GlobalSearch } from "@/components/global-search";
 import { ShortcutsHelp } from "@/components/shortcuts-help";
 import { CurrencyProvider } from "@/components/currency-provider";
-import { CurrencySwitcher } from "@/components/currency-switcher";
 import { Button } from "@/components/ui/button";
 import {
   api,
@@ -191,7 +190,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="grid min-h-screen place-items-center text-muted-foreground">
+      <div className="grid min-h-dvh place-items-center text-muted-foreground">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
       </div>
     );
@@ -216,7 +215,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ConfirmProvider>
       <CurrencyProvider initial={user?.display_currency ?? "EUR"} locale={locale}>
-      <div className="flex min-h-screen bg-muted/30">
+      <div className="flex min-h-dvh bg-muted/30">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-50 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-xl sm:px-6">
@@ -274,7 +273,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <HelpCircle className="h-5 w-5" />
               </button>
               <ThemeToggle />
-              <CurrencySwitcher />
               <LanguageSwitcher />
               {billing && (
                 <span className="hidden sm:inline-flex">

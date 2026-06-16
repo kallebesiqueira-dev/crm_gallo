@@ -22,10 +22,10 @@ export function AuthShell({
   const tApp = useTranslations("app");
 
   return (
-    <div className="dark relative min-h-screen bg-[#040509] text-foreground">
+    <div className="dark relative min-h-dvh bg-[#040509] text-foreground">
       <FuturisticBackground />
 
-      <div className="relative z-10 flex min-h-screen flex-col">
+      <div className="relative z-10 flex min-h-dvh flex-col">
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-5 sm:px-10">
           <Logo href="/" size="md" label={tApp("name")} />

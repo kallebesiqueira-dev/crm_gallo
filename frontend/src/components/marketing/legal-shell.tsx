@@ -37,7 +37,7 @@ export function LegalShell({
   const locale = useLocale();
 
   return (
-    <div className="dark relative min-h-screen text-foreground">
+    <div className="dark relative min-h-dvh text-foreground">
       <FuturisticBackground />
 
       {/* Sticky header — same shape as the landing's, minus the long nav */}
