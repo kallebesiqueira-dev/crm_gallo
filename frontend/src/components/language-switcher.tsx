@@ -28,9 +28,12 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
-          <Globe className="h-4 w-4" />
-          {localeLabels[current]}
+        <Button variant="ghost" size="sm" className="gap-1.5 px-2 sm:gap-2 sm:px-3">
+          <Globe className="h-4 w-4 shrink-0" />
+          {/* Full language name on desktop; compact 2-letter code on mobile so
+              long labels (Français / Deutsch / Rumantsch) don't crowd the top bar. */}
+          <span className="hidden sm:inline">{localeLabels[current]}</span>
+          <span className="font-medium sm:hidden">{current.toUpperCase()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

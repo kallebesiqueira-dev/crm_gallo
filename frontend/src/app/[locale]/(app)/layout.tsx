@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, HelpCircle, Mail, Search, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, HelpCircle, LogOut, Mail, Search, Sparkles, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -218,7 +218,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh bg-muted/30">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-50 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-xl sm:px-6">
+          <header className="sticky top-0 z-50 flex min-h-16 items-center gap-3 border-b bg-background/80 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:px-6">
             {/* Left — hamburger (mobile) + current section + org switcher */}
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <MobileNav />
@@ -241,7 +241,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </button>
 
             {/* Right — actions + identity */}
-            <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+            <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
               <Link
                 href={`/${locale}/inbox`}
                 aria-label="Messaggi"
@@ -292,15 +292,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <div className="text-[11px] text-muted-foreground">{roleLabel}</div>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                {tAuth("logout")}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                aria-label={tAuth("logout")}
+                className="px-2 sm:px-3"
+              >
+                <LogOut className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">{tAuth("logout")}</span>
               </Button>
             </div>
           </header>
 
           {banner}
 
-          <main className="flex-1 p-3 sm:p-6">{children}</main>
+          <main className="flex-1 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-6 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]">{children}</main>
         </div>
       </div>
       <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />

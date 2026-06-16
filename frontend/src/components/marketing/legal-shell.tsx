@@ -42,7 +42,7 @@ export function LegalShell({
 
       {/* Sticky header — same shape as the landing's, minus the long nav */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#040509]/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <Logo href="/" size="md" label={tApp("name")} />
           <div className="flex items-center gap-3">
             <Link

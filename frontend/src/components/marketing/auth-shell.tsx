@@ -27,7 +27,7 @@ export function AuthShell({
 
       <div className="relative z-10 flex min-h-dvh flex-col">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-5 sm:px-10">
+        <header className="flex items-center justify-between px-6 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-10">
           <Logo href="/" size="md" label={tApp("name")} />
           <LanguageSwitcher />
         </header>
@@ -45,7 +45,7 @@ export function AuthShell({
           </section>
         </main>
 
-        <footer className="px-6 py-6 text-center text-xs text-muted-foreground sm:px-10">
+        <footer className="px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-xs text-muted-foreground sm:px-10">
           © {new Date().getFullYear()} {tApp("name")} · AGPL-3.0
         </footer>
       </div>

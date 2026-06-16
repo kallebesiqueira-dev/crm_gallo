@@ -78,7 +78,7 @@ export function MobileNav() {
               aria-hidden="true"
             />
             <div className="absolute inset-y-0 left-0 flex w-72 max-w-[82vw] flex-col border-r bg-card shadow-xl">
-              <div className="flex items-center justify-between border-b px-4 py-4">
+              <div className="flex items-center justify-between border-b px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
                 <Link
                   href={`/${locale}/dashboard`}
                   onClick={() => setOpen(false)}

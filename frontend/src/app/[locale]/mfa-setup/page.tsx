@@ -39,7 +39,7 @@ export default function MfaSetupPage() {
 
   return (
     <div className="min-h-dvh bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-6 py-4">
+      <header className="flex items-center justify-between border-b bg-background px-6 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <Logo href={`/${locale}/dashboard`} size="md" label={tApp("name")} />
         <LanguageSwitcher />
       </header>
