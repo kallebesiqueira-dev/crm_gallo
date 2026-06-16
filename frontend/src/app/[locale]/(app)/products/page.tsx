@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Package, Pencil, Plus, Search, Trash2 } from "lucide-react";
@@ -10,60 +10,34 @@ import { Card } from "@/components/ui/card";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { api, type Product } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { type Product } from "@/lib/api";
+import { useDeleteProduct, useProductsInfinite } from "@/lib/use-products";
 
 export default function ProductsPage() {
   const t = useTranslations("products");
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const confirm = useConfirm();
-  const [items, setItems] = useState<Product[]>([]);
+
   const [q, setQ] = useState("");
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [debouncedQ, setDebouncedQ] = useState("");
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    const handle = setTimeout(() => {
-      api
-        .listProducts(token, { q: q || undefined })
-        .then((page) => {
-          setItems(page.items);
-          setCursor(page.next_cursor);
-          setHasMore(page.has_more);
-          setLoading(false);
-        })
-        .catch(() => {
-          setItems([]);
-          setCursor(null);
-          setHasMore(false);
-          setLoading(false);
-        });
-    }, 200);
+    const handle = setTimeout(() => setDebouncedQ(q), 200);
     return () => clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  async function loadMore() {
-    const token = getToken();
-    if (!token || !cursor || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const page = await api.listProducts(token, { q: q || undefined, cursor });
-      setItems((prev) => [...prev, ...page.items]);
-      setCursor(page.next_cursor);
-      setHasMore(page.has_more);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
+  const productsQuery = useProductsInfinite(debouncedQ);
+  const items = useMemo(
+    () => productsQuery.data?.pages.flatMap((p) => p.items) ?? [],
+    [productsQuery.data],
+  );
+
+  const deleteProduct = useDeleteProduct();
+  const error =
+    (productsQuery.isError && (productsQuery.error as Error).message) ||
+    (deleteProduct.isError && (deleteProduct.error as Error).message) ||
+    null;
 
   async function handleDelete(product: Product) {
     const ok = await confirm({
@@ -72,14 +46,10 @@ export default function ProductsPage() {
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
-    setError(null);
     try {
-      await api.deleteProduct(token, product.id);
-      setItems((prev) => prev.filter((p) => p.id !== product.id));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      await deleteProduct.mutateAsync(product.id);
+    } catch {
+      /* surfaced via deleteProduct.isError */
     }
   }
 
@@ -93,6 +63,8 @@ export default function ProductsPage() {
       return `${p.currency} ${n.toFixed(2)}`;
     }
   }
+
+  const loading = productsQuery.isLoading;
 
   return (
     <div className="space-y-4">
@@ -211,10 +183,15 @@ export default function ProductsPage() {
         )}
       </Card>
 
-      {hasMore && (
+      {productsQuery.hasNextPage && (
         <div className="flex justify-center">
-          <Button type="button" variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? tCommon("loading") : tCommon("loadMore")}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => productsQuery.fetchNextPage()}
+            disabled={productsQuery.isFetchingNextPage}
+          >
+            {productsQuery.isFetchingNextPage ? tCommon("loading") : tCommon("loadMore")}
           </Button>
         </div>
       )}
