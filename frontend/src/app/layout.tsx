@@ -1,15 +1,5 @@
 import "./globals.css";
-import type { Metadata, Viewport } from "next";
-
-// `viewport-fit=cover` lets the app paint edge-to-edge under the iOS notch /
-// home indicator AND makes `env(safe-area-inset-*)` resolve to real values
-// (they're 0 without it) — used by the app header (top) and main (bottom) so
-// content is never clipped by the status bar or the Safari bottom bar.
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-};
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   // Absolute base so OpenGraph/canonical/sitemap-relative URLs resolve to the
