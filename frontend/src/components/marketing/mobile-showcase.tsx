@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Smartphone } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Flag } from "@/components/flag-icon";
 import { Reveal } from "@/components/marketing/reveal";
 
@@ -8,8 +9,7 @@ import { Reveal } from "@/components/marketing/reveal";
  * Mobile showcase — a portrait screen recording of GALLO CRM running on a
  * phone, framed in a small device mockup, beside copy about the responsive,
  * 7-language UI. The greeting chips (one per supported locale) carry the
- * "speaks your language" point visually, so the section needs no translated
- * strings of its own.
+ * "speaks your language" point visually and stay untranslated by design.
  *
  * Swap the clip by replacing `public/mobile_demo.mp4` — no code change.
  */
@@ -27,13 +27,10 @@ const GREETINGS: { code: string; word: string }[] = [
   { code: "CH", word: "Allegra" },
 ];
 
-const POINTS = [
-  "Designed mobile-first — every screen reflows from phone to desktop",
-  "Run your pipeline, log follow-ups and close deals on the go",
-  "Fully translated across 7 European languages",
-];
-
 export function MobileShowcase() {
+  const t = useTranslations("marketing.mobileShowcase");
+  const points = [t("point1"), t("point2"), t("point3")];
+
   return (
     <section className="relative overflow-hidden py-16">
       {/* Ambient glow, matching the desktop showcase section. */}
@@ -70,19 +67,15 @@ export function MobileShowcase() {
         <div className="order-1 md:order-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
             <Smartphone className="h-3.5 w-3.5" />
-            Responsive
+            {t("badge")}
           </span>
           <h2 className="mt-4 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl dark:from-white dark:to-slate-300">
-            Your CRM in your pocket — in 7 languages
+            {t("headline")}
           </h2>
-          <p className="mt-4 max-w-md text-base text-slate-400">
-            GALLO CRM is responsive from the ground up: the same fast, focused
-            experience whether you&apos;re on a phone between meetings or at your
-            desk — localized into every supported language.
-          </p>
+          <p className="mt-4 max-w-md text-base text-slate-400">{t("description")}</p>
 
           <ul className="mt-6 space-y-3">
-            {POINTS.map((p) => (
+            {points.map((p) => (
               <li key={p} className="flex items-start gap-3 text-sm text-slate-300">
                 <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-400">
                   <Check className="h-3 w-3" />

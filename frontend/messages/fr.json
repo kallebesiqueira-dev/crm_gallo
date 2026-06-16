@@ -1099,6 +1099,14 @@
           "3": "Compatible résidence des données UE, RGPD"
         }
       }
+    },
+    "mobileShowcase": {
+      "badge": "Responsive",
+      "headline": "Votre CRM dans votre poche — en 7 langues",
+      "description": "GALLO CRM est responsive de bout en bout : la même expérience rapide et ciblée sur mobile entre deux réunions ou au bureau — traduit dans toutes les langues prises en charge.",
+      "point1": "Conçu mobile-first — chaque écran s'adapte du mobile au bureau",
+      "point2": "Gérez votre pipeline, notez vos relances et concluez vos affaires en déplacement",
+      "point3": "Entièrement traduit en 7 langues européennes"
     }
   },
   "pricing": {
