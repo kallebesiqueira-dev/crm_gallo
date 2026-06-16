@@ -77,22 +77,30 @@ export function TourGuide() {
     return el;
   }, [step]);
 
-  // On step change: scroll the target into view, then measure. Keep it pinned
-  // to the (possibly scrolling) element while the step is open.
+  // On step change: scroll the target into view, then measure; keep it pinned
+  // to the (possibly scrolling) element while the step is open. Esc closes.
   useEffect(() => {
     if (!active) return;
     const el = measure();
-    if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
-    const t1 = window.setTimeout(measure, 300);
+    // `auto` (not smooth) + NO body scroll-lock: a smooth scroll fired a storm
+    // of scroll events, and `overflow:hidden` broke scrollIntoView for targets
+    // below the fold — either one could strand the tooltip off-screen ("frozen"
+    // tour). Letting the page scroll is fine; the spotlight tracks it.
+    if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
+    const t1 = window.setTimeout(measure, 60);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
-    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
     return () => {
       window.clearTimeout(t1);
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
-      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, measure]);
 
   function close() {
@@ -115,10 +123,15 @@ export function TourGuide() {
     const vh = window.innerHeight;
     const w = Math.min(TIP_W, vw - 32);
     const left = Math.max(16, Math.min(rect.left + rect.width / 2 - w / 2, vw - w - 16));
-    const fitsBelow = rect.bottom + 230 < vh;
-    tip = fitsBelow
-      ? { top: rect.bottom + 12, left, width: w }
-      : { top: rect.top - 12, left, width: w, transform: "translateY(-100%)" };
+    if (rect.bottom + 230 < vh) {
+      tip = { top: rect.bottom + 12, left, width: w };
+    } else if (rect.top - 230 > 0) {
+      tip = { top: rect.top - 12, left, width: w, transform: "translateY(-100%)" };
+    } else {
+      // Tall target (e.g. the full-height sidebar) fits neither above nor
+      // below — center it vertically so the tooltip is never off-screen.
+      tip = { top: "50%", left, width: w, transform: "translateY(-50%)" };
+    }
   } else {
     tip = {
       top: "50%",
