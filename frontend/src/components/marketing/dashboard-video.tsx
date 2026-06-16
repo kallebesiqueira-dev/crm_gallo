@@ -8,16 +8,12 @@ import { cn } from "@/lib/utils";
  * wrapped in the same browser chrome the old carousel used so the section
  * keeps its "this is the live product" feel.
  *
- * SWAP THE VIDEO: drop new files in `public/` — no code change needed:
- *   • public/dashboard-tour.mp4   (required, H.264 for broad support)
- *   • public/dashboard-tour.webm  (optional, smaller; served first when present)
- *   • public/dashboard-tour-poster.jpg (optional first-frame poster)
+ * SWAP THE VIDEO: drop a new file in `public/` — no code change needed:
+ *   • public/demo_video.mp4   (H.264, web-optimized + faststart)
  * This component is the single source of truth for the showcase video, so a
- * future narrated/edited cut just replaces those files.
+ * future narrated/edited cut just replaces that file.
  */
-const VIDEO_MP4 = "/dashboard-tour.mp4";
-const VIDEO_WEBM = "/dashboard-tour.webm";
-const POSTER = "/dashboard-tour-poster.jpg";
+const VIDEO_MP4 = "/demo_video.mp4";
 
 export function DashboardVideo({ className }: { className?: string }) {
   return (
@@ -40,11 +36,10 @@ export function DashboardVideo({ className }: { className?: string }) {
         </div>
 
         {/* Recording. Muted autoplay + loop keeps the section alive; controls
-            let visitors replay, scrub, or unmute. Poster shows instantly while
-            the video streams in. */}
+            let visitors replay, scrub, or unmute. Aspect matches the source
+            (1334×600) so the full frame shows without cropping. */}
         <video
-          className="block aspect-video w-full bg-slate-950 object-cover"
-          poster={POSTER}
+          className="block aspect-[1334/600] w-full bg-slate-950 object-cover"
           autoPlay
           muted
           loop
@@ -53,7 +48,6 @@ export function DashboardVideo({ className }: { className?: string }) {
           preload="metadata"
           aria-label="GALLO CRM dashboard product tour"
         >
-          <source src={VIDEO_WEBM} type="video/webm" />
           <source src={VIDEO_MP4} type="video/mp4" />
         </video>
       </div>

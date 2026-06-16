@@ -35,6 +35,7 @@ import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { DashboardVideo } from "@/components/marketing/dashboard-video";
+import { MobileShowcase } from "@/components/marketing/mobile-showcase";
 import { FeatureSections } from "@/components/marketing/feature-section";
 import { AboutSection } from "@/components/marketing/about-section";
 import { ValuesSection } from "@/components/marketing/values-section";
@@ -493,6 +494,9 @@ export default function PricingPage() {
           <DashboardVideo />
         </Reveal>
       </section>
+
+      {/* ============================== MOBILE SHOWCASE (responsive · 7 languages) ============================== */}
+      <MobileShowcase />
 
       {/* ============================== ABOUT / CHI SIAMO ============================== */}
       <AboutSection />
