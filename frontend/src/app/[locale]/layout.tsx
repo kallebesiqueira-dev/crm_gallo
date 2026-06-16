@@ -3,6 +3,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { QueryProvider } from "@/components/query-provider";
 import { SentryBoot } from "@/sentry/sentry-boot";
 import { ToastProvider } from "@/components/toast-provider";
 import { locales, type Locale } from "@/i18n/config";
@@ -30,7 +31,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <ToastProvider>
-              <PostHogProvider>{children}</PostHogProvider>
+              <QueryProvider>
+                <PostHogProvider>{children}</PostHogProvider>
+              </QueryProvider>
             </ToastProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

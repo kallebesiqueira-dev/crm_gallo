@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import { Download, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,13 @@ import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { api, type Customer, type Tag } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { api, type Customer } from "@/lib/api";
+import {
+  customersKeys,
+  useCustomersInfinite,
+  useCustomerTags,
+  useDeleteCustomer,
+} from "@/lib/use-customers";
 
 export default function CustomersPage() {
   const t = useTranslations("customers");
@@ -22,72 +28,37 @@ export default function CustomersPage() {
   const tTags = useTranslations("tags");
   const locale = useLocale();
   const confirm = useConfirm();
-  const [items, setItems] = useState<Customer[]>([]);
-  const [tagMap, setTagMap] = useState<Record<string, Tag[]>>({});
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const qc = useQueryClient();
+
   const [q, setQ] = useState("");
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const loadTags = useCallback(async (ids: string[]) => {
-    const token = getToken();
-    if (!token || ids.length === 0) return;
-    try {
-      const rows = await api.listTagAssignments(token, "customer", ids);
-      setTagMap((prev) => {
-        const next = { ...prev };
-        for (const row of rows) next[row.entity_id] = row.tags;
-        return next;
-      });
-    } catch {
-      /* chips are non-critical — ignore */
-    }
-  }, []);
-
+  // Debounce the search box into the query key (200ms).
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    const handle = setTimeout(() => {
-      api
-        .listCustomers(token, { q: q || undefined })
-        .then((page) => {
-          setItems(page.items);
-          setCursor(page.next_cursor);
-          setHasMore(page.has_more);
-          setTagMap({});
-          setLoading(false);
-          setSelected(new Set());
-          loadTags(page.items.map((c) => c.id));
-        })
-        .catch(() => {
-          setItems([]);
-          setCursor(null);
-          setHasMore(false);
-          setLoading(false);
-        });
-    }, 200);
+    const handle = setTimeout(() => setDebouncedQ(q), 200);
     return () => clearTimeout(handle);
-  }, [q, loadTags]);
+  }, [q]);
 
-  async function loadMore() {
-    const token = getToken();
-    if (!token || !cursor || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const page = await api.listCustomers(token, { q: q || undefined, cursor });
-      setItems((prev) => [...prev, ...page.items]);
-      setCursor(page.next_cursor);
-      setHasMore(page.has_more);
-      loadTags(page.items.map((c) => c.id));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
+  const customersQuery = useCustomersInfinite(debouncedQ);
+  const items = useMemo(
+    () => customersQuery.data?.pages.flatMap((p) => p.items) ?? [],
+    [customersQuery.data],
+  );
+  const ids = useMemo(() => items.map((c) => c.id), [items]);
+  const tagsQuery = useCustomerTags(ids);
+  const tagMap = tagsQuery.data ?? {};
+
+  const deleteCustomer = useDeleteCustomer();
+  const error =
+    (customersQuery.isError && (customersQuery.error as Error).message) ||
+    (deleteCustomer.isError && (deleteCustomer.error as Error).message) ||
+    null;
+
+  // A fresh search is a fresh selection set.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [debouncedQ]);
 
   function toggleRow(id: string) {
     setSelected((prev) => {
@@ -111,16 +82,14 @@ export default function CustomersPage() {
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
-    setError(null);
     try {
-      await api.deleteCustomer(token, customer.id);
-      setItems((prev) => prev.filter((c) => c.id !== customer.id));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      await deleteCustomer.mutateAsync(customer.id);
+    } catch {
+      /* surfaced via deleteCustomer.isError */
     }
   }
+
+  const loading = customersQuery.isLoading;
 
   return (
     <div className="space-y-4">
@@ -162,7 +131,7 @@ export default function CustomersPage() {
         <BulkTagBar
           entityType="customer"
           selectedIds={Array.from(selected)}
-          onApplied={() => loadTags(Array.from(selected))}
+          onApplied={() => qc.invalidateQueries({ queryKey: customersKeys.all })}
           onClear={() => setSelected(new Set())}
         />
       )}
@@ -271,10 +240,15 @@ export default function CustomersPage() {
         )}
       </Card>
 
-      {hasMore && (
+      {customersQuery.hasNextPage && (
         <div className="flex justify-center">
-          <Button type="button" variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? tCommon("loading") : tCommon("loadMore")}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => customersQuery.fetchNextPage()}
+            disabled={customersQuery.isFetchingNextPage}
+          >
+            {customersQuery.isFetchingNextPage ? tCommon("loading") : tCommon("loadMore")}
           </Button>
         </div>
       )}
