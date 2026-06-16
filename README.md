@@ -50,7 +50,18 @@ Its product north star is **action over dashboards**: a follow-up engine and a *
 
 ## 📸 Screenshots
 
-> A conversion-focused landing and a 7-language product UI — from the pitch to checkout. The hero above shows the built-in **AI assistant**.
+> The product in **light & dark**, plus a conversion-focused landing — across a 7-language UI. The hero above shows the built-in **AI assistant**.
+
+### The app
+
+|  |  |
+| :---: | :---: |
+| ![Dashboard — light](frontend/public/dash_0.png) | ![Dashboard — dark](frontend/public/dash_dark1.png) |
+| **Dashboard — light** · KPIs, pipeline funnel & today's actions (CHF) | **Dashboard — dark** · same view, themed (EUR display currency) |
+| ![Report — light](frontend/public/dash_1.png) | ![Report — dark](frontend/public/dash_dark.png) |
+| **Report — light** · financial overview, conversion rate & quotes | **Report — dark** · same view, themed |
+
+### The landing
 
 |  |  |
 | :---: | :---: |
@@ -307,35 +318,87 @@ Mint a key in **Settings → API keys** (`read` and/or `write` scopes; shown onc
 
 ```
 crm_gallo/
-├── docker-compose.yml          # dev stack: db, redis, minio, ollama, backend, worker, frontend
-├── README.md · CHANGELOG.md · skills.md   # readme · changelog · internal plan/backlog
-├── scripts/post_deploy_smoke.py
+├── docker-compose.yml · docker-compose.ci.yml   # dev stack (db·redis·minio·ollama·backend·worker·frontend) + CI stack
+├── README.md                                    # this file
+├── LICENSE · NOTICE                             # AGPL-3.0-or-later
+├── scripts/
+│   └── post_deploy_smoke.py                     # post-deploy health probe
 ├── docs/
-│   ├── UML.md                  # full UML (Mermaid: class, ER, sequence, deployment)
-│   ├── api/v1.md               # public REST API reference
-│   └── screenshots/
-├── backend/                    # FastAPI + SQLAlchemy + Alembic + Arq
-│   ├── Dockerfile
-│   ├── alembic/                # migrations
+│   ├── UML.md                                   # full UML (Mermaid: class, ER, sequence, deployment, …)
+│   ├── api/v1.md                                # public REST API reference
+│   └── screenshots/                             # README imagery
+│
+├── backend/                                     # FastAPI · SQLAlchemy (async) · Alembic · Arq
+│   ├── Dockerfile · requirements.txt · pyproject.toml · pytest.ini · alembic.ini
+│   ├── openapi.json                             # generated API spec (source of truth for FE types)
+│   ├── scripts/dump_openapi.py                  # emits openapi.json
+│   ├── alembic/versions/                        # database migrations
+│   ├── tests/                                   # pytest suite
 │   └── app/
-│       ├── main.py · config.py · database.py · models.py · schemas.py
-│       ├── security.py · deps.py · audit.py · money.py · pagination.py
-│       ├── api/                # auth, leads, customers, companies, deals, quotes,
-│       │                       #   contracts, tasks, dashboard, assistant, billing,
-│       │                       #   fx, llm_usage, webhooks, automations, imports, …
-│       ├── billing/  email/  pdf/  imports/  worker/
-│       └── services/           # llm, ai_scoring, ai_assistant, fx, llm_usage, chatbot
-└── frontend/                   # Next.js 15 App Router
+│       ├── main.py                              # ASGI app + router wiring
+│       ├── config.py                            # settings (pydantic-settings)
+│       ├── database.py                          # async engine + transaction-scoped RLS GUC
+│       ├── models.py                            # SQLAlchemy ORM (45 tables)
+│       ├── schemas.py                           # Pydantic request/response models
+│       ├── deps.py                              # auth / org / role dependencies
+│       ├── security.py · crypto.py · cookies.py · mfa.py        # auth surface
+│       ├── audit.py · events.py · events_dispatcher.py          # audit trail + outbox events
+│       ├── money.py · pagination.py · mixins.py                 # Decimal money · cursors · soft-delete
+│       ├── rate_limit.py · captcha.py · metrics.py · logging_setup.py · sentry_setup.py
+│       ├── storage.py · redis_client.py                         # Cloudflare R2 (S3) · Redis
+│       ├── custom_fields.py · pipelines.py · activities.py · notifications.py · analytics.py
+│       ├── exports.py · web_forms.py · whatsapp.py · whatsapp_inbox.py
+│       ├── api_auth.py · api_keys.py · webhook_sign.py
+│       ├── api/                                 # one router per resource
+│       │   ├── auth.py · oauth.py · invites.py · orgs.py · teams.py
+│       │   ├── leads.py · customers.py · companies.py · lead_convert.py · duplicates.py
+│       │   ├── deals.py · pipelines.py · tasks.py · notes.py · activities.py
+│       │   ├── quotes.py · contracts.py · products.py · signatures.py · document_templates.py
+│       │   ├── dashboard.py · performance.py · automations.py · audit.py · search.py
+│       │   ├── assistant.py · fx.py · llm_usage.py
+│       │   ├── tags.py · segments.py · custom_fields.py · attachments.py · avatars.py
+│       │   ├── imports.py · exports.py · webhooks.py · forms.py · public.py · v1.py
+│       │   ├── billing.py · gdpr.py · onboarding.py · notifications.py · support.py
+│       │   └── whatsapp.py · outbox.py · admin_dlq.py · trash.py · versioning.py
+│       ├── services/                            # llm · ai_scoring · ai_assistant · ai_credits · chatbot
+│       │   │                                    #   fx · llm_usage · quotes · contracts · duplicates · stripe_service
+│       ├── worker/                              # Arq: jobs.py · settings.py · queue.py · dlq.py
+│       ├── billing/catalog.py                   # Stripe plan/price catalog
+│       ├── email/                               # providers.py · render.py · sender.py
+│       ├── pdf/                                 # render.py · store.py · templates/ (WeasyPrint)
+│       ├── imports/                             # parsers.py · spec.py (CSV/XLSX)
+│       ├── signing/                             # providers.py · service.py (e-signature seam)
+│       └── documents/merge.py                   # merge-field templating
+│
+└── frontend/                                    # Next.js 16 (App Router) · React 19 · TypeScript · Tailwind
     ├── Dockerfile
-    ├── messages/               # en · de · fr · it · rm · pt · es
+    ├── package.json · next.config.ts · tailwind.config.ts · tsconfig.json
+    ├── messages/                                # en · de · fr · it · pt · es · rm (7 locales)
+    ├── public/                                  # logos · hero/landing imagery · video poster
     └── src/
-        ├── middleware.ts       # i18n locale routing
-        ├── lib/ · i18n/ · components/ (ui/, marketing/, charts/)
-        └── app/[locale]/
-            ├── (marketing)     # landing / pricing / login / register / …
-            └── (app)/          # authenticated: dashboard, hoje, leads, customers,
-                                 #   pipeline, quotes, contracts, tasks, performance,
-                                 #   imports, billing, audit, settings, …
+        ├── middleware.ts                        # next-intl locale routing
+        ├── i18n/                                # locale config + request setup
+        ├── sentry/                              # client/server Sentry boot
+        ├── lib/                                 # api.ts · api-types.ts (generated) · auth.ts · public-api.ts · utils.ts
+        ├── components/                          # 60+ components
+        │   ├── ui/                              # design-system primitives (button, card, input, select, …)
+        │   ├── marketing/                       # landing sections (+ chatbot/)
+        │   └── charts/                          # palette + tooltip
+        └── app/
+            ├── layout.tsx · global-error.tsx · globals.css · robots.ts · sitemap.ts
+            └── [locale]/
+                ├── layout.tsx · page.tsx        # locale shell + landing
+                ├── login · register · forgot-password · reset-password    # auth
+                ├── verify-email · mfa-setup · invite · sign               # auth flows
+                ├── pricing · privacy · terms · security · cookies         # public / legal
+                └── (app)/                       # authenticated app (route group)
+                    ├── dashboard · hoje · performance · reports
+                    ├── leads · customers · companies · pipeline
+                    ├── quotes · contracts · products · tasks · calendar
+                    ├── inbox · documents · forms · automations
+                    ├── imports · exports · duplicates · trash
+                    ├── billing · teams · audit · settings · onboarding
+                    └── assistant · notifications
 ```
 
 ---
@@ -344,8 +407,6 @@ crm_gallo/
 
 - **[docs/UML.md](docs/UML.md)** — complete UML: class, enum, ER, component, deployment, use-case, sequence & state diagrams (Mermaid, renders on GitHub).
 - **[docs/api/v1.md](docs/api/v1.md)** — public REST API reference (auth, pagination, endpoints, schemas).
-- **[CHANGELOG.md](CHANGELOG.md)** — notable changes (Keep a Changelog).
-- **[skills.md](skills.md)** — internal engineering backlog, architecture decisions, and project status.
 
 ---
 
