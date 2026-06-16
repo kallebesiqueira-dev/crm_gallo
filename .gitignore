@@ -61,3 +61,7 @@ outbox_*.json
 
 # Local session handoff / scratch notes — contain credentials + infra details, never publish
 HANDOFF.md
+
+# Internal planning / backlog & changelog — kept local, not published (untracked via git rm --cached)
+skills.md
+CHANGELOG.md
