@@ -1726,5 +1726,23 @@
         "b2b-simple": "Einfaches B2B"
       }
     }
+  },
+  "tour": {
+    "welcomeTitle": "Willkommen bei GALLO CRM!",
+    "welcomeBody": "Machen wir eine kurze Tour durch die wichtigsten Funktionen. Dauert weniger als eine Minute.",
+    "navTitle": "Navigation",
+    "navBody": "Hier finden Sie alles: Leads, Pipeline, Kunden, Angebote und mehr.",
+    "assistantTitle": "KI-Assistent",
+    "assistantBody": "Fragen Sie jederzeit nach Analysen, Zusammenfassungen und Hilfe — Ihr Vertriebs-Copilot.",
+    "createTitle": "Erste Schritte",
+    "createBody": "Folgen Sie dieser Checkliste, um Ihr CRM einzurichten: Lead erstellen, Pipeline aufbauen und erstes Angebot senden.",
+    "doneTitle": "Alles bereit!",
+    "doneBody": "Sie können diese Tour jederzeit über das Hilfemenü erneut starten. Viel Erfolg!",
+    "skip": "Überspringen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "done": "Fertig",
+    "progress": "{step} / {total}",
+    "replay": "Tour erneut starten"
   }
 }

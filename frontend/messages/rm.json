@@ -1726,5 +1726,23 @@
         "b2b-simple": "B2B simpel"
       }
     }
+  },
+  "tour": {
+    "welcomeTitle": "Bainvegni tar GALLO CRM!",
+    "welcomeBody": "Faschain in curt tur tras las funcziuns principalas. Dura main ch'ina minuta.",
+    "navTitle": "Navigaziun",
+    "navBody": "Qua chattas ti tut: leads, pipeline, clients, offertas e dapli.",
+    "assistantTitle": "Assistent IA",
+    "assistantBody": "Dumonda analisas, resumaziuns ed agid da mintga mument — tes copilot da vendita.",
+    "createTitle": "Emprims pass",
+    "createBody": "Suonda questa glista per configurar tes CRM: creescha in lead, construescha tia pipeline e trametta tia emprima offerta.",
+    "doneTitle": "Tut pront!",
+    "doneBody": "Ti pos revair quest tur cura che ti vuls en il menu d'agid. Bun cumenzament!",
+    "skip": "Sursiglir",
+    "back": "Enavos",
+    "next": "Vinavant",
+    "done": "Finir",
+    "progress": "{step} / {total}",
+    "replay": "Revair il tur"
   }
 }

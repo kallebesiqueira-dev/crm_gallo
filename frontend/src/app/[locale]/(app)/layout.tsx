@@ -18,6 +18,7 @@ import { AvatarUpload } from "@/components/avatar-upload";
 import { SupportDialog } from "@/components/support-dialog";
 import { GlobalSearch } from "@/components/global-search";
 import { ShortcutsHelp } from "@/components/shortcuts-help";
+import { TourGuide } from "@/components/tour-guide";
 import { CurrencyProvider } from "@/components/currency-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -254,6 +255,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   left the nav (mobile must keep an entry point). */}
               <button
                 type="button"
+                data-tour="assistant"
                 onClick={() => {
                   setAssistantPrompt("");
                   setAssistantOpen(true);
@@ -313,6 +315,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SupportDialog open={supportOpen} onClose={() => setSupportOpen(false)} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <TourGuide />
       <AssistantPanel
         open={assistantOpen}
         initialPrompt={assistantPrompt}

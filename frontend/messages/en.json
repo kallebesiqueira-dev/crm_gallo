@@ -1726,5 +1726,23 @@
         "b2b-simple": "Simple B2B"
       }
     }
+  },
+  "tour": {
+    "welcomeTitle": "Welcome to GALLO CRM!",
+    "welcomeBody": "Let's take a quick tour of the main features. It takes less than a minute.",
+    "navTitle": "Navigation",
+    "navBody": "Everything lives here: leads, pipeline, customers, proposals and more.",
+    "assistantTitle": "AI assistant",
+    "assistantBody": "Ask for analyses, summaries and help anytime — your sales copilot.",
+    "createTitle": "First steps",
+    "createBody": "Follow this checklist to set up your CRM: create a lead, build your pipeline and send your first proposal.",
+    "doneTitle": "You're all set!",
+    "doneBody": "You can replay this tour anytime from the Help menu. Have a great start!",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "progress": "{step} / {total}",
+    "replay": "Replay the tour"
   }
 }

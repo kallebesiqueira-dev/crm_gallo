@@ -38,7 +38,7 @@ export function OnboardingChecklistWidget({ locale }: { locale: string }) {
   if (dismissed || !checklist || checklist.done) return null;
 
   return (
-    <Card className="border-primary/20 bg-primary/5">
+    <Card data-tour="checklist" className="border-primary/20 bg-primary/5">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>

@@ -55,6 +55,7 @@ export function MobileNav() {
     <>
       <button
         type="button"
+        data-tour="nav"
         onClick={() => setOpen(true)}
         aria-label="Open navigation menu"
         aria-expanded={open}

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2, Paperclip, X } from "lucide-react";
+import { Loader2, Paperclip, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ const CATEGORIES = ["technical", "bug", "feature", "question", "other"] as const
 
 export function SupportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslations("support");
+  const tTour = useTranslations("tour");
   const [category, setCategory] = useState<string>("technical");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -88,6 +89,19 @@ export function SupportDialog({ open, onClose }: { open: boolean; onClose: () =>
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* Replay the first-run guided tour. */}
+        <button
+          type="button"
+          onClick={() => {
+            close();
+            window.dispatchEvent(new Event("gallo:tour-start"));
+          }}
+          className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-input py-2 text-sm font-medium text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+        >
+          <Sparkles className="h-4 w-4" />
+          {tTour("replay")}
+        </button>
 
         {sent ? (
           <p className="py-8 text-center text-sm font-medium text-emerald-600">{t("sent")}</p>

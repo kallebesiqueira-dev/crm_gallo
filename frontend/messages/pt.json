@@ -1726,5 +1726,23 @@
         "b2b-simple": "B2B simples"
       }
     }
+  },
+  "tour": {
+    "welcomeTitle": "Bem-vindo ao GALLO CRM!",
+    "welcomeBody": "Vamos dar um tour rápido pelos principais recursos. Leva menos de um minuto.",
+    "navTitle": "Navegação",
+    "navBody": "Por aqui você acessa tudo: leads, pipeline, clientes, propostas e mais.",
+    "assistantTitle": "Assistente de IA",
+    "assistantBody": "Peça análises, resumos e ajuda a qualquer momento — seu copiloto de vendas.",
+    "createTitle": "Primeiros passos",
+    "createBody": "Siga este checklist para configurar seu CRM: crie um lead, monte seu pipeline e envie sua primeira proposta.",
+    "doneTitle": "Tudo pronto!",
+    "doneBody": "Você pode rever este tour quando quiser no menu de ajuda. Bom trabalho!",
+    "skip": "Pular",
+    "back": "Voltar",
+    "next": "Próximo",
+    "done": "Concluir",
+    "progress": "{step} / {total}",
+    "replay": "Rever o tour"
   }
 }

@@ -193,6 +193,7 @@ export function Sidebar() {
 
   return (
     <aside
+      data-tour="nav"
       className={cn(
         "hidden shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-[#3d2080] via-[#2a1559] to-[#190b33] text-white transition-[width] duration-300 ease-in-out md:flex",
         collapsed ? "w-16" : "w-44",
