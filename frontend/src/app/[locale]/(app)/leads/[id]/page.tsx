@@ -132,16 +132,20 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <CardTitle className="break-words text-2xl">
-                  {lead.first_name} {lead.last_name}
-                </CardTitle>
+                <div className="flex flex-wrap items-center gap-2">
+                  <CardTitle className="break-words text-2xl">
+                    {lead.first_name} {lead.last_name}
+                  </CardTitle>
+                  <Badge>{tStages(lead.stage)}</Badge>
+                </div>
                 <p className="mt-1 text-sm text-muted-foreground">{lead.company ?? "—"}</p>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <Badge>{tStages(lead.stage)}</Badge>
-                <Button asChild size="sm">
+              {/* Mobile: each action on its own full-width row (no overflow / no
+                  awkward wrap); desktop: inline buttons on the right. */}
+              <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:shrink-0">
+                <Button asChild size="sm" className="w-full justify-center sm:w-auto">
                   <Link href={`/${locale}/leads/${lead.id}/edit`}>
                     <Pencil className="h-4 w-4" />
                     {tCommon("edit")}
@@ -153,6 +157,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   size="sm"
                   onClick={handleConvert}
                   disabled={converting}
+                  className="w-full justify-center sm:w-auto"
                 >
                   {converting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -166,6 +171,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   variant="destructive"
                   size="sm"
                   onClick={handleDelete}
+                  className="w-full justify-center sm:w-auto"
                 >
                   <Trash2 className="h-4 w-4" />
                   {tCommon("delete")}
