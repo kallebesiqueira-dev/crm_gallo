@@ -151,7 +151,10 @@ app.add_middleware(
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Request-ID", CSRF_HEADER],
+    # If-Match: optimistic-locking header the SPA sends on entity updates
+    # (customers/leads/deals/products). Without it in the allow-list the CORS
+    # preflight 400s and Safari shows "Load failed" on save.
+    allow_headers=["Authorization", "Content-Type", "If-Match", "X-Request-ID", CSRF_HEADER],
     expose_headers=["X-Request-ID"],
 )
 
