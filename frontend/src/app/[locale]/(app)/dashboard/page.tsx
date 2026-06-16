@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardCustomize } from "@/components/dashboard-customize";
 import { OnboardingChecklistWidget } from "@/components/onboarding-checklist";
 import { EntityAvatar } from "@/components/entity-avatar";
+import { useCurrency } from "@/components/currency-provider";
 
 /**
  * GALLO CRM — premium dashboard, wired to REAL data. Light: white cards on a
@@ -91,10 +92,8 @@ export default function DashboardPage() {
     });
   }
 
-  const eur = useMemo(
-    () => new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }),
-    [locale],
-  );
+  // Display-currency aware money formatter (converts EUR headlines client-side).
+  const { format: formatMoney } = useCurrency();
   const int = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
   const openTasks = useMemo(() => tasks.filter((task) => task.status !== "done").slice(0, 6), [tasks]);
@@ -122,7 +121,7 @@ export default function DashboardPage() {
     { label: t("totalDeals"), value: stats ? int.format(stats.total_deals) : "—", icon: Target },
     {
       label: t("pipelineValue"),
-      value: stats ? eur.format(stats.pipeline_value_eur || 0) : "—",
+      value: stats ? formatMoney(stats.pipeline_value_eur || 0) : "—",
       icon: TrendingUp,
       sub: currencyBreakdown,
     },
@@ -213,7 +212,7 @@ export default function DashboardPage() {
       <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-2", hidden.has("activity") && "hidden")}>
         <Panel className="flex flex-col p-5">
           <SectionTitle icon={Target}>{t("pipeline")}</SectionTitle>
-          <Funnel funnel={stats?.pipeline_funnel ?? []} tStages={tStages} eur={eur} empty={t("noData")} />
+          <Funnel funnel={stats?.pipeline_funnel ?? []} tStages={tStages} format={formatMoney} empty={t("noData")} />
           <CardLink href={`/${locale}/pipeline`}>{t("goToPipeline")}</CardLink>
         </Panel>
 
@@ -368,12 +367,12 @@ function CardLinkInline({ href, children }: { href: string; children: React.Reac
 function Funnel({
   funnel,
   tStages,
-  eur,
+  format,
   empty,
 }: {
   funnel: { stage: string; count: number; value_eur: number }[];
   tStages: (key: string) => string;
-  eur: Intl.NumberFormat;
+  format: (v: number) => string;
   empty: string;
 }) {
   if (!funnel.length) {
@@ -399,7 +398,7 @@ function Funnel({
           </div>
           <span className="w-7 shrink-0 text-right text-xs font-semibold tabular-nums">{s.count}</span>
           <span className="w-20 shrink-0 whitespace-nowrap text-right text-[11px] text-muted-foreground tabular-nums">
-            {eur.format(s.value_eur)}
+            {format(s.value_eur)}
           </span>
         </div>
       ))}

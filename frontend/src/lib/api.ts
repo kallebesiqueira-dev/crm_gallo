@@ -689,12 +689,23 @@ export interface AutomationRun {
   created_at: string;
 }
 
+/** Current EUR-based FX rates (1 EUR = rates[ccy]); always includes EUR: 1. */
+export interface FxRates {
+  base: string;
+  rates: Record<string, number>;
+  as_of: string | null;
+  source: string;
+}
+
 export interface User {
   id: string;
   email: string;
   full_name: string;
   role: string;
   locale: string;
+  // Preferred display currency. Display-only: stored money is always EUR; the
+  // UI converts client-side via /api/fx/rates (ADR-015). Defaults to EUR.
+  display_currency: Currency;
   is_active: boolean;
   // Whether the user confirmed their email. False for fresh self-signups
   // until they click the verification link; true otherwise.
@@ -1285,9 +1296,10 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   me: (token: string) => request<User>("/api/auth/me", { token }),
+  getFxRates: (token: string) => request<FxRates>("/api/fx/rates", { token }),
   updateMe: (
     token: string,
-    payload: { full_name?: string; email?: string; locale?: string },
+    payload: { full_name?: string; email?: string; locale?: string; display_currency?: Currency },
   ) => request<User>("/api/auth/me", { method: "PATCH", token, body: JSON.stringify(payload) }),
   changePassword: (token: string, current_password: string, new_password: string) =>
     request<void>("/api/auth/me/password", {
