@@ -6,10 +6,14 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/frontend.yml"
+      # api-types.ts is generated from this — a schema-only change must
+      # re-run the drift check even when no frontend/ file moved.
+      - "backend/openapi.json"
   pull_request:
     paths:
       - "frontend/**"
       - ".github/workflows/frontend.yml"
+      - "backend/openapi.json"
 
 concurrency:
   group: frontend-${{ github.ref }}
@@ -41,6 +45,18 @@ jobs:
         # `ci` uses the lockfile verbatim — no dependency drift between
         # dev install and CI install.
         run: npm ci
+
+      - name: API types in sync (openapi-typescript)
+        # src/lib/api-types.ts is generated from backend/openapi.json (the
+        # backend job guarantees that file matches the live app). Regenerate
+        # and fail on drift so the committed types always match the schema.
+        # Locally: `npm run gen:api-types`.
+        run: |
+          npm run gen:api-types
+          git diff --exit-code src/lib/api-types.ts || {
+            echo "::error::api-types.ts is stale — run 'npm run gen:api-types'"
+            exit 1
+          }
 
       - name: Lint (eslint)
         run: npm run lint

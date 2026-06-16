@@ -127,6 +127,18 @@ jobs:
           print("audit_logs guard: OK")
           EOF
 
+      - name: OpenAPI schema in sync
+        # backend/openapi.json is the contract the frontend generates its API
+        # types from. Regenerate it from the live app and fail on drift, so a
+        # schema change can't merge without `python -m scripts.dump_openapi`
+        # being re-run. app.openapi() only introspects routes — no DB needed.
+        run: |
+          python -m scripts.dump_openapi > /tmp/openapi.json
+          diff -u openapi.json /tmp/openapi.json || {
+            echo "::error::backend/openapi.json is stale — run 'python -m scripts.dump_openapi > openapi.json'"
+            exit 1
+          }
+
       - name: Apply migrations
         # Validates the migration chain end-to-end against a real
         # Postgres. An invalid migration (broken op, missing column,
