@@ -80,6 +80,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       .then((u) => {
         setUser(u);
         setReady(true);
+        // Keep the persisted locale in sync with the UI locale so server-side
+        // AI (lead scoring, summaries) answers in the language the user is
+        // actually viewing — not a stale default from signup (e.g. "it").
+        if (u.locale !== locale) {
+          api.updateMe(token, { locale }).catch(() => {});
+        }
       })
       .catch(() => {
         clearToken();
