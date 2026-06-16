@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Loader2, Plus, ScrollText } from "lucide-react";
@@ -8,51 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
-import { api, type Contract } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { useContractsInfinite } from "@/lib/use-contracts";
 import { STATUS_VARIANT } from "./status";
 
 export default function ContractsPage() {
   const t = useTranslations("contracts");
   const tCommon = useTranslations("common");
   const locale = useLocale();
-  const [contracts, setContracts] = useState<Contract[] | null>(null);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api
-      .listContracts(token)
-      .then((page) => {
-        setContracts(page.items);
-        setCursor(page.next_cursor);
-        setHasMore(page.has_more);
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed");
-        setContracts([]);
-      });
-  }, []);
-
-  async function loadMore() {
-    const token = getToken();
-    if (!token || !cursor || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const page = await api.listContracts(token, { cursor });
-      setContracts((prev) => [...(prev ?? []), ...page.items]);
-      setCursor(page.next_cursor);
-      setHasMore(page.has_more);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
+  const contractsQuery = useContractsInfinite();
+  const contracts = useMemo(
+    () => contractsQuery.data?.pages.flatMap((p) => p.items),
+    [contractsQuery.data],
+  );
+  const error = contractsQuery.isError ? (contractsQuery.error as Error).message : null;
 
   return (
     <div className="space-y-4">
@@ -74,11 +43,11 @@ export default function ContractsPage() {
 
       <Card>
         <CardContent className="p-0">
-          {contracts === null ? (
+          {contractsQuery.isLoading ? (
             <div className="grid place-items-center py-10">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : contracts.length === 0 ? (
+          ) : !contracts || contracts.length === 0 ? (
             error ? null : (
               <EmptyState
                 icon={ScrollText}
@@ -114,10 +83,16 @@ export default function ContractsPage() {
         </CardContent>
       </Card>
 
-      {hasMore && (
+      {contractsQuery.hasNextPage && (
         <div className="flex justify-center">
-          <Button type="button" variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? tCommon("loading") : tCommon("loadMore")}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => contractsQuery.fetchNextPage()}
+            disabled={contractsQuery.isFetchingNextPage}
+          >
+            {contractsQuery.isFetchingNextPage ? tCommon("loading") : tCommon("loadMore")}
           </Button>
         </div>
       )}
