@@ -19,22 +19,21 @@ _VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 async def verify_turnstile(token: str | None, remote_ip: str | None = None) -> bool:
     """Return True if the Turnstile token is valid (or if CAPTCHA is disabled).
 
-    Disabled (no secret) → always True. Configured → a MISSING token fails
-    OPEN (the widget likely couldn't run for a legitimate visitor; the per-IP
-    rate limit still guards), a verified token passes, and a present-but-
-    INVALID token fails closed (the bot-tampering signal). A network error
-    reaching Cloudflare also fails OPEN so an outage never blocks sign-ups.
+    Disabled (no secret) → always True. Configured → a MISSING or INVALID
+    token fails CLOSED (Turnstile is live, so a real visitor's widget yields a
+    token; an absent/invalid one signals a bot), while a verified token passes.
+    A network error reaching Cloudflare fails OPEN so an outage never blocks
+    sign-ups; the per-IP rate limit is a second layer throughout.
     """
     secret = get_settings().turnstile_secret_key
     if not secret:
         return True
     if not token:
-        # No token usually means the widget couldn't run for a legitimate
-        # visitor (e.g. the site key's hostname list doesn't cover this
-        # deployment, or the challenge script was blocked) — which would
-        # otherwise block ALL sign-ups. Fail OPEN and lean on the per-IP rate
-        # limit; a present-but-INVALID token below still fails closed.
-        return True
+        # Fail CLOSED on a missing token: Turnstile is configured and live (the
+        # site key is served to the browser), so a legitimate visitor's widget
+        # produces a token. An absent token signals a bot or a tampered/blocked
+        # client — reject it. The per-IP rate limit remains a second layer.
+        return False
     payload = {"secret": secret, "response": token}
     if remote_ip:
         payload["remoteip"] = remote_ip
