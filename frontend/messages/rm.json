@@ -1099,6 +1099,14 @@
           "3": "Cumpatibel cun residenza da datas UE, GDPR-aware"
         }
       }
+    },
+    "mobileShowcase": {
+      "badge": "Responsiv",
+      "headline": "Tes CRM en sac — en 7 linguas",
+      "description": "GALLO CRM è responsiv da la basa: la medema experientscha svelta sin telefonin tranter sentupadas u a la maisa da lavur — translatà en mintga lingua sustegnida.",
+      "point1": "Concepì mobile-first — mintga vista s'adattescha dal telefonin al desktop",
+      "point2": "Maina tia pipeline, registrescha follow-ups e serra affars sin via",
+      "point3": "Cumplettamain translatà en 7 linguas europeicas"
     }
   },
   "pricing": {
