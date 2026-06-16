@@ -19,6 +19,10 @@ if (typeof window !== "undefined" && KEY && !booted) {
     capture_pageview: false, // captured manually below on client-side route changes
     capture_pageleave: true,
     persistence: "localStorage+cookie",
+    // No in-app survey/feedback popups. PostHog shows dashboard-configured
+    // surveys automatically by default (the "review" popup that appeared);
+    // we don't want them shown to users, so disable the feature at the SDK.
+    disable_surveys: true,
   });
 }
 
