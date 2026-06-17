@@ -134,7 +134,7 @@ def test_xlsx_blank_rows_skipped():
 
 
 def test_xlsx_unreadable_bytes_raise():
-    with pytest.raises(ImportParseError, match="readable .xlsx"):
+    with pytest.raises(ImportParseError, match=r"readable \.xlsx"):
         parse_table(b"not a real workbook", "", "x.xlsx")
 
 

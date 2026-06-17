@@ -151,8 +151,8 @@ async def stats(
             )
         )
     ).all()
-    funnel_count: dict[DealStage, int] = {s: 0 for s in FUNNEL_STAGES}
-    funnel_value: dict[DealStage, Decimal] = {s: ZERO for s in FUNNEL_STAGES}
+    funnel_count: dict[DealStage, int] = dict.fromkeys(FUNNEL_STAGES, 0)
+    funnel_value: dict[DealStage, Decimal] = dict.fromkeys(FUNNEL_STAGES, ZERO)
     for stage, value, currency in funnel_rows:
         funnel_count[stage] += 1
         funnel_value[stage] += (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
@@ -179,7 +179,7 @@ async def stats(
             mm = 12
             yy -= 1
     month_keys.reverse()
-    rev_by_month: dict[str, Decimal] = {k: ZERO for k in month_keys}
+    rev_by_month: dict[str, Decimal] = dict.fromkeys(month_keys, ZERO)
     revenue_total = ZERO
     for value, currency, updated in won_rows:
         eur_val = (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
