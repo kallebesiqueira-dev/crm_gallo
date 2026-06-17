@@ -151,7 +151,9 @@ async def microsoft_callback(
             },
         )
     if token_resp.status_code != 200:
-        log.warning("oauth.token_exchange_failed", provider="microsoft", status=token_resp.status_code)
+        log.warning(
+            "oauth.token_exchange_failed", provider="microsoft", status=token_resp.status_code
+        )
         raise HTTPException(status_code=400, detail="Token exchange failed")
 
     # Read the email from the id_token, NOT from /userinfo: Microsoft's
@@ -194,7 +196,13 @@ async def google_start(request: Request) -> RedirectResponse:
     }
     resp = RedirectResponse(f"{_GOOGLE_AUTH_ENDPOINT}?{urllib.parse.urlencode(params)}")
     resp.set_cookie(
-        _GOOGLE_STATE_COOKIE, state, max_age=600, httponly=True, secure=True, samesite="lax", path="/"
+        _GOOGLE_STATE_COOKIE,
+        state,
+        max_age=600,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path="/",
     )
     return resp
 
