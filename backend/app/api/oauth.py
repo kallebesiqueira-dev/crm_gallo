@@ -21,6 +21,7 @@ from fastapi.responses import RedirectResponse
 from jose import jwt
 from jose.exceptions import JWTError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import analytics
@@ -94,7 +95,16 @@ async def _complete_login(
 
     is_signup = user is None
     if is_signup:
-        user = await _provision_oauth_account(db, email=email, full_name=full_name)
+        try:
+            user = await _provision_oauth_account(db, email=email, full_name=full_name)
+        except IntegrityError:
+            # A concurrent callback already provisioned this email (User.email is
+            # UNIQUE) — roll back and fall back to logging the existing account in.
+            await db.rollback()
+            user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
+            if user is None or not user.is_active:
+                return RedirectResponse(f"{frontend}/login?oauth=no_email")
+            is_signup = False
 
     await record_audit(
         db,
@@ -184,6 +194,11 @@ async def microsoft_callback(
     except JWTError:
         log.warning("oauth.id_token_decode_failed", provider="microsoft")
         claims = {}
+    # Reject an id_token minted for a DIFFERENT client (aud mismatch) — defence
+    # in depth on top of the code->token exchange already being client-authed.
+    if claims.get("aud") != settings.microsoft_client_id:
+        log.warning("oauth.aud_mismatch", provider="microsoft")
+        claims = {}
     raw_email = claims.get("email") or claims.get("preferred_username") or claims.get("upn")
     email = (raw_email or "").lower().strip()
     return await _complete_login(
@@ -266,6 +281,11 @@ async def google_callback(
         claims = jwt.get_unverified_claims(id_token) if id_token else {}
     except JWTError:
         log.warning("oauth.id_token_decode_failed", provider="google")
+        claims = {}
+    # Reject an id_token minted for a DIFFERENT client (aud mismatch) — defence
+    # in depth on top of the code->token exchange already being client-authed.
+    if claims.get("aud") != settings.google_client_id:
+        log.warning("oauth.aud_mismatch", provider="google")
         claims = {}
     email = ""
     if claims.get("email_verified") in (True, "true"):

@@ -281,6 +281,14 @@ async def upgrade(
     DO NOT expose to end users in production. Useful for: demo accounts,
     support promo upgrades, automated tests. UI hides this for non-admins.
     """
+    if settings.is_production and not settings.allow_manual_upgrade:
+        # Stripe-bypassing grant — must never be reachable by a normal user in
+        # prod (every self-signup is an admin of their own org). Gated behind an
+        # explicit flag so a promo/demo can still enable it deliberately.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Manual upgrade is disabled in production.",
+        )
     if payload.plan == Plan.free:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -340,6 +348,10 @@ async def can_accept_new_user(db: AsyncSession, org_id: uuid.UUID) -> tuple[bool
     descriptor = get_plan(org.plan)
     if descriptor.seat_limit is None:
         return True, None
+    # Serialize concurrent seat checks for THIS org so two simultaneous
+    # invite-accepts can't both pass the count and overrun the cap. The lock is
+    # transaction-scoped (auto-released on commit/rollback).
+    await db.execute(select(func.pg_advisory_xact_lock(func.hashtext(f"seats:{org_id}"))))
     seats = await _seats_used(db, org_id)
     if seats < descriptor.seat_limit:
         return True, None

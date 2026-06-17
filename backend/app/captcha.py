@@ -41,5 +41,11 @@ async def verify_turnstile(token: str | None, remote_ip: str | None = None) -> b
         async with httpx.AsyncClient(timeout=8.0) as client:
             resp = await client.post(_VERIFY_URL, data=payload)
         return bool(resp.json().get("success"))
-    except Exception:
+    except httpx.RequestError:
+        # Connectivity fault reaching Cloudflare → fail OPEN so an outage never
+        # blocks sign-ups (the per-IP rate limit stays as a second layer).
         return True
+    except Exception:
+        # Any other error — non-2xx, unparseable/unexpected body — is a FAILED
+        # verification (fail CLOSED), not a free pass.
+        return False

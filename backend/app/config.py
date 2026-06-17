@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     # stay reachable so they can complete setup. Off by default so a
     # fresh install / dev never gets locked out — flip it on per deploy.
     mfa_required_for_privileged: bool = False
+    # Manual, Stripe-bypassing plan upgrade (POST /api/billing/upgrade). OFF in
+    # production by default — otherwise any org admin (and every self-signup
+    # owns an org as its admin) could grant themselves a paid plan for free.
+    # Flip on only in non-prod (demos/tests) or deliberately for a promo.
+    allow_manual_upgrade: bool = False
     # LLM-cost protection — per-user (see app.rate_limit.user_or_ip_key).
     rate_limit_score_per_hour: int = 10
     rate_limit_assistant_per_minute: int = 30
@@ -363,6 +368,13 @@ class Settings(BaseSettings):
             if self.is_production:
                 raise RuntimeError(msg)
             _log.warning("SECURITY: %s", msg)
+
+        if self.is_production and not self.app_database_url:
+            raise RuntimeError(
+                "APP_DATABASE_URL is unset in production: the app would connect as the "
+                "owner role and SILENTLY BYPASS Row-Level Security. Set it to the "
+                "non-superuser (crm_app) URL so tenant isolation is enforced."
+            )
 
         if self.is_production and not self.mfa_required_for_privileged:
             _log.warning(
