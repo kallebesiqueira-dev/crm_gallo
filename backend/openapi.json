@@ -13115,9 +13115,9 @@
         ]
       }
     },
-    "/api/auth/oauth/microsoft/callback": {
+    "/api/auth/oauth/google/callback": {
       "get": {
-        "operationId": "callback_api_auth_oauth_microsoft_callback_get",
+        "operationId": "google_callback_api_auth_oauth_google_callback_get",
         "parameters": [
           {
             "in": "query",
@@ -13160,15 +13160,15 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Callback",
+        "summary": "Google Callback",
         "tags": [
           "oauth"
         ]
       }
     },
-    "/api/auth/oauth/microsoft/start": {
+    "/api/auth/oauth/google/start": {
       "get": {
-        "operationId": "start_api_auth_oauth_microsoft_start_get",
+        "operationId": "google_start_api_auth_oauth_google_start_get",
         "responses": {
           "200": {
             "content": {
@@ -13179,7 +13179,77 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Start",
+        "summary": "Google Start",
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/auth/oauth/microsoft/callback": {
+      "get": {
+        "operationId": "microsoft_callback_api_auth_oauth_microsoft_callback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "State",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Microsoft Callback",
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/auth/oauth/microsoft/start": {
+      "get": {
+        "operationId": "microsoft_start_api_auth_oauth_microsoft_start_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Microsoft Start",
         "tags": [
           "oauth"
         ]
