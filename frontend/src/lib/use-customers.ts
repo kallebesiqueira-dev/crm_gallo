@@ -16,13 +16,15 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { api, type Customer, type EntityTags, type Page, type Tag } from "@/lib/api";
+import { api, type Customer, type Deal, type EntityTags, type Page, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 export const customersKeys = {
   all: ["customers"] as const,
   list: (q: string) => ["customers", "list", { q }] as const,
   tags: (ids: string[]) => ["customers", "tags", ids] as const,
+  detail: (id: string) => ["customers", "detail", id] as const,
+  deals: (id: string) => ["customers", "deals", id] as const,
 };
 
 /** Cursor-paginated customers list, optionally filtered by a search string. */
@@ -70,5 +72,36 @@ export function useDeleteCustomer() {
   return useMutation({
     mutationFn: (id: string) => api.deleteCustomer(getToken() as string, id),
     onSuccess: () => qc.invalidateQueries({ queryKey: customersKeys.all }),
+  });
+}
+
+// ── Detail page ───────────────────────────────────────────────────────────
+
+/** Single customer by id (detail page read). */
+export function useCustomer(id: string) {
+  const token = getToken();
+  return useQuery<Customer>({
+    queryKey: customersKeys.detail(id),
+    enabled: !!token,
+    queryFn: () => api.getCustomer(token as string, id),
+  });
+}
+
+/** Deals linked to a customer (detail sidebar); non-critical. */
+export function useCustomerDeals(id: string) {
+  const token = getToken();
+  return useQuery<Deal[]>({
+    queryKey: customersKeys.deals(id),
+    enabled: !!token,
+    queryFn: () => api.listDeals(token as string, { customer_id: id }),
+  });
+}
+
+/** Regenerate the AI summary; the updated customer replaces the cached detail. */
+export function useSummarizeCustomer(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.summarizeCustomer(getToken() as string, id),
+    onSuccess: (updated) => qc.setQueryData(customersKeys.detail(id), updated),
   });
 }
