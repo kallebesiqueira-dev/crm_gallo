@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,9 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
-import { api, type TeamMember } from "@/lib/api";
+import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useOrgMembers } from "@/lib/use-teams";
 
 export default function NewLeadPage() {
   const t = useTranslations("leads");
@@ -20,7 +21,7 @@ export default function NewLeadPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
-  const [members, setMembers] = useState<TeamMember[]>([]);
+  const members = useOrgMembers().data ?? [];
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -35,12 +36,6 @@ export default function NewLeadPage() {
     notes: "",
     owner_id: "",
   });
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api.listOrgMembers().then(setMembers).catch(() => {});
-  }, []);
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((s) => ({ ...s, [k]: v }));

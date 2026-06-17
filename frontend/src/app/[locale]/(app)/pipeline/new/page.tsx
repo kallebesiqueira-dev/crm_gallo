@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,10 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
-import { api, type Currency, type Customer, type DealStage, type TeamMember } from "@/lib/api";
+import { api, type Currency, type DealStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useAllCustomers } from "@/lib/use-customers";
+import { useOrgMembers } from "@/lib/use-teams";
 
 const STAGES: DealStage[] = [
   "new",
@@ -30,8 +32,8 @@ export default function NewDealPage() {
   const locale = useLocale();
   const router = useRouter();
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
+  const customers = useAllCustomers().data ?? [];
+  const members = useOrgMembers().data ?? [];
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
@@ -51,13 +53,6 @@ export default function NewDealPage() {
     owner_id: "",
     notes: "",
   });
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api.listAllCustomers(token).then(setCustomers).catch(() => setCustomers([]));
-    api.listOrgMembers().then(setMembers).catch(() => setMembers([]));
-  }, []);
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((s) => ({ ...s, [k]: v }));
