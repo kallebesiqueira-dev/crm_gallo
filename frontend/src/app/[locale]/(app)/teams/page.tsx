@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, Trash2, Users2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,86 +9,57 @@ import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type Team, type TeamMember } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { type Team } from "@/lib/api";
+import {
+  useAddTeamMember,
+  useCreateTeam,
+  useDeleteTeam,
+  useOrgMembers,
+  useRemoveTeamMember,
+  useTeams,
+} from "@/lib/use-teams";
 
 export default function TeamsPage() {
   const t = useTranslations("teams");
   const tCommon = useTranslations("common");
   const confirm = useConfirm();
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
   const [newName, setNewName] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  async function load() {
-    try {
-      const [ts, ms] = await Promise.all([api.listTeams(), api.listOrgMembers()]);
-      setTeams(ts);
-      setMembers(ms);
-      setLoading(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
-      setLoading(false);
-    }
-  }
+  const teamsQuery = useTeams();
+  const teams = teamsQuery.data ?? [];
+  const members = useOrgMembers().data ?? [];
+  const createTeam = useCreateTeam();
+  const deleteTeamM = useDeleteTeam();
+  const addMemberM = useAddTeamMember();
+  const removeMemberM = useRemoveTeamMember();
 
-  useEffect(() => {
-    if (getToken()) load();
-  }, []);
+  const loading = teamsQuery.isLoading;
+  const mutationError = [createTeam, deleteTeamM, addMemberM, removeMemberM].find((m) => m.isError)
+    ?.error;
+  const error = mutationError
+    ? (mutationError as Error).message
+    : teamsQuery.isError
+    ? (teamsQuery.error as Error).message
+    : null;
 
-  async function createTeam() {
+  async function handleCreate() {
     if (!newName.trim()) return;
-    setBusy(true);
-    setError(null);
     try {
-      await api.createTeam(newName.trim());
+      await createTeam.mutateAsync(newName.trim());
       setNewName("");
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setBusy(false);
+    } catch {
+      /* surfaced via error */
     }
   }
 
-  async function deleteTeam(team: Team) {
-    const ok = await confirm({ title: tCommon("confirmDelete"), tone: "danger", confirmLabel: tCommon("delete") });
+  async function handleDelete(team: Team) {
+    const ok = await confirm({
+      title: tCommon("confirmDelete"),
+      tone: "danger",
+      confirmLabel: tCommon("delete"),
+    });
     if (!ok) return;
-    setError(null);
-    try {
-      await api.deleteTeam(team.id);
-      setTeams((prev) => prev.filter((x) => x.id !== team.id));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    }
-  }
-
-  async function addMember(team: Team, userId: string) {
-    if (!userId) return;
-    setError(null);
-    try {
-      const updated = await api.addTeamMember(team.id, userId);
-      setTeams((prev) => prev.map((x) => (x.id === team.id ? updated : x)));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    }
-  }
-
-  async function removeMember(team: Team, userId: string) {
-    setError(null);
-    try {
-      await api.removeTeamMember(team.id, userId);
-      setTeams((prev) =>
-        prev.map((x) =>
-          x.id === team.id ? { ...x, members: x.members.filter((m) => m.user_id !== userId) } : x,
-        ),
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    }
+    deleteTeamM.mutate(team.id);
   }
 
   return (
@@ -102,11 +73,16 @@ export default function TeamsPage() {
         <Input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && createTeam()}
+          onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           placeholder={t("newTeamName")}
           className="max-w-xs"
         />
-        <Button type="button" onClick={createTeam} disabled={busy || !newName.trim()} className="gap-1.5">
+        <Button
+          type="button"
+          onClick={handleCreate}
+          disabled={createTeam.isPending || !newName.trim()}
+          className="gap-1.5"
+        >
           <Plus className="h-4 w-4" />
           {t("create")}
         </Button>
@@ -154,7 +130,7 @@ export default function TeamsPage() {
                     variant="ghost"
                     size="icon"
                     aria-label={tCommon("delete")}
-                    onClick={() => deleteTeam(team)}
+                    onClick={() => handleDelete(team)}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -174,7 +150,7 @@ export default function TeamsPage() {
                         <button
                           type="button"
                           aria-label={tCommon("delete")}
-                          onClick={() => removeMember(team, m.user_id)}
+                          onClick={() => removeMemberM.mutate({ teamId: team.id, userId: m.user_id })}
                           className="rounded-full p-0.5 hover:bg-primary/20"
                         >
                           <X className="h-3 w-3" />
@@ -187,7 +163,9 @@ export default function TeamsPage() {
                 {available.length > 0 && (
                   <Select
                     value=""
-                    onChange={(e) => addMember(team, e.target.value)}
+                    onChange={(e) =>
+                      e.target.value && addMemberM.mutate({ teamId: team.id, userId: e.target.value })
+                    }
                     aria-label={t("addMember")}
                   >
                     <option value="">{t("addMember")}</option>
