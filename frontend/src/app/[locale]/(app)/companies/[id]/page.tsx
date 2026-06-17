@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -13,8 +13,8 @@ import { CustomFieldsDisplay } from "@/components/custom-fields-input";
 import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
 import { PageSpinner } from "@/components/page-spinner";
-import { api, type CompanyRollup } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { useToast } from "@/components/toast-provider";
+import { useCompanyRollup, useDeleteCompany } from "@/lib/use-companies";
 
 export default function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -24,14 +24,11 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
   const locale = useLocale();
   const router = useRouter();
   const confirm = useConfirm();
-  const [data, setData] = useState<CompanyRollup | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api.getCompanyRollup(token, id).then(setData).catch((e) => setError(String(e)));
-  }, [id]);
+  const rollupQuery = useCompanyRollup(id);
+  const data = rollupQuery.data;
+  const deleteCompany = useDeleteCompany();
 
   async function handleDelete() {
     if (!data) return;
@@ -41,17 +38,17 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
     try {
-      await api.deleteCompany(token, data.company.id);
+      await deleteCompany.mutateAsync(data.company.id);
       router.push(`/${locale}/companies`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      toast(e instanceof Error ? e.message : "Failed", "error");
     }
   }
 
-  if (error) return <p className="text-sm text-destructive">{error}</p>;
+  if (rollupQuery.isError && !data) {
+    return <p className="text-sm text-destructive">{(rollupQuery.error as Error).message}</p>;
+  }
   if (!data) return <PageSpinner />;
 
   const { company, customers, leads, deals } = data;

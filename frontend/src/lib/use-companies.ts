@@ -13,13 +13,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { api, type Company, type EntityTags, type Page, type Tag } from "@/lib/api";
+import { api, type Company, type CompanyRollup, type EntityTags, type Page, type Tag } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 export const companiesKeys = {
   all: ["companies"] as const,
   list: (q: string) => ["companies", "list", { q }] as const,
   tags: (ids: string[]) => ["companies", "tags", ids] as const,
+  detail: (id: string) => ["companies", "detail", id] as const,
 };
 
 /** Cursor-paginated companies list, optionally filtered by a search string. */
@@ -61,5 +62,15 @@ export function useDeleteCompany() {
   return useMutation({
     mutationFn: (id: string) => api.deleteCompany(getToken() as string, id),
     onSuccess: () => qc.invalidateQueries({ queryKey: companiesKeys.all }),
+  });
+}
+
+/** Company detail rollup (company + linked customers/leads/deals). */
+export function useCompanyRollup(id: string) {
+  const token = getToken();
+  return useQuery<CompanyRollup>({
+    queryKey: companiesKeys.detail(id),
+    enabled: !!token,
+    queryFn: () => api.getCompanyRollup(token as string, id),
   });
 }
