@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/marketing/auth-shell";
 import { MicrosoftIcon } from "@/components/microsoft-icon";
+import { GoogleIcon } from "@/components/google-icon";
 import { api, API_URL, ApiError, isMfaChallenge, isMfaSetupRequired } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
@@ -40,11 +41,15 @@ export default function LoginPage() {
   // a button that actually works. `oauthError` surfaces the hint the callback
   // bounces back with (?oauth=no_account / no_email) for an unmatched email.
   const [msEnabled, setMsEnabled] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
   useEffect(() => {
     api
       .oauthProviders()
-      .then((p) => setMsEnabled(p.microsoft))
+      .then((p) => {
+        setMsEnabled(p.microsoft);
+        setGoogleEnabled(p.google);
+      })
       .catch(() => {});
     const o = new URLSearchParams(window.location.search).get("oauth");
     if (o) setOauthError(o);
@@ -290,20 +295,33 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {msEnabled && (
+            {(msEnabled || googleEnabled) && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
                   <span className="h-px flex-1 bg-border" />
                   {tAuth("orContinueWith")}
                   <span className="h-px flex-1 bg-border" />
                 </div>
-                <a
-                  href={`${API_URL}/api/auth/oauth/microsoft/start`}
-                  className="flex w-full items-center justify-center gap-2.5 rounded-md border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent"
-                >
-                  <MicrosoftIcon className="h-[18px] w-[18px]" />
-                  {tAuth("continueWithMicrosoft")}
-                </a>
+                <div className="space-y-2">
+                  {googleEnabled && (
+                    <a
+                      href={`${API_URL}/api/auth/oauth/google/start`}
+                      className="flex w-full items-center justify-center gap-2.5 rounded-md border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent"
+                    >
+                      <GoogleIcon className="h-[18px] w-[18px]" />
+                      {tAuth("continueWithGoogle")}
+                    </a>
+                  )}
+                  {msEnabled && (
+                    <a
+                      href={`${API_URL}/api/auth/oauth/microsoft/start`}
+                      className="flex w-full items-center justify-center gap-2.5 rounded-md border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent"
+                    >
+                      <MicrosoftIcon className="h-[18px] w-[18px]" />
+                      {tAuth("continueWithMicrosoft")}
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 

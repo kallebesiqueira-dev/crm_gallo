@@ -444,6 +444,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/oauth/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Google Callback */
+        get: operations["google_callback_api_auth_oauth_google_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/oauth/google/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Google Start */
+        get: operations["google_start_api_auth_oauth_google_start_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/oauth/microsoft/callback": {
         parameters: {
             query?: never;
@@ -451,8 +485,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Callback */
-        get: operations["callback_api_auth_oauth_microsoft_callback_get"];
+        /** Microsoft Callback */
+        get: operations["microsoft_callback_api_auth_oauth_microsoft_callback_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -468,8 +502,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Start */
-        get: operations["start_api_auth_oauth_microsoft_start_get"];
+        /** Microsoft Start */
+        get: operations["microsoft_start_api_auth_oauth_microsoft_start_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9015,7 +9049,7 @@ export interface operations {
             };
         };
     };
-    callback_api_auth_oauth_microsoft_callback_get: {
+    google_callback_api_auth_oauth_google_callback_get: {
         parameters: {
             query?: {
                 code?: string;
@@ -9047,7 +9081,59 @@ export interface operations {
             };
         };
     };
-    start_api_auth_oauth_microsoft_start_get: {
+    google_start_api_auth_oauth_google_start_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    microsoft_callback_api_auth_oauth_microsoft_callback_get: {
+        parameters: {
+            query?: {
+                code?: string;
+                state?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    microsoft_start_api_auth_oauth_microsoft_start_get: {
         parameters: {
             query?: never;
             header?: never;

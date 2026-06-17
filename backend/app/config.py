@@ -272,7 +272,17 @@ class Settings(BaseSettings):
     microsoft_tenant_id: str = "common"
     # Public base URL of THIS backend (e.g. https://api.gallo-crm.com) used to
     # build the OAuth redirect URI; falls back to the request's base URL.
+    # Shared by every social provider.
     oauth_redirect_base: str = ""
+
+    # ---- OAuth / social login (Google) ----
+    # Empty client id/secret ⇒ Google login is OFF (endpoints 404, button
+    # hides). Same email-match model as Microsoft (no oauth-account table, so
+    # NO migration). Create an OAuth 2.0 "Web application" client in Google
+    # Cloud Console; the client id is a public identifier, the secret is set on
+    # the backend service only and never committed.
+    google_client_id: str = ""
+    google_client_secret: str = ""
 
     # ---- E-signature (ADR-016) ----
     # Which signing backend `app.signing.get_provider()` selects. `manual`
