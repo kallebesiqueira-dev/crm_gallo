@@ -1,114 +1,61 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, type TrashCounts, type TrashItem } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { type TrashItem } from "@/lib/api";
+import {
+  useEmptyTrash,
+  useHardDelete,
+  useRestoreFromTrash,
+  useTrashCounts,
+  useTrashInfinite,
+} from "@/lib/use-trash";
 import { cn } from "@/lib/utils";
 
 type Tab = "all" | TrashItem["entity_type"];
 
 const TABS: Tab[] = ["all", "lead", "customer", "deal", "task"];
-const PAGE = 50;
 
 export default function TrashPage() {
   const t = useTranslations("trash");
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const confirm = useConfirm();
-  // The backend list is paginated (TrashPage envelope) and mixes entity
-  // types server-side, so tab filtering happens client-side on the loaded
-  // window while tab badges come from /api/trash/counts (always exact).
-  const [items, setItems] = useState<TrashItem[]>([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [counts, setCounts] = useState<TrashCounts | null>(null);
   const [tab, setTab] = useState<Tab>("all");
-  const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      const [page, c] = await Promise.all([
-        api.listTrash(token, { limit: PAGE }),
-        api.trashCounts(token),
-      ]);
-      setItems(page.items);
-      setHasMore(page.has_more);
-      setCounts(c);
-      setLoading(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-      setLoading(false);
-    }
-  }, []);
+  const trashQuery = useTrashInfinite();
+  const items = useMemo(
+    () => trashQuery.data?.pages.flatMap((p) => p.items) ?? [],
+    [trashQuery.data],
+  );
+  const counts = useTrashCounts().data ?? null;
+  const restore = useRestoreFromTrash();
+  const hardDeleteM = useHardDelete();
+  const emptyTrash = useEmptyTrash();
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  async function loadMore() {
-    const token = getToken();
-    if (!token || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const page = await api.listTrash(token, { limit: PAGE, offset: items.length });
-      setItems((prev) => [...prev, ...page.items]);
-      setHasMore(page.has_more);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
+  const loading = trashQuery.isLoading;
+  const mutationError = [restore, hardDeleteM, emptyTrash].find((m) => m.isError)?.error;
+  const error = mutationError
+    ? (mutationError as Error).message
+    : trashQuery.isError
+    ? (trashQuery.error as Error).message
+    : null;
 
   const filtered = tab === "all" ? items : items.filter((i) => i.entity_type === tab);
 
-  function dropItem(item: TrashItem) {
-    setItems((prev) =>
-      prev.filter((i) => !(i.id === item.id && i.entity_type === item.entity_type)),
-    );
-    setCounts((prev) =>
-      prev ? { ...prev, [item.entity_type]: Math.max(0, prev[item.entity_type] - 1) } : prev,
-    );
-  }
-
-  async function restore(item: TrashItem) {
-    const token = getToken();
-    if (!token) return;
-    setError(null);
-    try {
-      await api.restoreFromTrash(token, item.entity_type, item.id);
-      dropItem(item);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    }
-  }
-
-  async function hardDelete(item: TrashItem) {
+  async function onHardDelete(item: TrashItem) {
     const ok = await confirm({
       title: t("confirmHardDelete"),
       tone: "danger",
       confirmLabel: t("hardDelete"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
-    setError(null);
-    try {
-      await api.hardDelete(token, item.entity_type, item.id);
-      dropItem(item);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    }
+    hardDeleteM.mutate({ type: item.entity_type, id: item.id });
   }
 
   async function emptyAll() {
@@ -119,27 +66,18 @@ export default function TrashPage() {
       confirmLabel: t("emptyAll"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await api.emptyTrash(token);
-      setItems([]);
-      setHasMore(false);
-      setCounts({ lead: 0, customer: 0, deal: 0, task: 0 });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : tCommon("noPermission"));
-    } finally {
-      setBusy(false);
-    }
+    emptyTrash.mutate();
   }
 
   const totalCount = counts
     ? counts.lead + counts.customer + counts.deal + counts.task
     : items.length;
   const tabCount = (kt: Tab): number =>
-    kt === "all" ? totalCount : (counts ? counts[kt] : items.filter((i) => i.entity_type === kt).length);
+    kt === "all"
+      ? totalCount
+      : counts
+      ? counts[kt]
+      : items.filter((i) => i.entity_type === kt).length;
 
   return (
     <div className="space-y-4">
@@ -151,7 +89,7 @@ export default function TrashPage() {
         <Button
           variant="destructive"
           onClick={emptyAll}
-          disabled={totalCount === 0 || busy}
+          disabled={totalCount === 0 || emptyTrash.isPending}
           className="shrink-0"
         >
           <Trash2 className="h-4 w-4" />
@@ -224,7 +162,7 @@ export default function TrashPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => restore(item)}
+                    onClick={() => restore.mutate({ type: item.entity_type, id: item.id })}
                   >
                     <RotateCcw className="h-4 w-4" />
                     {t("restore")}
@@ -233,7 +171,7 @@ export default function TrashPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => hardDelete(item)}
+                    onClick={() => onHardDelete(item)}
                   >
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only sm:not-sr-only">{t("hardDelete")}</span>
@@ -245,10 +183,15 @@ export default function TrashPage() {
         )}
       </Card>
 
-      {hasMore && tab === "all" && (
+      {trashQuery.hasNextPage && tab === "all" && (
         <div className="flex justify-center">
-          <Button type="button" variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("loadMore")}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => trashQuery.fetchNextPage()}
+            disabled={trashQuery.isFetchingNextPage}
+          >
+            {trashQuery.isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("loadMore")}
           </Button>
         </div>
       )}
