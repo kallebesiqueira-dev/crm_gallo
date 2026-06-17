@@ -11,6 +11,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from app.api import (
     activities,
@@ -144,6 +145,17 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+async def _integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+    # A unique/constraint violation that escaped its handler (e.g. a concurrent
+    # duplicate insert). Return a clean 409 instead of a 500 that leaks DB
+    # internals; endpoints that can race (OAuth signup) handle it explicitly.
+    log.warning("integrity_error", path=request.url.path)
+    return JSONResponse(status_code=409, content={"detail": "Conflict"})
+
+
+app.add_exception_handler(IntegrityError, _integrity_error_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
