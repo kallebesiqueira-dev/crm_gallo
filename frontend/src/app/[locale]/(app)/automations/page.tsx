@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,14 +11,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import {
-  api,
   type AutomationAction,
   type AutomationRule,
-  type AutomationRun,
   type AutomationTrigger,
   type DealStage,
 } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import {
+  useAutomationRuns,
+  useAutomations,
+  useCreateAutomation,
+  useDeleteAutomation,
+  useUpdateAutomation,
+} from "@/lib/use-automations";
 
 const TRIGGERS: AutomationTrigger[] = [
   "lead_created",
@@ -46,11 +50,17 @@ export default function AutomationsPage() {
   const tStages = useTranslations("leads.stages");
   const confirm = useConfirm();
 
-  const [rules, setRules] = useState<AutomationRule[]>([]);
-  const [runs, setRuns] = useState<AutomationRun[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const automationsQuery = useAutomations();
+  const rules = automationsQuery.data ?? [];
+  const runs = useAutomationRuns().data ?? [];
+  const createAutomation = useCreateAutomation();
+  const updateAutomation = useUpdateAutomation();
+  const deleteAutomation = useDeleteAutomation();
+  const loading = automationsQuery.isLoading;
+  const errored = [automationsQuery, createAutomation, updateAutomation, deleteAutomation].find(
+    (m) => m.isError,
+  );
+  const error = errored ? (errored.error as Error).message : null;
 
   // Create form
   const [name, setName] = useState("");
@@ -61,29 +71,6 @@ export default function AutomationsPage() {
   const [cfgToStage, setCfgToStage] = useState<DealStage>("qualified");
   const [cfgDueInDays, setCfgDueInDays] = useState("");
   const [cfgStaleDays, setCfgStaleDays] = useState("7");
-  const [creating, setCreating] = useState(false);
-
-  const load = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-    setError(null);
-    try {
-      const [r, runLog] = await Promise.all([
-        api.listAutomations(token),
-        api.listAutomationRuns(token).catch(() => [] as AutomationRun[]),
-      ]);
-      setRules(r);
-      setRuns(runLog);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   // change_stage only applies to deal triggers — if the user picks a lead
   // trigger while change_stage is selected, fall back to a safe action.
@@ -114,12 +101,9 @@ export default function AutomationsPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !name.trim()) return;
-    setCreating(true);
-    setError(null);
+    if (!name.trim()) return;
     try {
-      await api.createAutomation(token, {
+      await createAutomation.mutateAsync({
         name: name.trim(),
         trigger,
         action,
@@ -129,48 +113,28 @@ export default function AutomationsPage() {
       setCfgTitle("");
       setCfgBody("");
       setCfgDueInDays("");
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setCreating(false);
+    } catch {
+      /* surfaced via error */
     }
   }
 
-  async function handleToggle(rule: AutomationRule) {
-    const token = getToken();
-    if (!token) return;
-    setBusyId(rule.id);
-    setError(null);
-    try {
-      await api.updateAutomation(token, rule.id, { enabled: !rule.enabled });
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setBusyId(null);
-    }
+  function handleToggle(rule: AutomationRule) {
+    updateAutomation.mutate({ id: rule.id, payload: { enabled: !rule.enabled } });
   }
 
   async function handleDelete(rule: AutomationRule) {
-    const token = getToken();
-    if (!token) return;
     const ok = await confirm({
       title: t("confirmDeleteTitle"),
       description: t("confirmDeleteBody", { name: rule.name }),
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    setBusyId(rule.id);
-    try {
-      await api.deleteAutomation(token, rule.id);
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setBusyId(null);
-    }
+    deleteAutomation.mutate(rule.id);
   }
+
+  const ruleBusy = (id: string) =>
+    (updateAutomation.isPending && updateAutomation.variables?.id === id) ||
+    (deleteAutomation.isPending && deleteAutomation.variables === id);
 
   const availableActions = useMemo(
     () => (DEAL_TRIGGERS.has(trigger) ? ACTIONS : ACTIONS.filter((a) => a !== "change_stage")),
@@ -291,7 +255,7 @@ export default function AutomationsPage() {
             )}
 
             <div className="flex items-end">
-              <Button type="submit" disabled={creating || !name.trim()}>
+              <Button type="submit" disabled={createAutomation.isPending || !name.trim()}>
                 {t("addRule")}
               </Button>
             </div>
@@ -326,7 +290,7 @@ export default function AutomationsPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleToggle(rule)}
-                        disabled={busyId === rule.id}
+                        disabled={ruleBusy(rule.id)}
                       >
                         {rule.enabled ? t("disable") : t("enable")}
                       </Button>
@@ -335,7 +299,7 @@ export default function AutomationsPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(rule)}
-                        disabled={busyId === rule.id}
+                        disabled={ruleBusy(rule.id)}
                         aria-label={tCommon("delete")}
                       >
                         {tCommon("delete")}
