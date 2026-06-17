@@ -17,8 +17,8 @@ import { AttachmentsPanel } from "@/components/attachments-panel";
 import { NotesPanel } from "@/components/notes-panel";
 import { PageSpinner } from "@/components/page-spinner";
 import { useToast } from "@/components/toast-provider";
-import { api, type Deal, type DealStage, type NextActionType } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { type DealStage, type NextActionType } from "@/lib/api";
+import { useDeal, useDeleteDeal, useSetNextAction, useUpdateDeal } from "@/lib/use-deals";
 import { ActionIcon } from "@/lib/action-icons";
 
 const STAGES: DealStage[] = [
@@ -62,30 +62,27 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
   const confirm = useConfirm();
   const toast = useToast();
 
-  const [deal, setDeal] = useState<Deal | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const dealQuery = useDeal(id);
+  const deal = dealQuery.data;
+  const updateDeal = useUpdateDeal(id);
+  const setNextAction = useSetNextAction(id);
+  const deleteDeal = useDeleteDeal();
 
-  // Next-action form state
+  // Next-action form state, seeded from the deal once it loads.
   const [naType, setNaType] = useState<NextActionType | "">("");
   const [naAt, setNaAt] = useState("");
-  const [naBusy, setNaBusy] = useState(false);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api.getDeal(token, id).then((d) => {
-      setDeal(d);
-      setNaType((d.next_action_type as NextActionType | null) ?? "");
-      setNaAt(d.next_action_at ? d.next_action_at.slice(0, 16) : "");
-    }).catch((e) => setError(String(e)));
-  }, [id]);
+    if (!deal) return;
+    setNaType((deal.next_action_type as NextActionType | null) ?? "");
+    setNaAt(deal.next_action_at ? deal.next_action_at.slice(0, 16) : "");
+    // Seed only when the loaded deal id changes — don't clobber edits on refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deal?.id]);
 
   async function changeStage(stage: DealStage) {
-    const token = getToken();
-    if (!token || !deal) return;
     try {
-      const updated = await api.updateDeal(token, deal.id, { stage }, deal.version);
-      setDeal(updated);
+      await updateDeal.mutateAsync({ stage });
       toast(t("stageUpdated"), "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e), "error");
@@ -94,25 +91,14 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
 
   async function saveNextAction(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !deal) return;
-    setNaBusy(true);
     try {
-      const updated = await api.setNextAction(
-        token,
-        deal.id,
-        {
-          next_action_type: (naType as NextActionType) || null,
-          next_action_at: naAt ? new Date(naAt).toISOString() : null,
-        },
-        deal.version,
-      );
-      setDeal(updated);
+      await setNextAction.mutateAsync({
+        next_action_type: (naType as NextActionType) || null,
+        next_action_at: naAt ? new Date(naAt).toISOString() : null,
+      });
       toast(t("followUpSaved"), "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e), "error");
-    } finally {
-      setNaBusy(false);
     }
   }
 
@@ -124,17 +110,17 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
     try {
-      await api.deleteDeal(token, deal.id);
+      await deleteDeal.mutateAsync(deal.id);
       router.push(`/${locale}/pipeline`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      toast(e instanceof Error ? e.message : "Failed", "error");
     }
   }
 
-  if (error) return <p className="text-sm text-destructive">{error}</p>;
+  if (dealQuery.isError && !deal) {
+    return <p className="text-sm text-destructive">{(dealQuery.error as Error).message}</p>;
+  }
   if (!deal) return <PageSpinner />;
 
   const isOverdue =
@@ -241,6 +227,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                   key={s}
                   variant={s === deal.stage ? "default" : "outline"}
                   size="sm"
+                  disabled={updateDeal.isPending}
                   onClick={() => changeStage(s)}
                 >
                   {tStages(s)}
@@ -293,8 +280,8 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                   onChange={(e) => setNaAt(e.target.value)}
                 />
               </div>
-              <Button type="submit" size="sm" disabled={naBusy} className="w-full">
-                {naBusy ? tCommon("loading") : t("saveFollowUp")}
+              <Button type="submit" size="sm" disabled={setNextAction.isPending} className="w-full">
+                {setNextAction.isPending ? tCommon("loading") : t("saveFollowUp")}
               </Button>
             </form>
           </CardContent>
