@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Keep the existing JS theme/plugins (tailwind.config.ts + tailwindcss-animate)
+   under the Tailwind v4 engine — avoids rewriting the whole theme to CSS-first
+   @theme during this engine bump. */
+@config "../../tailwind.config.ts";
 
 /* Landing splash: hide the landing until the once-per-session intro has played,
    so the page never flashes BEFORE the <LandingSplash> overlay mounts. An inline
