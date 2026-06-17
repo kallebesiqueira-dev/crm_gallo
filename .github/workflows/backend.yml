@@ -173,13 +173,11 @@ jobs:
         # treats unresolved deps as a failure too, so the lockfile
         # has to actually match.
         #
-        # Ignored vulnerabilities (revisit each on dep-bump rounds):
-        #   GHSA-6w46-j5rx-g56g — pytest dev-only DoS via tmp paths;
-        #     pytest>=9 requires pytest-asyncio>=0.25 which breaks our
-        #     fixtures. Tracked as follow-up TD-29.
+        # Ignored vulnerabilities (revisit each on dep-bump rounds): none.
+        # (TD-29 CLOSED 2026-06-17: pytest 9.1 + pytest-asyncio 1.4 land the
+        #  GHSA-6w46-j5rx-g56g fix (pytest>=9), so the ignore is dropped.)
         # (TD-28 CLOSED 2026-06-12: starlette 1.3.1 + fastapi 0.136 —
         #  the two starlette ignores are gone.)
         run: |
-          pip-audit --strict --requirement requirements.txt \
-            --ignore-vuln GHSA-6w46-j5rx-g56g
+          pip-audit --strict --requirement requirements.txt
         continue-on-error: false

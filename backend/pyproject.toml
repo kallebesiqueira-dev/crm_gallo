@@ -33,6 +33,13 @@ ignore = [
     # B006 thinks the mutable default could leak. Our metadata dicts
     # are constructed per-call, not a default arg.
     "B008",
+    # UP042 (str-Enum → StrEnum) and UP046 (PEP-695 generic classes) are
+    # pyupgrade *modernizations* that change runtime behaviour: StrEnum
+    # serializes by value (would alter the API/JSON output of our domain
+    # enums), and PEP-695 generics on Pydantic models (CursorPage) need
+    # their own validation. Deferred to a dedicated PR, not a tooling bump.
+    "UP042",
+    "UP046",
 ]
 # `×` (U+00D7) is intentional in user-facing line-item copy
 # ("2 × EUR 10.00") — allow it without disabling RUF001's homoglyph

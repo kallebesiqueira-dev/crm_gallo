@@ -292,8 +292,7 @@ async def _graph_post(phone_number_id: str, access_token: str, payload: dict) ->
     error worth retrying."""
     settings = get_settings()
     url = (
-        f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}"
-        f"/{phone_number_id}/messages"
+        f"{settings.whatsapp_graph_url}/{settings.whatsapp_api_version}/{phone_number_id}/messages"
     )
     headers = {
         "Authorization": f"Bearer {access_token}",

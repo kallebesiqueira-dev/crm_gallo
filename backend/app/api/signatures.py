@@ -365,8 +365,7 @@ async def create_signature_request(
             raise HTTPException(
                 status_code=409,
                 detail=(
-                    "Only a sent quote can be sent for signature "
-                    f"(current: {quote.status.value})."
+                    f"Only a sent quote can be sent for signature (current: {quote.status.value})."
                 ),
             )
         entity_type, entity_id = "quote", quote.id

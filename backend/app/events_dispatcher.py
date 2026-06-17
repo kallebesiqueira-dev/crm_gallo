@@ -43,7 +43,7 @@ class EventContext:
     object (not a Pydantic model) — handlers are trusted code in our
     own process, no need for parsing overhead."""
 
-    __slots__ = ("event_id", "event_type", "organization_id", "payload", "occurred_at")
+    __slots__ = ("event_id", "event_type", "occurred_at", "organization_id", "payload")
 
     def __init__(
         self,

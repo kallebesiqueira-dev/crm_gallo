@@ -149,9 +149,7 @@ def test_drain_marks_processed(admin_client, admin_user: User, db: Session):
     # Mark processed (simulates successful dispatch).
     for r in claim:
         db.execute(
-            text(
-                "UPDATE outbox_events SET processed_at = now(), " "last_error = NULL WHERE id = :id"
-            ),
+            text("UPDATE outbox_events SET processed_at = now(), last_error = NULL WHERE id = :id"),
             {"id": r.id},
         )
     db.commit()

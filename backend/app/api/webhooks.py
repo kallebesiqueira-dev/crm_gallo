@@ -480,7 +480,7 @@ async def webhook_metrics(
     success_rate = (row.succeeded / terminal) if terminal else None
 
     def _ms(v: float | None) -> int | None:
-        return int(round(v)) if v is not None else None
+        return round(v) if v is not None else None
 
     return WebhookDeliveryStats(
         window_days=window_days,

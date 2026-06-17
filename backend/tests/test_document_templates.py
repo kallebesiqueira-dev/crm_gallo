@@ -106,7 +106,7 @@ def test_format_line_items_block():
     ]
     block = _format_line_items(items, "EUR")
     assert block == (
-        "- Setup — 2 × EUR 1000.00 = EUR 2000.00\n" "- Training — 1 × EUR 500.00 = EUR 500.00"
+        "- Setup — 2 × EUR 1000.00 = EUR 2000.00\n- Training — 1 × EUR 500.00 = EUR 500.00"
     )
 
 
