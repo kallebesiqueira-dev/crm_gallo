@@ -23,6 +23,14 @@ updates:
       python-minor-patch:
         exclude-patterns: ["ruff", "pytest*"]
         update-types: [minor, patch]
+    ignore:
+      # arq (the worker's task queue) caps redis<6, and 0.28.0 is the
+      # latest arq release — none allow redis>=6. So a redis-major bump
+      # (e.g. #134's redis 8) can never resolve until arq ships redis-6+
+      # support. Hold redis on the 5.x line; revisit when arq does.
+      - dependency-name: "redis"
+        update-types:
+          - "version-update:semver-major"
     open-pull-requests-limit: 5
 
   - package-ecosystem: npm
