@@ -16,8 +16,12 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { api, type Company, type DashboardStats, type Quote, type Task } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import {
+  useCompaniesPreview,
+  useDashboardStats,
+  useMyTasks,
+  useQuotesPreview,
+} from "@/lib/use-dashboard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardCustomize } from "@/components/dashboard-customize";
@@ -38,37 +42,14 @@ export default function DashboardPage() {
   const tStages = useTranslations("leads.stages");
   const tApp = useTranslations("app");
   const locale = useLocale();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const statsQuery = useDashboardStats();
+  const stats = statsQuery.data ?? null;
+  const loading = statsQuery.isLoading;
+  const error = statsQuery.isError ? (statsQuery.error as Error).message : null;
+  const tasks = useMyTasks().data;
+  const companies = useCompaniesPreview().data ?? [];
+  const quotes = useQuotesPreview().data ?? [];
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api
-      .stats(token)
-      .then((s) => {
-        setStats(s);
-        setLoading(false);
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed");
-        setLoading(false);
-      });
-    api.listTasks(token, { mine: true }).then(setTasks).catch(() => {});
-    api
-      .listCompanies(token, { limit: 8 })
-      .then((p) => setCompanies(p.items))
-      .catch(() => {});
-    api
-      .listQuotes(token, { limit: 5 })
-      .then((p) => setQuotes(p.items))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     try {
@@ -97,7 +78,10 @@ export default function DashboardPage() {
   const { format: formatMoney } = useCurrency();
   const int = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
-  const openTasks = useMemo(() => tasks.filter((task) => task.status !== "done").slice(0, 6), [tasks]);
+  const openTasks = useMemo(
+    () => (tasks ?? []).filter((task) => task.status !== "done").slice(0, 6),
+    [tasks],
+  );
 
   // Per-currency breakdown under the EUR headline when the open
   // pipeline spans 2+ currencies (plan.md §6: display-only, no FX) —

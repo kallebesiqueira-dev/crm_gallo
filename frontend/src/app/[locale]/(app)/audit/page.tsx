@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Loader2, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, type AuditEntry } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 
 /**
  * Admin / manager audit log browser.
@@ -17,60 +19,54 @@ import { api, type AuditEntry } from "@/lib/api";
  * — a sales_agent landing here gets a 403 from the API and we
  * surface a friendly notice. Could add nav gating later.
  *
- * Filters:
- *   - `action` substring (ILIKE) — admins typically know the prefix
- *     ("lead.", "user.", "billing.")
- *   - `entity_type` exact — "lead" | "customer" | "user" | etc
- *   - `since` / `until` ISO date pickers
- *
- * Pagination: simple limit/offset with prev/next buttons. Cursor
- * paging is a P2 improvement; the audit ledger isn't write-heavy
- * enough at our current scale for offset drift to matter.
+ * Filters (applied on submit, not live) feed the query key; pagination
+ * is simple limit/offset with prev/next. Cursor paging is a P2 nicety —
+ * the audit ledger isn't write-heavy enough for offset drift to matter.
  */
 const PAGE_SIZE = 50;
+
+type AppliedFilters = { action: string; entityType: string; since: string; until: string };
 
 export default function AuditPage() {
   const t = useTranslations("audit");
   const locale = useLocale();
-  const [entries, setEntries] = useState<AuditEntry[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [offset, setOffset] = useState(0);
 
+  // Input state (edited freely); committed to `applied` only on submit.
   const [action, setAction] = useState("");
   const [entityType, setEntityType] = useState("");
   const [since, setSince] = useState("");
   const [until, setUntil] = useState("");
 
-  async function load(newOffset = offset) {
-    setBusy(true);
-    setError(null);
-    try {
-      const data = await api.listAudit({
-        action: action || undefined,
-        entity_type: entityType || undefined,
-        since: since ? new Date(since).toISOString() : undefined,
-        until: until ? new Date(until + "T23:59:59").toISOString() : undefined,
-        limit: PAGE_SIZE,
-        offset: newOffset,
-      });
-      setEntries(data);
-      setOffset(newOffset);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Load failed");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const [applied, setApplied] = useState<AppliedFilters>({
+    action: "",
+    entityType: "",
+    since: "",
+    until: "",
+  });
+  const [offset, setOffset] = useState(0);
 
-  useEffect(() => {
-    load(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const auditQuery = useQuery<AuditEntry[]>({
+    queryKey: ["audit", applied, offset],
+    enabled: !!getToken(),
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      api.listAudit({
+        action: applied.action || undefined,
+        entity_type: applied.entityType || undefined,
+        since: applied.since ? new Date(applied.since).toISOString() : undefined,
+        until: applied.until ? new Date(applied.until + "T23:59:59").toISOString() : undefined,
+        limit: PAGE_SIZE,
+        offset,
+      }),
+  });
+  const entries = auditQuery.data;
+  const busy = auditQuery.isFetching;
+  const error = auditQuery.isError ? (auditQuery.error as Error).message : null;
 
   function applyFilters(e: React.FormEvent) {
     e.preventDefault();
-    load(0);
+    setOffset(0);
+    setApplied({ action, entityType, since, until });
   }
 
   return (
@@ -142,7 +138,7 @@ export default function AuditPage() {
             </div>
           )}
 
-          {entries === null ? (
+          {entries === undefined ? (
             <div className="grid place-items-center py-10">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
@@ -229,7 +225,7 @@ export default function AuditPage() {
                 variant="outline"
                 size="sm"
                 disabled={offset === 0 || busy}
-                onClick={() => load(Math.max(0, offset - PAGE_SIZE))}
+                onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
                 {t("prev")}
@@ -238,7 +234,7 @@ export default function AuditPage() {
                 variant="outline"
                 size="sm"
                 disabled={busy || (entries?.length ?? 0) < PAGE_SIZE}
-                onClick={() => load(offset + PAGE_SIZE)}
+                onClick={() => setOffset(offset + PAGE_SIZE)}
               >
                 {t("next")}
                 <ChevronRight className="h-3.5 w-3.5" />
