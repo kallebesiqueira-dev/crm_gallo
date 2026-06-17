@@ -1,14 +1,15 @@
 """Social login (Microsoft Entra ID + Google) — OpenID Connect authorization-code flow.
 
-Matches an EXISTING user by their verified provider email (no oauth-account
-table ⇒ no DB migration). Each provider is disabled (404) until its CLIENT_ID +
-CLIENT_SECRET are set, so a fresh clone runs with social login off and the
-buttons hidden. CSRF is a short-lived, per-provider `state` cookie checked in
-constant time. The email is read from the id_token (returned back-channel over
-TLS from the token endpoint, so trusted without re-verifying its signature).
-Sign-up via a social provider (provisioning a new org) is a follow-up — today
-it logs in known accounts and bounces unknown emails back to the login page
-with a hint.
+Signs the user in by their verified provider email (no oauth-account table ⇒
+no DB migration): an existing active account logs in, while an unknown email
+is provisioned a fresh org + admin account on the spot (social sign-up,
+mirroring /register); a deactivated account is refused. Each provider is
+disabled (404) until its CLIENT_ID + CLIENT_SECRET are set, so a fresh clone
+runs with social login off and the buttons hidden. CSRF is a short-lived,
+per-provider `state` cookie checked in constant time. The email is read from
+the id_token (returned back-channel over TLS from the token endpoint, so
+trusted without re-verifying its signature). Terms acceptance on the sign-up
+path is implicit — the login page shows a consent notice by the buttons.
 """
 
 import secrets
