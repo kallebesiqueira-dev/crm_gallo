@@ -10,8 +10,10 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomFieldsInput } from "@/components/custom-fields-input";
-import { api, ApiError, type Currency, type Customer, type DealStage, type TeamMember } from "@/lib/api";
+import { api, ApiError, type Currency, type DealStage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useAllCustomers } from "@/lib/use-customers";
+import { useOrgMembers } from "@/lib/use-teams";
 
 const STAGES: DealStage[] = [
   "new",
@@ -32,8 +34,8 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
   const locale = useLocale();
   const router = useRouter();
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
+  const customers = useAllCustomers().data ?? [];
+  const members = useOrgMembers().data ?? [];
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,31 +56,28 @@ export default function EditDealPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    Promise.all([
-      api.getDeal(token, id),
-      api.listAllCustomers(token).catch(() => [] as Customer[]),
-      api.listOrgMembers().catch(() => [] as TeamMember[]),
-    ]).then(([deal, custs, mems]) => {
-      setForm({
-        title: deal.title,
-        value: String(deal.value),
-        currency: deal.currency,
-        stage: deal.stage,
-        probability: String(deal.probability),
-        expected_close_date: deal.expected_close_date ?? "",
-        customer_id: deal.customer_id ?? "",
-        owner_id: deal.owner_id ?? "",
-        notes: deal.notes ?? "",
+    api
+      .getDeal(token, id)
+      .then((deal) => {
+        setForm({
+          title: deal.title,
+          value: String(deal.value),
+          currency: deal.currency,
+          stage: deal.stage,
+          probability: String(deal.probability),
+          expected_close_date: deal.expected_close_date ?? "",
+          customer_id: deal.customer_id ?? "",
+          owner_id: deal.owner_id ?? "",
+          notes: deal.notes ?? "",
+        });
+        setVersion(deal.version);
+        setCustomFields(deal.custom_fields ?? {});
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : "Failed to load");
+        setLoading(false);
       });
-      setVersion(deal.version);
-      setCustomFields(deal.custom_fields ?? {});
-      setCustomers(custs);
-      setMembers(mems);
-      setLoading(false);
-    }).catch((e) => {
-      setError(e instanceof Error ? e.message : "Failed to load");
-      setLoading(false);
-    });
   }, [id]);
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {

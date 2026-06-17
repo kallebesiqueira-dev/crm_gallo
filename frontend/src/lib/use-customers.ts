@@ -45,6 +45,16 @@ export function useCustomersInfinite(q: string) {
   });
 }
 
+/** All customers (walks every page) — for form dropdowns; cached + deduped. */
+export function useAllCustomers() {
+  const token = getToken();
+  return useQuery<Customer[]>({
+    queryKey: ["customers", "all"],
+    enabled: !!token,
+    queryFn: () => api.listAllCustomers(token as string),
+  });
+}
+
 /**
  * Tag chips for the currently loaded customers. Keyed on the id list so a new
  * page refetches once for the widened set; non-critical, so failures resolve
