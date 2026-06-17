@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,14 +14,13 @@ import { CHART_COLORS, STAGE_COLORS } from "@/components/charts/palette";
 import { useConfirm } from "@/components/confirm-dialog";
 import { ReportsView } from "@/components/reports-view";
 import { cn } from "@/lib/utils";
+import { type GoalMetric, type GoalPeriod, type SalesGoal } from "@/lib/api";
 import {
-  api,
-  type GoalMetric,
-  type GoalPeriod,
-  type PerformanceSummary,
-  type SalesGoal,
-} from "@/lib/api";
-import { getToken } from "@/lib/auth";
+  useCreateGoal,
+  useDeleteGoal,
+  useGoals,
+  usePerformanceSummary,
+} from "@/lib/use-performance";
 
 const PERIODS: GoalPeriod[] = ["month", "quarter", "year"];
 
@@ -69,18 +68,23 @@ export default function PerformancePage() {
       /* non-fatal: tab still switches in-memory */
     }
   }
-  const [summary, setSummary] = useState<PerformanceSummary | null>(null);
-  const [goals, setGoals] = useState<SalesGoal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const summaryQuery = usePerformanceSummary(period);
+  const summary = summaryQuery.data ?? null;
+  const goals = useGoals().data ?? [];
+  const loading = summaryQuery.isLoading;
+  const createGoal = useCreateGoal();
+  const deleteGoalM = useDeleteGoal();
+  const error =
+    (summaryQuery.isError && (summaryQuery.error as Error).message) ||
+    (createGoal.isError && (createGoal.error as Error).message) ||
+    (deleteGoalM.isError && (deleteGoalM.error as Error).message) ||
+    null;
 
   // Goal create form
   const [gPeriod, setGPeriod] = useState<GoalPeriod>("month");
   const [gMetric, setGMetric] = useState<GoalMetric>("revenue");
   const [gStart, setGStart] = useState(firstOfMonth());
   const [gTarget, setGTarget] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
 
   const moneyFmt = useMemo(
     () => new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }),
@@ -89,73 +93,26 @@ export default function PerformancePage() {
   const intFmt = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const pctFmt = (n: number) => `${(n * 100).toFixed(1)}%`;
 
-  const loadSummary = useCallback(async (p: GoalPeriod) => {
-    const token = getToken();
-    if (!token) return;
-    setError(null);
-    try {
-      setSummary(await api.performanceSummary(token, p));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    }
-  }, []);
-
-  const loadGoals = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      setGoals(await api.listGoals(token));
-    } catch {
-      /* goals are non-critical; summary still renders */
-    }
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([loadSummary(period), loadGoals()]).finally(() => setLoading(false));
-  }, [period, loadSummary, loadGoals]);
-
   async function handleCreateGoal(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
     const target = Number(gTarget);
-    if (!token || !gStart || !Number.isFinite(target) || target < 0) return;
-    setCreating(true);
-    setError(null);
+    if (!gStart || !Number.isFinite(target) || target < 0) return;
     try {
-      await api.createGoal(token, {
-        period: gPeriod,
-        period_start: gStart,
-        metric: gMetric,
-        target,
-      });
+      await createGoal.mutateAsync({ period: gPeriod, period_start: gStart, metric: gMetric, target });
       setGTarget("");
-      await loadGoals();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setCreating(false);
+    } catch {
+      /* surfaced via error */
     }
   }
 
   async function handleDeleteGoal(goal: SalesGoal) {
-    const token = getToken();
-    if (!token) return;
     const ok = await confirm({
       title: t("confirmDeleteTitle"),
       description: t("confirmDeleteBody"),
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    setBusyId(goal.id);
-    try {
-      await api.deleteGoal(token, goal.id);
-      await loadGoals();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setBusyId(null);
-    }
+    deleteGoalM.mutate(goal.id);
   }
 
   const funnelData = useMemo(
@@ -378,7 +335,7 @@ export default function PerformancePage() {
                 required
               />
             </div>
-            <Button type="submit" disabled={creating || !gTarget}>
+            <Button type="submit" disabled={createGoal.isPending || !gTarget}>
               {t("addGoal")}
             </Button>
           </form>
@@ -412,7 +369,7 @@ export default function PerformancePage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteGoal(goal)}
-                          disabled={busyId === goal.id}
+                          disabled={deleteGoalM.isPending && deleteGoalM.variables === goal.id}
                           aria-label={tCommon("delete")}
                         >
                           {tCommon("delete")}
