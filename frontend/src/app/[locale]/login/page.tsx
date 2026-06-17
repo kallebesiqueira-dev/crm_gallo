@@ -222,7 +222,7 @@ export default function LoginPage() {
 
             {oauthError && (
               <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
-                {oauthError === "no_account" ? tAuth("oauthNoAccount") : tAuth("oauthNoEmail")}
+                {oauthError === "account_disabled" ? tAuth("oauthDisabled") : tAuth("oauthNoEmail")}
               </div>
             )}
 
@@ -322,6 +322,9 @@ export default function LoginPage() {
                     </a>
                   )}
                 </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  {tAuth("socialTermsNotice")}
+                </p>
               </div>
             )}
 

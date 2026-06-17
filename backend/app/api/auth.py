@@ -298,6 +298,35 @@ async def register(
 _DUMMY_PASSWORD_HASH = "$2b$12$Cw5z9rGq0Y9D6jZJqLqQXOJ9q5cQyWqM5p0sJgWmO5sQ9YK1d6jzS"
 
 
+async def _provision_oauth_account(db: AsyncSession, *, email: str, full_name: str | None) -> User:
+    """Provision a brand-new org + admin user for a social-login email that has
+    no account yet. Mirrors /register's multi-tenant signup, minus the password
+    (OAuth-only — a dummy hash is stored so password login never matches) and
+    the email-verification gate (the provider already verified the address).
+    """
+    owner_name = (full_name or email.split("@")[0] or "My").strip()
+    org_name = f"{owner_name}'s workspace"[:255]
+    slug_base = re.sub(r"[^a-z0-9]+", "-", owner_name.lower()).strip("-")[:40] or "workspace"
+    org = Organization(name=org_name, slug=f"{slug_base}-{uuid.uuid4().hex[:8]}")
+    db.add(org)
+    await db.flush()
+
+    user = User(
+        email=email,
+        full_name=full_name,
+        hashed_password=_DUMMY_PASSWORD_HASH,
+        role=UserRole.admin,
+        locale="en",
+        last_active_org_id=org.id,
+        email_verified=True,
+    )
+    db.add(user)
+    await db.flush()
+    db.add(OrgMembership(user_id=user.id, organization_id=org.id, role=UserRole.admin))
+    await db.flush()
+    return user
+
+
 @router.post("/login")
 @limiter.limit(f"{settings.rate_limit_login_per_minute}/minute")
 async def login(
