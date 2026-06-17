@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
   CheckCircle2,
@@ -20,8 +21,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { TasksMonthView } from "@/components/tasks-month-view";
-import { api, ApiError, type Task, type TaskPriority, type TaskStatus } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { ApiError, type Task, type TaskPriority, type TaskStatus } from "@/lib/api";
+import {
+  tasksKeys,
+  useCreateTask,
+  useDeleteTask,
+  useTasksInfinite,
+  useUpdateTask,
+} from "@/lib/use-tasks";
 import { cn } from "@/lib/utils";
 
 type TasksView = "list" | "month";
@@ -44,16 +51,19 @@ const PRIORITY_VARIANT: Record<TaskPriority, "secondary" | "warning" | "danger">
 export default function TasksPage() {
   const t = useTranslations("tasks");
   const tCommon = useTranslations("common");
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const qc = useQueryClient();
+
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [view, setView] = useState<TasksView>("list");
-  const PAGE = 50;
+
+  const tasksQuery = useTasksInfinite();
+  const tasks = useMemo(() => tasksQuery.data?.pages.flat() ?? [], [tasksQuery.data]);
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
 
   // View mode: `?view=month` (the old /calendar deep link) wins, then the
   // last choice from localStorage. Read in an effect — no useSearchParams,
@@ -81,74 +91,37 @@ export default function TasksPage() {
     }
   }
 
-  async function refresh() {
-    const token = getToken();
-    if (!token) return;
-    const list = await api.listTasks(token, { limit: PAGE });
-    setTasks(list);
-    setHasMore(list.length === PAGE);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function loadMore() {
-    const token = getToken();
-    if (!token || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const more = await api.listTasks(token, { limit: PAGE, offset: tasks.length });
-      setTasks((prev) => [...prev, ...more]);
-      setHasMore(more.length === PAGE);
-    } finally {
-      setLoadingMore(false);
-    }
-  }
-
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !title.trim()) return;
-    await api.createTask(token, {
-      title: title.trim(),
-      priority,
-      due_date: dueDate || null,
-    });
+    if (!title.trim()) return;
+    await createTask.mutateAsync({ title: title.trim(), priority, due_date: dueDate || null });
     setTitle("");
     setPriority("medium");
     setDueDate("");
-    refresh();
   }
 
   async function cycleStatus(task: Task) {
-    const token = getToken();
-    if (!token) return;
     const next = STATUSES[(STATUSES.indexOf(task.status) + 1) % STATUSES.length];
     setError(null);
     try {
-      const updated = await api.updateTask(token, task.id, { status: next }, task.version);
-      setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+      await updateTask.mutateAsync({ id: task.id, payload: { status: next }, version: task.version });
     } catch (e) {
       if (e instanceof ApiError && e.status === 412) {
-        // The task changed under us — surface a conflict and reload so
-        // the row carries the fresh version for the next attempt.
+        // The task changed under us — surface a conflict and refetch so the
+        // row carries the fresh version for the next attempt.
         setError(tCommon("versionConflict"));
-        refresh();
+        qc.invalidateQueries({ queryKey: tasksKeys.list });
       } else {
         throw e;
       }
     }
   }
 
-  async function remove(task: Task) {
-    const token = getToken();
-    if (!token) return;
-    await api.deleteTask(token, task.id);
-    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+  function remove(task: Task) {
+    deleteTask.mutate(task.id);
   }
+
+  const loading = tasksQuery.isLoading;
 
   return (
     <div className="space-y-4">
@@ -215,7 +188,7 @@ export default function TasksPage() {
               onChange={(e) => setDueDate(e.target.value)}
               className="w-44 sm:w-full lg:w-44"
             />
-            <Button type="submit">
+            <Button type="submit" disabled={createTask.isPending}>
               <Plus className="h-4 w-4" />
               {t("add")}
             </Button>
@@ -297,10 +270,15 @@ export default function TasksPage() {
         </CardContent>
       </Card>
 
-      {hasMore && (
+      {tasksQuery.hasNextPage && (
         <div className="flex justify-center">
-          <Button type="button" variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("loadMore")}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => tasksQuery.fetchNextPage()}
+            disabled={tasksQuery.isFetchingNextPage}
+          >
+            {tasksQuery.isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("loadMore")}
           </Button>
         </div>
       )}
