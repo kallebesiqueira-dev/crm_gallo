@@ -1,14 +1,15 @@
 """Social login (Microsoft Entra ID + Google) — OpenID Connect authorization-code flow.
 
-Matches an EXISTING user by their verified provider email (no oauth-account
-table ⇒ no DB migration). Each provider is disabled (404) until its CLIENT_ID +
-CLIENT_SECRET are set, so a fresh clone runs with social login off and the
-buttons hidden. CSRF is a short-lived, per-provider `state` cookie checked in
-constant time. The email is read from the id_token (returned back-channel over
-TLS from the token endpoint, so trusted without re-verifying its signature).
-Sign-up via a social provider (provisioning a new org) is a follow-up — today
-it logs in known accounts and bounces unknown emails back to the login page
-with a hint.
+Signs the user in by their verified provider email (no oauth-account table ⇒
+no DB migration): an existing active account logs in, while an unknown email
+is provisioned a fresh org + admin account on the spot (social sign-up,
+mirroring /register); a deactivated account is refused. Each provider is
+disabled (404) until its CLIENT_ID + CLIENT_SECRET are set, so a fresh clone
+runs with social login off and the buttons hidden. CSRF is a short-lived,
+per-provider `state` cookie checked in constant time. The email is read from
+the id_token (returned back-channel over TLS from the token endpoint, so
+trusted without re-verifying its signature). Terms acceptance on the sign-up
+path is implicit — the login page shows a consent notice by the buttons.
 """
 
 import secrets
@@ -23,7 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import analytics
-from app.api.auth import _start_session
+from app.api.auth import _provision_oauth_account, _start_session
 from app.audit import record_audit
 from app.config import get_settings
 from app.database import get_db
@@ -72,24 +73,36 @@ async def _complete_login(
     db: AsyncSession,
     email: str,
     *,
+    full_name: str | None,
     provider: str,
     state_cookie: str,
 ) -> RedirectResponse:
-    """Shared callback tail: match the verified `email` to an existing active
-    user and start a session, else bounce to /login with a hint. `provider`
-    labels the audit + analytics records; `state_cookie` is cleared on success.
+    """Shared callback tail: sign the user in by their verified `email`. An
+    existing active account logs in; an unknown email is provisioned a fresh
+    org + admin account on the spot (social sign-up — same multi-tenant shape
+    as /register); a deactivated account is refused. `provider` labels the
+    audit + analytics records; `state_cookie` is cleared on success.
     """
     frontend = settings.frontend_base_url.rstrip("/")
     if not email:
         return RedirectResponse(f"{frontend}/login?oauth=no_email")
 
     user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
-    if user is None or not user.is_active:
-        # No matching (active) account — bounce to login with a hint to sign up.
-        return RedirectResponse(f"{frontend}/login?oauth=no_account")
+    if user is not None and not user.is_active:
+        # Existing but deactivated — never silently re-activate it via OAuth.
+        return RedirectResponse(f"{frontend}/login?oauth=account_disabled")
+
+    is_signup = user is None
+    if is_signup:
+        user = await _provision_oauth_account(db, email=email, full_name=full_name)
 
     await record_audit(
-        db, actor=user, action=f"user.login_oauth_{provider}", entity_type="user", entity_id=user.id
+        db,
+        actor=user,
+        action=f"user.{'register' if is_signup else 'login'}_oauth_{provider}",
+        entity_type="user",
+        entity_id=user.id,
+        organization_id=user.last_active_org_id if is_signup else None,
     )
     await db.commit()
     redirect = RedirectResponse(f"{frontend}/{user.locale}/dashboard")
@@ -97,7 +110,11 @@ async def _complete_login(
     # the SPA reads the csrf cookie and treats the user as logged in.
     await _start_session(request, redirect, user)
     redirect.delete_cookie(state_cookie, path="/")
-    analytics.capture(str(user.id), "user_logged_in", {"method": f"{provider}_oauth"})
+    analytics.capture(
+        str(user.id),
+        "user_signed_up" if is_signup else "user_logged_in",
+        {"method": f"{provider}_oauth"},
+    )
     return redirect
 
 
@@ -170,7 +187,12 @@ async def microsoft_callback(
     raw_email = claims.get("email") or claims.get("preferred_username") or claims.get("upn")
     email = (raw_email or "").lower().strip()
     return await _complete_login(
-        request, db, email, provider="microsoft", state_cookie=_MS_STATE_COOKIE
+        request,
+        db,
+        email,
+        full_name=claims.get("name"),
+        provider="microsoft",
+        state_cookie=_MS_STATE_COOKIE,
     )
 
 
@@ -249,5 +271,10 @@ async def google_callback(
     if claims.get("email_verified") in (True, "true"):
         email = (claims.get("email") or "").lower().strip()
     return await _complete_login(
-        request, db, email, provider="google", state_cookie=_GOOGLE_STATE_COOKIE
+        request,
+        db,
+        email,
+        full_name=claims.get("name"),
+        provider="google",
+        state_cookie=_GOOGLE_STATE_COOKIE,
     )
