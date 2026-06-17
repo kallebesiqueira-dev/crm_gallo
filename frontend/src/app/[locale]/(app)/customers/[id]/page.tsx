@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -17,8 +17,12 @@ import { NotesPanel } from "@/components/notes-panel";
 import { PageSpinner } from "@/components/page-spinner";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { useToast } from "@/components/toast-provider";
-import { api, type Customer, type Deal } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import {
+  useCustomer,
+  useCustomerDeals,
+  useDeleteCustomer,
+  useSummarizeCustomer,
+} from "@/lib/use-customers";
 
 function formatMoney(value: number, currency: string) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
@@ -33,30 +37,19 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const confirm = useConfirm();
   const toast = useToast();
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api.getCustomer(token, id).then(setCustomer).catch((e) => setError(String(e)));
-    api.listDeals(token, { customer_id: id }).then(setDeals).catch(() => {});
-  }, [id]);
+  const customerQuery = useCustomer(id);
+  const customer = customerQuery.data;
+  const deals = useCustomerDeals(id).data ?? [];
+  const summarize = useSummarizeCustomer(id);
+  const deleteCustomer = useDeleteCustomer();
 
-  async function summarize() {
-    const token = getToken();
-    if (!token || !customer) return;
-    setBusy(true);
+  async function handleSummarize() {
     try {
-      const updated = await api.summarizeCustomer(token, customer.id);
-      setCustomer(updated);
+      await summarize.mutateAsync();
       toast("Summary updated", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Failed", "error");
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -68,17 +61,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
     try {
-      await api.deleteCustomer(token, customer.id);
+      await deleteCustomer.mutateAsync(customer.id);
       router.push(`/${locale}/customers`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      toast(e instanceof Error ? e.message : "Failed", "error");
     }
   }
 
-  if (error) return <p className="text-sm text-destructive">{error}</p>;
+  if (customerQuery.isError && !customer) {
+    return <p className="text-sm text-destructive">{(customerQuery.error as Error).message}</p>;
+  }
   if (!customer) return <PageSpinner />;
 
   return (
@@ -193,9 +186,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">{t("aiSummary")}</CardTitle>
-              <Button size="sm" onClick={summarize} disabled={busy}>
+              <Button size="sm" onClick={handleSummarize} disabled={summarize.isPending}>
                 <Sparkles className="h-4 w-4" />
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("summarize")}
+                {summarize.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("summarize")}
               </Button>
             </div>
           </CardHeader>

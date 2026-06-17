@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -16,8 +16,8 @@ import { EntityTags } from "@/components/entity-tags";
 import { NotesPanel } from "@/components/notes-panel";
 import { PageSpinner } from "@/components/page-spinner";
 import { useToast } from "@/components/toast-provider";
-import { api, type Lead, type LeadStage } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { type LeadStage } from "@/lib/api";
+import { useConvertLead, useDeleteLead, useLead, useScoreLead, useUpdateLead } from "@/lib/use-leads";
 
 const STAGES: LeadStage[] = [
   "new",
@@ -39,10 +39,13 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const confirm = useConfirm();
   const toast = useToast();
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [scoring, setScoring] = useState(false);
-  const [converting, setConverting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const leadQuery = useLead(id);
+  const lead = leadQuery.data;
+  const updateLead = useUpdateLead(id);
+  const scoreLead = useScoreLead(id);
+  const convertLead = useConvertLead(id);
+  const deleteLead = useDeleteLead();
 
   async function handleConvert() {
     if (!lead) return;
@@ -52,22 +55,13 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       confirmLabel: t("convert"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
-    setConverting(true);
     try {
-      const result = await api.convertLead(token, lead.id, {});
+      const result = await convertLead.mutateAsync({});
       toast(t("convertSuccess"), "success");
       router.push(`/${locale}/pipeline/${result.deal_id}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Conversion failed";
-      if (msg.includes("already been converted")) {
-        toast(t("convertAlready"), "error");
-      } else {
-        toast(msg, "error");
-      }
-    } finally {
-      setConverting(false);
+      toast(msg.includes("already been converted") ? t("convertAlready") : msg, "error");
     }
   }
 
@@ -79,28 +73,17 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    const token = getToken();
-    if (!token) return;
     try {
-      await api.deleteLead(token, lead.id);
+      await deleteLead.mutateAsync(lead.id);
       router.push(`/${locale}/leads`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      toast(e instanceof Error ? e.message : "Failed", "error");
     }
   }
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    api.getLead(token, id).then(setLead).catch((e) => setError(String(e)));
-  }, [id]);
-
   async function changeStage(stage: LeadStage) {
-    const token = getToken();
-    if (!token || !lead) return;
     try {
-      const updated = await api.updateLead(token, lead.id, { stage });
-      setLead(updated);
+      await updateLead.mutateAsync({ stage });
       toast("Stage updated", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Failed to update stage", "error");
@@ -108,23 +91,18 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   async function runScore() {
-    const token = getToken();
-    if (!token || !lead) return;
-    setScoring(true);
     try {
-      const scored = await api.scoreLead(token, lead.id);
-      setLead(scored);
+      await scoreLead.mutateAsync();
       toast("Lead scored", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Scoring failed", "error");
-    } finally {
-      setScoring(false);
     }
   }
 
-  // Only a LOAD failure (no lead yet) should replace the page. A scoring or
-  // delete error must not wipe the detail view — it shows inline instead.
-  if (error && !lead) return <p className="text-sm text-destructive">{error}</p>;
+  // Only a LOAD failure (no lead yet) replaces the page; action errors toast.
+  if (leadQuery.isError && !lead) {
+    return <p className="text-sm text-destructive">{(leadQuery.error as Error).message}</p>;
+  }
   if (!lead) return <PageSpinner />;
 
   return (
@@ -156,10 +134,10 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   variant="outline"
                   size="sm"
                   onClick={handleConvert}
-                  disabled={converting}
+                  disabled={convertLead.isPending}
                   className="w-full justify-center sm:w-auto"
                 >
-                  {converting ? (
+                  {convertLead.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <ArrowRightCircle className="h-4 w-4" />
@@ -222,6 +200,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   key={s}
                   variant={s === lead.stage ? "default" : "outline"}
                   size="sm"
+                  disabled={updateLead.isPending}
                   onClick={() => changeStage(s)}
                 >
                   {tStages(s)}
@@ -249,16 +228,13 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">{t("score")}</CardTitle>
-              <Button size="sm" onClick={runScore} disabled={scoring}>
+              <Button size="sm" onClick={runScore} disabled={scoreLead.isPending}>
                 <Sparkles className="h-4 w-4" />
-                {scoring ? <Loader2 className="h-4 w-4 animate-spin" /> : t("scoreNow")}
+                {scoreLead.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("scoreNow")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
-            )}
             {lead.ai_score != null ? (
               <>
                 <div className="text-4xl font-semibold">{lead.ai_score}</div>

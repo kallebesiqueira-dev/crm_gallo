@@ -24,6 +24,7 @@ export const leadsKeys = {
   all: ["leads"] as const,
   list: (q: string) => ["leads", "list", { q }] as const,
   tags: (ids: string[]) => ["leads", "tags", ids] as const,
+  detail: (id: string) => ["leads", "detail", id] as const,
 };
 
 /** Cursor-paginated leads list, optionally filtered by a search string. */
@@ -72,6 +73,53 @@ export function useDeleteLead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteLead(getToken() as string, id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: leadsKeys.all }),
+  });
+}
+
+// ── Detail page ───────────────────────────────────────────────────────────
+
+/** Single lead by id (detail page read). */
+export function useLead(id: string) {
+  const token = getToken();
+  return useQuery<Lead>({
+    queryKey: leadsKeys.detail(id),
+    enabled: !!token,
+    queryFn: () => api.getLead(token as string, id),
+  });
+}
+
+/** Cache the returned lead as the detail source of truth + refresh lists. */
+function useLeadDetailMutation<TArgs>(fn: (id: string, args: TArgs) => Promise<Lead>, id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: TArgs) => fn(id, args),
+    onSuccess: (updated) => {
+      qc.setQueryData(leadsKeys.detail(id), updated);
+      qc.invalidateQueries({ queryKey: leadsKeys.list("") });
+    },
+  });
+}
+
+/** Change a lead's stage (or any patch); keeps detail + lists in sync. */
+export function useUpdateLead(id: string) {
+  return useLeadDetailMutation<Partial<Lead>>(
+    (lid, payload) => api.updateLead(getToken() as string, lid, payload),
+    id,
+  );
+}
+
+/** Run AI scoring; the scored lead replaces the cached detail. */
+export function useScoreLead(id: string) {
+  return useLeadDetailMutation<void>((lid) => api.scoreLead(getToken() as string, lid), id);
+}
+
+/** Convert a lead to customer/deal; invalidates lists (the page navigates away). */
+export function useConvertLead(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { deal_title?: string; deal_value?: number }) =>
+      api.convertLead(getToken() as string, id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: leadsKeys.all }),
   });
 }
