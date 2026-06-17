@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { useQuery } from "@tanstack/react-query";
 import { FileSignature, FileText, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { api, type Contract, type Quote } from "@/lib/api";
+import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
 /**
@@ -57,48 +58,48 @@ export default function DocumentsPage() {
   const tQuoteStatus = useTranslations("quotes.statuses");
   const tContractStatus = useTranslations("contracts.statuses");
   const locale = useLocale();
-  const [docs, setDocs] = useState<Doc[]>([]);
   const [kind, setKind] = useState<"all" | DocKind>("all");
   const [group, setGroup] = useState<StatusGroup | null>(null);
   const [q, setQ] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    Promise.all([
-      api.listQuotes(token, { limit: 100 }).catch(() => ({ items: [] as Quote[] })),
-      api.listContracts(token, { limit: 100 }).catch(() => ({ items: [] as Contract[] })),
-    ])
-      .then(([qs, cs]) => {
-        const quotes: Doc[] = qs.items.map((x) => ({
-          kind: "quote",
-          id: x.id,
-          number: x.number,
-          title: x.title,
-          status: x.status,
-          value: x.total,
-          currency: x.currency,
-          date: x.valid_until,
-          created_at: x.created_at,
-        }));
-        const contracts: Doc[] = cs.items.map((x) => ({
-          kind: "contract",
-          id: x.id,
-          number: x.number,
-          title: x.title,
-          status: x.status,
-          value: x.value,
-          currency: x.currency,
-          date: x.effective_date,
-          created_at: x.created_at,
-        }));
-        setDocs(
-          [...quotes, ...contracts].sort((a, b) => b.created_at.localeCompare(a.created_at)),
-        );
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const token = getToken();
+  const quotesQuery = useQuery({
+    queryKey: ["documents", "quotes"],
+    enabled: !!token,
+    queryFn: () => api.listQuotes(token as string, { limit: 100 }),
+  });
+  const contractsQuery = useQuery({
+    queryKey: ["documents", "contracts"],
+    enabled: !!token,
+    queryFn: () => api.listContracts(token as string, { limit: 100 }),
+  });
+  const loading = quotesQuery.isLoading || contractsQuery.isLoading;
+
+  const docs = useMemo<Doc[]>(() => {
+    const quotes: Doc[] = (quotesQuery.data?.items ?? []).map((x) => ({
+      kind: "quote",
+      id: x.id,
+      number: x.number,
+      title: x.title,
+      status: x.status,
+      value: x.total,
+      currency: x.currency,
+      date: x.valid_until,
+      created_at: x.created_at,
+    }));
+    const contracts: Doc[] = (contractsQuery.data?.items ?? []).map((x) => ({
+      kind: "contract",
+      id: x.id,
+      number: x.number,
+      title: x.title,
+      status: x.status,
+      value: x.value,
+      currency: x.currency,
+      date: x.effective_date,
+      created_at: x.created_at,
+    }));
+    return [...quotes, ...contracts].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }, [quotesQuery.data, contractsQuery.data]);
 
   const money = useMemo(() => {
     const cache = new Map<string, Intl.NumberFormat>();

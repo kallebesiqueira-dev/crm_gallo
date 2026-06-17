@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { GitMerge, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import {
-  api,
   type DuplicateEntity,
   type DuplicateGroup,
   type DuplicateRecord,
 } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { useDuplicates, useMergeDuplicates } from "@/lib/use-duplicates";
 
 const ENTITY_TYPES: DuplicateEntity[] = ["lead", "customer", "company"];
 
@@ -30,43 +29,33 @@ export default function DuplicatesPage() {
   const confirm = useConfirm();
 
   const [entityType, setEntityType] = useState<DuplicateEntity>("lead");
-  const [groups, setGroups] = useState<DuplicateGroup[]>([]);
   const [survivors, setSurvivors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [mergingKey, setMergingKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const groupKey = (g: DuplicateGroup) => `${g.match_type}:${g.key}`;
 
-  const load = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.listDuplicates(token, entityType);
-      setGroups(res.groups);
-      // Default survivor for each group = first (oldest) record.
-      const defaults: Record<string, string> = {};
-      for (const g of res.groups) defaults[`${g.match_type}:${g.key}`] = g.records[0]?.id;
-      setSurvivors(defaults);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-      setGroups([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [entityType]);
+  const duplicatesQuery = useDuplicates(entityType);
+  const groups = duplicatesQuery.data?.groups ?? [];
+  const mergeM = useMergeDuplicates();
 
+  const loading = duplicatesQuery.isLoading;
+  const error =
+    (mergeM.isError && (mergeM.error as Error).message) ||
+    (duplicatesQuery.isError && (duplicatesQuery.error as Error).message) ||
+    null;
+
+  // Re-seed the per-group survivor selection (oldest record by default) and
+  // clear the notice whenever the candidate set changes (new tab / post-merge).
   useEffect(() => {
+    const defaults: Record<string, string> = {};
+    for (const g of duplicatesQuery.data?.groups ?? []) {
+      defaults[`${g.match_type}:${g.key}`] = g.records[0]?.id;
+    }
+    setSurvivors(defaults);
     setNotice(null);
-    load();
-  }, [load]);
+  }, [duplicatesQuery.data]);
 
   async function handleMerge(group: DuplicateGroup) {
-    const token = getToken();
-    if (!token) return;
     const survivorId = survivors[groupKey(group)];
     if (!survivorId) return;
     const loserIds = group.records.map((r) => r.id).filter((id) => id !== survivorId);
@@ -79,21 +68,15 @@ export default function DuplicatesPage() {
     });
     if (!ok) return;
 
-    setMergingKey(groupKey(group));
-    setError(null);
-    setNotice(null);
     try {
-      const res = await api.mergeDuplicates(token, {
+      const res = await mergeM.mutateAsync({
         entity_type: entityType,
         survivor_id: survivorId,
         loser_ids: loserIds,
       });
       setNotice(t("merged", { count: res.merged_count }));
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setMergingKey(null);
+    } catch {
+      /* surfaced via error */
     }
   }
 
@@ -148,7 +131,7 @@ export default function DuplicatesPage() {
           {groups.map((group) => {
             const key = groupKey(group);
             const survivorId = survivors[key];
-            const merging = mergingKey === key;
+            const merging = mergeM.isPending && mergeM.variables?.survivor_id === survivorId;
             return (
               <Card key={key} className="p-4">
                 <div className="mb-3 flex items-center justify-between gap-2">
