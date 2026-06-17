@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Code2, Copy, Inbox, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useConfirm } from "@/components/confirm-dialog";
-import { api, API_URL, type WebForm } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { API_URL, type WebForm } from "@/lib/api";
+import { useCreateForm, useDeleteForm, useForms, useUpdateForm } from "@/lib/use-forms";
 
 function embedSnippet(token: string): string {
   const action = `${API_URL}/api/public/forms/${token}/submit`;
@@ -35,11 +35,6 @@ export default function FormsPage() {
   const tCommon = useTranslations("common");
   const confirm = useConfirm();
 
-  const [forms, setForms] = useState<WebForm[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showSnippet, setShowSnippet] = useState<string | null>(null);
 
@@ -47,32 +42,24 @@ export default function FormsPage() {
   const [defaultSource, setDefaultSource] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("");
 
-  const load = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-    setLoading(true);
-    setError(null);
-    try {
-      setForms(await api.listForms(token));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const formsQuery = useForms();
+  const forms = formsQuery.data ?? [];
+  const createForm = useCreateForm();
+  const updateForm = useUpdateForm();
+  const deleteForm = useDeleteForm();
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const loading = formsQuery.isLoading;
+  const errored = [formsQuery, createForm, updateForm, deleteForm].find((m) => m.isError);
+  const error = errored ? (errored.error as Error).message : null;
+  const formBusy = (id: string) =>
+    (updateForm.isPending && updateForm.variables?.id === id) ||
+    (deleteForm.isPending && deleteForm.variables === id);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !name.trim()) return;
-    setCreating(true);
-    setError(null);
+    if (!name.trim()) return;
     try {
-      await api.createForm(token, {
+      await createForm.mutateAsync({
         name: name.trim(),
         default_source: defaultSource.trim() || null,
         redirect_url: redirectUrl.trim() || null,
@@ -80,48 +67,23 @@ export default function FormsPage() {
       setName("");
       setDefaultSource("");
       setRedirectUrl("");
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setCreating(false);
+    } catch {
+      /* surfaced via error */
     }
   }
 
-  async function toggleActive(form: WebForm) {
-    const token = getToken();
-    if (!token) return;
-    setBusyId(form.id);
-    setError(null);
-    try {
-      await api.updateForm(token, form.id, { active: !form.active });
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setBusyId(null);
-    }
+  function toggleActive(form: WebForm) {
+    updateForm.mutate({ id: form.id, payload: { active: !form.active } });
   }
 
   async function handleDelete(form: WebForm) {
-    const token = getToken();
-    if (!token) return;
     const ok = await confirm({
       title: t("confirmDeleteTitle"),
       description: t("confirmDeleteBody", { name: form.name }),
       confirmLabel: tCommon("delete"),
     });
     if (!ok) return;
-    setBusyId(form.id);
-    setError(null);
-    try {
-      await api.deleteForm(token, form.id);
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setBusyId(null);
-    }
+    deleteForm.mutate(form.id);
   }
 
   async function copySnippet(form: WebForm) {
@@ -179,8 +141,8 @@ export default function FormsPage() {
             />
           </div>
           <div className="sm:col-span-2">
-            <Button type="submit" disabled={creating || !name.trim()}>
-              {creating ? (
+            <Button type="submit" disabled={createForm.isPending || !name.trim()}>
+              {createForm.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Plus className="h-4 w-4" />
@@ -203,7 +165,7 @@ export default function FormsPage() {
       ) : (
         <div className="space-y-3">
           {forms.map((form) => {
-            const busy = busyId === form.id;
+            const busy = formBusy(form.id);
             const open = showSnippet === form.id;
             return (
               <Card key={form.id} className="p-4">
