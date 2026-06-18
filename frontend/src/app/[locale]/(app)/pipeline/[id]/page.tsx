@@ -278,6 +278,7 @@ export default function DealDetailPage({ params }: { params: Promise<{ id: strin
                   type="datetime-local"
                   value={naAt}
                   onChange={(e) => setNaAt(e.target.value)}
+                  className="w-auto sm:w-full"
                 />
               </div>
               <Button type="submit" size="sm" disabled={setNextAction.isPending} className="w-full">
