@@ -3,7 +3,7 @@ from datetime import UTC, datetime, time, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -79,27 +79,38 @@ async def stats(
     # Every aggregate filters by the current org — without it the dashboard
     # would leak counts across tenants (a tiny but real existence leak:
     # "this install has 12k leads" tells you something about other orgs).
-    total_leads = (
+    # Leads: one grouped pass returns per-stage count + AI-score sum and
+    # non-null count, replacing three separate queries (COUNT(*), GROUP BY
+    # stage, AVG(ai_score)). `total_leads` = Σ per-stage counts; the global
+    # avg = Σscore / count(non-null), identical to AVG(ai_score) which
+    # ignores NULLs.
+    lead_rows = (
         await db.execute(
-            select(func.count()).select_from(Lead).where(Lead.organization_id == org_id)
+            select(
+                Lead.stage,
+                func.count(),
+                func.sum(Lead.ai_score),
+                func.count(Lead.ai_score),
+            )
+            .where(Lead.organization_id == org_id)
+            .group_by(Lead.stage)
         )
-    ).scalar_one()
-
-    by_stage_result = await db.execute(
-        select(Lead.stage, func.count()).where(Lead.organization_id == org_id).group_by(Lead.stage)
-    )
+    ).all()
     by_stage: dict[str, int] = {s.value: 0 for s in LeadStage}
-    for stage, count in by_stage_result.all():
+    total_leads = 0
+    score_sum = 0
+    score_n = 0
+    for stage, count, s_sum, s_n in lead_rows:
         by_stage[stage.value] = count
+        total_leads += count
+        score_sum += s_sum or 0
+        score_n += s_n
+    avg_score = (score_sum / score_n) if score_n else None
 
     won = by_stage.get(LeadStage.won.value, 0)
     lost = by_stage.get(LeadStage.lost.value, 0)
     closed = won + lost
     conversion_rate = round(won / closed, 4) if closed else 0.0
-
-    avg_score = (
-        await db.execute(select(func.avg(Lead.ai_score)).where(Lead.organization_id == org_id))
-    ).scalar_one()
 
     total_customers = (
         await db.execute(
@@ -122,13 +133,17 @@ async def stats(
         )
     ).scalar_one()
 
-    # Pipeline value = OPEN deals only (exclude won/lost).
-    open_deals = (
+    # Deals: one grouped pass over (stage, currency) returns count + Σvalue,
+    # replacing two full row-pulls (open pipeline + funnel). At most
+    # |stages|×|currencies| rows cross the wire; the live EUR multiplier is
+    # applied per currency in Python (the multipliers are a runtime dict,
+    # not DB state). Pipeline value = OPEN deals only (won/lost excluded);
+    # funnel = the FUNNEL_STAGES set (which includes won).
+    deal_rows = (
         await db.execute(
-            select(Deal.value, Deal.currency).where(
-                Deal.organization_id == org_id,
-                Deal.stage.notin_(CLOSED_DEAL_STAGES),
-            )
+            select(Deal.stage, Deal.currency, func.count(), func.sum(Deal.value))
+            .where(Deal.organization_id == org_id)
+            .group_by(Deal.stage, Deal.currency)
         )
     ).all()
     pipeline_value = ZERO
@@ -136,37 +151,35 @@ async def stats(
     # display-only, no conversion) — the widget shows "what you actually
     # have" when the pipeline spans currencies.
     pipeline_by_currency: dict[str, Decimal] = {}
-    for value, currency in open_deals:
-        pipeline_value += (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
-        pipeline_by_currency[currency.value] = pipeline_by_currency.get(currency.value, ZERO) + (
-            value or ZERO
-        )
-
-    # Pipeline funnel — count + EUR value per stage (lost excluded).
-    funnel_rows = (
-        await db.execute(
-            select(Deal.stage, Deal.value, Deal.currency).where(
-                Deal.organization_id == org_id,
-                Deal.stage.in_(FUNNEL_STAGES),
-            )
-        )
-    ).all()
     funnel_count: dict[DealStage, int] = dict.fromkeys(FUNNEL_STAGES, 0)
     funnel_value: dict[DealStage, Decimal] = dict.fromkeys(FUNNEL_STAGES, ZERO)
-    for stage, value, currency in funnel_rows:
-        funnel_count[stage] += 1
-        funnel_value[stage] += (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
+    for stage, currency, count, total in deal_rows:
+        total = total or ZERO
+        eur_val = total * fx_mult.get(currency.value, Decimal("1"))
+        if stage not in CLOSED_DEAL_STAGES:
+            pipeline_value += eur_val
+            pipeline_by_currency[currency.value] = (
+                pipeline_by_currency.get(currency.value, ZERO) + total
+            )
+        if stage in funnel_count:
+            funnel_count[stage] += count
+            funnel_value[stage] += eur_val
     pipeline_funnel = [
         FunnelStageStat(stage=s.value, count=funnel_count[s], value_eur=float(q2(funnel_value[s])))
         for s in FUNNEL_STAGES
     ]
 
-    # Monthly revenue — won deals by month (last 12 months) + total.
+    # Monthly revenue — won deals grouped by UTC month + currency (last 12
+    # months on the chart, all-time for the total). `timezone('UTC', …)`
+    # buckets in UTC to match the previous Python `.year/.month` on the
+    # UTC-normalised timestamps; one row per (month, currency) instead of
+    # one per won deal.
+    month_expr = func.to_char(func.timezone("UTC", Deal.updated_at), "YYYY-MM")
     won_rows = (
         await db.execute(
-            select(Deal.value, Deal.currency, Deal.updated_at).where(
-                Deal.organization_id == org_id, Deal.stage == DealStage.won
-            )
+            select(month_expr, Deal.currency, func.sum(Deal.value))
+            .where(Deal.organization_id == org_id, Deal.stage == DealStage.won)
+            .group_by(month_expr, Deal.currency)
         )
     ).all()
     now = datetime.now(UTC)
@@ -181,27 +194,35 @@ async def stats(
     month_keys.reverse()
     rev_by_month: dict[str, Decimal] = dict.fromkeys(month_keys, ZERO)
     revenue_total = ZERO
-    for value, currency, updated in won_rows:
-        eur_val = (value or ZERO) * fx_mult.get(currency.value, Decimal("1"))
+    for month_key, currency, total in won_rows:
+        eur_val = (total or ZERO) * fx_mult.get(currency.value, Decimal("1"))
         revenue_total += eur_val
-        key = f"{updated.year:04d}-{updated.month:02d}"
-        if key in rev_by_month:
-            rev_by_month[key] += eur_val
+        if month_key in rev_by_month:
+            rev_by_month[month_key] += eur_val
     monthly_revenue = [
         MonthValue(month=k, value_eur=float(q2(rev_by_month[k]))) for k in month_keys
     ]
 
     # Quotes summary — value by status + open/overdue (sent, by valid_until).
+    # Grouped by (status, currency, is_overdue): Σtotal per bucket replaces
+    # the full row-pull. `is_overdue` is true only when valid_until is set
+    # and past — the open/overdue split only applies to SENT quotes below.
+    today = now.date()
+    is_overdue = and_(Quote.valid_until.isnot(None), Quote.valid_until < today)
     quote_rows = (
         await db.execute(
-            select(Quote.status, Quote.total, Quote.currency, Quote.valid_until).where(
-                Quote.organization_id == org_id
+            select(
+                Quote.status,
+                Quote.currency,
+                is_overdue.label("overdue"),
+                func.sum(Quote.total),
             )
+            .where(Quote.organization_id == org_id)
+            .group_by(Quote.status, Quote.currency, is_overdue)
         )
     ).all()
-    today = now.date()
     q_total = q_out = q_acc = q_rej = q_open = q_overdue = ZERO
-    for status, total, currency, valid_until in quote_rows:
+    for status, currency, overdue, total in quote_rows:
         eur_val = (total or ZERO) * fx_mult.get(currency.value, Decimal("1"))
         q_total += eur_val
         if status in (QuoteStatus.draft, QuoteStatus.sent):
@@ -211,7 +232,7 @@ async def stats(
         elif status in (QuoteStatus.declined, QuoteStatus.expired):
             q_rej += eur_val
         if status == QuoteStatus.sent:
-            if valid_until is not None and valid_until < today:
+            if overdue:
                 q_overdue += eur_val
             else:
                 q_open += eur_val
