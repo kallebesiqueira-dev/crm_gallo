@@ -114,12 +114,16 @@ COPY --from=builder --chown=appuser:app /app/.next/standalone ./
 COPY --from=builder --chown=appuser:app /app/.next/static ./.next/static
 COPY --from=builder --chown=appuser:app /app/public ./public
 
-# esbuild ships a prebuilt Go binary (built with an old Go toolchain, so Trivy
-# flags ~18 Go-stdlib HIGH/CRITICAL CVEs against it). It is a build-time tool
-# that the production server (`node server.js`) never invokes, yet next's
-# dependency trace copies it into the standalone bundle. Drop it so the runtime
-# image carries no Go binary and the Trivy gate stays clean.
-RUN rm -rf node_modules/@esbuild node_modules/esbuild
+# Strip build-time-only tooling the production server (`node server.js`) never
+# invokes, so the runtime image carries no avoidable CVEs and the Trivy gate
+# stays clean:
+#   - esbuild: ships a prebuilt Go binary (old Go toolchain ⇒ ~18 Go-stdlib
+#     HIGH/CRITICAL CVEs), pulled in by next's dependency trace.
+#   - npm: the base image bundles npm under /usr/local/lib/node_modules/npm,
+#     whose vendored deps drift into CVEs (e.g. semver 6.25.0, CVE-2026-12151).
+#     The standalone server runs via `node`, not npm, so npm/npx are dead weight.
+RUN rm -rf node_modules/@esbuild node_modules/esbuild \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 USER appuser
 EXPOSE 3000
