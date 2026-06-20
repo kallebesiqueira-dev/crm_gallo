@@ -12,7 +12,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { TagChipList } from "@/components/entity-tags";
 import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable, type Column } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { api, type Customer } from "@/lib/api";
 import {
@@ -91,6 +91,76 @@ export default function CustomersPage() {
 
   const loading = customersQuery.isLoading;
 
+  const columns: Column<Customer>[] = [
+    {
+      id: "name",
+      header: t("name"),
+      sortValue: (c) => `${c.first_name} ${c.last_name}`.toLowerCase(),
+      cell: (c) => (
+        <>
+          <Link
+            href={`/${locale}/customers/${c.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {c.first_name} {c.last_name}
+          </Link>
+          {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
+        </>
+      ),
+    },
+    {
+      id: "company",
+      header: t("company"),
+      sortValue: (c) => c.company?.toLowerCase() ?? null,
+      cell: (c) => c.company ?? "—",
+    },
+    {
+      id: "country",
+      header: t("country"),
+      sortValue: (c) => c.country ?? null,
+      cell: (c) => c.country ?? "—",
+    },
+    {
+      id: "tags",
+      header: tTags("title"),
+      cell: (c) => <TagChipList tags={tagMap[c.id] ?? []} />,
+    },
+    {
+      id: "created",
+      header: t("created"),
+      sortValue: (c) => c.created_at,
+      cell: (c) => (
+        <span className="text-muted-foreground">
+          {new Date(c.created_at).toLocaleDateString(locale)}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: tCommon("actions"),
+      align: "right",
+      cell: (c) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button asChild variant="ghost" size="icon" aria-label={tCommon("edit")}>
+            <Link href={`/${locale}/customers/${c.id}/edit`}>
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={tCommon("delete")}
+            onClick={() => handleDelete(c)}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -143,101 +213,25 @@ export default function CustomersPage() {
       )}
 
       <Card className="overflow-hidden">
-        {loading ? (
-          <div className="space-y-0 divide-y">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-3">
-                <Skeleton className="h-4 w-4 shrink-0 rounded" />
-                <Skeleton className="h-4 w-36" />
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="ml-auto h-4 w-24" />
-              </div>
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title={t("empty")}
-            actionLabel={t("new")}
-            actionHref={`/${locale}/customers/new`}
-          />
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full min-w-[40rem] text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="w-10 px-4 py-3 text-left font-medium">
-                  <input
-                    type="checkbox"
-                    aria-label={tCommon("selectAll")}
-                    className="h-4 w-4 rounded border-input"
-                    checked={items.length > 0 && selected.size === items.length}
-                    onChange={toggleAll}
-                  />
-                </th>
-                <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("company")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("country")}</th>
-                <th className="px-4 py-3 text-left font-medium">{tTags("title")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
-                <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((c) => (
-                <tr key={c.id} className="border-t hover:bg-muted/30">
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      aria-label={tCommon("select")}
-                      className="h-4 w-4 rounded border-input"
-                      checked={selected.has(c.id)}
-                      onChange={() => toggleRow(c.id)}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/${locale}/customers/${c.id}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {c.first_name} {c.last_name}
-                    </Link>
-                    {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
-                  </td>
-                  <td className="px-4 py-3">{c.company ?? "—"}</td>
-                  <td className="px-4 py-3">{c.country ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <TagChipList tags={tagMap[c.id] ?? []} />
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(c.created_at).toLocaleDateString(locale)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button asChild variant="ghost" size="icon" aria-label={tCommon("edit")}>
-                        <Link href={`/${locale}/customers/${c.id}/edit`}>
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={tCommon("delete")}
-                        onClick={() => handleDelete(c)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
+        <DataTable<Customer>
+          columns={columns}
+          rows={items}
+          getRowId={(c) => c.id}
+          loading={loading}
+          empty={
+            <EmptyState
+              icon={Users}
+              title={t("empty")}
+              actionLabel={t("new")}
+              actionHref={`/${locale}/customers/new`}
+            />
+          }
+          selectedIds={selected}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          selectAllLabel={tCommon("selectAll")}
+          selectRowLabel={tCommon("select")}
+        />
       </Card>
 
       {customersQuery.hasNextPage && (
