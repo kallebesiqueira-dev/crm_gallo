@@ -170,11 +170,11 @@ export function Sidebar() {
         {!collapsed && <span className="truncate">{tNav(label)}</span>}
         {badge && badge > 0 ? (
           collapsed ? (
-            <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+            <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
               {badge > 99 ? "99" : badge}
             </span>
           ) : (
-            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
               {badge > 99 ? "99+" : badge}
             </span>
           )
@@ -182,7 +182,7 @@ export function Sidebar() {
         {collapsed && (
           <span
             role="tooltip"
-            className="pointer-events-none absolute left-full top-1/2 z-[60] ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#1a0f38] px-2 py-1 text-xs font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100"
+            className="pointer-events-none absolute left-full top-1/2 z-[60] ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-[hsl(var(--sidebar))] px-2 py-1 text-xs font-medium text-[hsl(var(--sidebar-foreground))] opacity-0 shadow-md ring-1 ring-white/10 transition-opacity duration-150 group-hover:opacity-100"
           >
             {tNav(label)}
           </span>
@@ -195,7 +195,7 @@ export function Sidebar() {
     <aside
       data-tour="nav"
       className={cn(
-        "hidden shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-[#3d2080] via-[#2a1559] to-[#190b33] text-white transition-[width] duration-300 ease-in-out md:flex",
+        "hidden shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-[hsl(var(--sidebar-from))] via-[hsl(var(--sidebar-via))] to-[hsl(var(--sidebar-to))] text-[hsl(var(--sidebar-foreground))] transition-[width] duration-300 ease-in-out md:flex",
         collapsed ? "w-16" : "w-44",
       )}
     >

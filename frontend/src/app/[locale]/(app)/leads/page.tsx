@@ -13,7 +13,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { TagChipList } from "@/components/entity-tags";
 import { BulkTagBar } from "@/components/bulk-tag-bar";
 import { SegmentBar } from "@/components/segment-bar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable, type Column } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { api, type Lead, type LeadStage } from "@/lib/api";
 import { leadsKeys, useDeleteLead, useLeadsInfinite, useLeadTags } from "@/lib/use-leads";
@@ -99,6 +99,87 @@ export default function LeadsPage() {
 
   const loading = leadsQuery.isLoading;
 
+  const columns: Column<Lead>[] = [
+    {
+      id: "name",
+      header: t("name"),
+      sortValue: (l) => `${l.first_name} ${l.last_name}`.toLowerCase(),
+      cell: (lead) => (
+        <>
+          <Link
+            href={`/${locale}/leads/${lead.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {lead.first_name} {lead.last_name}
+          </Link>
+          {lead.email && <div className="text-xs text-muted-foreground">{lead.email}</div>}
+        </>
+      ),
+    },
+    {
+      id: "company",
+      header: t("company"),
+      sortValue: (l) => l.company?.toLowerCase() ?? null,
+      cell: (l) => l.company ?? "—",
+    },
+    {
+      id: "stage",
+      header: t("stage"),
+      sortValue: (l) => l.stage,
+      cell: (l) => <Badge variant={STAGE_VARIANT[l.stage]}>{tStages(l.stage)}</Badge>,
+    },
+    {
+      id: "tags",
+      header: tTags("title"),
+      cell: (l) => <TagChipList tags={tagMap[l.id] ?? []} />,
+    },
+    {
+      id: "score",
+      header: t("score"),
+      sortValue: (l) => l.ai_score ?? null,
+      cell: (l) =>
+        l.ai_score != null ? (
+          <span className="font-mono">{l.ai_score}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      id: "created",
+      header: t("created"),
+      sortValue: (l) => l.created_at,
+      cell: (l) => (
+        <span className="text-muted-foreground">
+          {new Date(l.created_at).toLocaleDateString(locale)}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: tCommon("actions"),
+      align: "right",
+      cell: (lead) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button asChild variant="ghost" size="icon" aria-label={tCommon("edit")}>
+            <Link href={`/${locale}/leads/${lead.id}/edit`}>
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={tCommon("delete")}
+            onClick={() => handleDelete(lead)}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -151,114 +232,25 @@ export default function LeadsPage() {
       )}
 
       <Card className="overflow-hidden">
-        {loading ? (
-          <div className="space-y-0 divide-y">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-3">
-                <Skeleton className="h-4 w-4 shrink-0 rounded" />
-                <Skeleton className="h-4 w-36" />
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-5 w-20 rounded-full" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="ml-auto h-4 w-24" />
-              </div>
-            ))}
-          </div>
-        ) : leads.length === 0 ? (
-          <EmptyState
-            icon={Target}
-            title={t("empty")}
-            actionLabel={t("new")}
-            actionHref={`/${locale}/leads/new`}
-          />
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full min-w-[40rem] text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="w-10 px-4 py-3 text-left font-medium">
-                  <input
-                    type="checkbox"
-                    aria-label={tCommon("selectAll")}
-                    className="h-4 w-4 rounded border-input"
-                    checked={leads.length > 0 && selected.size === leads.length}
-                    onChange={toggleAll}
-                  />
-                </th>
-                <th className="px-4 py-3 text-left font-medium">{t("name")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("company")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("stage")}</th>
-                <th className="px-4 py-3 text-left font-medium">{tTags("title")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("score")}</th>
-                <th className="px-4 py-3 text-left font-medium">{t("created")}</th>
-                <th className="px-4 py-3 text-right font-medium">{tCommon("actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead) => (
-                <tr key={lead.id} className="border-t hover:bg-muted/30">
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      aria-label={tCommon("select")}
-                      className="h-4 w-4 rounded border-input"
-                      checked={selected.has(lead.id)}
-                      onChange={() => toggleRow(lead.id)}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/${locale}/leads/${lead.id}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {lead.first_name} {lead.last_name}
-                    </Link>
-                    {lead.email && (
-                      <div className="text-xs text-muted-foreground">{lead.email}</div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">{lead.company ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={STAGE_VARIANT[lead.stage]}>{tStages(lead.stage)}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <TagChipList tags={tagMap[lead.id] ?? []} />
-                  </td>
-                  <td className="px-4 py-3">
-                    {lead.ai_score != null ? (
-                      <span className="font-mono">{lead.ai_score}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(lead.created_at).toLocaleDateString(locale)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button asChild variant="ghost" size="icon" aria-label={tCommon("edit")}>
-                        <Link href={`/${locale}/leads/${lead.id}/edit`}>
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={tCommon("delete")}
-                        onClick={() => handleDelete(lead)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
+        <DataTable<Lead>
+          columns={columns}
+          rows={leads}
+          getRowId={(l) => l.id}
+          loading={loading}
+          empty={
+            <EmptyState
+              icon={Target}
+              title={t("empty")}
+              actionLabel={t("new")}
+              actionHref={`/${locale}/leads/new`}
+            />
+          }
+          selectedIds={selected}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          selectAllLabel={tCommon("selectAll")}
+          selectRowLabel={tCommon("select")}
+        />
       </Card>
 
       {leadsQuery.hasNextPage && (

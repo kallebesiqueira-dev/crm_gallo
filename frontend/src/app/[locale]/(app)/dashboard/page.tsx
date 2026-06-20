@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  AlertTriangle,
   ArrowUpRight,
   Building2,
   CalendarDays,
@@ -83,6 +84,20 @@ export default function DashboardPage() {
     [tasks],
   );
 
+  // "Needs attention" signal — open tasks already past their due date. Reuses
+  // the tasks already fetched (no extra request); drives the count badge on the
+  // My Tasks card + the per-row red treatment below.
+  const startOfToday = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const isOverdue = (due?: string | null) => !!due && new Date(due) < startOfToday;
+  const overdueCount = useMemo(
+    () => (tasks ?? []).filter((task) => task.status !== "done" && isOverdue(task.due_date)).length,
+    [tasks, startOfToday], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   // Per-currency breakdown under the EUR headline when the open
   // pipeline spans 2+ currencies (plan.md §6: display-only, no FX) —
   // e.g. "€10,000 · CHF 3,200". Single-currency orgs see no change.
@@ -102,18 +117,30 @@ export default function DashboardPage() {
   }, [stats, locale]);
 
   const kpis = [
-    { label: t("totalLeads"), value: stats ? int.format(stats.total_leads) : "—", icon: Users },
-    { label: t("totalDeals"), value: stats ? int.format(stats.total_deals) : "—", icon: Target },
+    {
+      label: t("totalLeads"),
+      value: stats ? int.format(stats.total_leads) : "—",
+      icon: Users,
+      href: `/${locale}/leads`,
+    },
+    {
+      label: t("totalDeals"),
+      value: stats ? int.format(stats.total_deals) : "—",
+      icon: Target,
+      href: `/${locale}/pipeline`,
+    },
     {
       label: t("pipelineValue"),
       value: stats ? formatMoney(stats.pipeline_value_eur || 0) : "—",
       icon: TrendingUp,
       sub: currencyBreakdown,
+      href: `/${locale}/pipeline`,
     },
     {
       label: t("conversionRate"),
       value: stats ? `${(stats.conversion_rate * 100).toFixed(1)}%` : "—",
       icon: CheckCircle2,
+      href: `/${locale}/performance`,
     },
   ];
 
@@ -174,22 +201,27 @@ export default function DashboardPage() {
       {/* KPI row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((k) => (
-          <Panel key={k.label} className="p-5">
-            <div className="flex items-start justify-between">
-              <div className="text-sm font-medium text-muted-foreground">{k.label}</div>
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
-                <k.icon className="h-5 w-5" />
-              </span>
-            </div>
-            {loading ? (
-              <Skeleton className="mt-3 h-9 w-24" />
-            ) : (
-              <div className="mt-3 text-3xl font-bold tracking-tight">{k.value}</div>
-            )}
-            {!loading && "sub" in k && k.sub ? (
-              <div className="mt-1 text-xs text-muted-foreground">{k.sub}</div>
-            ) : null}
-          </Panel>
+          <Link key={k.label} href={k.href} className="group focus-visible:outline-none">
+            <Panel className="p-5 transition-all group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring">
+              <div className="flex items-start justify-between">
+                <div className="text-sm font-medium text-muted-foreground">{k.label}</div>
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <k.icon className="h-5 w-5" />
+                </span>
+              </div>
+              {loading ? (
+                <Skeleton className="mt-3 h-9 w-24" />
+              ) : (
+                <div className="mt-3 flex items-center gap-1 text-3xl font-bold tracking-tight">
+                  {k.value}
+                  <ArrowUpRight className="h-5 w-5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </div>
+              )}
+              {!loading && "sub" in k && k.sub ? (
+                <div className="mt-1 text-xs text-muted-foreground">{k.sub}</div>
+              ) : null}
+            </Panel>
+          </Link>
         ))}
       </div>
 
@@ -203,22 +235,43 @@ export default function DashboardPage() {
         </Panel>
 
         <Panel className="flex flex-col p-5">
-          <SectionTitle icon={CalendarDays}>{t("myTasks")}</SectionTitle>
+          <div className="flex items-center justify-between">
+            <SectionTitle icon={CalendarDays}>{t("myTasks")}</SectionTitle>
+            {overdueCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                <AlertTriangle className="h-3 w-3" />
+                {overdueCount} {t("overdue")}
+              </span>
+            )}
+          </div>
           {openTasks.length === 0 ? (
             <div className="grid flex-1 place-items-center py-8 text-xs text-muted-foreground">{t("noTasks")}</div>
           ) : (
             <div className="mt-3 space-y-1">
-              {openTasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-accent">
-                  <span className="h-4 w-4 shrink-0 rounded-full border-2 border-primary/50" />
-                  <div className="min-w-0 flex-1 truncate text-sm">{task.title}</div>
-                  {task.due_date && (
-                    <div className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
-                      {new Date(task.due_date).toLocaleDateString(locale)}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {openTasks.map((task) => {
+                const overdue = isOverdue(task.due_date);
+                return (
+                  <div key={task.id} className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-accent">
+                    <span
+                      className={cn(
+                        "h-4 w-4 shrink-0 rounded-full border-2",
+                        overdue ? "border-destructive" : "border-primary/50",
+                      )}
+                    />
+                    <div className="min-w-0 flex-1 truncate text-sm">{task.title}</div>
+                    {task.due_date && (
+                      <div
+                        className={cn(
+                          "shrink-0 text-xs font-medium tabular-nums",
+                          overdue ? "font-semibold text-destructive" : "text-muted-foreground",
+                        )}
+                      >
+                        {new Date(task.due_date).toLocaleDateString(locale)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
           <CardLink href={`/${locale}/tasks?view=month`}>{t("viewCalendar")}</CardLink>

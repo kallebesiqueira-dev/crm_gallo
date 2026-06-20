@@ -44,6 +44,18 @@ html.gallo-splash-pending body {
     --input: 264 30% 90%;
     --ring: 262 83% 58%;
     --radius: 0.5rem; /* Design System #10: squarer/corporate (was 0.75rem) */
+
+    /* Sidebar surface — the brand purple, now token-driven instead of
+       hardcoded hex. Same in light and dark (brand-fixed), so defined once
+       here. Hue aligned to --primary (262deg) and saturation pulled back a
+       touch from the old gradient for a more sophisticated, less aggressive
+       feel. Overlay states (active fill, borders) stay as white/alpha. */
+    --sidebar: 264 52% 11%; /* darkest stop — also tooltip surface */
+    --sidebar-from: 260 45% 26%;
+    --sidebar-via: 262 50% 18%;
+    --sidebar-to: 264 52% 11%;
+    --sidebar-foreground: 250 40% 98%;
+    --sidebar-muted: 252 30% 78%; /* inactive item + group headers */
   }
 
   .dark {
