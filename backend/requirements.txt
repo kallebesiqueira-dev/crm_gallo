@@ -38,13 +38,13 @@ openpyxl==3.1.5
 weasyprint==69.0
 pydyf==0.12.1
 tinyhtml5==2.1.0
-pytest==9.1.0
+pytest==9.1.1
 pytest-asyncio==1.4.0
 asgi-lifespan==2.1.0
 # Dev / CI tooling — installed in the same image because we run them
 # in container during `docker compose exec backend ruff check`. Pinned
 # so a transitive update doesn't quietly fail CI.
-ruff==0.15.17
+ruff==0.15.18
 pip-audit==2.10.1
 structlog==26.1.0
 stripe==15.2.1
