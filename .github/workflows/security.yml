@@ -23,7 +23,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # Full history always. gitleaks-action scans the pushed commit
           # RANGE (commits[0]^..after), so a shallow clone breaks on any
@@ -47,7 +47,7 @@ jobs:
     # see "gitleaks clean, trufflehog noisy" and respond per-tool.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # trufflehog needs commit range to compare
 
