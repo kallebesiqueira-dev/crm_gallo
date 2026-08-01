@@ -142,7 +142,7 @@ jobs:
         # accessible by integration". Don't fail the job over it; the SARIF
         # is still kept as a build artifact for manual review.
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.3
         with:
           sarif_file: trivy-${{ matrix.component.name }}.sarif
           category: trivy-${{ matrix.component.name }}
