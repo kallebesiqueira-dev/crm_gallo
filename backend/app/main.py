@@ -100,10 +100,21 @@ async def lifespan(app: FastAPI):
     # so by the time we get here the DB is at the right revision. We log
     # which revision is live so anyone tailing the startup output can
     # confirm at a glance.
-    async with engine.begin() as conn:
-        rev = (
-            await conn.execute(text("SELECT version_num FROM alembic_version"))
-        ).scalar_one_or_none()
+    # The revision probe is diagnostic. A slow or unreachable pooler must not
+    # take the whole function down on a cold start — requests still hit the
+    # database themselves and surface a real error there.
+    rev = None
+    try:
+        async with engine.begin() as conn:
+            rev = (
+                await conn.execute(text("SELECT version_num FROM alembic_version"))
+            ).scalar_one_or_none()
+    except Exception as exc:
+        log.warning(
+            "startup_db_probe_failed",
+            error=type(exc).__name__,
+            detail=str(exc)[:180],
+        )
 
     # Ensure the S3 bucket for file attachments exists. Idempotent —
     # safe to run on every boot. If MinIO/S3 is unreachable we LOG
