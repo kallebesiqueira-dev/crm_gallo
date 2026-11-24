@@ -3,7 +3,7 @@
 // calls send no cookies/credentials and need no CSRF token. Secrets never live
 // here — only the public base URL, which is already exposed to the browser.
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { API_URL } from "@/lib/api-base";
 
 export type ChatSource = "ai" | "fallback";
 

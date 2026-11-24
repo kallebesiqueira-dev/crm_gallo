@@ -895,6 +895,16 @@
     "select": "Auswählen"
   },
   "marketing": {
+    "scroll": {
+      "eyebrow": "Der Weg",
+      "title": "Vom ersten Hallo bis zur Unterschrift",
+      "steps": {
+        "capture": {"title": "Erfassen", "body": "Leads kommen aus Formularen, Importen oder dem Posteingang — schon bewertet, mit nächstem Schritt."},
+        "work": {"title": "Das Board führen", "body": "Überfällig, heute fällig und liegengebliebene Deals an einem Ort — nicht in einer Tabelle."},
+        "propose": {"title": "Anbieten", "body": "Angebote und Verträge bleiben am Deal, in der Währung, die der Kunde wirklich zahlt."},
+        "close": {"title": "Abschliessen", "body": "Unterschreiben im Produkt. Die Liste von morgen sagt, wen du anrufst."}
+      }
+    },
     "benefitFreeTier": "Für immer kostenlos für bis zu 2 Benutzer",
     "benefitNoCard": "Keine Kreditkarte erforderlich",
     "benefitCancel": "Jederzeit kündbar, Ihre Daten gehören Ihnen",

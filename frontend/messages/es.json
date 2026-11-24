@@ -895,6 +895,16 @@
     "select": "Seleccionar"
   },
   "marketing": {
+    "scroll": {
+      "eyebrow": "El recorrido",
+      "title": "Del primer hola a la firma",
+      "steps": {
+        "capture": {"title": "Captar", "body": "Los leads llegan de formularios, importaciones o la bandeja — ya puntuados, con el siguiente paso."},
+        "work": {"title": "Mover el tablero", "body": "Vencidos, para hoy o parados: todo en un sitio, no en una hoja de cálculo."},
+        "propose": {"title": "Proponer", "body": "Presupuestos y contratos se quedan en el negocio, en la moneda que el cliente paga."},
+        "close": {"title": "Cerrar", "body": "Firma dentro del producto. La lista de mañana dice a quién llamar."}
+      }
+    },
     "benefitFreeTier": "Gratis para siempre para hasta 2 usuarios",
     "benefitNoCard": "Sin tarjeta de crédito",
     "benefitCancel": "Cancela cuando quieras, tus datos son tuyos",

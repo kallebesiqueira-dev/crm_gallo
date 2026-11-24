@@ -29,10 +29,12 @@ gets cleaned up lazily by `list_user_sessions`.
 from __future__ import annotations
 
 import hashlib
+import time
 from datetime import UTC, datetime
 
 import redis.asyncio as redis
 
+from app import sql_sessions
 from app.config import get_settings
 
 _REFRESH_KEY_PREFIX = "refresh:"
@@ -49,11 +51,98 @@ _USED_REFRESH_TTL = 300
 _pool: redis.Redis | None = None
 
 
-def get_redis() -> redis.Redis:
+def _redis_backed() -> bool:
+    url = get_settings().redis_url
+    return url.startswith("redis://") or url.startswith("rediss://")
+
+
+class _MemoryRedis:
+    """Process-local stand-in for counters and short caches.
+
+    Refresh tokens do not live here — those go to Postgres via
+    `sql_sessions` so a second serverless instance can still refresh.
+    """
+
+    def __init__(self) -> None:
+        self._values: dict[str, tuple[str, float | None]] = {}
+        self._lists: dict[str, list[str]] = {}
+
+    def _get(self, key: str) -> str | None:
+        item = self._values.get(key)
+        if item is None:
+            return None
+        value, expires = item
+        if expires is not None and expires < time.monotonic():
+            self._values.pop(key, None)
+            return None
+        return value
+
+    async def ping(self) -> bool:
+        return True
+
+    async def get(self, key: str) -> str | None:
+        return self._get(key)
+
+    async def set(self, key: str, value: str, ex: int | None = None, nx: bool = False):
+        if nx and self._get(key) is not None:
+            return None
+        expires = time.monotonic() + ex if ex else None
+        self._values[key] = (value, expires)
+        return True
+
+    async def delete(self, *keys: str) -> int:
+        removed = 0
+        for key in keys:
+            if key in self._values or key in self._lists:
+                self._values.pop(key, None)
+                self._lists.pop(key, None)
+                removed += 1
+        return removed
+
+    async def incr(self, key: str) -> int:
+        current = self._get(key)
+        nxt = int(current or "0") + 1
+        expires = self._values[key][1] if current is not None and key in self._values else None
+        self._values[key] = (str(nxt), expires)
+        return nxt
+
+    async def expire(self, key: str, seconds: int) -> bool:
+        current = self._get(key)
+        if current is None:
+            return False
+        self._values[key] = (current, time.monotonic() + seconds)
+        return True
+
+    async def llen(self, key: str) -> int:
+        return len(self._lists.get(key, []))
+
+    async def lpush(self, key: str, value: str) -> int:
+        bucket = self._lists.setdefault(key, [])
+        bucket.insert(0, value)
+        return len(bucket)
+
+    async def ltrim(self, key: str, start: int, end: int) -> bool:
+        bucket = self._lists.get(key, [])
+        stop = None if end < 0 else end + 1
+        self._lists[key] = bucket[start:stop]
+        return True
+
+    async def lrange(self, key: str, start: int, end: int) -> list[str]:
+        bucket = self._lists.get(key, [])
+        stop = None if end < 0 else end + 1
+        return bucket[start:stop]
+
+
+_memory = _MemoryRedis()
+
+
+def get_redis():
     """Lazy singleton — first call constructs the connection pool,
     subsequent calls reuse it. Pool size defaults are fine for a single
     uvicorn worker; revisit when we add Gunicorn + multi-worker."""
     global _pool
+    if not _redis_backed():
+        return _memory
     if _pool is None:
         settings = get_settings()
         _pool = redis.from_url(
@@ -92,6 +181,10 @@ async def create_session(
     transactional pipeline so a crash between them can't leave a token
     valid but missing from the user's session list.
     """
+    if not _redis_backed():
+        return await sql_sessions.create_session(
+            token, user_id, ttl_seconds, user_agent=user_agent, ip_address=ip_address
+        )
     sid = session_id_from_token(token)
     now = datetime.now(UTC).isoformat()
     r = get_redis()
@@ -123,6 +216,8 @@ async def create_session(
 async def resolve_refresh_token(token: str) -> str | None:
     """Return the user_id this token belongs to, or None if the token
     is unknown / expired / revoked."""
+    if not _redis_backed():
+        return await sql_sessions.resolve_refresh_token(token)
     r = get_redis()
     return await r.get(_REFRESH_KEY_PREFIX + token)
 
@@ -132,6 +227,9 @@ async def touch_session(token: str) -> None:
     from /refresh so the "active sessions" UI reflects recent use.
     Silent no-op if the session metadata is missing (shouldn't happen,
     but treat as best-effort)."""
+    if not _redis_backed():
+        await sql_sessions.touch_session(token)
+        return
     sid = session_id_from_token(token)
     r = get_redis()
     # HSET only if the key exists — avoids resurrecting a key that
@@ -165,6 +263,15 @@ async def rotate_refresh_token(
     floor; tune via `_USED_REFRESH_TTL` if telemetry suggests
     otherwise.
     """
+    if not _redis_backed():
+        return await sql_sessions.rotate_refresh_token(
+            old_token,
+            new_token,
+            user_id,
+            ttl_seconds,
+            user_agent=user_agent,
+            ip_address=ip_address,
+        )
     new_sid = session_id_from_token(new_token)
     old_sid = session_id_from_token(old_token)
     now = datetime.now(UTC).isoformat()
@@ -205,6 +312,8 @@ async def check_rotated_token(token: str) -> str | None:
     """Return the user_id this (now-tombstoned) token belonged to,
     or None if the token is not in the tombstone. Used by /refresh
     to detect replays after rotation."""
+    if not _redis_backed():
+        return await sql_sessions.check_rotated_token(token)
     r = get_redis()
     return await r.get(_USED_REFRESH_PREFIX + token)
 
@@ -215,6 +324,8 @@ async def revoke_refresh_token(token: str) -> bool:
     from the user's set — all in one transactional pipeline so partial
     cleanup can't strand orphan entries. Returns True if anything was
     deleted (i.e. the token was a real live session)."""
+    if not _redis_backed():
+        return await sql_sessions.revoke_refresh_token(token)
     r = get_redis()
     sid = session_id_from_token(token)
     user_id = await r.get(_REFRESH_KEY_PREFIX + token)
@@ -236,6 +347,8 @@ async def list_user_sessions(user_id: str) -> list[dict]:
     `id`, `created_at`, `last_seen_at`, `user_agent`, `ip_address`.
     Drops and self-heals SET entries whose session hash has already
     expired (TTL drift)."""
+    if not _redis_backed():
+        return await sql_sessions.list_user_sessions(user_id)
     r = get_redis()
     sids = await r.smembers(_USER_SESSIONS_PREFIX + user_id)
     sessions: list[dict] = []
@@ -265,6 +378,8 @@ async def revoke_session_by_id(user_id: str, session_id: str) -> bool:
     """Revoke a specific session, checking it belongs to this user
     (so /sessions/{id} cannot be used to enumerate or revoke other
     users' sessions). Returns True if a session was found and revoked."""
+    if not _redis_backed():
+        return await sql_sessions.revoke_session_by_id(user_id, session_id)
     r = get_redis()
     data = await r.hgetall(_SESSION_KEY_PREFIX + session_id)
     if not data or data.get("user_id") != user_id:
@@ -286,6 +401,8 @@ async def revoke_user_sessions_except(user_id: str, except_session_id: str | Non
     by `except_session_id` (typically the caller's own session, so
     "log out other devices" doesn't log YOU out). Returns the count
     of sessions revoked. Pass None to revoke all sessions."""
+    if not _redis_backed():
+        return await sql_sessions.revoke_user_sessions_except(user_id, except_session_id)
     r = get_redis()
     sids = await r.smembers(_USER_SESSIONS_PREFIX + user_id)
     count = 0

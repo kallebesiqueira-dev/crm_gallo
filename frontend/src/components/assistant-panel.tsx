@@ -6,8 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowUp, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getToken, readCookie } from "@/lib/auth";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+import { API_URL } from "@/lib/api-base";
 
 interface Msg {
   role: "user" | "assistant";

@@ -26,6 +26,11 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
+    // Native scroll on small screens: Lenis interpolation fights touch
+    // and costs main-thread time on mobile Lighthouse.
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      return;
+    }
 
     gsap.registerPlugin(ScrollTrigger);
 

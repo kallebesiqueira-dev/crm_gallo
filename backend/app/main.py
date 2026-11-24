@@ -111,13 +111,14 @@ async def lifespan(app: FastAPI):
     # time with a clear message, but the rest of the app is fine
     # without object storage.
     s3_ready = False
-    try:
-        from app.storage import ensure_bucket
+    if settings.s3_endpoint_url.strip():
+        try:
+            from app.storage import ensure_bucket
 
-        await ensure_bucket()
-        s3_ready = True
-    except Exception as e:
-        log.warning("s3_bucket_bootstrap_failed", error=str(e)[:200])
+            await ensure_bucket()
+            s3_ready = True
+        except Exception as e:
+            log.warning("s3_bucket_bootstrap_failed", error=str(e)[:200])
 
     log.info(
         "startup_complete",

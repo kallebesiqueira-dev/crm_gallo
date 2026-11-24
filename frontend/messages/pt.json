@@ -895,6 +895,16 @@
     "select": "Selecionar"
   },
   "marketing": {
+    "scroll": {
+      "eyebrow": "O percurso",
+      "title": "Do primeiro olá ao contrato assinado",
+      "steps": {
+        "capture": {"title": "Captar", "body": "Os leads chegam de formulários, importações ou da caixa — já pontuados, com o próximo passo."},
+        "work": {"title": "Trabalhar o quadro", "body": "Atrasados, para hoje ou parados: tudo num sítio, não numa folha de cálculo."},
+        "propose": {"title": "Propor", "body": "Orçamentos e contratos ficam no negócio, na moeda que o cliente realmente paga."},
+        "close": {"title": "Fechar", "body": "Assine no produto. A lista de amanhã diz a quem ligar."}
+      }
+    },
     "benefitFreeTier": "Grátis para sempre para até 2 usuários",
     "benefitNoCard": "Sem cartão de crédito",
     "benefitCancel": "Cancele quando quiser, seus dados são seus",

@@ -1,6 +1,7 @@
 import { clearToken, readCookie } from "./auth";
+import { API_URL } from "./api-base";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export { API_URL };
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {

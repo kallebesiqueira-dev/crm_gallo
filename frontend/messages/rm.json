@@ -895,6 +895,16 @@
     "select": "Selecziunar"
   },
   "marketing": {
+    "scroll": {
+      "eyebrow": "La via",
+      "title": "Da l'emprim salid fin la suttascripziun",
+      "steps": {
+        "capture": {"title": "Rimnar", "body": "Ils leads arrivan da formulars, imports u da la chascha — gia valitads, cun il proxim pass."},
+        "work": {"title": "Manar la tabella", "body": "En retard, per oz u bloccads: tut en in lieu, betg en ina tabella."},
+        "propose": {"title": "Proponer", "body": "Offertas e contracts restan al deal, en la valuta che la clientella paja."},
+        "close": {"title": "Concluder", "body": "Suttascriva en il product. La glista da damaun di a tgi telefonar."}
+      }
+    },
     "benefitFreeTier": "Gratuit per adina per fin a 2 utilisaturs",
     "benefitNoCard": "Senza carta da credit",
     "benefitCancel": "Annulla cura ti vuls, tias datas restan tias",

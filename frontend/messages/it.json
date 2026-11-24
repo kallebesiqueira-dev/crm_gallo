@@ -895,6 +895,16 @@
     "select": "Seleziona"
   },
   "marketing": {
+    "scroll": {
+      "eyebrow": "Il percorso",
+      "title": "Dal primo ciao alla firma",
+      "steps": {
+        "capture": {"title": "Raccogli", "body": "I lead arrivano da moduli, import o dalla inbox — già valutati, con il passo successivo."},
+        "work": {"title": "Tieni la board", "body": "In ritardo, in scadenza oggi o fermi: tutto in un posto, non in un foglio."},
+        "propose": {"title": "Proponi", "body": "Preventivi e contratti restano sul deal, nella valuta che il cliente paga davvero."},
+        "close": {"title": "Chiudi", "body": "Firma nel prodotto. La lista di domani dice chi chiamare."}
+      }
+    },
     "benefitFreeTier": "Gratis per sempre fino a 2 utenti",
     "benefitNoCard": "Senza carta di credito",
     "benefitCancel": "Cancella quando vuoi, i tuoi dati restano tuoi",

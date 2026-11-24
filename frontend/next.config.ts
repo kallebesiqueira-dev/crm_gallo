@@ -16,8 +16,18 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
+const apiProxy = process.env.API_PROXY_URL?.replace(/\/$/, "");
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    if (!apiProxy) return [];
+    return [
+      { source: "/api/:path*", destination: `${apiProxy}/api/:path*` },
+      { source: "/health", destination: `${apiProxy}/health` },
+      { source: "/ready", destination: `${apiProxy}/ready` },
+    ];
+  },
   // Self-contained server bundle (.next/standalone) so the production Docker
   // image ships only the traced runtime deps — no dev toolchain, no full
   // node_modules. This is what keeps the runner stage small and Trivy-clean

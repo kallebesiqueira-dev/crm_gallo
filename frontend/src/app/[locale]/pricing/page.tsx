@@ -48,6 +48,8 @@ import { Footer } from "@/components/marketing/footer";
 import { TiltCard } from "@/components/marketing/tilt-card";
 import { Logo } from "@/components/logo";
 import { SmoothScroll } from "@/components/marketing/smooth-scroll";
+import { HeroCanvas } from "@/components/marketing/hero-canvas";
+import { PipelineScroll } from "@/components/marketing/pipeline-scroll";
 import { SearchParamWatcher } from "@/components/search-param-watcher";
 import { api, type PlanOut, type PlanId, type BillingCycle } from "@/lib/api";
 import { createPublicCheckoutSession } from "@/lib/public-api";
@@ -333,6 +335,7 @@ export default function PricingPage() {
             standalone
             className="relative mx-auto flex w-full max-w-[480px] items-center justify-center"
           >
+            <HeroCanvas />
             <TiltCard max={12} glare={false} className="relative w-full">
             {/* Dashed outer ring */}
             <svg
@@ -478,6 +481,7 @@ export default function PricingPage() {
 
       {/* ============================== MANIFESTO (main objective) ============================== */}
       <ManifestoSection />
+      <PipelineScroll />
 
       {/* ============================== COMPARISON (Why Gallo) ============================== */}
       <ComparisonSection />
