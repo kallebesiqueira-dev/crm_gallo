@@ -58,6 +58,11 @@ def _redis_settings_from_url() -> RedisSettings:
     is intentionally minimal — we only run against the redis://
     scheme in dev and rediss:// in prod, both supported here."""
     url = get_settings().redis_url
+    # Demo deploys set REDIS_URL=memory:// (sessions live in Postgres).
+    # This class is evaluated at import, so a non-redis URL must not crash
+    # the API process. The worker itself is not started in that mode.
+    if not (url.startswith("redis://") or url.startswith("rediss://")):
+        return RedisSettings(host="localhost")
     # `redis://[[username]:password@]host[:port][/db]`
     no_scheme = url.replace("rediss://", "").replace("redis://", "")
     ssl = url.startswith("rediss://")
