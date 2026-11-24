@@ -106,9 +106,3 @@ html.gallo-splash-pending body {
     background: hsl(var(--primary) / 0.28);
   }
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  [data-reveal] {
-    opacity: 0;
-  }
-}

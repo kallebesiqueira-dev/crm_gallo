@@ -65,11 +65,12 @@ export function Reveal({
       if (!el || reduced || !self) return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const spec = SPECS[variant];
-      gsap.fromTo(el, spec.from, {
-        ...spec.to,
+      gsap.from(el, {
+        ...spec.from,
         duration: spec.duration,
         delay: delay ?? 0,
         ease: EASE,
+        immediateRender: false,
         scrollTrigger: { trigger: el, start: "top 88%", once: true },
       });
     },
@@ -118,17 +119,14 @@ export function RevealGroup({
       );
       if (items.length === 0) return;
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: root, start: "top 84%", once: true },
+        scrollTrigger: { trigger: root, start: "top 88%", once: true },
       });
       items.forEach((el, index) => {
         const spec = SPECS[(el.dataset.reveal as RevealVariant) || "base"] ?? SPECS.base;
         const extra = Number(el.dataset.revealDelay || 0);
-        tl.fromTo(
-          el,
-          spec.from,
-          { ...spec.to, duration: spec.duration, ease: EASE },
-          index * stagger + delayChildren + extra,
-        );
+        // immediateRender false: if the trigger never fires (pinned sections
+        // shift later triggers), the block stays visible instead of opacity 0.
+        tl.from(el, { ...spec.from, duration: spec.duration, ease: EASE, immediateRender: false }, index * stagger + delayChildren + extra);
       });
     },
     { scope: ref, dependencies: [reduced, stagger, delayChildren] },

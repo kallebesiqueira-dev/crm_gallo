@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, HelpCircle, LogOut, Mail, Search, Sparkles, TrendingUp } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -225,20 +231,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh bg-muted/30">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-50 flex min-h-16 items-center gap-3 border-b bg-background/80 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:px-6">
-            {/* Left — hamburger (mobile) + current section + org switcher */}
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <header className="sticky top-0 z-50 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur-xl sm:px-4">
+            <div className="flex shrink-0 items-center gap-2">
               <MobileNav />
               <div className="hidden sm:block">
                 <OrgSwitcher activeOrgId={user?.last_active_org_id ?? null} />
               </div>
             </div>
 
-            {/* Center — global search; opens the ⌘K command palette */}
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="mr-auto hidden w-full max-w-[18rem] items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:flex"
+              className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full border border-input bg-muted/50 px-3 text-left text-sm text-muted-foreground transition hover:border-primary/40 md:max-w-md"
             >
               <Search className="h-4 w-4 shrink-0" />
               <span className="flex-1 truncate">{tSearch("placeholder")}</span>
@@ -247,69 +251,93 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </kbd>
             </button>
 
-            {/* Right — actions + identity */}
-            <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
-              <Link
-                href={`/${locale}/inbox`}
-                aria-label="Messaggi"
-                className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground sm:grid"
-              >
-                <Mail className="h-5 w-5" />
-              </Link>
-              <NotificationsBell />
-              {/* Assistant slide-out — visible on every width since the page
-                  left the nav (mobile must keep an entry point). */}
-              <button
-                type="button"
-                data-tour="assistant"
-                onClick={() => {
-                  setAssistantPrompt("");
-                  setAssistantOpen(true);
-                }}
-                aria-label={tNav("assistant")}
-                title={tNav("assistant")}
-                className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground"
-              >
-                <Sparkles className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setSupportOpen(true)}
-                aria-label="Aiuto"
-                className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground sm:grid"
-              >
-                <HelpCircle className="h-5 w-5" />
-              </button>
-              <ThemeToggle />
-              <LanguageSwitcher />
-              {billing && (
-                <span className="hidden sm:inline-flex">
-                  <PlanBadge plan={billing.plan} />
-                </span>
-              )}
-              <div className="ml-1 flex items-center gap-2 border-l border-border pl-2">
-                {user ? (
-                  <AvatarUpload entityType="user" entityId={user.id} fallback={initials} size={36} />
-                ) : (
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-semibold text-white">
-                    {initials}
-                  </span>
-                )}
-                <div className="hidden leading-tight xl:block">
-                  <div className="max-w-[9rem] truncate text-sm font-semibold">{fullName}</div>
-                  <div className="text-[11px] text-muted-foreground">{roleLabel}</div>
-                </div>
+            <div className="ml-auto flex shrink-0 items-center gap-1.5">
+              <div className="flex items-center rounded-full border bg-muted/40 p-0.5">
+                <Link
+                  href={`/${locale}/inbox`}
+                  aria-label={tNav("inbox")}
+                  className="hidden h-8 w-8 place-items-center rounded-full text-muted-foreground transition hover:bg-background hover:text-foreground sm:grid"
+                >
+                  <Mail className="h-4 w-4" />
+                </Link>
+                <NotificationsBell />
+                <button
+                  type="button"
+                  data-tour="assistant"
+                  onClick={() => {
+                    setAssistantPrompt("");
+                    setAssistantOpen(true);
+                  }}
+                  aria-label={tNav("assistant")}
+                  className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition hover:bg-background hover:text-foreground"
+                >
+                  <Sparkles className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupportOpen(true)}
+                  aria-label="Help"
+                  className="hidden h-8 w-8 place-items-center rounded-full text-muted-foreground transition hover:bg-background hover:text-foreground sm:grid"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={logout}
-                aria-label={tAuth("logout")}
-                className="px-2 sm:px-3"
-              >
-                <LogOut className="h-4 w-4 sm:hidden" />
-                <span className="hidden sm:inline">{tAuth("logout")}</span>
-              </Button>
+              <LanguageSwitcher />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-9 items-center gap-2 rounded-full border bg-background py-0.5 pl-0.5 pr-2 text-left transition hover:bg-accent"
+                    aria-label={fullName}
+                  >
+                    {user ? (
+                      <AvatarUpload entityType="user" entityId={user.id} fallback={initials} size={28} />
+                    ) : (
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-xs font-semibold text-white">
+                        {initials}
+                      </span>
+                    )}
+                    <span className="hidden max-w-[7rem] truncate text-sm font-medium sm:inline">{fullName}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={8}
+                  className="z-50 w-56 rounded-xl border bg-popover p-1.5 shadow-lg"
+                >
+                  <div className="px-2 py-2">
+                    <div className="truncate text-sm font-semibold">{fullName}</div>
+                    <div className="text-xs text-muted-foreground">{roleLabel}</div>
+                    {billing && (
+                      <div className="mt-2">
+                        <PlanBadge plan={billing.plan} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end px-1">
+                    <ThemeToggle />
+                  </div>
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+                    onSelect={() => router.push(`/${locale}/settings`)}
+                  >
+                    {tNav("settings")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+                    onSelect={() => router.push(`/${locale}/billing`)}
+                  >
+                    {tNav("billing")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+                    onSelect={() => logout()}
+                  >
+                    <LogOut className="mr-2 inline h-3.5 w-3.5" />
+                    {tAuth("logout")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 

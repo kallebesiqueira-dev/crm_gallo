@@ -169,7 +169,7 @@ export default function PricingPage() {
   const locale = useLocale();
   const router = useRouter();
 
-  const [plans, setPlans] = useState<PlanOut[] | null>(null);
+  const [plans, setPlans] = useState<PlanOut[]>(FALLBACK_PLANS);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [busyPlan, setBusyPlan] = useState<PlanId | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
@@ -567,8 +567,7 @@ export default function PricingPage() {
             stagger={0.12}
             delayChildren={0.15}
           >
-            {plans === null && <PlanSkeleton count={3} />}
-            {plans?.map((plan) => (
+            {plans.map((plan) => (
               <Reveal key={plan.id} variant="card" className="h-full">
                 {/* Vitrine: each price card tilts in 3D toward the cursor with
                     a glass sheen — a little showroom for the plans. */}
@@ -601,7 +600,7 @@ export default function PricingPage() {
       </section>
 
       {/* ============================== COMPARE MATRIX ============================== */}
-      {plans && plans.length > 0 && (
+      {plans.length > 0 && (
         <section>
           <RevealGroup className="mx-auto max-w-5xl px-6 py-20">
             <Reveal variant="soft">
@@ -861,20 +860,6 @@ function PlanCard({
         </ul>
       </div>
     </div>
-  );
-}
-
-function PlanSkeleton({ count }: { count: number }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="h-[520px] animate-pulse rounded-2xl border bg-card/50"
-          style={{ animationDelay: `${i * 80}ms` }}
-        />
-      ))}
-    </>
   );
 }
 
