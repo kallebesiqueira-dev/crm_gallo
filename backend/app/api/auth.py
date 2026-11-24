@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -333,6 +333,7 @@ async def login(
     request: Request,
     response: Response,
     form: OAuth2PasswordRequestForm = Depends(),
+    turnstile_token: str | None = Form(default=None),
     db: AsyncSession = Depends(get_db),
 ):
     """Verifies password. If the user has MFA enabled, returns a
@@ -343,7 +344,14 @@ async def login(
     Response shape depends on MFA state, so the return type is
     intentionally untyped at the FastAPI layer (frontend type-narrows
     on the `mfa_required` field).
+
+    Turnstile is checked first. A missing token is allowed (the widget
+    fails open after a few seconds) so a blocked script cannot trap login.
+    A present but invalid token is rejected.
     """
+    if not await verify_turnstile(turnstile_token, missing_ok=True):
+        raise HTTPException(status_code=400, detail="CAPTCHA verification failed.")
+
     result = await db.execute(select(User).where(User.email == form.username))
     user = result.scalar_one_or_none()
     # Always run bcrypt — even on missing-user — so the response time

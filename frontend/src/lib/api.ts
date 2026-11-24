@@ -1261,8 +1261,13 @@ export interface Page<T> {
 }
 
 export const api = {
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(
+    email: string,
+    password: string,
+    turnstileToken?: string | null,
+  ): Promise<LoginResponse> {
     const body = new URLSearchParams({ username: email, password });
+    if (turnstileToken) body.set("turnstile_token", turnstileToken);
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

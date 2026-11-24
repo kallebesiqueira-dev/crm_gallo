@@ -11,11 +11,11 @@
 // input is labelled; Enter sends; the message log is an aria-live region.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Bot, RefreshCw, Send, User, X } from "lucide-react";
 import { publicChatbot, type ChatSource, type ChatTurn } from "@/lib/public-api";
 import { cn } from "@/lib/utils";
+import { WavingRobot } from "@/components/marketing/chatbot/waving-robot";
 
 interface Msg {
   role: "user" | "assistant";
@@ -36,7 +36,6 @@ export default function LandingChatbot() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [lastUserMsg, setLastUserMsg] = useState<string | null>(null);
-  const [hovered, setHovered] = useState(false);
 
   const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -117,36 +116,8 @@ export default function LandingChatbot() {
 
   return (
     <>
-      {/* Interactive robot launcher (replaces the old floating button):
-          hovering the robot reveals a clickable cloud above its head; clicking
-          the cloud — or the robot — opens the chat. The cloud fades out once
-          the chat is closed and the pointer leaves. */}
-      <div
-        className="fixed bottom-4 right-4 z-50"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {/* Cloud / speech bubble — invisible until hover (or while the chat is open). */}
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label={t("launcherLabel")}
-          tabIndex={hovered || open ? 0 : -1}
-          className={cn(
-            "absolute bottom-full right-0 mb-3 max-w-[12rem] cursor-pointer rounded-2xl",
-            "bg-white px-3 py-1.5 text-center text-xs font-semibold leading-snug text-violet-700",
-            "shadow-lg ring-1 ring-violet-200 transition-all duration-300 ease-out",
-            "hover:-translate-y-1 hover:scale-105 dark:bg-slate-800 dark:text-violet-200 dark:ring-violet-500/40",
-            "after:absolute after:right-10 after:top-full after:border-x-[6px] after:border-t-[7px] after:border-x-transparent after:border-t-white dark:after:border-t-slate-800",
-            hovered || open
-              ? "pointer-events-auto translate-y-0 opacity-100"
-              : "pointer-events-none translate-y-2 opacity-0",
-          )}
-        >
-          {t("launcherLabel")}
-        </button>
-
-        {/* Robot — bigger, frameless ("solto"), the launcher itself. */}
+      {/* Robot launcher. The greeting bubble and wave are CSS; click opens chat. */}
+      <div className="fixed bottom-4 right-4 z-50">
         <button
           ref={launcherRef}
           type="button"
@@ -156,14 +127,7 @@ export default function LandingChatbot() {
           aria-controls="gallo-chatbot-panel"
           className="block cursor-pointer rounded-2xl transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
         >
-          <Image
-            src="/roboat.png"
-            alt={t("launcherLabel")}
-            width={128}
-            height={128}
-            priority={false}
-            className="h-16 w-16 animate-bob object-contain drop-shadow-[0_8px_22px_rgba(76,29,149,0.5)] sm:h-24 sm:w-24"
-          />
+          <WavingRobot greeting={t("waveHello")} />
         </button>
       </div>
 
@@ -181,13 +145,7 @@ export default function LandingChatbot() {
         >
           <header className="flex items-center gap-3 bg-violet-600 px-4 py-3 text-white">
             <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-white/15">
-              <Image
-                src="/roboat.png"
-                alt=""
-                width={36}
-                height={36}
-                className="h-full w-full object-cover object-top"
-              />
+              <WavingRobot compact />
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{t("title")}</p>

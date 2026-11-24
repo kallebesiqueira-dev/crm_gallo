@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, HelpCircle, LogOut, Mail, Search, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, CreditCard, HelpCircle, LogOut, Mail, Search, Settings, Sparkles, TrendingUp } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +35,9 @@ import {
   type User,
 } from "@/lib/api";
 import { clearToken, getToken, isExpired, onTokenChange } from "@/lib/auth";
+
+const menuItemClass =
+  "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm outline-none data-[highlighted]:bg-accent";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -303,37 +306,42 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuContent
                   align="end"
                   sideOffset={8}
-                  className="z-50 w-56 rounded-xl border bg-popover p-1.5 shadow-lg"
+                  className="z-50 w-64 rounded-xl border bg-popover p-1.5 shadow-lg"
                 >
-                  <div className="px-2 py-2">
-                    <div className="truncate text-sm font-semibold">{fullName}</div>
-                    <div className="text-xs text-muted-foreground">{roleLabel}</div>
-                    {billing && (
-                      <div className="mt-2">
-                        <PlanBadge plan={billing.plan} />
-                      </div>
+                  <div className="flex items-center gap-3 px-2.5 py-2">
+                    {user ? (
+                      <AvatarUpload entityType="user" entityId={user.id} fallback={initials} size={36} />
+                    ) : (
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-xs font-semibold text-white">
+                        {initials}
+                      </span>
                     )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold leading-5">{fullName}</div>
+                      <div className="truncate text-xs leading-5 text-muted-foreground">{roleLabel}</div>
+                      {billing ? (
+                        <div className="mt-1">
+                          <PlanBadge plan={billing.plan} />
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="flex justify-end px-1">
-                    <ThemeToggle />
-                  </div>
-                  <DropdownMenuItem
-                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
-                    onSelect={() => router.push(`/${locale}/settings`)}
-                  >
+                  <div className="mx-2 my-1 h-px bg-border" role="separator" />
+                  <DropdownMenuItem className={menuItemClass} onSelect={() => router.push(`/${locale}/settings`)}>
+                    <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {tNav("settings")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
-                    onSelect={() => router.push(`/${locale}/billing`)}
-                  >
+                  <DropdownMenuItem className={menuItemClass} onSelect={() => router.push(`/${locale}/billing`)}>
+                    <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {tNav("billing")}
                   </DropdownMenuItem>
+                  <ThemeToggle variant="menu" />
+                  <div className="mx-2 my-1 h-px bg-border" role="separator" />
                   <DropdownMenuItem
-                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+                    className={`${menuItemClass} text-rose-600 data-[highlighted]:bg-rose-500/10 data-[highlighted]:text-rose-700 dark:text-rose-400`}
                     onSelect={() => logout()}
                   >
-                    <LogOut className="mr-2 inline h-3.5 w-3.5" />
+                    <LogOut className="h-4 w-4 shrink-0" />
                     {tAuth("logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>

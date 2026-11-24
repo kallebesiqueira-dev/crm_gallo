@@ -171,8 +171,7 @@ async def list_user_sessions(user_id: str) -> list[dict]:
     async with engine.begin() as conn:
         await conn.execute(
             text(
-                "DELETE FROM auth_refresh_sessions "
-                "WHERE user_id = :user_id AND expires_at <= now()"
+                "DELETE FROM auth_refresh_sessions WHERE user_id = :user_id AND expires_at <= now()"
             ),
             {"user_id": user_id},
         )

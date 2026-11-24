@@ -1293,6 +1293,7 @@
   },
   "chatbot": {
     "launcherLabel": "Abrir o assistente GALLO",
+    "waveHello": "Olá!",
     "title": "Assistente GALLO",
     "subtitle": "Pergunte sobre funcionalidades, planos e segurança",
     "greeting": "Olá! 👋 Sou o assistente do GALLO CRM. Pergunte-me qualquer coisa sobre funcionalidades, planos, o período de teste gratuito, segurança ou como começar.",

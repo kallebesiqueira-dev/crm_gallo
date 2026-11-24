@@ -130,3 +130,85 @@ html.gallo-splash-pending body {
 @media (prefers-reduced-motion: reduce) {
   .gallo-wordmark { animation: none; }
 }
+
+/* Landing mascot: idle float, a short wave on load, and a greeting bubble. */
+.gallo-robot-arm {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: gallo-wave 0.95s ease-in-out 2 both;
+}
+.gallo-robot-body {
+  animation: gallo-float 3.4s ease-in-out infinite;
+}
+.gallo-robot-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gallo-blink 4.8s ease-in-out infinite;
+}
+.gallo-robot:hover .gallo-robot-arm,
+.gallo-robot:focus-within .gallo-robot-arm {
+  animation: gallo-wave 0.7s ease-in-out infinite;
+}
+.gallo-robot-hello {
+  position: absolute;
+  bottom: calc(100% - 0.15rem);
+  left: 50%;
+  z-index: 1;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #6d28d9;
+  box-shadow: 0 8px 22px rgba(76, 29, 149, 0.28);
+  animation: gallo-hello 4.4s ease-in-out 0.35s 1 both;
+}
+.gallo-robot-hello::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: #fff;
+}
+.gallo-robot:hover .gallo-robot-hello,
+.gallo-robot:focus-within .gallo-robot-hello {
+  animation: none;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@keyframes gallo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes gallo-wave {
+  0%, 100% { transform: rotate(8deg); }
+  25% { transform: rotate(-28deg); }
+  50% { transform: rotate(6deg); }
+  75% { transform: rotate(-24deg); }
+}
+@keyframes gallo-blink {
+  0%, 42%, 48%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.12); }
+}
+@keyframes gallo-hello {
+  0% { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.92); }
+  12%, 78% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.96); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallo-robot-body,
+  .gallo-robot-arm,
+  .gallo-robot-eyes { animation: none; }
+  .gallo-robot-arm { transform: none; }
+  .gallo-robot-hello {
+    animation: none;
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}

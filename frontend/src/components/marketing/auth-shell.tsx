@@ -23,7 +23,7 @@ export function AuthShell({
 
   return (
     <div className="dark relative min-h-dvh bg-[#040509] text-foreground">
-      <FuturisticBackground />
+      <FuturisticBackground particles />
 
       <div className="relative z-10 flex min-h-dvh flex-col">
         {/* Top bar */}

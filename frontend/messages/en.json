@@ -1293,6 +1293,7 @@
   },
   "chatbot": {
     "launcherLabel": "Open the GALLO assistant",
+    "waveHello": "Hi!",
     "title": "GALLO assistant",
     "subtitle": "Ask about features, plans & security",
     "greeting": "Hi! 👋 I'm the GALLO CRM assistant. Ask me anything about features, plans, the free trial, security, or how to get started.",
