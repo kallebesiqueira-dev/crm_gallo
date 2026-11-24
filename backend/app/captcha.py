@@ -16,34 +16,34 @@ from app.config import get_settings
 _VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
 
-async def verify_turnstile(token: str | None, remote_ip: str | None = None) -> bool:
+async def verify_turnstile(
+    token: str | None,
+    remote_ip: str | None = None,
+    *,
+    missing_ok: bool = False,
+) -> bool:
     """Return True if the Turnstile token is valid (or if CAPTCHA is disabled).
 
-    Disabled (no secret) → always True. Configured → a MISSING or INVALID
-    token fails CLOSED (Turnstile is live, so a real visitor's widget yields a
-    token; an absent/invalid one signals a bot), while a verified token passes.
-    A network error reaching Cloudflare fails OPEN so an outage never blocks
-    sign-ups; the per-IP rate limit is a second layer throughout.
+    Disabled (no secret) → always True. Configured → an INVALID token fails
+    CLOSED. A missing token fails CLOSED unless ``missing_ok`` (login): the
+    widget can time out or fail to load, and that path must not trap the user.
+    A network error or a siteverify call that exceeds 4s fails OPEN so an
+    outage never blocks the form. The per-IP rate limit stays as a second layer.
     """
     secret = get_settings().turnstile_secret_key
     if not secret:
         return True
     if not token:
-        # Fail CLOSED on a missing token: Turnstile is configured and live (the
-        # site key is served to the browser), so a legitimate visitor's widget
-        # produces a token. An absent token signals a bot or a tampered/blocked
-        # client — reject it. The per-IP rate limit remains a second layer.
-        return False
+        return missing_ok
     payload = {"secret": secret, "response": token}
     if remote_ip:
         payload["remoteip"] = remote_ip
     try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             resp = await client.post(_VERIFY_URL, data=payload)
         return bool(resp.json().get("success"))
     except httpx.RequestError:
-        # Connectivity fault reaching Cloudflare → fail OPEN so an outage never
-        # blocks sign-ups (the per-IP rate limit stays as a second layer).
+        # Connectivity fault or timeout reaching Cloudflare → fail OPEN.
         return True
     except Exception:
         # Any other error — non-2xx, unparseable/unexpected body — is a FAILED

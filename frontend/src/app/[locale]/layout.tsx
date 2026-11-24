@@ -1,3 +1,4 @@
+import { Instrument_Sans } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -7,6 +8,12 @@ import { QueryProvider } from "@/components/query-provider";
 import { SentryBoot } from "@/sentry/sentry-boot";
 import { ToastProvider } from "@/components/toast-provider";
 import { locales, type Locale } from "@/i18n/config";
+
+const instrument = Instrument_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-instrument",
+});
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -25,7 +32,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} className={instrument.variable} suppressHydrationWarning>
       <body>
         <SentryBoot />
         <NextIntlClientProvider locale={locale} messages={messages}>

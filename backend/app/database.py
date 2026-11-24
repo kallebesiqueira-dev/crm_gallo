@@ -11,15 +11,17 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase, Session, with_loader_criteria
 
 from app.config import get_settings
+from app.db_url import prepare_async_url
 
 settings = get_settings()
+_db_url, _db_connect_args = prepare_async_url(settings.runtime_database_url)
 
 engine = create_async_engine(
-    settings.runtime_database_url,
+    _db_url,
     echo=False,
     future=True,
     pool_pre_ping=True,
-    connect_args={"server_settings": {"statement_timeout": "30000"}},
+    connect_args=_db_connect_args,
 )
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 

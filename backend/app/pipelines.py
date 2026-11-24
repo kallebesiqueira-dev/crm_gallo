@@ -21,7 +21,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import LeadStage, Pipeline, PipelineKind, PipelineStage
+from app.models import Pipeline, PipelineKind, PipelineStage
 
 # Seed templates: (slug, name, probability, is_won, is_lost). These
 # mirror the legacy enum so the per-row backfill in Phase 2 is a
@@ -106,8 +106,3 @@ KIND_LOOKUP: dict[str, PipelineKind] = {
     "lead": PipelineKind.lead,
     "deal": PipelineKind.deal,
 }
-
-
-# Silence ruff: LeadStage import kept for future Phase 2 backfill
-# helper that lives here. Remove this when the helper lands.
-_ = LeadStage

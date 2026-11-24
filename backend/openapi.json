@@ -1001,6 +1001,17 @@
             "title": "Scope",
             "type": "string"
           },
+          "turnstile_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnstile Token"
+          },
           "username": {
             "title": "Username",
             "type": "string"
@@ -12766,7 +12777,7 @@
     },
     "/api/auth/login": {
       "post": {
-        "description": "Verifies password. If the user has MFA enabled, returns a\nshort-lived `mfa_token` instead of a full session — the client\nfollows up with /mfa/verify. Otherwise returns the full session\n(cookies + body) as before.\n\nResponse shape depends on MFA state, so the return type is\nintentionally untyped at the FastAPI layer (frontend type-narrows\non the `mfa_required` field).",
+        "description": "Verifies password. If the user has MFA enabled, returns a\nshort-lived `mfa_token` instead of a full session — the client\nfollows up with /mfa/verify. Otherwise returns the full session\n(cookies + body) as before.\n\nResponse shape depends on MFA state, so the return type is\nintentionally untyped at the FastAPI layer (frontend type-narrows\non the `mfa_required` field).\n\nTurnstile is checked first. A missing token is allowed (the widget\nfails open after a few seconds) so a blocked script cannot trap login.\nA present but invalid token is rejected.",
         "operationId": "login_api_auth_login_post",
         "requestBody": {
           "content": {

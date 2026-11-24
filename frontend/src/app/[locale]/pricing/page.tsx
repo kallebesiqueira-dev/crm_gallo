@@ -48,6 +48,8 @@ import { Footer } from "@/components/marketing/footer";
 import { TiltCard } from "@/components/marketing/tilt-card";
 import { Logo } from "@/components/logo";
 import { SmoothScroll } from "@/components/marketing/smooth-scroll";
+import { HeroCanvas } from "@/components/marketing/hero-canvas";
+import { PipelineScroll } from "@/components/marketing/pipeline-scroll";
 import { SearchParamWatcher } from "@/components/search-param-watcher";
 import { api, type PlanOut, type PlanId, type BillingCycle } from "@/lib/api";
 import { createPublicCheckoutSession } from "@/lib/public-api";
@@ -167,7 +169,7 @@ export default function PricingPage() {
   const locale = useLocale();
   const router = useRouter();
 
-  const [plans, setPlans] = useState<PlanOut[] | null>(null);
+  const [plans, setPlans] = useState<PlanOut[]>(FALLBACK_PLANS);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [busyPlan, setBusyPlan] = useState<PlanId | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
@@ -273,7 +275,7 @@ export default function PricingPage() {
       <Suspense fallback={null}>
         <SearchParamWatcher name="stripe" onValue={setStripeFlag} />
       </Suspense>
-      <FuturisticBackground />
+      <FuturisticBackground particles />
       {/* Sticky header */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#040509]/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -333,6 +335,7 @@ export default function PricingPage() {
             standalone
             className="relative mx-auto flex w-full max-w-[480px] items-center justify-center"
           >
+            <HeroCanvas />
             <TiltCard max={12} glare={false} className="relative w-full">
             {/* Dashed outer ring */}
             <svg
@@ -478,6 +481,7 @@ export default function PricingPage() {
 
       {/* ============================== MANIFESTO (main objective) ============================== */}
       <ManifestoSection />
+      <PipelineScroll />
 
       {/* ============================== COMPARISON (Why Gallo) ============================== */}
       <ComparisonSection />
@@ -559,24 +563,19 @@ export default function PricingPage() {
           </RevealGroup>
 
           <RevealGroup
-            className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+            className="mt-12 grid auto-rows-fr items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-4"
             stagger={0.12}
             delayChildren={0.15}
           >
-            {plans === null && <PlanSkeleton count={3} />}
-            {plans?.map((plan) => (
+            {plans.map((plan) => (
               <Reveal key={plan.id} variant="card" className="h-full">
-                {/* Vitrine: each price card tilts in 3D toward the cursor with
-                    a glass sheen — a little showroom for the plans. */}
-                <TiltCard max={6} glare={false} className="h-full rounded-2xl">
-                  <PlanCard
-                    plan={plan}
-                    cycle={cycle}
-                    money={money}
-                    busy={busyPlan === plan.id}
-                    onChoose={() => handleChoose(plan)}
-                  />
-                </TiltCard>
+                <PlanCard
+                  plan={plan}
+                  cycle={cycle}
+                  money={money}
+                  busy={busyPlan === plan.id}
+                  onChoose={() => handleChoose(plan)}
+                />
               </Reveal>
             ))}
           </RevealGroup>
@@ -597,7 +596,7 @@ export default function PricingPage() {
       </section>
 
       {/* ============================== COMPARE MATRIX ============================== */}
-      {plans && plans.length > 0 && (
+      {plans.length > 0 && (
         <section>
           <RevealGroup className="mx-auto max-w-5xl px-6 py-20">
             <Reveal variant="soft">
@@ -786,10 +785,10 @@ function PlanCard({
   return (
     <div
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-7 transition-all",
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-6 transition-shadow sm:p-7",
         plan.highlighted
-          ? "border-primary/40 shadow-2xl shadow-primary/10 ring-1 ring-primary/20 lg:-translate-y-2"
-          : "hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg",
+          ? "border-primary/70 shadow-[0_0_0_1px_hsl(var(--primary)/0.45),0_18px_48px_-20px_hsl(var(--primary)/0.7)]"
+          : "hover:border-primary/35 hover:shadow-lg",
       )}
     >
       <div
@@ -800,43 +799,53 @@ function PlanCard({
         )}
       />
 
-      {plan.highlighted && (
-        <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-primary to-violet-500 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground shadow-md">
-          {t("mostPopular")}
+      <div className="relative flex h-full flex-col">
+        <div className="flex min-h-6 items-start justify-between gap-2">
+          <div className="text-sm font-semibold leading-5 text-foreground">{plan.name}</div>
+          <span
+            className={cn(
+              "max-w-[6.5rem] shrink-0 rounded-full px-2 py-0.5 text-center text-[10px] font-semibold uppercase leading-tight tracking-wide",
+              plan.highlighted
+                ? "bg-gradient-to-r from-primary to-violet-500 text-primary-foreground shadow-md"
+                : "invisible",
+            )}
+            aria-hidden={!plan.highlighted}
+          >
+            {t("mostPopular")}
+          </span>
         </div>
-      )}
+        <p className="mt-2 min-h-[3.75rem] text-sm leading-5 text-muted-foreground">{tagline}</p>
 
-      <div className="relative flex flex-1 flex-col">
-        <div className="text-sm font-semibold text-foreground">{plan.name}</div>
-        <p className="mt-1 text-sm text-muted-foreground">{tagline}</p>
-
-        <div className="mt-6 flex items-baseline gap-1">
-          <span className="text-5xl font-semibold tracking-tight">
+        <div className="mt-5 flex min-h-12 items-end">
+          <span className="text-4xl font-semibold leading-none tracking-tight sm:text-5xl">
             {isFree ? t("free") : money(price)}
           </span>
-          {!isFree && (
-            <span className="text-sm text-muted-foreground">{t("perUserPerMonth")}</span>
-          )}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {isFree
-            ? t("freeCtaSubtext")
-            : cycle === "yearly"
-              ? t("billedYearly", { total: money(plan.yearly_total_eur) })
-              : t("billedMonthly")}
+        <p className="mt-2 min-h-5 text-xs leading-5 text-muted-foreground">
+          {isFree ? "\u00a0" : t("perUserPerMonth")}
         </p>
-
-        {plan.trial_days > 0 && (
-          <div className="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-            <Zap className="h-3 w-3" /> {t("trialBadge", { days: plan.trial_days })}
+        <div className="mt-1 flex min-h-[4.25rem] flex-col gap-2">
+          <p className="min-h-10 text-xs leading-5 text-muted-foreground">
+            {isFree
+              ? t("freeCtaSubtext")
+              : cycle === "yearly"
+                ? t("billedYearly", { total: money(plan.yearly_total_eur) })
+                : t("billedMonthly")}
+          </p>
+          <div className="min-h-6">
+            {plan.trial_days > 0 ? (
+              <div className="inline-flex w-fit items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <Zap className="h-3 w-3" /> {t("trialBadge", { days: plan.trial_days })}
+              </div>
+            ) : null}
           </div>
-        )}
+        </div>
 
         <Button
           type="button"
           onClick={onChoose}
           disabled={busy}
-          className="mt-6 w-full"
+          className="mt-4 w-full"
           variant={plan.highlighted ? "default" : "outline"}
           size="lg"
         >
@@ -844,7 +853,7 @@ function PlanCard({
           {!busy && <ArrowRight className="h-4 w-4" />}
         </Button>
 
-        <ul className="mt-7 space-y-2.5 text-sm">
+        <ul className="mt-6 space-y-2.5 text-sm">
           {features.map((f, i) => {
             const Icon = FEATURE_ICONS[plan.id]?.[i] ?? Check;
             return (
@@ -857,20 +866,6 @@ function PlanCard({
         </ul>
       </div>
     </div>
-  );
-}
-
-function PlanSkeleton({ count }: { count: number }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="h-[520px] animate-pulse rounded-2xl border bg-card/50"
-          style={{ animationDelay: `${i * 80}ms` }}
-        />
-      ))}
-    </>
   );
 }
 

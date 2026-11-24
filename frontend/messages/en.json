@@ -895,6 +895,16 @@
     "select": "Select"
   },
   "marketing": {
+    "scroll": {
+      "eyebrow": "The path",
+      "title": "From first hello to signed deal",
+      "steps": {
+        "capture": {"title": "Capture", "body": "Leads land from forms, imports, or the inbox — already scored, with a next step."},
+        "work": {"title": "Work the board", "body": "Overdue, due today, and stalled deals sit in one place so nothing waits in a spreadsheet."},
+        "propose": {"title": "Propose", "body": "Quotes and contracts stay on the deal, in the currency your customer actually pays."},
+        "close": {"title": "Close", "body": "Sign in the product. Tomorrow's list is who to call, not another dashboard to interpret."}
+      }
+    },
     "benefitFreeTier": "Free forever for up to 2 users",
     "benefitNoCard": "No credit card required",
     "benefitCancel": "Cancel anytime, your data stays yours",
@@ -1283,6 +1293,7 @@
   },
   "chatbot": {
     "launcherLabel": "Open the GALLO assistant",
+    "waveHello": "Hi!",
     "title": "GALLO assistant",
     "subtitle": "Ask about features, plans & security",
     "greeting": "Hi! 👋 I'm the GALLO CRM assistant. Ask me anything about features, plans, the free trial, security, or how to get started.",

@@ -1,6 +1,7 @@
 import { clearToken, readCookie } from "./auth";
+import { API_URL } from "./api-base";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export { API_URL };
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -1260,8 +1261,13 @@ export interface Page<T> {
 }
 
 export const api = {
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(
+    email: string,
+    password: string,
+    turnstileToken?: string | null,
+  ): Promise<LoginResponse> {
     const body = new URLSearchParams({ username: email, password });
+    if (turnstileToken) body.set("turnstile_token", turnstileToken);
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

@@ -18,7 +18,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 from app import models  # noqa: F401 — side-effect: registers ORM classes
@@ -27,6 +27,7 @@ from app import models  # noqa: F401 — side-effect: registers ORM classes
 # every mapped class registers itself on the metadata.
 from app.config import get_settings
 from app.database import Base
+from app.db_url import prepare_async_url
 
 config = context.config
 
@@ -77,11 +78,8 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    url, connect_args = prepare_async_url(get_settings().database_url)
+    connectable = create_async_engine(url, poolclass=pool.NullPool, connect_args=connect_args)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()

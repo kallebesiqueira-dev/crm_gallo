@@ -895,6 +895,16 @@
     "select": "Sélectionner"
   },
   "marketing": {
+    "scroll": {
+      "eyebrow": "Le parcours",
+      "title": "Du premier bonjour à la signature",
+      "steps": {
+        "capture": {"title": "Capter", "body": "Les leads arrivent des formulaires, des imports ou de la boîte — déjà scorés, avec la suite."},
+        "work": {"title": "Tenir le tableau", "body": "En retard, pour aujourd'hui, ou bloqués : tout est au même endroit, pas dans un tableur."},
+        "propose": {"title": "Proposer", "body": "Devis et contrats restent sur l'affaire, dans la devise que le client paie vraiment."},
+        "close": {"title": "Conclure", "body": "Signez dans le produit. La liste de demain dit qui appeler."}
+      }
+    },
     "benefitFreeTier": "Gratuit à vie pour 2 utilisateurs maximum",
     "benefitNoCard": "Sans carte de crédit",
     "benefitCancel": "Annulez quand vous voulez, vos données restent les vôtres",
@@ -1283,6 +1293,7 @@
   },
   "chatbot": {
     "launcherLabel": "Ouvrir l'assistant GALLO",
+    "waveHello": "Salut!",
     "title": "Assistant GALLO",
     "subtitle": "Posez vos questions sur les fonctionnalités, les offres et la sécurité",
     "greeting": "Bonjour ! 👋 Je suis l'assistant GALLO CRM. Posez-moi toutes vos questions sur les fonctionnalités, les offres, l'essai gratuit, la sécurité ou la prise en main.",

@@ -29,6 +29,7 @@ import {
   Users2,
   Workflow,
   CalendarClock,
+  ChevronDown,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -110,6 +111,7 @@ export function Sidebar() {
   const tApp = useTranslations("app");
 
   const [collapsed, setCollapsed] = useState(false);
+  const [closedGroups, setClosedGroups] = useState<Record<string, boolean>>({});
   const [hojePending, setHojePending] = useState(0);
 
   useEffect(() => {
@@ -156,8 +158,8 @@ export function Sidebar() {
         title={collapsed ? tNav(label) : undefined}
         aria-label={collapsed ? tNav(label) : undefined}
         className={cn(
-          "group relative flex items-center rounded-lg py-2 text-sm font-medium transition-colors",
-          collapsed ? "justify-center px-2" : "gap-3 px-3",
+          "group relative flex items-center rounded-md py-1 text-[13px] font-medium transition-colors",
+          collapsed ? "justify-center px-2" : "gap-2 px-2",
           active
             ? "bg-white/15 text-white shadow-sm"
             : "text-violet-100/70 hover:bg-white/10 hover:text-white",
@@ -196,14 +198,14 @@ export function Sidebar() {
       data-tour="nav"
       className={cn(
         "hidden shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-[hsl(var(--sidebar-from))] via-[hsl(var(--sidebar-via))] to-[hsl(var(--sidebar-to))] text-[hsl(var(--sidebar-foreground))] transition-[width] duration-300 ease-in-out md:flex",
-        collapsed ? "w-16" : "w-44",
+        collapsed ? "w-14" : "w-52",
       )}
     >
       {/* Brand */}
       <div
         className={cn(
           "flex items-center border-b border-white/10",
-          collapsed ? "justify-center px-2 py-4" : "px-5 py-5",
+          collapsed ? "justify-center px-2 py-2.5" : "gap-2 px-3 py-2.5",
         )}
       >
         <Link
@@ -216,43 +218,59 @@ export function Sidebar() {
             alt=""
             width={48}
             height={48}
-            className="h-12 w-12 shrink-0 rounded-lg object-contain"
+            className="h-8 w-8 shrink-0 rounded-md object-contain"
           />
           {!collapsed && (
-            <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-violet-200/50">
-              AI Sales Platform
+            <div className="leading-tight">
+              <div className="text-sm font-semibold tracking-wide">GALLO</div>
+              <div className="text-[10px] font-medium uppercase tracking-wider text-violet-200/55">
+                CRM
+              </div>
             </div>
           )}
         </Link>
       </div>
 
       {/* Nav — pinned home, then the six groups */}
-      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="space-y-1">{renderItem(DASHBOARD_ITEM)}</div>
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label} className="space-y-1">
-            {collapsed ? (
-              <div className="mx-2 my-1.5 h-px bg-white/10" />
-            ) : (
-              <div className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-violet-200/40">
-                {tNav(`groups.${group.label.toLowerCase()}`)}
-              </div>
-            )}
-            {group.items.map((item) => renderItem(item, item.href === "hoje" ? hojePending : undefined))}
-          </div>
-        ))}
+      <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div>{renderItem(DASHBOARD_ITEM)}</div>
+        {NAV_GROUPS.map((group) => {
+          const shut = !collapsed && closedGroups[group.label];
+          return (
+            <div key={group.label}>
+              {collapsed ? (
+                <div className="mx-2 my-1 h-px bg-white/10" />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setClosedGroups((prev) => ({ ...prev, [group.label]: !prev[group.label] }))
+                  }
+                  className="flex w-full items-center justify-between px-2 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wider text-violet-200/45 hover:text-white"
+                >
+                  {tNav(`groups.${group.label.toLowerCase()}`)}
+                  <ChevronDown className={cn("h-3 w-3 transition", shut && "-rotate-90")} />
+                </button>
+              )}
+              {!shut &&
+                group.items.map((item) =>
+                  renderItem(item, item.href === "hoje" ? hojePending : undefined),
+                )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Collapse / expand */}
-      <div className="border-t border-white/10 p-3">
+      <div className="border-t border-white/10 p-2">
         <button
           type="button"
           onClick={toggle}
           aria-label={collapsed ? tApp("expandSidebar") : tApp("collapseSidebar")}
           title={collapsed ? tApp("expandSidebar") : tApp("collapseSidebar")}
           className={cn(
-            "flex w-full items-center rounded-lg py-2 text-sm font-medium text-violet-100/70 transition-colors hover:bg-white/10 hover:text-white",
-            collapsed ? "justify-center px-2" : "gap-3 px-3",
+            "flex w-full items-center rounded-md py-1.5 text-[13px] font-medium text-violet-100/70 transition-colors hover:bg-white/10 hover:text-white",
+            collapsed ? "justify-center px-2" : "gap-2 px-2",
           )}
         >
           {collapsed ? (

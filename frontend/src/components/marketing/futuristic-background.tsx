@@ -1,5 +1,7 @@
 "use client";
 
+import { LandingAtmosphere } from "@/components/marketing/landing-atmosphere";
+
 /**
  * Page-wide futuristic background — static. Sits behind every section of
  * the landing, pinned with `fixed inset-0 z-0` so it doesn't scroll with
@@ -14,14 +16,12 @@
  *      drifting under the eye.
  *   3. Conic spotlight — a very-low-opacity rotated gradient, also frozen,
  *      that adds a sense of depth without committing to one light source.
- *   4. Grid — faint dotted line floor that anchors the perspective. Fixed
- *      offset, no panning.
- *   5. Vignette — soft top/bottom darkening so the hero headline stays
+ *   4. Vignette — soft top/bottom darkening so the hero headline stays
  *      legible at peak brightness.
  *
  * Pointer-events disabled throughout, so it never intercepts anything.
  */
-export function FuturisticBackground() {
+export function FuturisticBackground({ particles = false }: { particles?: boolean }) {
   return (
     <div
       aria-hidden
@@ -38,11 +38,10 @@ export function FuturisticBackground() {
       {/* 3. Frozen conic spotlight */}
       <div className="absolute left-1/2 top-1/2 h-[120vmax] w-[120vmax] -translate-x-1/2 -translate-y-1/2 opacity-[0.07] [background:conic-gradient(from_0deg_at_50%_50%,transparent,rgba(99,102,241,0.7),transparent_30%,rgba(217,70,239,0.5),transparent_70%,rgba(59,130,246,0.6),transparent)]" />
 
-      {/* 4. Static grid floor */}
-      <div className="absolute inset-[-10%] opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:72px_72px]" />
+      {particles ? <LandingAtmosphere /> : null}
 
-      {/* 5. Vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(120%_60%_at_50%_50%,transparent_55%,rgba(0,0,0,0.55)_100%)]" />
+      {/* Vignette sits above the particle field so headlines stay readable. */}
+      <div className="absolute inset-0 z-10 bg-[radial-gradient(120%_60%_at_50%_50%,transparent_55%,rgba(0,0,0,0.55)_100%)]" />
     </div>
   );
 }

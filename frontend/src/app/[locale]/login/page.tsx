@@ -13,8 +13,11 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/marketing/auth-shell";
 import { MicrosoftIcon } from "@/components/microsoft-icon";
 import { GoogleIcon } from "@/components/google-icon";
+import { Turnstile } from "@/components/turnstile";
 import { api, API_URL, ApiError, isMfaChallenge, isMfaSetupRequired } from "@/lib/api";
 import { setToken } from "@/lib/auth";
+
+const CAPTCHA_ON = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export default function LoginPage() {
   const tAuth = useTranslations("auth");
@@ -37,17 +40,23 @@ export default function LoginPage() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
   const [resendDone, setResendDone] = useState(false);
-  // Social login: ask the backend which providers are wired so we only render
-  // a button that actually works. `oauthError` surfaces the hint the callback
-  // bounces back with (?oauth=no_account / no_email) for an unmatched email.
-  const [msEnabled, setMsEnabled] = useState(false);
+  // Google renders only when the backend has a client. Microsoft stays visible
+  // so the button is never missing; it completes once the Entra app is set.
+  // `oauthError` surfaces the hint the callback bounces back with.
   const [googleEnabled, setGoogleEnabled] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // Widget script/network/config failures must not leave Sign in disabled.
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
+  useEffect(() => {
+    if (!CAPTCHA_ON || turnstileToken) return;
+    const timer = setTimeout(() => setCaptchaUnavailable(true), 4000);
+    return () => clearTimeout(timer);
+  }, [turnstileToken]);
   useEffect(() => {
     api
       .oauthProviders()
       .then((p) => {
-        setMsEnabled(p.microsoft);
         setGoogleEnabled(p.google);
       })
       .catch(() => {});
@@ -62,7 +71,7 @@ export default function LoginPage() {
     setNeedsVerification(false);
     setResendDone(false);
     try {
-      const res = await api.login(email, password);
+      const res = await api.login(email, password, turnstileToken);
       if (isMfaChallenge(res)) {
         setMfaToken(res.mfa_token);
         setMfaCode("");
@@ -289,14 +298,29 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button type="submit" className="group w-full" disabled={busy} size="lg">
+              <Turnstile
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setCaptchaUnavailable(true)}
+              />
+              {CAPTCHA_ON && captchaUnavailable && !turnstileToken && (
+                <p className="text-center text-xs text-muted-foreground">
+                  {tAuth("captchaUnavailable")}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                className="group w-full"
+                disabled={busy || (CAPTCHA_ON && !turnstileToken && !captchaUnavailable)}
+                size="lg"
+              >
                 {busy ? tAuth("signingIn") : tAuth("login")}
                 {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
               </Button>
             </form>
 
-            {(msEnabled || googleEnabled) && (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
                   <span className="h-px flex-1 bg-border" />
                   {tAuth("orContinueWith")}
@@ -312,21 +336,18 @@ export default function LoginPage() {
                       {tAuth("continueWithGoogle")}
                     </a>
                   )}
-                  {msEnabled && (
-                    <a
-                      href={`${API_URL}/api/auth/oauth/microsoft/start`}
-                      className="flex w-full items-center justify-center gap-2.5 rounded-md border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent"
-                    >
-                      <MicrosoftIcon className="h-[18px] w-[18px]" />
-                      {tAuth("continueWithMicrosoft")}
-                    </a>
-                  )}
+                  <a
+                    href={`${API_URL}/api/auth/oauth/microsoft/start`}
+                    className="flex w-full items-center justify-center gap-2.5 rounded-md border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent"
+                  >
+                    <MicrosoftIcon className="h-[18px] w-[18px]" />
+                    {tAuth("continueWithMicrosoft")}
+                  </a>
                 </div>
                 <p className="text-center text-xs text-muted-foreground">
                   {tAuth("socialTermsNotice")}
                 </p>
               </div>
-            )}
 
             <div className="space-y-3 text-center text-sm">
               <p className="text-muted-foreground">

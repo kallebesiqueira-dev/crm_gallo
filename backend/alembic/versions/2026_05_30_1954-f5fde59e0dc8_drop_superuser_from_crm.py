@@ -135,6 +135,21 @@ def upgrade() -> None:
         "ON ALL SEQUENCES IN SCHEMA public TO crm_app;"
     )
 
+    # ALTER DEFAULT PRIVILEGES FOR ROLE crm requires the migrator to be
+    # a member of `crm`. Docker runs as `crm` already. Managed Postgres
+    # (the migrator is a different owner) needs an explicit membership
+    # first; granting a role to itself is an error, so skip that case.
+    op.execute(
+        """
+        DO $$
+        BEGIN
+          IF current_user <> 'crm' THEN
+            EXECUTE format('GRANT crm TO %I', current_user);
+          END IF;
+        END
+        $$;
+        """
+    )
     # ALTER DEFAULT PRIVILEGES applies only to objects created BY THE
     # SPECIFIED ROLE (crm here) AFTER this statement runs. Without
     # this, future migrations create tables owned by crm that crm_app
