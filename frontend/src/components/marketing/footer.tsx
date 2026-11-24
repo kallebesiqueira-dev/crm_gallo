@@ -1,7 +1,13 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 import {
   Cloud,
   Cpu,
@@ -60,6 +66,45 @@ const SOCIAL_LINKS: SocialLink[] = [
   { id: "instagram", label: "Instagram", href: "#",                       Icon: null },
   { id: "email",     label: "Email",     href: "mailto:gallo-crm@hotmail.com", Icon: Mail },
 ];
+
+const WORDMARK = "GALLO CRM";
+
+function Wordmark() {
+  const ref = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const letters = ref.current?.querySelectorAll("[data-letter]");
+      if (!letters?.length) return;
+      gsap.from(letters, {
+        scale: 0.55,
+        y: 24,
+        autoAlpha: 0,
+        stagger: 0.045,
+        duration: 0.7,
+        ease: "back.out(1.8)",
+        immediateRender: false,
+        scrollTrigger: { trigger: ref.current, start: "top 92%", once: true },
+      });
+    },
+    { scope: ref },
+  );
+
+  return (
+    <div ref={ref} className="relative overflow-hidden px-2 py-8 text-center">
+      <p
+        className="font-bold leading-[0.85] tracking-tighter"
+        style={{ fontSize: "clamp(3.5rem, 16vw, 14rem)" }}
+      >
+        {WORDMARK.split("").map((char, index) => (
+          <span key={`${char}-${index}`} data-letter="" className="gallo-wordmark inline-block">
+            {char === " " ? "\u00A0" : char}
+          </span>
+        ))}
+      </p>
+    </div>
+  );
+}
 
 export function Footer() {
   const t = useTranslations("pricing");
@@ -271,24 +316,7 @@ export function Footer() {
         </p>
       </div>
 
-      {/* ============== Watermark wordmark ============== */}
-      {/* Gigantic gradient-clipped wordmark — last beat of brand presence
-          before the user leaves. Hovering the letters triggers a soft
-          "bubble inflate": springy cubic-bezier scale + intensified
-          gradient + glow, like a balloon swelling under the cursor. */}
-      <div className="group relative overflow-hidden">
-        <div
-          aria-hidden
-          className="mx-auto max-w-[1600px] cursor-default px-2 py-6 text-center"
-        >
-          <span
-            className="inline-block bg-gradient-to-b from-white/10 via-white/[0.04] to-transparent bg-clip-text font-bold leading-[0.85] tracking-tighter text-transparent transition-all duration-[700ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-[1.04] group-hover:from-white/35 group-hover:via-white/15 group-hover:drop-shadow-[0_20px_80px_rgba(168,85,247,0.45)]"
-            style={{ fontSize: "clamp(4rem, 18vw, 16rem)" }}
-          >
-            GALLO CRM
-          </span>
-        </div>
-      </div>
+      <Wordmark />
     </footer>
   );
 }

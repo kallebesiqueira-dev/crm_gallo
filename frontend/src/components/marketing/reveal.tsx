@@ -8,7 +8,7 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-const EASE = "expo.out";
+const EASE = "back.out(1.7)";
 
 type RevealVariant =
   | "base"
@@ -24,15 +24,15 @@ type RevealVariant =
 type Spec = { from: gsap.TweenVars; to: gsap.TweenVars; duration: number };
 
 const SPECS: Record<RevealVariant, Spec> = {
-  base: { from: { autoAlpha: 0, y: 48, scale: 0.98 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.9 },
-  title: { from: { autoAlpha: 0, y: 56, scale: 0.98 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.95 },
-  text: { from: { autoAlpha: 0, y: 28 }, to: { autoAlpha: 1, y: 0 }, duration: 0.75 },
-  button: { from: { autoAlpha: 0, y: 20, scale: 0.98 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.65 },
-  card: { from: { autoAlpha: 0, y: 36, scale: 0.98 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.8 },
-  scaleIn: { from: { autoAlpha: 0, y: 24, scale: 0.94 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.9 },
-  soft: { from: { autoAlpha: 0 }, to: { autoAlpha: 1 }, duration: 0.7 },
-  "fade-right": { from: { autoAlpha: 0, x: -36 }, to: { autoAlpha: 1, x: 0 }, duration: 0.85 },
-  "fade-left": { from: { autoAlpha: 0, x: 36 }, to: { autoAlpha: 1, x: 0 }, duration: 0.85 },
+  base: { from: { autoAlpha: 0, y: 28, scale: 0.82 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.7 },
+  title: { from: { autoAlpha: 0, y: 32, scale: 0.78 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.75 },
+  text: { from: { autoAlpha: 0, y: 16, scale: 0.9 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.6 },
+  button: { from: { autoAlpha: 0, y: 12, scale: 0.86 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.55 },
+  card: { from: { autoAlpha: 0, y: 24, scale: 0.8 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.7 },
+  scaleIn: { from: { autoAlpha: 0, y: 18, scale: 0.84 }, to: { autoAlpha: 1, y: 0, scale: 1 }, duration: 0.7 },
+  soft: { from: { autoAlpha: 0, scale: 0.92 }, to: { autoAlpha: 1, scale: 1 }, duration: 0.55 },
+  "fade-right": { from: { autoAlpha: 0, x: -28, scale: 0.86 }, to: { autoAlpha: 1, x: 0, scale: 1 }, duration: 0.65 },
+  "fade-left": { from: { autoAlpha: 0, x: 28, scale: 0.86 }, to: { autoAlpha: 1, x: 0, scale: 1 }, duration: 0.65 },
 };
 
 const InGroup = createContext(false);

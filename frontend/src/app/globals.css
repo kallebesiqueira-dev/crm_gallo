@@ -106,3 +106,27 @@ html.gallo-splash-pending body {
     background: hsl(var(--primary) / 0.28);
   }
 }
+
+@keyframes gallo-shine {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+.gallo-wordmark {
+  background-image: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.18) 20%,
+    rgba(255, 255, 255, 0.92) 46%,
+    rgba(196, 181, 253, 0.95) 52%,
+    rgba(255, 255, 255, 0.18) 78%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gallo-shine 5.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallo-wordmark { animation: none; }
+}
